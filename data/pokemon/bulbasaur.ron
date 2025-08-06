@@ -1,0 +1,41 @@
+PokemonSpecies(
+    pokedex_number: 1,
+    name: "Bulbasaur",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 45,
+        attack: 49,
+        defense: 49,
+        sp_attack: 65,
+        sp_defense: 65,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Growl],
+            7: [LeechSeed],
+            13: [VineWhip],
+            19: [PoisonPowder],
+            21: [StunSpore],
+            25: [MegaDrain],
+            27: [Growth],
+            31: [SleepPowder],
+            
+        },
+        signature: None,
+        can_learn: [
+            SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Rage, Absorb, RazorLeaf, GigaDrain, Solarbeam, Mimic, DoubleTeam,
+            Reflect, Bide, Rest, Substitute, Cut, Bind, Headbutt,
+            Stomp, Roar, Bite, AncientPower, Earthquake, PoisonGas, 
+            PetalDance, Spore
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 64,
+    description: "A strange seed was planted on its back at birth. The plant sprouts and grows with this Pokémon.",
+    evolution_data: Some((
+        evolves_into: "Ivysaur",
+        method: Level(16),
+    )),
+)

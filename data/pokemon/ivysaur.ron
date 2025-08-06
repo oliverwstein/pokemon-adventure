@@ -1,0 +1,40 @@
+PokemonSpecies(
+    pokedex_number: 2,
+    name: "Ivysaur",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 60,
+        attack: 62,
+        defense: 63,
+        sp_attack: 80,
+        sp_defense: 80,
+        speed: 60,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Growl, LeechSeed],
+            7: [LeechSeed],
+            13: [VineWhip],
+            22: [PoisonPowder],
+            25: [StunSpore],
+            29: [MegaDrain],
+            33: [Growth],
+            38: [SleepPowder],
+        },
+        signature: None,
+        can_learn: [
+            SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Rage, Absorb, RazorLeaf, GigaDrain, Solarbeam, Mimic, DoubleTeam,
+            Reflect, Bide, Rest, Substitute, Cut, Bind, Headbutt,
+            Stomp, Roar, Bite, AncientPower, Earthquake, PoisonGas, 
+            PetalDance, Spore
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 142,
+    description: "When the bulb on its back grows large, it appears to lose the ability to stand on its hind legs.",
+    evolution_data: Some((
+        evolves_into: "Venusaur",
+        method: Level(32),
+    )),
+)

@@ -1,0 +1,39 @@
+PokemonSpecies(
+    pokedex_number: 7,
+    name: "Squirtle",
+    types: [Water],
+    base_stats: (
+        hp: 44,
+        attack: 48,
+        defense: 65,
+        sp_attack: 50,
+        sp_defense: 64,
+        speed: 43,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip],
+            8: [Bubble],
+            15: [WaterGun],
+            22: [Bite],
+            28: [Withdraw],
+            35: [SkullBash],
+            42: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Rage, Dig,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, SkullBash,
+            Rest, Substitute, Surf, Strength, Flash, Cut,
+            IcePunch, AuroraBeam, Mist, Waterfall
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 66,
+    description: "After birth, its back swells and hardens into a shell. Powerfully sprays foam from its mouth.",
+    evolution_data: Some((
+        evolves_into: "Wartortle",
+        method: Level(16),
+    )),
+)

@@ -1,0 +1,39 @@
+PokemonSpecies(
+    pokedex_number: 8,
+    name: "Wartortle",
+    types: [Water],
+    base_stats: (
+        hp: 59,
+        attack: 63,
+        defense: 80,
+        sp_attack: 65,
+        sp_defense: 80,
+        speed: 58,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, Bubble],
+            8: [Bubble],
+            15: [WaterGun],
+            24: [Bite],
+            31: [Withdraw],
+            39: [SkullBash],
+            47: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Rage, Dig,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, SkullBash,
+            Rest, Substitute, Surf, Strength, Flash, Cut,
+            IcePunch, AuroraBeam, Mist, Waterfall
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 143,
+    description: "Often hides in water to stalk unwary prey. For swimming fast, it moves its ears to maintain balance.",
+    evolution_data: Some((
+        evolves_into: "Blastoise",
+        method: Level(36),
+    )),
+)

@@ -1,0 +1,41 @@
+PokemonSpecies(
+    pokedex_number: 6,
+    name: "Charizard",
+    types: [Fire, Flying],
+    base_stats: (
+        hp: 78,
+        attack: 84,
+        defense: 78,
+        sp_attack: 109,
+        sp_defense: 85,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Growl, Ember, Smokescreen],
+            7: [Ember],
+            13: [Smokescreen],
+            15: [Leer],
+            20: [Rage],
+            27: [Bite],
+            34: [FireFang],
+            36: [WingAttack, Slash],
+            44: [Flamethrower],
+            54: [FireBlast],
+        },
+        signature: Some(FireSpin),
+        can_learn: [
+            SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Rage, FirePunch, BlazeKick, Flamethrower, FireBlast,
+            Mimic, DoubleTeam, Reflect, Bide, Rest, Substitute,
+            Cut, Bind, Headbutt, Stomp, Roar, Bite, Slash,
+            AncientPower, RockSlide, SkullBash, Earthquake,
+            DragonRage, Outrage, WingAttack, Fly,
+            RazorWind, SkyAttack, Gust, Dig, Swift
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 209,
+    description: "Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.",
+    evolution_data: None,
+)

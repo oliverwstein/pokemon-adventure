@@ -1,0 +1,5897 @@
+{
+    "DITTO": {
+        "level 0": [],
+        "level 1": [
+            "TRANSFORM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "POLIWAG": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "BUBBLE"
+        ],
+        "evolutions": [
+            {
+                "to": "POLIWHIRL",
+                "method": "level",
+                "level": 25
+            }
+        ],
+        "level_up_moves": {
+            "16": "HYPNOSIS",
+            "19": "WATER_GUN",
+            "25": "DOUBLESLAP",
+            "31": "BODY_SLAM",
+            "38": "AMNESIA",
+            "45": "HYDRO_PUMP"
+        }
+    },
+    "MAGMAR": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "EMBER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "36": "LEER",
+            "39": "CONFUSE_RAY",
+            "43": "FIRE_PUNCH",
+            "48": "SMOKESCREEN",
+            "52": "SMOG",
+            "55": "FLAMETHROWER"
+        }
+    },
+    "METAPOD": {
+        "level 0": [],
+        "level 1": [
+            "HARDEN"
+        ],
+        "evolutions": [
+            {
+                "to": "BUTTERFREE",
+                "method": "level",
+                "level": 10
+            }
+        ],
+        "level_up_moves": {}
+    },
+    "ELECTRODE": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "EXPLOSION",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SCREECH",
+            "SONICBOOM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "17": "SONICBOOM",
+            "22": "SELFDESTRUCT",
+            "29": "LIGHT_SCREEN",
+            "40": "SWIFT",
+            "50": "EXPLOSION"
+        }
+    },
+    "ZAPDOS": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLY",
+            "FLASH"
+        ],
+        "level 1": [
+            "THUNDERSHOCK",
+            "DRILL_PECK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "51": "THUNDER",
+            "55": "AGILITY",
+            "60": "LIGHT_SCREEN"
+        }
+    },
+    "PARAS": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "SCRATCH"
+        ],
+        "evolutions": [
+            {
+                "to": "PARASECT",
+                "method": "level",
+                "level": 24
+            }
+        ],
+        "level_up_moves": {
+            "13": "STUN_SPORE",
+            "20": "LEECH_LIFE",
+            "27": "SPORE",
+            "34": "SLASH",
+            "41": "GROWTH"
+        }
+    },
+    "WEEPINBELL": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "VINE_WHIP",
+            "GROWTH",
+            "WRAP"
+        ],
+        "evolutions": [
+            {
+                "to": "VICTREEBEL",
+                "method": "item",
+                "item": "LEAF_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "13": "WRAP",
+            "15": "POISONPOWDER",
+            "18": "SLEEP_POWDER",
+            "23": "STUN_SPORE",
+            "29": "ACID",
+            "38": "RAZOR_LEAF",
+            "49": "SLAM"
+        }
+    },
+    "GOLBAT": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LEECH_LIFE",
+            "SCREECH",
+            "BITE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "10": "SUPERSONIC",
+            "15": "BITE",
+            "21": "CONFUSE_RAY",
+            "32": "WING_ATTACK",
+            "43": "HAZE"
+        }
+    },
+    "NIDORAN_F": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "GROWL",
+            "TACKLE"
+        ],
+        "evolutions": [
+            {
+                "to": "NIDORINA",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {
+            "8": "SCRATCH",
+            "14": "POISON_STING",
+            "21": "TAIL_WHIP",
+            "29": "BITE",
+            "36": "FURY_SWIPES",
+            "43": "DOUBLE_KICK"
+        }
+    },
+    "RAPIDASH": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "EMBER",
+            "TAIL_WHIP",
+            "STOMP",
+            "GROWL"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "30": "TAIL_WHIP",
+            "32": "STOMP",
+            "35": "GROWL",
+            "39": "FIRE_SPIN",
+            "47": "TAKE_DOWN",
+            "55": "AGILITY"
+        }
+    },
+    "CLEFABLE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "SING",
+            "DOUBLESLAP",
+            "MINIMIZE",
+            "METRONOME"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "RATICATE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "TAIL_WHIP",
+            "QUICK_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "7": "QUICK_ATTACK",
+            "14": "HYPER_FANG",
+            "27": "FOCUS_ENERGY",
+            "41": "SUPER_FANG"
+        }
+    },
+    "PARASECT": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "STUN_SPORE",
+            "LEECH_LIFE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "13": "STUN_SPORE",
+            "20": "LEECH_LIFE",
+            "30": "SPORE",
+            "39": "SLASH",
+            "48": "GROWTH"
+        }
+    },
+    "EEVEE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SAND_ATTACK"
+        ],
+        "evolutions": [
+            {
+                "to": "FLAREON",
+                "method": "item",
+                "item": "FIRE_STONE"
+            },
+            {
+                "to": "JOLTEON",
+                "method": "item",
+                "item": "THUNDER_STONE"
+            },
+            {
+                "to": "VAPOREON",
+                "method": "item",
+                "item": "WATER_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "27": "QUICK_ATTACK",
+            "31": "TAIL_WHIP",
+            "37": "BITE",
+            "45": "TAKE_DOWN"
+        }
+    },
+    "KADABRA": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TELEPORT",
+            "CONFUSION",
+            "DISABLE"
+        ],
+        "evolutions": [
+            {
+                "to": "ALAKAZAM",
+                "method": "trade"
+            }
+        ],
+        "level_up_moves": {
+            "16": "CONFUSION",
+            "20": "DISABLE",
+            "27": "PSYBEAM",
+            "31": "RECOVER",
+            "38": "PSYCHIC_M",
+            "42": "REFLECT"
+        }
+    },
+    "VENOMOTH": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "DISABLE",
+            "POISONPOWDER",
+            "LEECH_LIFE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "24": "POISONPOWDER",
+            "27": "LEECH_LIFE",
+            "30": "STUN_SPORE",
+            "38": "PSYBEAM",
+            "43": "SLEEP_POWDER",
+            "50": "PSYCHIC_M"
+        }
+    },
+    "PORYGON": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SHARPEN",
+            "CONVERSION"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "23": "PSYBEAM",
+            "28": "RECOVER",
+            "35": "AGILITY",
+            "42": "TRI_ATTACK"
+        }
+    },
+    "PIKACHU": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "PAY_DAY",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "THUNDERSHOCK",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "RAICHU",
+                "method": "item",
+                "item": "THUNDER_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "9": "THUNDER_WAVE",
+            "16": "QUICK_ATTACK",
+            "26": "SWIFT",
+            "33": "AGILITY",
+            "43": "THUNDER"
+        }
+    },
+    "SHELLDER": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "SWIFT",
+            "REST",
+            "EXPLOSION",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "TACKLE",
+            "WITHDRAW"
+        ],
+        "evolutions": [
+            {
+                "to": "CLOYSTER",
+                "method": "item",
+                "item": "WATER_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "18": "SUPERSONIC",
+            "23": "CLAMP",
+            "30": "AURORA_BEAM",
+            "39": "LEER",
+            "50": "ICE_BEAM"
+        }
+    },
+    "DRAGONAIR": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "WRAP",
+            "LEER",
+            "THUNDER_WAVE"
+        ],
+        "evolutions": [
+            {
+                "to": "DRAGONITE",
+                "method": "level",
+                "level": 55
+            }
+        ],
+        "level_up_moves": {
+            "10": "THUNDER_WAVE",
+            "20": "AGILITY",
+            "35": "SLAM",
+            "45": "DRAGON_RAGE",
+            "55": "HYPER_BEAM"
+        }
+    },
+    "RAICHU": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "THUNDERSHOCK",
+            "GROWL",
+            "THUNDER_WAVE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "VICTREEBEL": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "SLEEP_POWDER",
+            "STUN_SPORE",
+            "ACID",
+            "RAZOR_LEAF"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "13": "WRAP",
+            "15": "POISONPOWDER",
+            "18": "SLEEP_POWDER"
+        }
+    },
+    "MAGNETON": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SONICBOOM",
+            "THUNDERSHOCK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "21": "SONICBOOM",
+            "25": "THUNDERSHOCK",
+            "29": "SUPERSONIC",
+            "38": "THUNDER_WAVE",
+            "46": "SWIFT",
+            "54": "SCREECH"
+        }
+    },
+    "MOLTRES": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "FIRE_SPIN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "51": "LEER",
+            "55": "AGILITY",
+            "60": "SKY_ATTACK"
+        }
+    },
+    "DODUO": {
+        "level 0": [
+            "WHIRLWIND",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "SKY_ATTACK",
+            "REST",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK"
+        ],
+        "evolutions": [
+            {
+                "to": "DODRIO",
+                "method": "level",
+                "level": 31
+            }
+        ],
+        "level_up_moves": {
+            "20": "GROWL",
+            "24": "FURY_ATTACK",
+            "30": "DRILL_PECK",
+            "36": "RAGE",
+            "40": "TRI_ATTACK",
+            "44": "AGILITY"
+        }
+    },
+    "GOLEM": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "DEFENSE_CURL"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "11": "DEFENSE_CURL",
+            "16": "ROCK_THROW",
+            "21": "SELFDESTRUCT",
+            "29": "HARDEN",
+            "36": "EARTHQUAKE",
+            "43": "EXPLOSION"
+        }
+    },
+    "HYPNO": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "DREAM_EATER",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "POUND",
+            "HYPNOSIS",
+            "DISABLE",
+            "CONFUSION"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "12": "DISABLE",
+            "17": "CONFUSION",
+            "24": "HEADBUTT",
+            "33": "POISON_GAS",
+            "37": "PSYCHIC_M",
+            "43": "MEDITATE"
+        }
+    },
+    "GEODUDE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE"
+        ],
+        "evolutions": [
+            {
+                "to": "GRAVELER",
+                "method": "level",
+                "level": 25
+            }
+        ],
+        "level_up_moves": {
+            "11": "DEFENSE_CURL",
+            "16": "ROCK_THROW",
+            "21": "SELFDESTRUCT",
+            "26": "HARDEN",
+            "31": "EARTHQUAKE",
+            "36": "EXPLOSION"
+        }
+    },
+    "FARFETCHD": {
+        "level 0": [
+            "RAZOR_WIND",
+            "SWORDS_DANCE",
+            "WHIRLWIND",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "SAND_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "7": "LEER",
+            "15": "FURY_ATTACK",
+            "23": "SWORDS_DANCE",
+            "31": "AGILITY",
+            "39": "SLASH"
+        }
+    },
+    "JOLTEON": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SAND_ATTACK",
+            "QUICK_ATTACK",
+            "THUNDERSHOCK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "27": "QUICK_ATTACK",
+            "31": "THUNDERSHOCK",
+            "37": "TAIL_WHIP",
+            "40": "THUNDER_WAVE",
+            "42": "DOUBLE_KICK",
+            "44": "AGILITY",
+            "48": "PIN_MISSILE",
+            "54": "THUNDER"
+        }
+    },
+    "GLOOM": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "ABSORB",
+            "POISONPOWDER",
+            "STUN_SPORE"
+        ],
+        "evolutions": [
+            {
+                "to": "VILEPLUME",
+                "method": "item",
+                "item": "LEAF_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "15": "POISONPOWDER",
+            "17": "STUN_SPORE",
+            "19": "SLEEP_POWDER",
+            "28": "ACID",
+            "38": "PETAL_DANCE",
+            "52": "SOLARBEAM"
+        }
+    },
+    "GENGAR": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MEGA_DRAIN",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "SKULL_BASH",
+            "DREAM_EATER",
+            "REST",
+            "PSYWAVE",
+            "EXPLOSION",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "LICK",
+            "CONFUSE_RAY",
+            "NIGHT_SHADE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "29": "HYPNOSIS",
+            "38": "DREAM_EATER"
+        }
+    },
+    "MEW": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "RAZOR_WIND",
+            "SWORDS_DANCE",
+            "WHIRLWIND",
+            "MEGA_KICK",
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "EGG_BOMB",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "SOFTBOILED",
+            "DREAM_EATER",
+            "SKY_ATTACK",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "EXPLOSION",
+            "ROCK_SLIDE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "CUT",
+            "FLY",
+            "SURF",
+            "STRENGTH",
+            "FLASH",
+            "UNUSED"
+        ],
+        "level 1": [
+            "POUND"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "10": "TRANSFORM",
+            "20": "MEGA_PUNCH",
+            "30": "METRONOME",
+            "40": "PSYCHIC_M"
+        }
+    },
+    "DROWZEE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "DREAM_EATER",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "POUND",
+            "HYPNOSIS"
+        ],
+        "evolutions": [
+            {
+                "to": "HYPNO",
+                "method": "level",
+                "level": 26
+            }
+        ],
+        "level_up_moves": {
+            "12": "DISABLE",
+            "17": "CONFUSION",
+            "24": "HEADBUTT",
+            "29": "POISON_GAS",
+            "32": "PSYCHIC_M",
+            "37": "MEDITATE"
+        }
+    },
+    "WEEZING": {
+        "level 0": [
+            "TOXIC",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SMOG",
+            "SLUDGE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "32": "SLUDGE",
+            "39": "SMOKESCREEN",
+            "43": "SELFDESTRUCT",
+            "49": "HAZE",
+            "53": "EXPLOSION"
+        }
+    },
+    "NIDOKING": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "HORN_ATTACK",
+            "POISON_STING",
+            "THRASH"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "8": "HORN_ATTACK",
+            "14": "POISON_STING",
+            "23": "THRASH"
+        }
+    },
+    "ELECTABUZZ": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "QUICK_ATTACK",
+            "LEER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "34": "THUNDERSHOCK",
+            "37": "SCREECH",
+            "42": "THUNDERPUNCH",
+            "49": "LIGHT_SCREEN",
+            "54": "THUNDER"
+        }
+    },
+    "GYARADOS": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BITE",
+            "DRAGON_RAGE",
+            "LEER",
+            "HYDRO_PUMP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "20": "BITE",
+            "25": "DRAGON_RAGE",
+            "32": "LEER",
+            "41": "HYDRO_PUMP",
+            "52": "HYPER_BEAM"
+        }
+    },
+    "GROWLITHE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "DRAGON_RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "BITE",
+            "ROAR"
+        ],
+        "evolutions": [
+            {
+                "to": "ARCANINE",
+                "method": "item",
+                "item": "FIRE_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "18": "EMBER",
+            "23": "LEER",
+            "30": "TAKE_DOWN",
+            "39": "AGILITY",
+            "50": "FLAMETHROWER"
+        }
+    },
+    "HITMONLEE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "DOUBLE_KICK",
+            "MEDITATE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "33": "ROLLING_KICK",
+            "38": "JUMP_KICK",
+            "43": "FOCUS_ENERGY",
+            "48": "HI_JUMP_KICK",
+            "53": "MEGA_KICK"
+        }
+    },
+    "VAPOREON": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SAND_ATTACK",
+            "QUICK_ATTACK",
+            "WATER_GUN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "27": "QUICK_ATTACK",
+            "31": "WATER_GUN",
+            "37": "TAIL_WHIP",
+            "40": "BITE",
+            "42": "ACID_ARMOR",
+            "44": "HAZE",
+            "48": "MIST",
+            "54": "HYDRO_PUMP"
+        }
+    },
+    "GOLDEEN": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "PECK",
+            "TAIL_WHIP"
+        ],
+        "evolutions": [
+            {
+                "to": "SEAKING",
+                "method": "level",
+                "level": 33
+            }
+        ],
+        "level_up_moves": {
+            "19": "SUPERSONIC",
+            "24": "HORN_ATTACK",
+            "30": "FURY_ATTACK",
+            "37": "WATERFALL",
+            "45": "HORN_DRILL",
+            "54": "AGILITY"
+        }
+    },
+    "STARMIE": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "WATER_GUN",
+            "HARDEN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "CHARIZARD": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "SWORDS_DANCE",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DRAGON_RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL",
+            "EMBER",
+            "LEER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "9": "EMBER",
+            "15": "LEER",
+            "24": "RAGE",
+            "36": "SLASH",
+            "46": "FLAMETHROWER",
+            "55": "FIRE_SPIN"
+        }
+    },
+    "WEEDLE": {
+        "level 0": [],
+        "level 1": [
+            "POISON_STING",
+            "STRING_SHOT"
+        ],
+        "evolutions": [
+            {
+                "to": "KAKUNA",
+                "method": "level",
+                "level": 7
+            }
+        ],
+        "level_up_moves": {}
+    },
+    "DUGTRIO": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL",
+            "DIG"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "15": "GROWL",
+            "19": "DIG",
+            "24": "SAND_ATTACK",
+            "35": "SLASH",
+            "47": "EARTHQUAKE"
+        }
+    },
+    "HAUNTER": {
+        "level 0": [
+            "TOXIC",
+            "RAGE",
+            "MEGA_DRAIN",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "DREAM_EATER",
+            "REST",
+            "PSYWAVE",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LICK",
+            "CONFUSE_RAY",
+            "NIGHT_SHADE"
+        ],
+        "evolutions": [
+            {
+                "to": "GENGAR",
+                "method": "trade"
+            }
+        ],
+        "level_up_moves": {
+            "29": "HYPNOSIS",
+            "38": "DREAM_EATER"
+        }
+    },
+    "DIGLETT": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "SCRATCH"
+        ],
+        "evolutions": [
+            {
+                "to": "DUGTRIO",
+                "method": "level",
+                "level": 26
+            }
+        ],
+        "level_up_moves": {
+            "15": "GROWL",
+            "19": "DIG",
+            "24": "SAND_ATTACK",
+            "31": "SLASH",
+            "40": "EARTHQUAKE"
+        }
+    },
+    "KINGLER": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BUBBLE",
+            "LEER",
+            "VICEGRIP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "20": "VICEGRIP",
+            "25": "GUILLOTINE",
+            "34": "STOMP",
+            "42": "CRABHAMMER",
+            "49": "HARDEN"
+        }
+    },
+    "PIDGEY": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "GUST"
+        ],
+        "evolutions": [
+            {
+                "to": "PIDGEOTTO",
+                "method": "level",
+                "level": 18
+            }
+        ],
+        "level_up_moves": {
+            "5": "SAND_ATTACK",
+            "12": "QUICK_ATTACK",
+            "19": "WHIRLWIND",
+            "28": "WING_ATTACK",
+            "36": "AGILITY",
+            "44": "MIRROR_MOVE"
+        }
+    },
+    "DRAGONITE": {
+        "level 0": [
+            "RAZOR_WIND",
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "WRAP",
+            "LEER",
+            "THUNDER_WAVE",
+            "AGILITY"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "10": "THUNDER_WAVE",
+            "20": "AGILITY",
+            "35": "SLAM",
+            "45": "DRAGON_RAGE",
+            "60": "HYPER_BEAM"
+        }
+    },
+    "HORSEA": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "BUBBLE"
+        ],
+        "evolutions": [
+            {
+                "to": "SEADRA",
+                "method": "level",
+                "level": 32
+            }
+        ],
+        "level_up_moves": {
+            "19": "SMOKESCREEN",
+            "24": "LEER",
+            "30": "WATER_GUN",
+            "37": "AGILITY",
+            "45": "HYDRO_PUMP"
+        }
+    },
+    "FEAROW": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "GROWL",
+            "LEER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "9": "LEER",
+            "15": "FURY_ATTACK",
+            "25": "MIRROR_MOVE",
+            "34": "DRILL_PECK",
+            "43": "AGILITY"
+        }
+    },
+    "OMASTAR": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "WATER_GUN",
+            "WITHDRAW",
+            "HORN_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "34": "HORN_ATTACK",
+            "39": "LEER",
+            "44": "SPIKE_CANNON",
+            "49": "HYDRO_PUMP"
+        }
+    },
+    "BUTTERFREE": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "CONFUSION"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "12": "CONFUSION",
+            "15": "POISONPOWDER",
+            "16": "STUN_SPORE",
+            "17": "SLEEP_POWDER",
+            "21": "SUPERSONIC",
+            "26": "WHIRLWIND",
+            "32": "PSYBEAM"
+        }
+    },
+    "EXEGGUTOR": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "EGG_BOMB",
+            "REST",
+            "PSYWAVE",
+            "EXPLOSION",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BARRAGE",
+            "HYPNOSIS"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "28": "STOMP"
+        }
+    },
+    "ONIX": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "SKULL_BASH",
+            "REST",
+            "EXPLOSION",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SCREECH"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "15": "BIND",
+            "19": "ROCK_THROW",
+            "25": "RAGE",
+            "33": "SLAM",
+            "43": "HARDEN"
+        }
+    },
+    "RATTATA": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "TAIL_WHIP"
+        ],
+        "evolutions": [
+            {
+                "to": "RATICATE",
+                "method": "level",
+                "level": 20
+            }
+        ],
+        "level_up_moves": {
+            "7": "QUICK_ATTACK",
+            "14": "HYPER_FANG",
+            "23": "FOCUS_ENERGY",
+            "34": "SUPER_FANG"
+        }
+    },
+    "NIDOQUEEN": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SCRATCH",
+            "TAIL_WHIP",
+            "BODY_SLAM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "8": "SCRATCH",
+            "14": "POISON_STING",
+            "23": "BODY_SLAM"
+        }
+    },
+    "ZUBAT": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LEECH_LIFE"
+        ],
+        "evolutions": [
+            {
+                "to": "GOLBAT",
+                "method": "level",
+                "level": 22
+            }
+        ],
+        "level_up_moves": {
+            "10": "SUPERSONIC",
+            "15": "BITE",
+            "21": "CONFUSE_RAY",
+            "28": "WING_ATTACK",
+            "36": "HAZE"
+        }
+    },
+    "CLEFAIRY": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "POUND",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "CLEFABLE",
+                "method": "item",
+                "item": "MOON_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "13": "SING",
+            "18": "DOUBLESLAP",
+            "24": "MINIMIZE",
+            "31": "METRONOME",
+            "39": "DEFENSE_CURL",
+            "48": "LIGHT_SCREEN"
+        }
+    },
+    "CLOYSTER": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "SWIFT",
+            "REST",
+            "EXPLOSION",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "WITHDRAW",
+            "SUPERSONIC",
+            "CLAMP",
+            "AURORA_BEAM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "50": "SPIKE_CANNON"
+        }
+    },
+    "KABUTO": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "HARDEN"
+        ],
+        "evolutions": [
+            {
+                "to": "KABUTOPS",
+                "method": "level",
+                "level": 40
+            }
+        ],
+        "level_up_moves": {
+            "34": "ABSORB",
+            "39": "SLASH",
+            "44": "LEER",
+            "49": "HYDRO_PUMP"
+        }
+    },
+    "JIGGLYPUFF": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "SING"
+        ],
+        "evolutions": [
+            {
+                "to": "WIGGLYTUFF",
+                "method": "item",
+                "item": "MOON_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "9": "POUND",
+            "14": "DISABLE",
+            "19": "DEFENSE_CURL",
+            "24": "DOUBLESLAP",
+            "29": "REST",
+            "34": "BODY_SLAM",
+            "39": "DOUBLE_EDGE"
+        }
+    },
+    "EKANS": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "WRAP",
+            "LEER"
+        ],
+        "evolutions": [
+            {
+                "to": "ARBOK",
+                "method": "level",
+                "level": 22
+            }
+        ],
+        "level_up_moves": {
+            "10": "POISON_STING",
+            "17": "BITE",
+            "24": "GLARE",
+            "31": "SCREECH",
+            "38": "ACID"
+        }
+    },
+    "WARTORTLE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "TAIL_WHIP",
+            "BUBBLE"
+        ],
+        "evolutions": [
+            {
+                "to": "BLASTOISE",
+                "method": "level",
+                "level": 36
+            }
+        ],
+        "level_up_moves": {
+            "8": "BUBBLE",
+            "15": "WATER_GUN",
+            "24": "BITE",
+            "31": "WITHDRAW",
+            "39": "SKULL_BASH",
+            "47": "HYDRO_PUMP"
+        }
+    },
+    "NINETALES": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "EMBER",
+            "TAIL_WHIP",
+            "QUICK_ATTACK",
+            "ROAR"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "SNORLAX": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HEADBUTT",
+            "AMNESIA",
+            "REST"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "35": "BODY_SLAM",
+            "41": "HARDEN",
+            "48": "DOUBLE_EDGE",
+            "56": "HYPER_BEAM"
+        }
+    },
+    "TENTACOOL": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MEGA_DRAIN",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "SURF"
+        ],
+        "level 1": [
+            "ACID"
+        ],
+        "evolutions": [
+            {
+                "to": "TENTACRUEL",
+                "method": "level",
+                "level": 30
+            }
+        ],
+        "level_up_moves": {
+            "7": "SUPERSONIC",
+            "13": "WRAP",
+            "18": "POISON_STING",
+            "22": "WATER_GUN",
+            "27": "CONSTRICT",
+            "33": "BARRIER",
+            "40": "SCREECH",
+            "48": "HYDRO_PUMP"
+        }
+    },
+    "LAPRAS": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "SOLARBEAM",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "WATER_GUN",
+            "GROWL"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "16": "SING",
+            "20": "MIST",
+            "25": "BODY_SLAM",
+            "31": "CONFUSE_RAY",
+            "38": "ICE_BEAM",
+            "46": "HYDRO_PUMP"
+        }
+    },
+    "VENONAT": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "DISABLE"
+        ],
+        "evolutions": [
+            {
+                "to": "VENOMOTH",
+                "method": "level",
+                "level": 31
+            }
+        ],
+        "level_up_moves": {
+            "24": "POISONPOWDER",
+            "27": "LEECH_LIFE",
+            "30": "STUN_SPORE",
+            "35": "PSYBEAM",
+            "38": "SLEEP_POWDER",
+            "43": "PSYCHIC_M"
+        }
+    },
+    "SLOWBRO": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "CONFUSION",
+            "DISABLE",
+            "HEADBUTT"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "18": "DISABLE",
+            "22": "HEADBUTT",
+            "27": "GROWL",
+            "33": "WATER_GUN",
+            "37": "WITHDRAW",
+            "44": "AMNESIA",
+            "55": "PSYCHIC_M"
+        }
+    },
+    "CUBONE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BONE_CLUB",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "MAROWAK",
+                "method": "level",
+                "level": 28
+            }
+        ],
+        "level_up_moves": {
+            "25": "LEER",
+            "31": "FOCUS_ENERGY",
+            "38": "THRASH",
+            "43": "BONEMERANG",
+            "46": "RAGE"
+        }
+    },
+    "SANDSHREW": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH"
+        ],
+        "evolutions": [
+            {
+                "to": "SANDSLASH",
+                "method": "level",
+                "level": 22
+            }
+        ],
+        "level_up_moves": {
+            "10": "SAND_ATTACK",
+            "17": "SLASH",
+            "24": "POISON_STING",
+            "31": "SWIFT",
+            "38": "FURY_SWIPES"
+        }
+    },
+    "VENUSAUR": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "TACKLE",
+            "GROWL",
+            "LEECH_SEED",
+            "VINE_WHIP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "7": "LEECH_SEED",
+            "13": "VINE_WHIP",
+            "22": "POISONPOWDER",
+            "30": "RAZOR_LEAF",
+            "43": "GROWTH",
+            "55": "SLEEP_POWDER",
+            "65": "SOLARBEAM"
+        }
+    },
+    "LICKITUNG": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "SWORDS_DANCE",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "WRAP",
+            "SUPERSONIC"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "7": "STOMP",
+            "15": "DISABLE",
+            "23": "DEFENSE_CURL",
+            "31": "SLAM",
+            "39": "SCREECH"
+        }
+    },
+    "SEADRA": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "BUBBLE",
+            "SMOKESCREEN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "19": "SMOKESCREEN",
+            "24": "LEER",
+            "30": "WATER_GUN",
+            "41": "AGILITY",
+            "52": "HYDRO_PUMP"
+        }
+    },
+    "GRIMER": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "POUND",
+            "DISABLE"
+        ],
+        "evolutions": [
+            {
+                "to": "MUK",
+                "method": "level",
+                "level": 38
+            }
+        ],
+        "level_up_moves": {
+            "30": "POISON_GAS",
+            "33": "MINIMIZE",
+            "37": "SLUDGE",
+            "42": "HARDEN",
+            "48": "SCREECH",
+            "55": "ACID_ARMOR"
+        }
+    },
+    "MAGIKARP": {
+        "level 0": [],
+        "level 1": [
+            "SPLASH"
+        ],
+        "evolutions": [
+            {
+                "to": "GYARADOS",
+                "method": "level",
+                "level": 20
+            }
+        ],
+        "level_up_moves": {
+            "15": "TACKLE"
+        }
+    },
+    "SLOWPOKE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "PAY_DAY",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "CONFUSION"
+        ],
+        "evolutions": [
+            {
+                "to": "SLOWBRO",
+                "method": "level",
+                "level": 37
+            }
+        ],
+        "level_up_moves": {
+            "18": "DISABLE",
+            "22": "HEADBUTT",
+            "27": "GROWL",
+            "33": "WATER_GUN",
+            "40": "AMNESIA",
+            "48": "PSYCHIC_M"
+        }
+    },
+    "HITMONCHAN": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "COMET_PUNCH",
+            "AGILITY"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "33": "FIRE_PUNCH",
+            "38": "ICE_PUNCH",
+            "43": "THUNDERPUNCH",
+            "48": "MEGA_PUNCH",
+            "53": "COUNTER"
+        }
+    },
+    "MEOWTH": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "PAY_DAY",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "PERSIAN",
+                "method": "level",
+                "level": 28
+            }
+        ],
+        "level_up_moves": {
+            "12": "BITE",
+            "17": "PAY_DAY",
+            "24": "SCREECH",
+            "33": "FURY_SWIPES",
+            "44": "SLASH"
+        }
+    },
+    "SPEAROW": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "FEAROW",
+                "method": "level",
+                "level": 20
+            }
+        ],
+        "level_up_moves": {
+            "9": "LEER",
+            "15": "FURY_ATTACK",
+            "22": "MIRROR_MOVE",
+            "29": "DRILL_PECK",
+            "36": "AGILITY"
+        }
+    },
+    "VULPIX": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "EMBER",
+            "TAIL_WHIP"
+        ],
+        "evolutions": [
+            {
+                "to": "NINETALES",
+                "method": "item",
+                "item": "FIRE_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "16": "QUICK_ATTACK",
+            "21": "ROAR",
+            "28": "CONFUSE_RAY",
+            "35": "FLAMETHROWER",
+            "42": "FIRE_SPIN"
+        }
+    },
+    "DEWGONG": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HEADBUTT",
+            "GROWL",
+            "AURORA_BEAM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "30": "GROWL",
+            "35": "AURORA_BEAM",
+            "44": "REST",
+            "50": "TAKE_DOWN",
+            "56": "ICE_BEAM"
+        }
+    },
+    "PRIMEAPE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "LEER",
+            "KARATE_CHOP",
+            "FURY_SWIPES"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "15": "KARATE_CHOP",
+            "21": "FURY_SWIPES",
+            "27": "FOCUS_ENERGY",
+            "37": "SEISMIC_TOSS",
+            "46": "THRASH"
+        }
+    },
+    "SCYTHER": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "QUICK_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "17": "LEER",
+            "20": "FOCUS_ENERGY",
+            "24": "DOUBLE_TEAM",
+            "29": "SLASH",
+            "35": "SWORDS_DANCE",
+            "42": "AGILITY"
+        }
+    },
+    "KANGASKHAN": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "COMET_PUNCH",
+            "RAGE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "26": "BITE",
+            "31": "TAIL_WHIP",
+            "36": "MEGA_PUNCH",
+            "41": "LEER",
+            "46": "DIZZY_PUNCH"
+        }
+    },
+    "BULBASAUR": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "TACKLE",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "IVYSAUR",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {
+            "7": "LEECH_SEED",
+            "13": "VINE_WHIP",
+            "20": "POISONPOWDER",
+            "27": "RAZOR_LEAF",
+            "34": "GROWTH",
+            "41": "SLEEP_POWDER",
+            "48": "SOLARBEAM"
+        }
+    },
+    "RHYDON": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HORN_ATTACK",
+            "STOMP",
+            "TAIL_WHIP",
+            "FURY_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "30": "STOMP",
+            "35": "TAIL_WHIP",
+            "40": "FURY_ATTACK",
+            "48": "HORN_DRILL",
+            "55": "LEER",
+            "64": "TAKE_DOWN"
+        }
+    },
+    "CHARMANDER": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "SWORDS_DANCE",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DRAGON_RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL"
+        ],
+        "evolutions": [
+            {
+                "to": "CHARMELEON",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {
+            "9": "EMBER",
+            "15": "LEER",
+            "22": "RAGE",
+            "30": "SLASH",
+            "38": "FLAMETHROWER",
+            "46": "FIRE_SPIN"
+        }
+    },
+    "MR_MIME": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "CONFUSION",
+            "BARRIER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "15": "CONFUSION",
+            "23": "LIGHT_SCREEN",
+            "31": "DOUBLESLAP",
+            "39": "MEDITATE",
+            "47": "SUBSTITUTE"
+        }
+    },
+    "GRAVELER": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "DEFENSE_CURL"
+        ],
+        "evolutions": [
+            {
+                "to": "GOLEM",
+                "method": "trade"
+            }
+        ],
+        "level_up_moves": {
+            "11": "DEFENSE_CURL",
+            "16": "ROCK_THROW",
+            "21": "SELFDESTRUCT",
+            "29": "HARDEN",
+            "36": "EARTHQUAKE",
+            "43": "EXPLOSION"
+        }
+    },
+    "POLIWRATH": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HYPNOSIS",
+            "WATER_GUN",
+            "DOUBLESLAP",
+            "BODY_SLAM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "16": "HYPNOSIS",
+            "19": "WATER_GUN"
+        }
+    },
+    "PSYDUCK": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH"
+        ],
+        "evolutions": [
+            {
+                "to": "GOLDUCK",
+                "method": "level",
+                "level": 33
+            }
+        ],
+        "level_up_moves": {
+            "28": "TAIL_WHIP",
+            "31": "DISABLE",
+            "36": "CONFUSION",
+            "43": "FURY_SWIPES",
+            "52": "HYDRO_PUMP"
+        }
+    },
+    "AERODACTYL": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "DRAGON_RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "WING_ATTACK",
+            "AGILITY"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "33": "SUPERSONIC",
+            "38": "BITE",
+            "45": "TAKE_DOWN",
+            "54": "HYPER_BEAM"
+        }
+    },
+    "MACHOKE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "KARATE_CHOP",
+            "LOW_KICK",
+            "LEER"
+        ],
+        "evolutions": [
+            {
+                "to": "MACHAMP",
+                "method": "trade"
+            }
+        ],
+        "level_up_moves": {
+            "20": "LOW_KICK",
+            "25": "LEER",
+            "36": "FOCUS_ENERGY",
+            "44": "SEISMIC_TOSS",
+            "52": "SUBMISSION"
+        }
+    },
+    "KOFFING": {
+        "level 0": [
+            "TOXIC",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SMOG"
+        ],
+        "evolutions": [
+            {
+                "to": "WEEZING",
+                "method": "level",
+                "level": 35
+            }
+        ],
+        "level_up_moves": {
+            "32": "SLUDGE",
+            "37": "SMOKESCREEN",
+            "40": "SELFDESTRUCT",
+            "45": "HAZE",
+            "48": "EXPLOSION"
+        }
+    },
+    "IVYSAUR": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "TACKLE",
+            "GROWL",
+            "LEECH_SEED"
+        ],
+        "evolutions": [
+            {
+                "to": "VENUSAUR",
+                "method": "level",
+                "level": 32
+            }
+        ],
+        "level_up_moves": {
+            "7": "LEECH_SEED",
+            "13": "VINE_WHIP",
+            "22": "POISONPOWDER",
+            "30": "RAZOR_LEAF",
+            "38": "GROWTH",
+            "46": "SLEEP_POWDER",
+            "54": "SOLARBEAM"
+        }
+    },
+    "EXEGGCUTE": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "EGG_BOMB",
+            "REST",
+            "PSYWAVE",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "BARRAGE",
+            "HYPNOSIS"
+        ],
+        "evolutions": [
+            {
+                "to": "EXEGGUTOR",
+                "method": "item",
+                "item": "LEAF_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "25": "REFLECT",
+            "28": "LEECH_SEED",
+            "32": "STUN_SPORE",
+            "37": "POISONPOWDER",
+            "42": "SOLARBEAM",
+            "48": "SLEEP_POWDER"
+        }
+    },
+    "RHYHORN": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HORN_ATTACK"
+        ],
+        "evolutions": [
+            {
+                "to": "RHYDON",
+                "method": "level",
+                "level": 42
+            }
+        ],
+        "level_up_moves": {
+            "30": "STOMP",
+            "35": "TAIL_WHIP",
+            "40": "FURY_ATTACK",
+            "45": "HORN_DRILL",
+            "50": "LEER",
+            "55": "TAKE_DOWN"
+        }
+    },
+    "ABRA": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TELEPORT"
+        ],
+        "evolutions": [
+            {
+                "to": "KADABRA",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {}
+    },
+    "MACHAMP": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "KARATE_CHOP",
+            "LOW_KICK",
+            "LEER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "20": "LOW_KICK",
+            "25": "LEER",
+            "36": "FOCUS_ENERGY",
+            "44": "SEISMIC_TOSS",
+            "52": "SUBMISSION"
+        }
+    },
+    "MAROWAK": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BONE_CLUB",
+            "GROWL",
+            "LEER",
+            "FOCUS_ENERGY"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "25": "LEER",
+            "33": "FOCUS_ENERGY",
+            "41": "THRASH",
+            "48": "BONEMERANG",
+            "55": "RAGE"
+        }
+    },
+    "POLIWHIRL": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BUBBLE",
+            "HYPNOSIS",
+            "WATER_GUN"
+        ],
+        "evolutions": [
+            {
+                "to": "POLIWRATH",
+                "method": "item",
+                "item": "WATER_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "16": "HYPNOSIS",
+            "19": "WATER_GUN",
+            "26": "DOUBLESLAP",
+            "33": "BODY_SLAM",
+            "41": "AMNESIA",
+            "49": "HYDRO_PUMP"
+        }
+    },
+    "VILEPLUME": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "STUN_SPORE",
+            "SLEEP_POWDER",
+            "ACID",
+            "PETAL_DANCE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "15": "POISONPOWDER",
+            "17": "STUN_SPORE",
+            "19": "SLEEP_POWDER"
+        }
+    },
+    "VOLTORB": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SELFDESTRUCT",
+            "SWIFT",
+            "REST",
+            "THUNDER_WAVE",
+            "EXPLOSION",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SCREECH"
+        ],
+        "evolutions": [
+            {
+                "to": "ELECTRODE",
+                "method": "level",
+                "level": 30
+            }
+        ],
+        "level_up_moves": {
+            "17": "SONICBOOM",
+            "22": "SELFDESTRUCT",
+            "29": "LIGHT_SCREEN",
+            "36": "SWIFT",
+            "43": "EXPLOSION"
+        }
+    },
+    "MEWTWO": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "CONFUSION",
+            "DISABLE",
+            "SWIFT",
+            "PSYCHIC_M"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "63": "BARRIER",
+            "66": "PSYCHIC_M",
+            "70": "RECOVER",
+            "75": "MIST",
+            "81": "AMNESIA"
+        }
+    },
+    "BLASTOISE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "TAIL_WHIP",
+            "BUBBLE",
+            "WATER_GUN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "8": "BUBBLE",
+            "15": "WATER_GUN",
+            "24": "BITE",
+            "31": "WITHDRAW",
+            "42": "SKULL_BASH",
+            "52": "HYDRO_PUMP"
+        }
+    },
+    "GOLDUCK": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "TAIL_WHIP",
+            "DISABLE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "28": "TAIL_WHIP",
+            "31": "DISABLE",
+            "39": "CONFUSION",
+            "48": "FURY_SWIPES",
+            "59": "HYDRO_PUMP"
+        }
+    },
+    "OMANYTE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "WATER_GUN",
+            "WITHDRAW"
+        ],
+        "evolutions": [
+            {
+                "to": "OMASTAR",
+                "method": "level",
+                "level": 40
+            }
+        ],
+        "level_up_moves": {
+            "34": "HORN_ATTACK",
+            "39": "LEER",
+            "46": "SPIKE_CANNON",
+            "53": "HYDRO_PUMP"
+        }
+    },
+    "TANGELA": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "CONSTRICT",
+            "BIND"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "29": "ABSORB",
+            "32": "POISONPOWDER",
+            "36": "STUN_SPORE",
+            "39": "SLEEP_POWDER",
+            "45": "SLAM",
+            "49": "GROWTH"
+        }
+    },
+    "SEAKING": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "PECK",
+            "TAIL_WHIP",
+            "SUPERSONIC"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "19": "SUPERSONIC",
+            "24": "HORN_ATTACK",
+            "30": "FURY_ATTACK",
+            "39": "WATERFALL",
+            "48": "HORN_DRILL",
+            "54": "AGILITY"
+        }
+    },
+    "CATERPIE": {
+        "level 0": [],
+        "level 1": [
+            "TACKLE",
+            "STRING_SHOT"
+        ],
+        "evolutions": [
+            {
+                "to": "METAPOD",
+                "method": "level",
+                "level": 7
+            }
+        ],
+        "level_up_moves": {}
+    },
+    "ODDISH": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "ABSORB"
+        ],
+        "evolutions": [
+            {
+                "to": "GLOOM",
+                "method": "level",
+                "level": 21
+            }
+        ],
+        "level_up_moves": {
+            "15": "POISONPOWDER",
+            "17": "STUN_SPORE",
+            "19": "SLEEP_POWDER",
+            "24": "ACID",
+            "33": "PETAL_DANCE",
+            "46": "SOLARBEAM"
+        }
+    },
+    "DODRIO": {
+        "level 0": [
+            "WHIRLWIND",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "SKY_ATTACK",
+            "REST",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "GROWL",
+            "FURY_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "20": "GROWL",
+            "24": "FURY_ATTACK",
+            "30": "DRILL_PECK",
+            "39": "RAGE",
+            "45": "TRI_ATTACK",
+            "51": "AGILITY"
+        }
+    },
+    "PIDGEOTTO": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "GUST",
+            "SAND_ATTACK"
+        ],
+        "evolutions": [
+            {
+                "to": "PIDGEOT",
+                "method": "level",
+                "level": 36
+            }
+        ],
+        "level_up_moves": {
+            "5": "SAND_ATTACK",
+            "12": "QUICK_ATTACK",
+            "21": "WHIRLWIND",
+            "31": "WING_ATTACK",
+            "40": "AGILITY",
+            "49": "MIRROR_MOVE"
+        }
+    },
+    "CHANSEY": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "EGG_BOMB",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "SOFTBOILED",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "POUND",
+            "DOUBLESLAP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "24": "SING",
+            "30": "GROWL",
+            "38": "MINIMIZE",
+            "44": "DEFENSE_CURL",
+            "48": "LIGHT_SCREEN",
+            "54": "DOUBLE_EDGE"
+        }
+    },
+    "SEEL": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "PAY_DAY",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "HEADBUTT"
+        ],
+        "evolutions": [
+            {
+                "to": "DEWGONG",
+                "method": "level",
+                "level": 34
+            }
+        ],
+        "level_up_moves": {
+            "30": "GROWL",
+            "35": "AURORA_BEAM",
+            "40": "REST",
+            "45": "TAKE_DOWN",
+            "50": "ICE_BEAM"
+        }
+    },
+    "PONYTA": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "EMBER"
+        ],
+        "evolutions": [
+            {
+                "to": "RAPIDASH",
+                "method": "level",
+                "level": 40
+            }
+        ],
+        "level_up_moves": {
+            "30": "TAIL_WHIP",
+            "32": "STOMP",
+            "35": "GROWL",
+            "39": "FIRE_SPIN",
+            "43": "TAKE_DOWN",
+            "48": "AGILITY"
+        }
+    },
+    "NIDORINA": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "GROWL",
+            "TACKLE",
+            "SCRATCH"
+        ],
+        "evolutions": [
+            {
+                "to": "NIDOQUEEN",
+                "method": "item",
+                "item": "MOON_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "8": "SCRATCH",
+            "14": "POISON_STING",
+            "23": "TAIL_WHIP",
+            "32": "BITE",
+            "41": "FURY_SWIPES",
+            "50": "DOUBLE_KICK"
+        }
+    },
+    "ARBOK": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "WRAP",
+            "LEER",
+            "POISON_STING"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "10": "POISON_STING",
+            "17": "BITE",
+            "27": "GLARE",
+            "36": "SCREECH",
+            "47": "ACID"
+        }
+    },
+    "ARCANINE": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "DRAGON_RAGE",
+            "DIG",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "ROAR",
+            "EMBER",
+            "LEER",
+            "TAKE_DOWN"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "KRABBY": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "BUBBLE",
+            "LEER"
+        ],
+        "evolutions": [
+            {
+                "to": "KINGLER",
+                "method": "level",
+                "level": 28
+            }
+        ],
+        "level_up_moves": {
+            "20": "VICEGRIP",
+            "25": "GUILLOTINE",
+            "30": "STOMP",
+            "35": "CRABHAMMER",
+            "40": "HARDEN"
+        }
+    },
+    "DRATINI": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "DRAGON_RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "WRAP",
+            "LEER"
+        ],
+        "evolutions": [
+            {
+                "to": "DRAGONAIR",
+                "method": "level",
+                "level": 30
+            }
+        ],
+        "level_up_moves": {
+            "10": "THUNDER_WAVE",
+            "20": "AGILITY",
+            "30": "SLAM",
+            "40": "DRAGON_RAGE",
+            "50": "HYPER_BEAM"
+        }
+    },
+    "ARTICUNO": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "PECK",
+            "ICE_BEAM"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "51": "BLIZZARD",
+            "55": "AGILITY",
+            "60": "MIST"
+        }
+    },
+    "GASTLY": {
+        "level 0": [
+            "TOXIC",
+            "RAGE",
+            "MEGA_DRAIN",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "DREAM_EATER",
+            "REST",
+            "PSYWAVE",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LICK",
+            "CONFUSE_RAY",
+            "NIGHT_SHADE"
+        ],
+        "evolutions": [
+            {
+                "to": "HAUNTER",
+                "method": "level",
+                "level": 25
+            }
+        ],
+        "level_up_moves": {
+            "27": "HYPNOSIS",
+            "35": "DREAM_EATER"
+        }
+    },
+    "JYNX": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "PSYWAVE",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "POUND",
+            "LOVELY_KISS"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "18": "LICK",
+            "23": "DOUBLESLAP",
+            "31": "ICE_PUNCH",
+            "39": "BODY_SLAM",
+            "47": "THRASH",
+            "58": "BLIZZARD"
+        }
+    },
+    "MUK": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SELFDESTRUCT",
+            "FIRE_BLAST",
+            "REST",
+            "EXPLOSION",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "POUND",
+            "DISABLE",
+            "POISON_GAS"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "30": "POISON_GAS",
+            "33": "MINIMIZE",
+            "37": "SLUDGE",
+            "45": "HARDEN",
+            "53": "SCREECH",
+            "60": "ACID_ARMOR"
+        }
+    },
+    "PERSIAN": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "HYPER_BEAM",
+            "PAY_DAY",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL",
+            "BITE",
+            "SCREECH"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "12": "BITE",
+            "17": "PAY_DAY",
+            "24": "SCREECH",
+            "37": "FURY_SWIPES",
+            "51": "SLASH"
+        }
+    },
+    "FLAREON": {
+        "level 0": [
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "TACKLE",
+            "SAND_ATTACK",
+            "QUICK_ATTACK",
+            "EMBER"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "27": "QUICK_ATTACK",
+            "31": "EMBER",
+            "37": "TAIL_WHIP",
+            "40": "BITE",
+            "42": "LEER",
+            "44": "FIRE_SPIN",
+            "48": "RAGE",
+            "54": "FLAMETHROWER"
+        }
+    },
+    "KABUTOPS": {
+        "level 0": [
+            "RAZOR_WIND",
+            "SWORDS_DANCE",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "HARDEN",
+            "ABSORB"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "34": "ABSORB",
+            "39": "SLASH",
+            "46": "LEER",
+            "53": "HYDRO_PUMP"
+        }
+    },
+    "CHARMELEON": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "SWORDS_DANCE",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DRAGON_RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "GROWL",
+            "EMBER"
+        ],
+        "evolutions": [
+            {
+                "to": "CHARIZARD",
+                "method": "level",
+                "level": 36
+            }
+        ],
+        "level_up_moves": {
+            "9": "EMBER",
+            "15": "LEER",
+            "24": "RAGE",
+            "33": "SLASH",
+            "42": "FLAMETHROWER",
+            "56": "FIRE_SPIN"
+        }
+    },
+    "MACHOP": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "KARATE_CHOP"
+        ],
+        "evolutions": [
+            {
+                "to": "MACHOKE",
+                "method": "level",
+                "level": 28
+            }
+        ],
+        "level_up_moves": {
+            "20": "LOW_KICK",
+            "25": "LEER",
+            "32": "FOCUS_ENERGY",
+            "39": "SEISMIC_TOSS",
+            "46": "SUBMISSION"
+        }
+    },
+    "BELLSPROUT": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "MEGA_DRAIN",
+            "SOLARBEAM",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "VINE_WHIP",
+            "GROWTH"
+        ],
+        "evolutions": [
+            {
+                "to": "WEEPINBELL",
+                "method": "level",
+                "level": 21
+            }
+        ],
+        "level_up_moves": {
+            "13": "WRAP",
+            "15": "POISONPOWDER",
+            "18": "SLEEP_POWDER",
+            "21": "STUN_SPORE",
+            "26": "ACID",
+            "33": "RAZOR_LEAF",
+            "42": "SLAM"
+        }
+    },
+    "SANDSLASH": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "EARTHQUAKE",
+            "FISSURE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "SAND_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "10": "SAND_ATTACK",
+            "17": "SLASH",
+            "27": "POISON_STING",
+            "36": "SWIFT",
+            "47": "FURY_SWIPES"
+        }
+    },
+    "PIDGEOT": {
+        "level 0": [
+            "RAZOR_WIND",
+            "WHIRLWIND",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKY_ATTACK",
+            "REST",
+            "SUBSTITUTE",
+            "FLY"
+        ],
+        "level 1": [
+            "GUST",
+            "SAND_ATTACK",
+            "QUICK_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "5": "SAND_ATTACK",
+            "12": "QUICK_ATTACK",
+            "21": "WHIRLWIND",
+            "31": "WING_ATTACK",
+            "44": "AGILITY",
+            "54": "MIRROR_MOVE"
+        }
+    },
+    "STARYU": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "SURF",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE"
+        ],
+        "evolutions": [
+            {
+                "to": "STARMIE",
+                "method": "item",
+                "item": "WATER_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "17": "WATER_GUN",
+            "22": "HARDEN",
+            "27": "RECOVER",
+            "32": "SWIFT",
+            "37": "MINIMIZE",
+            "42": "LIGHT_SCREEN",
+            "47": "HYDRO_PUMP"
+        }
+    },
+    "PINSIR": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "VICEGRIP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "25": "SEISMIC_TOSS",
+            "30": "GUILLOTINE",
+            "36": "FOCUS_ENERGY",
+            "43": "HARDEN",
+            "49": "SLASH",
+            "54": "SWORDS_DANCE"
+        }
+    },
+    "KAKUNA": {
+        "level 0": [],
+        "level 1": [
+            "HARDEN"
+        ],
+        "evolutions": [
+            {
+                "to": "BEEDRILL",
+                "method": "level",
+                "level": 10
+            }
+        ],
+        "level_up_moves": {}
+    },
+    "TAUROS": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "EARTHQUAKE",
+            "FISSURE",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "21": "STOMP",
+            "28": "TAIL_WHIP",
+            "35": "LEER",
+            "44": "RAGE",
+            "51": "TAKE_DOWN"
+        }
+    },
+    "BEEDRILL": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT"
+        ],
+        "level 1": [
+            "FURY_ATTACK"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "12": "FURY_ATTACK",
+            "16": "FOCUS_ENERGY",
+            "20": "TWINEEDLE",
+            "25": "RAGE",
+            "30": "PIN_MISSILE",
+            "35": "AGILITY"
+        }
+    },
+    "MAGNEMITE": {
+        "level 0": [
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SWIFT",
+            "REST",
+            "THUNDER_WAVE",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TACKLE"
+        ],
+        "evolutions": [
+            {
+                "to": "MAGNETON",
+                "method": "level",
+                "level": 30
+            }
+        ],
+        "level_up_moves": {
+            "21": "SONICBOOM",
+            "25": "THUNDERSHOCK",
+            "29": "SUPERSONIC",
+            "35": "THUNDER_WAVE",
+            "41": "SWIFT",
+            "47": "SCREECH"
+        }
+    },
+    "MANKEY": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "PAY_DAY",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "BIDE",
+            "METRONOME",
+            "SWIFT",
+            "SKULL_BASH",
+            "REST",
+            "ROCK_SLIDE",
+            "SUBSTITUTE",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "SCRATCH",
+            "LEER"
+        ],
+        "evolutions": [
+            {
+                "to": "PRIMEAPE",
+                "method": "level",
+                "level": 28
+            }
+        ],
+        "level_up_moves": {
+            "15": "KARATE_CHOP",
+            "21": "FURY_SWIPES",
+            "27": "FOCUS_ENERGY",
+            "33": "SEISMIC_TOSS",
+            "39": "THRASH"
+        }
+    },
+    "NIDORINO": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LEER",
+            "TACKLE",
+            "HORN_ATTACK"
+        ],
+        "evolutions": [
+            {
+                "to": "NIDOKING",
+                "method": "item",
+                "item": "MOON_STONE"
+            }
+        ],
+        "level_up_moves": {
+            "8": "HORN_ATTACK",
+            "14": "POISON_STING",
+            "23": "FOCUS_ENERGY",
+            "32": "FURY_ATTACK",
+            "41": "HORN_DRILL",
+            "50": "DOUBLE_KICK"
+        }
+    },
+    "WIGGLYTUFF": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "SOLARBEAM",
+            "THUNDERBOLT",
+            "THUNDER",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "FIRE_BLAST",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "STRENGTH",
+            "FLASH"
+        ],
+        "level 1": [
+            "SING",
+            "DISABLE",
+            "DEFENSE_CURL",
+            "DOUBLESLAP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {}
+    },
+    "TENTACRUEL": {
+        "level 0": [
+            "SWORDS_DANCE",
+            "TOXIC",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "HYPER_BEAM",
+            "RAGE",
+            "MEGA_DRAIN",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "CUT",
+            "SURF"
+        ],
+        "level 1": [
+            "ACID",
+            "SUPERSONIC",
+            "WRAP"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "7": "SUPERSONIC",
+            "13": "WRAP",
+            "18": "POISON_STING",
+            "22": "WATER_GUN",
+            "27": "CONSTRICT",
+            "35": "BARRIER",
+            "43": "SCREECH",
+            "50": "HYDRO_PUMP"
+        }
+    },
+    "SQUIRTLE": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BUBBLEBEAM",
+            "WATER_GUN",
+            "ICE_BEAM",
+            "BLIZZARD",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE",
+            "SURF",
+            "STRENGTH"
+        ],
+        "level 1": [
+            "TACKLE",
+            "TAIL_WHIP"
+        ],
+        "evolutions": [
+            {
+                "to": "WARTORTLE",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {
+            "8": "BUBBLE",
+            "15": "WATER_GUN",
+            "22": "BITE",
+            "28": "WITHDRAW",
+            "35": "SKULL_BASH",
+            "42": "HYDRO_PUMP"
+        }
+    },
+    "ALAKAZAM": {
+        "level 0": [
+            "MEGA_PUNCH",
+            "MEGA_KICK",
+            "TOXIC",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "HYPER_BEAM",
+            "SUBMISSION",
+            "COUNTER",
+            "SEISMIC_TOSS",
+            "RAGE",
+            "DIG",
+            "PSYCHIC_M",
+            "TELEPORT",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "METRONOME",
+            "SKULL_BASH",
+            "REST",
+            "THUNDER_WAVE",
+            "PSYWAVE",
+            "TRI_ATTACK",
+            "SUBSTITUTE",
+            "FLASH"
+        ],
+        "level 1": [
+            "TELEPORT",
+            "CONFUSION",
+            "DISABLE"
+        ],
+        "evolutions": [],
+        "level_up_moves": {
+            "16": "CONFUSION",
+            "20": "DISABLE",
+            "27": "PSYBEAM",
+            "31": "RECOVER",
+            "38": "PSYCHIC_M",
+            "42": "REFLECT"
+        }
+    },
+    "NIDORAN_M": {
+        "level 0": [
+            "TOXIC",
+            "HORN_DRILL",
+            "BODY_SLAM",
+            "TAKE_DOWN",
+            "DOUBLE_EDGE",
+            "BLIZZARD",
+            "RAGE",
+            "THUNDERBOLT",
+            "THUNDER",
+            "MIMIC",
+            "DOUBLE_TEAM",
+            "REFLECT",
+            "BIDE",
+            "SKULL_BASH",
+            "REST",
+            "SUBSTITUTE"
+        ],
+        "level 1": [
+            "LEER",
+            "TACKLE"
+        ],
+        "evolutions": [
+            {
+                "to": "NIDORINO",
+                "method": "level",
+                "level": 16
+            }
+        ],
+        "level_up_moves": {
+            "8": "HORN_ATTACK",
+            "14": "POISON_STING",
+            "21": "FOCUS_ENERGY",
+            "29": "FURY_ATTACK",
+            "36": "HORN_DRILL",
+            "43": "DOUBLE_KICK"
+        }
+    }
+}

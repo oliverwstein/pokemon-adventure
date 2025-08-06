@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 9,
+    name: "Blastoise",
+    types: [Water],
+    base_stats: (
+        hp: 79,
+        attack: 83,
+        defense: 100,
+        sp_attack: 85,
+        sp_defense: 105,
+        speed: 78,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, Bubble, WaterGun],
+            8: [Bubble],
+            15: [WaterGun],
+            24: [Bite],
+            31: [Withdraw],
+            42: [SkullBash],
+            52: [HydroPump],
+        },
+        signature: Some(HydroPump),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            HyperBeam, Bubblebeam, WaterGun, IceBeam, Blizzard, Rage,
+            Earthquake, Fissure, Dig, Mimic, DoubleTeam, Reflect,
+            Bide, Swift, SkullBash, Rest, Substitute, Surf,
+            Strength, Flash, Cut, IcePunch, AuroraBeam, Mist,
+            Waterfall
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 210,
+    description: "A brutal Pokemon with pressurized water jets on its shell. They are used for high speed tackles.",
+    evolution_data: None,
+)

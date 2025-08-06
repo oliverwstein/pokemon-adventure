@@ -1,0 +1,41 @@
+PokemonSpecies(
+    pokedex_number: 4,
+    name: "Charmander",
+    types: [Fire],
+    base_stats: (
+        hp: 39,
+        attack: 52,
+        defense: 43,
+        sp_attack: 60,
+        sp_defense: 50,
+        speed: 65,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Growl],
+            7: [Ember],
+            13: [Smokescreen],
+            15: [Leer],
+            19: [Rage],
+            25: [Bite],
+            30: [Slash],
+            31: [FireFang],
+            37: [Flamethrower],
+        },
+        signature: None,
+        can_learn: [
+            SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Rage, FirePunch, BlazeKick, Flamethrower, FireBlast,
+            Mimic, DoubleTeam, Reflect, Bide, Rest, Substitute,
+            Cut, Bind, Headbutt, Stomp, Roar, Bite, Slash,
+            AncientPower, RockSlide, SkullBash, Earthquake, DragonRage, Outrage, Dig, Swift
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 65,
+    description: "Obviously prefers hot places. When it rains, steam is said to spout from the tip of its tail.",
+    evolution_data: Some((
+        evolves_into: "Charmeleon",
+        method: Level(16),
+    )),
+)

@@ -1,0 +1,41 @@
+PokemonSpecies(
+    pokedex_number: 5,
+    name: "Charmeleon",
+    types: [Fire],
+    base_stats: (
+        hp: 58,
+        attack: 64,
+        defense: 58,
+        sp_attack: 80,
+        sp_defense: 65,
+        speed: 80,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Growl, Ember],
+            7: [Ember],
+            13: [Smokescreen],
+            15: [Leer],
+            20: [Rage],
+            27: [Bite],
+            33: [Slash],
+            34: [FireFang],
+            41: [Flamethrower],
+        },
+        signature: None,
+        can_learn: [
+            SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Rage, FirePunch, BlazeKick, Flamethrower, FireBlast,
+            Mimic, DoubleTeam, Reflect, Bide, Rest, Substitute,
+            Cut, Bind, Headbutt, Stomp, Roar, Bite, Slash,
+            AncientPower, RockSlide, SkullBash, Earthquake, DragonRage, Outrage, Dig, Swift
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 142,
+    description: "When it swings its burning tail, it elevates the temperature to unbearably hot levels.",
+    evolution_data: Some((
+        evolves_into: "Charizard",
+        method: Level(36),
+    )),
+)

@@ -1,0 +1,27 @@
+PokemonSpecies(
+    pokedex_number: 10,
+    name: "Caterpie",
+    types: [Bug],
+    base_stats: (
+        hp: 45,
+        attack: 30,
+        defense: 35,
+        sp_attack: 20,
+        sp_defense: 20,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, StringShot],
+        },
+        signature: Some(StringShot),
+        can_learn: [],
+    ),
+    catch_rate: 255,
+    base_exp: 53,
+    description: "Its short feet are tipped with suction pads that enable it to tirelessly climb slopes and walls.",
+    evolution_data: Some((
+        evolves_into: "Metapod",
+        method: Level(7),
+    )),
+)

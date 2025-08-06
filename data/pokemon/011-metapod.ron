@@ -1,0 +1,27 @@
+PokemonSpecies(
+    pokedex_number: 11,
+    name: "Metapod",
+    types: [Bug],
+    base_stats: (
+        hp: 50,
+        attack: 20,
+        defense: 55,
+        sp_attack: 25,
+        sp_defense: 25,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Harden],
+        },
+        signature: None,
+        can_learn: [],
+    ),
+    catch_rate: 120,
+    base_exp: 72,
+    description: "This Pokemon is vulnerable to attack while its shell is soft, exposing its weak and tender body.",
+    evolution_data: Some((
+        evolves_into: "Butterfree",
+        method: Level(10),
+    )),
+)

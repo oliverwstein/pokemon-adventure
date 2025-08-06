@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 18,
+    name: "Pidgeot",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 83,
+        attack: 80,
+        defense: 75,
+        sp_attack: 70,
+        sp_defense: 70,
+        speed: 91,
+    ),
+    learnset: (
+        level_up: {
+            1: [Gust, SandAttack, QuickAttack],
+            5: [SandAttack],
+            12: [QuickAttack],
+            21: [Whirlwind],
+            31: [WingAttack],
+            44: [Agility],
+            54: [MirrorMove],
+        },
+        signature: Some(SkyAttack),
+        can_learn: [
+            RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
+            HyperBeam, Rage, Mimic, DoubleTeam, Reflect, Bide,
+            Swift, SkyAttack, Rest, Substitute, Fly
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 172,
+    description: "When hunting, it skims the surface of water at high speed to pick off unwary prey such as Magikarp.",
+    evolution_data: None,
+)

@@ -1,0 +1,27 @@
+PokemonSpecies(
+    pokedex_number: 13,
+    name: "Weedle",
+    types: [Bug, Poison],
+    base_stats: (
+        hp: 40,
+        attack: 35,
+        defense: 30,
+        sp_attack: 20,
+        sp_defense: 20,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [PoisonSting, StringShot],
+        },
+        signature: Some(PoisonSting),
+        can_learn: [],
+    ),
+    catch_rate: 255,
+    base_exp: 52,
+    description: "Often found in forests, eating leaves. It has a sharp venomous stinger on its head.",
+    evolution_data: Some((
+        evolves_into: "Kakuna",
+        method: Level(7),
+    )),
+)

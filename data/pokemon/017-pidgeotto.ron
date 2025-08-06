@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 17,
+    name: "Pidgeotto",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 63,
+        attack: 60,
+        defense: 55,
+        sp_attack: 50,
+        sp_defense: 50,
+        speed: 71,
+    ),
+    learnset: (
+        level_up: {
+            1: [Gust, SandAttack],
+            5: [SandAttack],
+            12: [QuickAttack],
+            21: [Whirlwind],
+            31: [WingAttack],
+            40: [Agility],
+            49: [MirrorMove],
+        },
+        signature: None,
+        can_learn: [
+            RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
+            Rage, Mimic, DoubleTeam, Reflect, Bide, Swift,
+            SkyAttack, Rest, Substitute, Fly
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 113,
+    description: "Very protective of its sprawling territorial area, this Pokemon will fiercely peck at any intruder.",
+    evolution_data: Some((
+        evolves_into: "Pidgeot",
+        method: Level(36),
+    )),
+)

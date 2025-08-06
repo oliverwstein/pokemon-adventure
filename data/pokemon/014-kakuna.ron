@@ -1,0 +1,27 @@
+PokemonSpecies(
+    pokedex_number: 14,
+    name: "Kakuna",
+    types: [Bug, Poison],
+    base_stats: (
+        hp: 45,
+        attack: 25,
+        defense: 50,
+        sp_attack: 25,
+        sp_defense: 25,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [Harden],
+        },
+        signature: None,
+        can_learn: [],
+    ),
+    catch_rate: 120,
+    base_exp: 71,
+    description: "Almost incapable of moving, this Pokemon can only harden its shell to protect itself from predators.",
+    evolution_data: Some((
+        evolves_into: "Beedrill",
+        method: Level(10),
+    )),
+)

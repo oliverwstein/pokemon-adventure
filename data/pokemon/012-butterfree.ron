@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 12,
+    name: "Butterfree",
+    types: [Bug, Flying],
+    base_stats: (
+        hp: 60,
+        attack: 45,
+        defense: 50,
+        sp_attack: 90,
+        sp_defense: 80,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Confusion],
+            12: [Confusion],
+            15: [PoisonPowder],
+            16: [StunSpore],
+            17: [SleepPowder],
+            21: [Supersonic],
+            26: [Whirlwind],
+            32: [Psybeam],
+        },
+        signature: Some(SilverWind),
+        can_learn: [
+            RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
+            HyperBeam, Rage, MegaDrain, Solarbeam, Psychic,
+            Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift,
+            Rest, Psywave, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 160,
+    description: "In battle, it flaps its wings at high speed to release highly toxic dust into the air.",
+    evolution_data: None,
+)

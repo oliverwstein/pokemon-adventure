@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 16,
+    name: "Pidgey",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 40,
+        attack: 45,
+        defense: 40,
+        sp_attack: 35,
+        sp_defense: 35,
+        speed: 56,
+    ),
+    learnset: (
+        level_up: {
+            1: [Gust],
+            5: [SandAttack],
+            12: [QuickAttack],
+            19: [Whirlwind],
+            28: [WingAttack],
+            36: [Agility],
+            44: [MirrorMove],
+        },
+        signature: None,
+        can_learn: [
+            RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
+            Rage, Mimic, DoubleTeam, Reflect, Bide, Swift,
+            SkyAttack, Rest, Substitute, Fly
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 55,
+    description: "A common sight in forests and woods. It flaps its wings at ground level to kick up blinding sand.",
+    evolution_data: Some((
+        evolves_into: "Pidgeotto",
+        method: Level(18),
+    )),
+)

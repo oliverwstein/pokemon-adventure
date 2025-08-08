@@ -2,11 +2,13 @@ mod moves;
 mod pokemon;
 mod player;
 mod move_data;
+mod species;
 
 use std::path::Path;
-use pokemon::{PokemonSpecies, PokemonInst};
+use pokemon::{PokemonSpecies, PokemonInst, initialize_species_data, get_species_data};
 use moves::Move;
 use move_data::initialize_move_data;
+use species::Species;
 
 fn main() {
     let data_path = Path::new("data");
@@ -17,17 +19,22 @@ fn main() {
         return;
     }
     
-    // Example 1: Load a single Pokemon by name
-    match PokemonSpecies::load_by_name("pikachu", data_path) {
-        Ok(pikachu) => {
-            println!("Loaded Pikachu:");
-            println!("  Number: #{}", pikachu.pokedex_number);
-            println!("  Types: {:?}", pikachu.types);
-            println!("  Base Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
-                     pikachu.base_stats.hp, pikachu.base_stats.attack, pikachu.base_stats.defense,
-                     pikachu.base_stats.sp_attack, pikachu.base_stats.sp_defense, pikachu.base_stats.speed);
-        }
-        Err(e) => println!("Error loading Pikachu: {}", e),
+    // Initialize global species data
+    if let Err(e) = initialize_species_data(data_path) {
+        println!("Error initializing species data: {}", e);
+        return;
+    }
+    
+    // Example 1: Load a single Pokemon using Species enum
+    if let Some(pikachu) = get_species_data(Species::Pikachu) {
+        println!("Loaded Pikachu:");
+        println!("  Number: #{}", pikachu.pokedex_number);
+        println!("  Types: {:?}", pikachu.types);
+        println!("  Base Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
+                 pikachu.base_stats.hp, pikachu.base_stats.attack, pikachu.base_stats.defense,
+                 pikachu.base_stats.sp_attack, pikachu.base_stats.sp_defense, pikachu.base_stats.speed);
+    } else {
+        println!("Error loading Pikachu");
     }
     
     println!();
@@ -83,64 +90,61 @@ fn main() {
     
     println!();
     
-    // Example 4: Create a Pokemon instance
-    match PokemonSpecies::create_species_map(data_path) {
-        Ok(species_map) => {
-            if let Some(pikachu_species) = species_map.get("PIKACHU") {
-                // Create a level 25 Pikachu with some moves
-                let pikachu_moves = vec![
-                    Move::QuickAttack,
-                    Move::Thunderclap,
-                    Move::TailWhip,
-                    Move::Agility,
-                ];
-                
-                // Example with custom moves
-                let my_pikachu = PokemonInst::new(
-                    "PIKACHU".to_string(),
-                    pikachu_species,
-                    25,
-                    Some([15, 20, 10, 25, 18, 30]), // Custom IVs
-                    Some(pikachu_moves), // Custom moves
-                );
-                
-                println!("Created Pokemon instance (with custom moves):");
-                println!("  Name: {}", my_pikachu.name);
-                println!("  Species: {}", my_pikachu.species);
-                println!("  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
-                         my_pikachu.curr_stats[0], my_pikachu.curr_stats[1], my_pikachu.curr_stats[2],
-                         my_pikachu.curr_stats[3], my_pikachu.curr_stats[4], my_pikachu.curr_stats[5]);
-                println!("  Moves:");
-                for (i, move_slot) in my_pikachu.moves.iter().enumerate() {
-                    if let Some(move_inst) = move_slot {
-                        println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
-                    }
-                }
-                
-                println!();
-                
-                // Example with moves derived from learnset
-                let auto_pikachu = PokemonInst::new(
-                    "PIKACHU".to_string(),
-                    pikachu_species,
-                    25,
-                    None, // Random IVs
-                    None, // Auto-derive moves from learnset
-                );
-                
-                println!("Created Pokemon instance (with auto-derived moves):");
-                println!("  Name: {}", auto_pikachu.name);
-                println!("  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
-                         auto_pikachu.curr_stats[0], auto_pikachu.curr_stats[1], auto_pikachu.curr_stats[2],
-                         auto_pikachu.curr_stats[3], auto_pikachu.curr_stats[4], auto_pikachu.curr_stats[5]);
-                println!("  Moves (auto-derived from level {} learnset):", 25);
-                for (i, move_slot) in auto_pikachu.moves.iter().enumerate() {
-                    if let Some(move_inst) = move_slot {
-                        println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
-                    }
-                }
+    // Example 4: Create a Pokemon instance using Species enum
+    if let Some(pikachu_species) = get_species_data(Species::Pikachu) {
+        // Create a level 25 Pikachu with some moves
+        let pikachu_moves = vec![
+            Move::QuickAttack,
+            Move::Thunderclap,
+            Move::TailWhip,
+            Move::Agility,
+        ];
+        
+        // Example with custom moves
+        let my_pikachu = PokemonInst::new(
+            Species::Pikachu,
+            &pikachu_species,
+            25,
+            Some([15, 20, 10, 25, 18, 30]), // Custom IVs
+            Some(pikachu_moves), // Custom moves
+        );
+        
+        println!("Created Pokemon instance (with custom moves):");
+        println!("  Name: {}", my_pikachu.name);
+        println!("  Species: {:?} ({})", my_pikachu.species, my_pikachu.species.name());
+        println!("  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
+                 my_pikachu.curr_stats[0], my_pikachu.curr_stats[1], my_pikachu.curr_stats[2],
+                 my_pikachu.curr_stats[3], my_pikachu.curr_stats[4], my_pikachu.curr_stats[5]);
+        println!("  Moves:");
+        for (i, move_slot) in my_pikachu.moves.iter().enumerate() {
+            if let Some(move_inst) = move_slot {
+                println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
             }
         }
-        Err(e) => println!("Error creating species map for Pokemon instance: {}", e),
+        
+        println!();
+        
+        // Example with moves derived from learnset
+        let auto_pikachu = PokemonInst::new(
+            Species::Pikachu,
+            &pikachu_species,
+            25,
+            None, // Default IVs
+            None, // Auto-derive moves from learnset
+        );
+        
+        println!("Created Pokemon instance (with auto-derived moves):");
+        println!("  Name: {}", auto_pikachu.name);
+        println!("  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}", 
+                 auto_pikachu.curr_stats[0], auto_pikachu.curr_stats[1], auto_pikachu.curr_stats[2],
+                 auto_pikachu.curr_stats[3], auto_pikachu.curr_stats[4], auto_pikachu.curr_stats[5]);
+        println!("  Moves (auto-derived from level {} learnset):", 25);
+        for (i, move_slot) in auto_pikachu.moves.iter().enumerate() {
+            if let Some(move_inst) = move_slot {
+                println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
+            }
+        }
+    } else {
+        println!("Error loading Pikachu species data for Pokemon instance");
     }
 }

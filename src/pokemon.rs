@@ -1,9 +1,64 @@
 use crate::moves::Move;
 use crate::move_data::{get_move_max_pp};
+use crate::species::Species;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
+use std::sync::{LazyLock, RwLock};
 use serde::{Serialize, Deserialize};
+
+// Global species data storage - loaded once at startup, indexed by Species enum
+static SPECIES_DATA: LazyLock<RwLock<[Option<PokemonSpecies>; 151]>> = LazyLock::new(|| {
+    RwLock::new([const { None }; 151])
+});
+
+/// Initialize the global species data by loading from disk
+pub fn initialize_species_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let mut global_data = SPECIES_DATA.write().unwrap();
+    
+    for species_variant in [
+        Species::Bulbasaur, Species::Ivysaur, Species::Venusaur, Species::Charmander, Species::Charmeleon, Species::Charizard,
+        Species::Squirtle, Species::Wartortle, Species::Blastoise, Species::Caterpie, Species::Metapod, Species::Butterfree,
+        Species::Weedle, Species::Kakuna, Species::Beedrill, Species::Pidgey, Species::Pidgeotto, Species::Pidgeot,
+        Species::Rattata, Species::Raticate, Species::Spearow, Species::Fearow, Species::Ekans, Species::Arbok,
+        Species::Pikachu, Species::Raichu, Species::Sandshrew, Species::Sandslash, Species::NidoranFemale, Species::Nidorina,
+        Species::Nidoqueen, Species::NidoranMale, Species::Nidorino, Species::Nidoking, Species::Clefairy, Species::Clefable,
+        Species::Vulpix, Species::Ninetales, Species::Jigglypuff, Species::Wigglytuff, Species::Zubat, Species::Golbat,
+        Species::Oddish, Species::Gloom, Species::Vileplume, Species::Paras, Species::Parasect, Species::Venonat,
+        Species::Venomoth, Species::Diglett, Species::Dugtrio, Species::Meowth, Species::Persian, Species::Psyduck,
+        Species::Golduck, Species::Mankey, Species::Primeape, Species::Growlithe, Species::Arcanine, Species::Poliwag,
+        Species::Poliwhirl, Species::Poliwrath, Species::Abra, Species::Kadabra, Species::Alakazam, Species::Machop,
+        Species::Machoke, Species::Machamp, Species::Bellsprout, Species::Weepinbell, Species::Victreebel, Species::Tentacool,
+        Species::Tentacruel, Species::Geodude, Species::Graveler, Species::Golem, Species::Ponyta, Species::Rapidash,
+        Species::Slowpoke, Species::Slowbro, Species::Magnemite, Species::Magneton, Species::Farfetchd, Species::Doduo,
+        Species::Dodrio, Species::Seel, Species::Dewgong, Species::Grimer, Species::Muk, Species::Shellder,
+        Species::Cloyster, Species::Gastly, Species::Haunter, Species::Gengar, Species::Onix, Species::Drowzee,
+        Species::Hypno, Species::Krabby, Species::Kingler, Species::Voltorb, Species::Electrode, Species::Exeggcute,
+        Species::Exeggutor, Species::Cubone, Species::Marowak, Species::Hitmonlee, Species::Hitmonchan, Species::Lickitung,
+        Species::Koffing, Species::Weezing, Species::Rhyhorn, Species::Rhydon, Species::Chansey, Species::Tangela,
+        Species::Kangaskhan, Species::Horsea, Species::Seadra, Species::Goldeen, Species::Seaking, Species::Staryu,
+        Species::Starmie, Species::MrMime, Species::Scyther, Species::Jynx, Species::Electabuzz, Species::Magmar,
+        Species::Pinsir, Species::Tauros, Species::Magikarp, Species::Gyarados, Species::Lapras, Species::Ditto,
+        Species::Eevee, Species::Vaporeon, Species::Jolteon, Species::Flareon, Species::Porygon, Species::Omanyte,
+        Species::Omastar, Species::Kabuto, Species::Kabutops, Species::Aerodactyl, Species::Snorlax, Species::Articuno,
+        Species::Zapdos, Species::Moltres, Species::Dratini, Species::Dragonair, Species::Dragonite, Species::Mewtwo,
+        Species::Mew,
+    ] {
+        if let Ok(species_data) = PokemonSpecies::load_by_species(species_variant, data_path) {
+            let index = species_variant.pokedex_number() as usize - 1; // 0-indexed
+            global_data[index] = Some(species_data);
+        }
+    }
+    
+    Ok(())
+}
+
+/// Get species data for a specific species from the global store
+pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
+    let global_data = SPECIES_DATA.read().unwrap();
+    let index = species.pokedex_number() as usize - 1; // 0-indexed
+    global_data[index].clone()
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Type {
@@ -53,7 +108,7 @@ pub struct MoveInstance {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PokemonInst {
     pub name: String,                    // Species name if no nickname
-    pub species: String,                 // Key for looking up species data (e.g., "PIKACHU")
+    pub species: Species,                // Species enum for type-safe lookup
     pub curr_exp: u8,                    // Only really relevant for single-player
     pub ivs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
     pub evs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
@@ -126,7 +181,28 @@ impl Learnset {
 }
 
 impl PokemonSpecies {
-    /// Load a Pokemon species from its RON file by name
+    /// Load a Pokemon species from its RON file by species enum
+    pub fn load_by_species(species: Species, data_path: &Path) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
+        let pokemon_dir = data_path.join("pokemon");
+        
+        if !pokemon_dir.exists() {
+            return Err(format!("Pokemon data directory not found: {}", pokemon_dir.display()).into());
+        }
+
+        // Find the RON file based on the species enum
+        let species_filename = format!("{:03}-{}", species.pokedex_number(), species.name().to_lowercase());
+        let ron_file = pokemon_dir.join(format!("{}.ron", species_filename));
+        
+        if !ron_file.exists() {
+            return Err(format!("Pokemon file not found: {}", ron_file.display()).into());
+        }
+        
+        let content = fs::read_to_string(&ron_file)?;
+        let species_data: PokemonSpecies = ron::from_str(&content)?;
+        Ok(species_data)
+    }
+
+    /// Load a Pokemon species from its RON file by name (legacy method)
     pub fn load_by_name(name: &str, data_path: &Path) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
         // Find the RON file that matches this Pokemon name
         let pokemon_dir = data_path.join("pokemon");
@@ -259,7 +335,7 @@ impl MoveInstance {
 impl PokemonInst {
     /// Create a new Pokemon instance from species data
     pub fn new(
-        species_key: String,
+        species: Species,
         species_data: &PokemonSpecies,
         level: u8,
         ivs: Option<[u8; 6]>,
@@ -285,7 +361,7 @@ impl PokemonInst {
         
         PokemonInst {
             name: species_data.name.clone(),
-            species: species_key,
+            species,
             curr_exp: 0, // TODO: Calculate from level
             ivs,
             evs,
@@ -352,8 +428,8 @@ impl PokemonInst {
     }
     
     /// Get the species data for this Pokemon instance
-    pub fn get_species_data<'a>(&self, species_map: &'a HashMap<String, PokemonSpecies>) -> Option<&'a PokemonSpecies> {
-        species_map.get(&self.species)
+    pub fn get_species_data(&self) -> Option<PokemonSpecies> {
+        get_species_data(self.species)
     }
 }
 

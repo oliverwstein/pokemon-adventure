@@ -6,9 +6,16 @@ mod move_data;
 use std::path::Path;
 use pokemon::{PokemonSpecies, PokemonInst};
 use moves::Move;
+use move_data::initialize_move_data;
 
 fn main() {
     let data_path = Path::new("data");
+    
+    // Initialize global move data first
+    if let Err(e) = initialize_move_data(data_path) {
+        println!("Error initializing move data: {}", e);
+        return;
+    }
     
     // Example 1: Load a single Pokemon by name
     match PokemonSpecies::load_by_name("pikachu", data_path) {

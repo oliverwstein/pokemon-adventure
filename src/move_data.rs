@@ -3,7 +3,34 @@ use crate::pokemon::Type;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
+use std::sync::{LazyLock, RwLock};
 use serde::{Serialize, Deserialize};
+
+// Global move data storage - loaded once at startup
+static MOVE_DATA: LazyLock<RwLock<HashMap<Move, MoveData>>> = LazyLock::new(|| {
+    RwLock::new(HashMap::new())
+});
+
+/// Initialize the global move data by loading from disk
+pub fn initialize_move_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let move_data_map = MoveData::load_all(data_path)?;
+    let mut global_data = MOVE_DATA.write().unwrap();
+    *global_data = move_data_map;
+    Ok(())
+}
+
+/// Get move data for a specific move from the global store
+pub fn get_move_data(move_: Move) -> Option<MoveData> {
+    let global_data = MOVE_DATA.read().unwrap();
+    global_data.get(&move_).cloned()
+}
+
+/// Get max PP for a specific move
+pub fn get_move_max_pp(move_: Move) -> u8 {
+    get_move_data(move_)
+        .map(|data| data.max_pp)
+        .unwrap_or(30) // Default fallback
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MoveCategory {

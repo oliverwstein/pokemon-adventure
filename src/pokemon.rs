@@ -1,4 +1,5 @@
 use crate::moves::Move;
+use crate::move_data::{get_move_max_pp};
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
@@ -225,10 +226,17 @@ impl PokemonSpecies {
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
+        let max_pp = get_move_max_pp(move_);
+        
         MoveInstance {
             move_,
-            pp: 30, // TODO: Get actual max PP from move data
+            pp: max_pp,
         }
+    }
+    
+    /// Get the max PP for this move
+    pub fn max_pp(&self) -> u8 {
+        get_move_max_pp(self.move_)
     }
     
     /// Use the move (decrease PP)
@@ -243,7 +251,8 @@ impl MoveInstance {
     
     /// Restore PP
     pub fn restore_pp(&mut self, amount: u8) {
-        self.pp = (self.pp + amount).min(30); // TODO: Use actual max PP
+        let max_pp = self.max_pp();
+        self.pp = (self.pp + amount).min(max_pp);
     }
 }
 
@@ -268,14 +277,11 @@ impl PokemonInst {
         // Derive moves from learnset if not provided
         let moves = moves.unwrap_or_else(|| Self::derive_moves_from_learnset(&species_data.learnset, level));
         
-        // Create move instances with max PP (TODO: get actual max PP from move data)
+        // Create move instances with max PP from move data
         let move_instances: Vec<MoveInstance> = moves
             .into_iter()
             .take(4) // Max 4 moves
-            .map(|move_| MoveInstance {
-                move_,
-                pp: 30, // TODO: Get actual max PP from move data
-            })
+            .map(|move_| MoveInstance::new(move_))
             .collect();
         
         PokemonInst {

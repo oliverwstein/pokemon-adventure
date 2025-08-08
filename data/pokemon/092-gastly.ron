@@ -19,7 +19,7 @@ PokemonSpecies(
         },
         signature: Some(ShadowBall),
         can_learn: [
-            Toxic, Rage, Psychic, Mimic, DoubleTeam, Bide, SelfDestruct,
+            Toxic, Rage, Perplex, Mimic, DoubleTeam, Bide, SelfDestruct,
             DreamEater, Rest, Substitute, Explosion
         ],
     ),

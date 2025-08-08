@@ -16,7 +16,7 @@ PokemonSpecies(
             15: [KarateChop],
             21: [FurySwipes],
             27: [FocusEnergy],
-            33: [Seismic],
+            33: [SeismicToss],
             39: [Thrash],
         },
         signature: None,

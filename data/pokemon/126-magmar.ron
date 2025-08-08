@@ -23,7 +23,7 @@ PokemonSpecies(
         signature: Some(FirePunch),
         can_learn: [
             Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
-            Submission, Counter, Toxic, Psychic, Rage, Mimic,
+            Submission, Counter, Toxic, Perplex, Rage, Mimic,
             DoubleTeam, Bide, Metronome, FireBlast, SkullBash,
             Rest, Substitute
         ],

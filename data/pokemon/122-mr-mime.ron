@@ -22,7 +22,7 @@ PokemonSpecies(
         signature: Some(Mimic),
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
-            Counter, Toxic, Psychic, Rage, Solarbeam, Thunderclap,
+            Counter, Toxic, Perplex, Rage, Solarbeam, Thunderclap,
             Thunderclap, Teleport, Mimic, DoubleTeam, Reflect,
             Bide, Metronome, SkullBash, Rest, Substitute, Flash
         ],

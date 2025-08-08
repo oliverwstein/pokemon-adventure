@@ -23,7 +23,7 @@ PokemonSpecies(
         signature: Some(Amnesia),
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun, IceBeam,
-            Blizzard, HydroPump, Surf, Flamethrower, Psychic, Teleport,
+            Blizzard, HydroPump, Surf, Flamethrower, Perplex, Teleport,
             Rage, Earthquake, Fissure, Dig, Mimic, DoubleTeam, Reflect,
             Bide, FireBlast, Swift, Rest, TriAttack, Substitute, Flash,
             Strength

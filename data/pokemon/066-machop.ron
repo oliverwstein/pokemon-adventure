@@ -16,7 +16,7 @@ PokemonSpecies(
             20: [LowKick],
             25: [Leer],
             32: [FocusEnergy],
-            39: [Seismic],
+            39: [SeismicToss],
             46: [Submission],
         },
         signature: None,

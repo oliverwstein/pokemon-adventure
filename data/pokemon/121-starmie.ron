@@ -18,7 +18,7 @@ PokemonSpecies(
         can_learn: [
             TakeDown, DoubleEdge, HyperBeam, Bubblebeam,
             WaterGun, IceBeam, Blizzard, Surf, Toxic,
-            Psychic, Rage, Thunderclap, Teleport,
+            Perplex, Rage, Thunderclap, Teleport,
             Mimic, DoubleTeam, Reflect, Bide, Swift,
             SkullBash, Rest, TriAttack, Substitute, Flash
         ],

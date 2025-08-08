@@ -22,7 +22,7 @@ PokemonSpecies(
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Submission, Counter,
             Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
-            Toxic, Rage, Psychic, Mimic, DoubleTeam, Bide,
+            Toxic, Rage, Perplex, Mimic, DoubleTeam, Bide,
             Swift, Rest, Substitute, Flash
         ],
     ),

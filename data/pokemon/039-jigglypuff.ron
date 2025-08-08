@@ -25,7 +25,7 @@ PokemonSpecies(
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
             IceBeam, Blizzard, Submission, Counter, Toxic,
-            Psychic, Rage, Solarbeam, Thunderclap,
+            Perplex, Rage, Solarbeam, Thunderclap,
             Mimic, DoubleTeam, Reflect, Bide, FireBlast,
             SkullBash, Rest, TriAttack, Substitute, Flash
         ],
@@ -35,6 +35,6 @@ PokemonSpecies(
     description: "When its huge eyes light up, it sings a mysteriously soothing melody that lulls its enemies to sleep.",
     evolution_data: Some((
         evolves_into: "Wigglytuff",
-        method: Item(Moonstone),
+        method: Item(MoonStone),
     )),
 )

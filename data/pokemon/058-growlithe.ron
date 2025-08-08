@@ -31,6 +31,6 @@ PokemonSpecies(
     description: "Very protective of its territory. It will bark and bite to repel intruders from its space.",
     evolution_data: Some((
         evolves_into: "Arcanine",
-        method: Item(Firestone),
+        method: Item(FireStone),
     )),
 )

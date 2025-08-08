@@ -23,7 +23,7 @@ PokemonSpecies(
         signature: Some(Haze),
         can_learn: [
             RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
-            Toxic, Rage, MegaDrain, Solarbeam, Psychic, Mimic,
+            Toxic, Rage, MegaDrain, Solarbeam, Perplex, Mimic,
             DoubleTeam, Reflect, Bide, Rest, Substitute
         ],
     ),

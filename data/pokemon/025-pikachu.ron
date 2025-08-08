@@ -26,7 +26,7 @@ PokemonSpecies(
         signature: Some(QuickAttack),
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Submission, Counter,
-            Seismic, Toxic, Rage, Thunderclap, Mimic,
+            SeismicToss, Toxic, Rage, Thunderclap, Mimic,
             DoubleTeam, Reflect, Bide, Swift, SkullBash,
             Rest, Lightning, Substitute, Flash
         ],
@@ -36,6 +36,6 @@ PokemonSpecies(
     description: "When several of these Pokemon gather, their electricity could build and cause lightning storms.",
     evolution_data: Some((
         evolves_into: "Raichu",
-        method: Item(Thunderstone),
+        method: Item(ThunderStone),
     )),
 )

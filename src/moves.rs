@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub enum Move {
     // Normal Type
     Pound,
@@ -179,6 +179,7 @@ pub enum Move {
     ThunderWave,
     Thunderclap,
     ChargeBeam,
+    Lightning,
     Flash,
 
     // Psychic Type
@@ -192,6 +193,7 @@ pub enum Move {
     Reflect,
     Amnesia,
     Kinesis,
+    Psychic,
     Psywave,
     DreamEater,
     LovelyKiss,

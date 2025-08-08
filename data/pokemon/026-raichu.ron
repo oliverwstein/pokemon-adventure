@@ -17,7 +17,7 @@ PokemonSpecies(
         signature: None,
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
-            Counter, Seismic, Toxic, Rage, Lightning,
+            Counter, SeismicToss, Toxic, Rage, Lightning,
             Mimic, DoubleTeam, Reflect, Bide, Swift, SkullBash,
             Rest, Thunderclap, Substitute, Flash
         ],

@@ -26,7 +26,7 @@ PokemonSpecies(
             MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
             Bubblebeam, WaterGun, IceBeam, Blizzard, HyperBeam, HydroPump,
             Surf, Submission, Counter, SeismicToss, Rage, Earthquake,
-            Fissure, Psychic, Teleport, Dig, Mimic, DoubleTeam, Reflect,
+            Fissure, Perplex, Teleport, Dig, Mimic, DoubleTeam, Reflect,
             Bide, Metronome, FireBlast, Swift, SkullBash, Rest, TriAttack,
             Substitute, Flash, Strength
         ],

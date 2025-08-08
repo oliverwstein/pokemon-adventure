@@ -24,7 +24,7 @@ PokemonSpecies(
         can_learn: [
             Strength, BodySlam, TakeDown, DoubleEdge, Submission,
             Counter, Bubblebeam, WaterGun, IceBeam, Blizzard,
-            Surf, Toxic, Psychic, Rage, Earthquake, Fissure,
+            Surf, Toxic, Perplex, Rage, Earthquake, Fissure,
             Mimic, DoubleTeam, Bide, SkullBash, Rest, Substitute
         ],
     ),
@@ -33,6 +33,6 @@ PokemonSpecies(
     description: "Capable of living in or out of water. When out of water, it sweats to keep its body slimy.",
     evolution_data: Some((
         evolves_into: "Poliwrath",
-        method: Item(Waterstone),
+        method: Item(WaterStone),
     )),
 )

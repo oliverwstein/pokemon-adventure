@@ -24,7 +24,7 @@ PokemonSpecies(
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
             IceBeam, Blizzard, Submission, Counter, Toxic,
-            Psychic, Rage, Solarbeam, Thunderclap,
+            Perplex, Rage, Solarbeam, Thunderclap,
             Mimic, DoubleTeam, Reflect, Bide, Metronome,
             FireBlast, SkullBash, Rest, TriAttack, Substitute,
             Flash
@@ -35,6 +35,6 @@ PokemonSpecies(
     description: "Its magical and cute appeal has many admirers. It is rare and found only in certain areas.",
     evolution_data: Some((
         evolves_into: "Clefable",
-        method: Item(Moonstone),
+        method: Item(MoonStone),
     )),
 )

@@ -31,6 +31,6 @@ PokemonSpecies(
     description: "At the time of birth, it has just one tail. The tail splits from its tip as it grows older.",
     evolution_data: Some((
         evolves_into: "Ninetales",
-        method: Item(Firestone),
+        method: Item(FireStone),
     )),
 )

@@ -12,7 +12,7 @@ PokemonSpecies(
     ),
     learnset: (
         level_up: {
-            1: [Confusion, Disable, Psychic, Recover],
+            1: [Confusion, Disable, Perplex, Recover],
             63: [Barrier],
             66: [Psychic],
             70: [Recover],
@@ -23,7 +23,7 @@ PokemonSpecies(
         can_learn: [
             Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
             Submission, Counter, Bubblebeam, WaterGun, IceBeam,
-            Blizzard, Surf, Toxic, Psychic, Rage, Solarbeam,
+            Blizzard, Surf, Toxic, Perplex, Rage, Solarbeam,
             Thunderclap, Earthquake, Fissure, Dig,
             Teleport, Mimic, DoubleTeam, Reflect, Bide,
             Metronome, SelfDestruct, FireBlast, Swift,

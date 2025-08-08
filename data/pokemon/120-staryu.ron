@@ -24,7 +24,7 @@ PokemonSpecies(
         signature: None,
         can_learn: [
             TakeDown, DoubleEdge, Bubblebeam, WaterGun,
-            IceBeam, Blizzard, Surf, Toxic, Psychic, Rage,
+            IceBeam, Blizzard, Surf, Toxic, Perplex, Rage,
             Teleport, Mimic, DoubleTeam, Reflect, Bide,
             Swift, Rest, TriAttack, Substitute, Flash
         ],
@@ -34,6 +34,6 @@ PokemonSpecies(
     description: "An enigmatic Pokemon that can effortlessly regenerate any appendage it loses in battle.",
     evolution_data: Some((
         evolves_into: "Starmie",
-        method: Item(Waterstone),
+        method: Item(WaterStone),
     )),
 )

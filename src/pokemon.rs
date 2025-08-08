@@ -108,7 +108,6 @@ impl Learnset {
 
 impl PokemonSpecies {
     /// Load a Pokemon species from its RON file by name
-    /// Name should be lowercase (e.g., "bulbasaur", "mr-mime")
     pub fn load_by_name(name: &str, data_path: &Path) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
         // Find the RON file that matches this Pokemon name
         let pokemon_dir = data_path.join("pokemon");
@@ -171,16 +170,34 @@ impl PokemonSpecies {
         Ok(species)
     }
     
-    /// Create a HashMap for fast name-based lookups
+    /// Create a HashMap for fast name-based lookups using RON filename-based keys
     pub fn create_species_map(data_path: &Path) -> Result<HashMap<String, PokemonSpecies>, Box<dyn std::error::Error>> {
-        let all_species = Self::load_all(data_path)?;
+        let pokemon_dir = data_path.join("pokemon");
         let mut map = HashMap::new();
         
-        for species in all_species {
-            // Store both the exact name and a lowercase version for case-insensitive lookup
-            let lowercase_name = species.name.to_lowercase();
-            map.insert(species.name.clone(), species.clone());
-            map.insert(lowercase_name, species);
+        if !pokemon_dir.exists() {
+            return Err(format!("Pokemon data directory not found: {}", pokemon_dir.display()).into());
+        }
+
+        let entries = fs::read_dir(&pokemon_dir)?;
+        
+        for entry in entries {
+            let entry = entry?;
+            let path = entry.path();
+            
+            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
+                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
+                    // Extract name from filename format: "001-bulbasaur.ron" -> "bulbasaur"
+                    if let Some(pokemon_name) = filename.split('-').nth(1) {
+                        let content = fs::read_to_string(&path)?;
+                        let species: PokemonSpecies = ron::from_str(&content)?;
+                        
+                        // Use the filename-based name as the key (uppercase for consistency)
+                        let key = pokemon_name.to_uppercase();
+                        map.insert(key, species);
+                    }
+                }
+            }
         }
         
         Ok(map)

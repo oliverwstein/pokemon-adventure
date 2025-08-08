@@ -43,13 +43,29 @@ fn main() {
         Ok(species_map) => {
             println!("Created species map with {} entries", species_map.len());
             
-            // Test case-insensitive lookup
-            if let Some(charizard) = species_map.get("charizard") {
-                println!("  Found Charizard via lowercase lookup: #{}", charizard.pokedex_number);
-            }
+            // Test filename-based lookup
+            let charizard_found = if let Some(charizard) = species_map.get("CHARIZARD") {
+                println!("  Found Charizard via filename lookup: #{}", charizard.pokedex_number);
+                true
+            } else {
+                false
+            };
             
-            if let Some(mr_mime) = species_map.get("mr-mime") {
+            let mr_mime_found = if let Some(mr_mime) = species_map.get("MR_MIME") {
                 println!("  Found Mr. Mime: #{}", mr_mime.pokedex_number);
+                true
+            } else {
+                false
+            };
+            
+            // If either lookup failed, print all available species names
+            if !charizard_found || !mr_mime_found {
+                println!("  Available species names in map:");
+                let mut names: Vec<_> = species_map.keys().collect();
+                names.sort();
+                for name in names {
+                    println!("    {}", name);
+                }
             }
         }
         Err(e) => println!("Error creating species map: {}", e),

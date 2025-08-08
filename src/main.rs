@@ -9,6 +9,7 @@ use pokemon::{PokemonSpecies, PokemonInst, initialize_species_data, get_species_
 use moves::Move;
 use move_data::initialize_move_data;
 use species::Species;
+use player::{BattlePlayer, StatType};
 
 fn main() {
     let data_path = Path::new("data");
@@ -146,5 +147,42 @@ fn main() {
         }
     } else {
         println!("Error loading Pikachu species data for Pokemon instance");
+    }
+    
+    println!();
+    
+    // Example 5: Demonstrate stat stage management
+    if let Some(charizard_species) = get_species_data(Species::Charizard) {
+        let charizard = PokemonInst::new(Species::Charizard, &charizard_species, 50, None, None);
+        let mut player = BattlePlayer::new(
+            "trainer_red".to_string(),
+            "Red".to_string(),
+            vec![charizard],
+        );
+        
+        println!("Stat Stage Management Example:");
+        println!("  Initial Attack stage: {}", player.get_stat_stage(StatType::Attack));
+        
+        // Swords Dance (+2 Attack)
+        player.modify_stat_stage(StatType::Attack, 2);
+        println!("  After Swords Dance: {}", player.get_stat_stage(StatType::Attack));
+        
+        // Another Attack boost
+        player.modify_stat_stage(StatType::Attack, 1);
+        println!("  After another boost: {}", player.get_stat_stage(StatType::Attack));
+        
+        // Speed reduction
+        player.set_stat_stage(StatType::Speed, -1);
+        println!("  Speed stage: {}", player.get_stat_stage(StatType::Speed));
+        
+        println!("  All current stages: {:?}", player.get_all_stat_stages());
+        
+        // Switching clears stat stages
+        if player.team[1].is_some() {
+            let _ = player.switch_pokemon(1);
+        } else {
+            player.clear_stat_stages();
+        }
+        println!("  After switch/clear - Attack stage: {}", player.get_stat_stage(StatType::Attack));
     }
 }

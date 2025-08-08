@@ -23,6 +23,18 @@ pub enum TeamCondition {
     Mist,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum StatType {
+    Attack,
+    Defense,
+    Speed,
+    SpecialAttack,
+    SpecialDefense,
+    Accuracy,
+    Evasion,
+    Focus,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PokemonCondition {
     Flinched,
@@ -42,14 +54,6 @@ pub enum PokemonCondition {
     Substitute { hp: u8 },
     Biding { turns_remaining: u8, damage: u16 },
     Countering { damage: u16 },
-    AttackStage { stage: i8 },
-    DefenseStage { stage: i8 },
-    SpeedStage { stage: i8 },
-    SpecialAttackStage { stage: i8 },
-    SpecialDefenseStage { stage: i8 },
-    EvasionStage { stage: i8 },
-    AccuracyStage { stage: i8 },
-    FocusStage { stage: i8 },
 }
 
 impl Hash for PokemonCondition {
@@ -79,6 +83,9 @@ pub struct BattlePlayer {
 
     // HashMap for O(1) condition lookup/update, prevents duplicates
     pub active_pokemon_conditions: HashMap<PokemonCondition, PokemonCondition>,
+
+    // HashMap for stat stage modifications, value is stage (-6 to +6)
+    pub stat_stages: HashMap<StatType, i8>,
     
     pub last_move: Option<Move>,
 }
@@ -98,6 +105,7 @@ impl BattlePlayer {
             active_pokemon_index: 0,
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
+            stat_stages: HashMap::new(),
             last_move: None,
         }
     }
@@ -145,8 +153,9 @@ impl BattlePlayer {
             return Err("Invalid Pokemon index or empty slot".to_string());
         }
         
-        // Clear active Pokemon conditions when switching
+        // Clear active Pokemon conditions and stat stages when switching
         self.active_pokemon_conditions.clear();
+        self.stat_stages.clear();
         self.active_pokemon_index = new_index;
         
         Ok(())
@@ -178,5 +187,43 @@ impl BattlePlayer {
             *turns = turns.saturating_sub(1);
             *turns > 0
         });
+    }
+    
+    // === Stat Stage Management ===
+    
+    /// Get the current stage for a stat type (0 if not set)
+    pub fn get_stat_stage(&self, stat: StatType) -> i8 {
+        self.stat_stages.get(&stat).copied().unwrap_or(0)
+    }
+    
+    /// Set the stage for a stat type (clamped to -6 to +6)
+    pub fn set_stat_stage(&mut self, stat: StatType, stage: i8) {
+        let clamped_stage = stage.clamp(-6, 6);
+        if clamped_stage == 0 {
+            self.stat_stages.remove(&stat);
+        } else {
+            self.stat_stages.insert(stat, clamped_stage);
+        }
+    }
+    
+    /// Modify the stage for a stat type by a delta (clamped to -6 to +6)
+    pub fn modify_stat_stage(&mut self, stat: StatType, delta: i8) {
+        let current = self.get_stat_stage(stat);
+        self.set_stat_stage(stat, current + delta);
+    }
+    
+    /// Check if a stat has any stage modification
+    pub fn has_stat_stage(&self, stat: StatType) -> bool {
+        self.stat_stages.contains_key(&stat)
+    }
+    
+    /// Remove all stat stage modifications
+    pub fn clear_stat_stages(&mut self) {
+        self.stat_stages.clear();
+    }
+    
+    /// Get all current stat stages (for debugging/display)
+    pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
+        &self.stat_stages
     }
 }

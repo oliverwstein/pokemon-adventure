@@ -1,0 +1,11 @@
+MoveData(
+    name: "Quick Attack",
+    move_type: Normal,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Priority(1),
+    ],
+)

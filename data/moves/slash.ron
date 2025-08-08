@@ -1,0 +1,11 @@
+MoveData(
+    name: "Slash",
+    move_type: Normal,
+    power: Some(70),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Crit(3),
+    ],
+)

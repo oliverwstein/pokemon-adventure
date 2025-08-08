@@ -1,0 +1,12 @@
+MoveData(
+    name: "Lovely Kiss",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Confuse(50),
+        Sedate(50),
+    ],
+)

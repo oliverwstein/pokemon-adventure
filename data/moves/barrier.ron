@@ -1,0 +1,11 @@
+MoveData(
+    name: "Barrier",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 15,
+    effects: [
+        StatChange(User, Def, 2, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Hypnosis",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Sedate(100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Haze",
+    move_type: Poison,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 15,
+    effects: [
+        Haze(100),
+    ],
+)

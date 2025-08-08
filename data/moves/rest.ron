@@ -1,0 +1,12 @@
+MoveData(
+    name: "Rest",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        Heal(100),
+        Rest(2),
+    ],
+)

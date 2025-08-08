@@ -1,0 +1,11 @@
+MoveData(
+    name: "Rock Slide",
+    move_type: Rock,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        Flinch(20),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Minimize",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        StatChange(User, Eva, 1, 100),
+    ],
+)

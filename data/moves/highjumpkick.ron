@@ -1,0 +1,11 @@
+MoveData(
+    name: "High Jump Kick",
+    move_type: Fighting,
+    power: Some(130),
+    category: Physical,
+    accuracy: Some(80),
+    max_pp: 15,
+    effects: [
+        Reckless(50),
+    ],
+)

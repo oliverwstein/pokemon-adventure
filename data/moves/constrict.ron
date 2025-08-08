@@ -1,0 +1,11 @@
+MoveData(
+    name: "Constrict",
+    move_type: Normal,
+    power: Some(30),
+    category: Physical,
+    accuracy: Some(80),
+    max_pp: 20,
+    effects: [
+        Trap(100),
+    ],
+)

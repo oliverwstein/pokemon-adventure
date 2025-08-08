@@ -1,0 +1,11 @@
+MoveData(
+    name: "Acid Armor",
+    move_type: Poison,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        StatChange(User, Def, 2, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Mist",
+    move_type: Water,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        Mist,
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Double Edge",
+    move_type: Normal,
+    power: Some(140),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Recoil(20),
+    ],
+)

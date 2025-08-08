@@ -1,0 +1,11 @@
+MoveData(
+    name: "Charge Beam",
+    move_type: Electric,
+    power: Some(60),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        StatChange(User, SpAtk, 1, 50),
+    ],
+)

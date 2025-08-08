@@ -1,0 +1,11 @@
+MoveData(
+    name: "Reflect",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        Reflect("Physical"),
+    ],
+)

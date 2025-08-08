@@ -1,0 +1,11 @@
+MoveData(
+    name: "Poison Gas",
+    move_type: Poison,
+    power: Some(20),
+    category: Special,
+    accuracy: Some(80),
+    max_pp: 15,
+    effects: [
+        Poison(100),
+    ],
+)

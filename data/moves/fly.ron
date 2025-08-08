@@ -1,0 +1,12 @@
+MoveData(
+    name: "Fly",
+    move_type: Flying,
+    power: Some(90),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        InAir,
+        ChargeUp,
+    ],
+)

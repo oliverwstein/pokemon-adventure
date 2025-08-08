@@ -1,0 +1,11 @@
+MoveData(
+    name: "Psybeam",
+    move_type: Psychic,
+    power: Some(65),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Confuse(20),
+    ],
+)

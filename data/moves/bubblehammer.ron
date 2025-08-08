@@ -1,0 +1,11 @@
+MoveData(
+    name: "Bubblehammer",
+    move_type: Water,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(90),
+    max_pp: 15,
+    effects: [
+        Crit(3),
+    ],
+)

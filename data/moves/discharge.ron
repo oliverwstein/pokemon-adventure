@@ -1,0 +1,11 @@
+MoveData(
+    name: "Discharge",
+    move_type: Electric,
+    power: Some(90),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Paralyze(10),
+    ],
+)

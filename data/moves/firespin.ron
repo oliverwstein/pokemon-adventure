@@ -1,0 +1,12 @@
+MoveData(
+    name: "Fire Spin",
+    move_type: Fire,
+    power: Some(60),
+    category: Special,
+    accuracy: Some(80),
+    max_pp: 20,
+    effects: [
+        Burn(10),
+        Trap(100),
+    ],
+)

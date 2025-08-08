@@ -1,0 +1,11 @@
+MoveData(
+    name: "Double Kick",
+    move_type: Fighting,
+    power: Some(30),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        MultiHit(2, 2),
+    ],
+)

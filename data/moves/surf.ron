@@ -1,0 +1,11 @@
+MoveData(
+    name: "Surf",
+    move_type: Water,
+    power: Some(80),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        StatChange(Target, Spe, -1, 20),
+    ],
+)

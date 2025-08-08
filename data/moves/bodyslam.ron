@@ -1,0 +1,12 @@
+MoveData(
+    name: "Body Slam",
+    move_type: Normal,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Exhaust(10),
+        Paralyze(30),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Hyper Fang",
+    move_type: Normal,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        StatChange(Target, Def, -2, 30),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Dragon Rage",
+    move_type: Dragon,
+    power: None,
+    category: Other,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        SetDamage(40),
+    ],
+)

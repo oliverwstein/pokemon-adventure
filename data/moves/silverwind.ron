@@ -1,0 +1,11 @@
+MoveData(
+    name: "Silver Wind",
+    move_type: Bug,
+    power: Some(60),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        RaiseAllStats(10),
+    ],
+)

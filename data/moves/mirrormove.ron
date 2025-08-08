@@ -1,0 +1,11 @@
+MoveData(
+    name: "Mirror Move",
+    move_type: Normal,
+    power: None,
+    category: Other,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        MirrorMove,
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Sand Attack",
+    move_type: Ground,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        StatChange(Target, Acc, -1, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Sludge",
+    move_type: Poison,
+    power: Some(80),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Poison(20),
+    ],
+)

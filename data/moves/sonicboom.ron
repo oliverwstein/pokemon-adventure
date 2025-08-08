@@ -1,0 +1,12 @@
+MoveData(
+    name: "Sonic Boom",
+    move_type: Normal,
+    power: None,
+    category: Other,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        SetDamage(20),
+        Flinch(20),
+    ],
+)

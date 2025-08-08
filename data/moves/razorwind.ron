@@ -1,0 +1,11 @@
+MoveData(
+    name: "Razor Wind",
+    move_type: Flying,
+    power: Some(70),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Flinch(20),
+    ],
+)

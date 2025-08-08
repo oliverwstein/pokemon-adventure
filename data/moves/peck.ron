@@ -1,0 +1,11 @@
+MoveData(
+    name: "Peck",
+    move_type: Flying,
+    power: Some(40),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Flinch(10),
+    ],
+)

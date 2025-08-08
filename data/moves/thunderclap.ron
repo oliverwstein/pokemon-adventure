@@ -1,0 +1,11 @@
+MoveData(
+    name: "Thunderclap",
+    move_type: Electric,
+    power: Some(120),
+    category: Special,
+    accuracy: None,
+    max_pp: 5,
+    effects: [
+        Flinch(30),
+    ],
+)

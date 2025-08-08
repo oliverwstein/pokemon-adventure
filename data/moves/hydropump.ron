@@ -1,0 +1,11 @@
+MoveData(
+    name: "Hydro Pump",
+    move_type: Water,
+    power: Some(120),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 5,
+    effects: [
+        Flinch(20),
+    ],
+)

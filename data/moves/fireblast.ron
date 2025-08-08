@@ -1,0 +1,11 @@
+MoveData(
+    name: "Fire Blast",
+    move_type: Fire,
+    power: Some(120),
+    category: Special,
+    accuracy: Some(70),
+    max_pp: 5,
+    effects: [
+        Burn(30),
+    ],
+)

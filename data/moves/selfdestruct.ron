@@ -1,0 +1,12 @@
+MoveData(
+    name: "Self-Destruct",
+    move_type: Normal,
+    power: Some(180),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Explode,
+        IgnoreDef(50),
+    ],
+)

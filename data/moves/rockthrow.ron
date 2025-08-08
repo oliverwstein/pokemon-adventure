@@ -1,0 +1,11 @@
+MoveData(
+    name: "Rock Throw",
+    move_type: Rock,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Flinch(40),
+    ],
+)

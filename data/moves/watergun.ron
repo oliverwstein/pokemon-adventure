@@ -1,0 +1,11 @@
+MoveData(
+    name: "Water Gun",
+    move_type: Water,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        Flinch(10),
+    ],
+)

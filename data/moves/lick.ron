@@ -1,0 +1,11 @@
+MoveData(
+    name: "Lick",
+    move_type: Ghost,
+    power: Some(30),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        Paralyze(20),
+    ],
+)

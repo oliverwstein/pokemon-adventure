@@ -1,0 +1,11 @@
+MoveData(
+    name: "Bubble",
+    move_type: Water,
+    power: Some(30),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        StatChange(Target, Spe, -1, 30),
+    ],
+)

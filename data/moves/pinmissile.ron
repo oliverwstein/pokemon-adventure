@@ -1,0 +1,12 @@
+MoveData(
+    name: "Pin Missile",
+    move_type: Bug,
+    power: Some(20),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        MultiHit(2, 5),
+        Flinch(10),
+    ],
+)

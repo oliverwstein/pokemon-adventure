@@ -1,0 +1,11 @@
+MoveData(
+    name: "Blizzard",
+    move_type: Ice,
+    power: Some(100),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Freeze(20),
+    ],
+)

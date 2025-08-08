@@ -1,0 +1,11 @@
+MoveData(
+    name: "Swift",
+    move_type: Normal,
+    power: Some(60),
+    category: Special,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        SureHit,
+    ],
+)

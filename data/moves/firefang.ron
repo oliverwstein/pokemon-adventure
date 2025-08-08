@@ -1,0 +1,12 @@
+MoveData(
+    name: "Fire Fang",
+    move_type: Fire,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(80),
+    max_pp: 20,
+    effects: [
+        Burn(20),
+        Flinch(20),
+    ],
+)

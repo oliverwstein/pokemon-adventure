@@ -1,0 +1,11 @@
+MoveData(
+    name: "Thrash",
+    move_type: Normal,
+    power: Some(120),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Rampage("Confuse"),
+    ],
+)

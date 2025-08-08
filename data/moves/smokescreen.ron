@@ -1,0 +1,11 @@
+MoveData(
+    name: "Smokescreen",
+    move_type: Fire,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        StatChange(Target, Acc, -2, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Acid",
+    move_type: Poison,
+    power: Some(50),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        SuperFang(20),
+    ],
+)

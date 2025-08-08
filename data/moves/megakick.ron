@@ -1,0 +1,11 @@
+MoveData(
+    name: "Mega Kick",
+    move_type: Fighting,
+    power: Some(100),
+    category: Physical,
+    accuracy: Some(90),
+    max_pp: 15,
+    effects: [
+        Recoil(10),
+    ],
+)

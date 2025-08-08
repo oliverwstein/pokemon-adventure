@@ -1,0 +1,11 @@
+MoveData(
+    name: "Thunder Wave",
+    move_type: Electric,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Paralyze(100),
+    ],
+)

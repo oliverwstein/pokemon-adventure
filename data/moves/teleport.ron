@@ -1,0 +1,11 @@
+MoveData(
+    name: "Teleport",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 15,
+    effects: [
+        Teleport(100),
+    ],
+)

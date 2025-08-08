@@ -1,0 +1,11 @@
+MoveData(
+    name: "Bonemerang",
+    move_type: Ground,
+    power: Some(50),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        MultiHit(2, 2),
+    ],
+)

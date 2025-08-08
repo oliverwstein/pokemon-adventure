@@ -1,0 +1,12 @@
+MoveData(
+    name: "Smog",
+    move_type: Poison,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        StatChange(Target, Acc, -1, 50),
+        Poison(50),
+    ],
+)

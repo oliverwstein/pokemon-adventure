@@ -1,0 +1,9 @@
+MoveData(
+    name: "Gust",
+    move_type: Flying,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Bubblebeam",
+    move_type: Water,
+    power: Some(65),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        StatChange(Target, Spe, -1, 10),
+    ],
+)

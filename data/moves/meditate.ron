@@ -1,0 +1,12 @@
+MoveData(
+    name: "Meditate",
+    move_type: Fighting,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        StatChange(User, SpAtk, 1, 100),
+        StatChange(User, Atk, 1, 100),
+    ],
+)

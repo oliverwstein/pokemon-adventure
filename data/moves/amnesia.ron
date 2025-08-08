@@ -1,0 +1,11 @@
+MoveData(
+    name: "Amnesia",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        StatChange(User, SpDef, 2, 100),
+    ],
+)

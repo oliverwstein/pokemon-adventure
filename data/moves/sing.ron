@@ -1,0 +1,12 @@
+MoveData(
+    name: "Sing",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: Some(80),
+    max_pp: 10,
+    effects: [
+        Sedate(50),
+        StatChange(Target, Atk, -2, 50),
+    ],
+)

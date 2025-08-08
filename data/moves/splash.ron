@@ -1,0 +1,9 @@
+MoveData(
+    name: "Splash",
+    move_type: Water,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [],
+)

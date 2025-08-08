@@ -1,0 +1,11 @@
+MoveData(
+    name: "Absorb",
+    move_type: Grass,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        Drain(50),
+    ],
+)

@@ -1,0 +1,13 @@
+MoveData(
+    name: "Screech",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        StatChange(Target, Spe, -2, 100),
+        CureStatus(Target, "Sleep"),
+        Flinch(50),
+    ],
+)

@@ -1,0 +1,12 @@
+MoveData(
+    name: "String Shot",
+    move_type: Bug,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        StatChange(Target, Spe, -1, 100),
+        Trap(50),
+    ],
+)

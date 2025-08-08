@@ -1,0 +1,11 @@
+MoveData(
+    name: "Confusion",
+    move_type: Psychic,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        Confuse(50),
+    ],
+)

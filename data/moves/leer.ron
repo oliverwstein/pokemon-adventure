@@ -1,0 +1,11 @@
+MoveData(
+    name: "Leer",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        StatChange(Target, Def, -1, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Clamp",
+    move_type: Normal,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Trap(50),
+    ],
+)

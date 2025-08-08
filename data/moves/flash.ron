@@ -1,0 +1,11 @@
+MoveData(
+    name: "Flash",
+    move_type: Electric,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 15,
+    effects: [
+        StatChange(Target, Acc, -1, 100),
+    ],
+)

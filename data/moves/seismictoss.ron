@@ -1,0 +1,11 @@
+MoveData(
+    name: "Seismic Toss",
+    move_type: Fighting,
+    power: None,
+    category: Other,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        LevelDamage,
+    ],
+)

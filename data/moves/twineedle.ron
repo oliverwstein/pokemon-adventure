@@ -1,0 +1,12 @@
+MoveData(
+    name: "Twineedle",
+    move_type: Poison,
+    power: Some(40),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        MultiHit(2, 2),
+        Poison(30),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Night Shade",
+    move_type: Ghost,
+    power: None,
+    category: Other,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        LevelDamage,
+    ],
+)

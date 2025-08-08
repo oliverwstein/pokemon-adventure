@@ -1,0 +1,11 @@
+MoveData(
+    name: "Psywave",
+    move_type: Psychic,
+    power: None,
+    category: Other,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        LevelDamage,
+    ],
+)

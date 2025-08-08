@@ -1,0 +1,11 @@
+MoveData(
+    name: "Ancient Power",
+    move_type: Rock,
+    power: Some(60),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        RaiseAllStats(10),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Super Fang",
+    move_type: Normal,
+    power: None,
+    category: Other,
+    accuracy: Some(90),
+    max_pp: 10,
+    effects: [
+        SuperFang(50),
+    ],
+)

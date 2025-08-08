@@ -1,0 +1,11 @@
+MoveData(
+    name: "Guillotine",
+    move_type: Normal,
+    power: None,
+    category: Other,
+    accuracy: Some(30),
+    max_pp: 5,
+    effects: [
+        OHKO,
+    ],
+)

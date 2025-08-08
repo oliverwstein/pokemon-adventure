@@ -1,0 +1,11 @@
+MoveData(
+    name: "Ice Beam",
+    move_type: Ice,
+    power: Some(90),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Freeze(20),
+    ],
+)

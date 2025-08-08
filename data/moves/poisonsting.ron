@@ -1,0 +1,11 @@
+MoveData(
+    name: "Poison Sting",
+    move_type: Poison,
+    power: Some(40),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Poison(20),
+    ],
+)

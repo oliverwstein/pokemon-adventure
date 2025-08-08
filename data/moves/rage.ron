@@ -1,0 +1,11 @@
+MoveData(
+    name: "Rage",
+    move_type: Normal,
+    power: Some(20),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Rage(100),
+    ],
+)

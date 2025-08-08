@@ -1,0 +1,11 @@
+MoveData(
+    name: "Fire Punch",
+    move_type: Fire,
+    power: Some(70),
+    category: Physical,
+    accuracy: Some(90),
+    max_pp: 20,
+    effects: [
+        Burn(10),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Fury Swipes",
+    move_type: Normal,
+    power: Some(15),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        MultiHit(2, 5),
+    ],
+)

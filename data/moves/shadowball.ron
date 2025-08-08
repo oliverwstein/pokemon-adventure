@@ -1,0 +1,11 @@
+MoveData(
+    name: "Shadow Ball",
+    move_type: Ghost,
+    power: Some(80),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        StatChange(Target, SpDef, -1, 30),
+    ],
+)

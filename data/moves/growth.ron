@@ -1,0 +1,12 @@
+MoveData(
+    name: "Growth",
+    move_type: Grass,
+    power: None,
+    category: Status,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        StatChange(User, SpAtk, 1, 100),
+        StatChange(User, Atk, 1, 100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Wing Attack",
+    move_type: Flying,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Flinch(10),
+    ],
+)

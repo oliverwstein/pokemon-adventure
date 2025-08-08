@@ -1,0 +1,12 @@
+MoveData(
+    name: "Roar",
+    move_type: Normal,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Flinch(50),
+        StatChange(User, Atk, 1, 20),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Wrap",
+    move_type: Normal,
+    power: Some(30),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        Trap(90),
+    ],
+)

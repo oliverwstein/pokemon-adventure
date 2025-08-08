@@ -1,0 +1,11 @@
+MoveData(
+    name: "Blaze Kick",
+    move_type: Fire,
+    power: Some(90),
+    category: Physical,
+    accuracy: Some(80),
+    max_pp: 20,
+    effects: [
+        Burn(10),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Low Kick",
+    move_type: Fighting,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        IgnoreDef(50),
+    ],
+)

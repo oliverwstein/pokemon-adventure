@@ -1,0 +1,11 @@
+MoveData(
+    name: "Pay Day",
+    move_type: Normal,
+    power: Some(30),
+    category: Physical,
+    accuracy: Some(90),
+    max_pp: 30,
+    effects: [
+        Ante(2),
+    ],
+)

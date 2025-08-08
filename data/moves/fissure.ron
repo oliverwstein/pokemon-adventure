@@ -1,0 +1,11 @@
+MoveData(
+    name: "Fissure",
+    move_type: Ground,
+    power: None,
+    category: Other,
+    accuracy: Some(30),
+    max_pp: 5,
+    effects: [
+        OHKO,
+    ],
+)

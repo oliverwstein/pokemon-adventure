@@ -1,0 +1,12 @@
+MoveData(
+    name: "Supersonic",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: Some(70),
+    max_pp: 15,
+    effects: [
+        Confuse(75),
+        StatChange(Target, SpAtk, -1, 75),
+    ],
+)

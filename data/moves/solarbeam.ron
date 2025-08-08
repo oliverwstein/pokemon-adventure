@@ -1,0 +1,12 @@
+MoveData(
+    name: "Solarbeam",
+    move_type: Grass,
+    power: Some(180),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 5,
+    effects: [
+        ChargeUp,
+        Burn(50),
+    ],
+)

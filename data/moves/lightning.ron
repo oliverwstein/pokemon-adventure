@@ -1,0 +1,12 @@
+MoveData(
+    name: "Lightning",
+    move_type: Electric,
+    power: Some(80),
+    category: Special,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        Paralyze(30),
+        Flinch(10),
+    ],
+)

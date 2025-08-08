@@ -1,0 +1,11 @@
+MoveData(
+    name: "Mega Drain",
+    move_type: Grass,
+    power: Some(60),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Drain(50),
+    ],
+)

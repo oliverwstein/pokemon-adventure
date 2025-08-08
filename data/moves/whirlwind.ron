@@ -1,0 +1,11 @@
+MoveData(
+    name: "Whirlwind",
+    move_type: Flying,
+    power: Some(20),
+    category: Special,
+    accuracy: Some(90),
+    max_pp: 20,
+    effects: [
+        Teleport(100),
+    ],
+)

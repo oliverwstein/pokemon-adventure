@@ -1,0 +1,11 @@
+MoveData(
+    name: "Submission",
+    move_type: Fighting,
+    power: Some(50),
+    category: Physical,
+    accuracy: Some(90),
+    max_pp: 20,
+    effects: [
+        Trap(50),
+    ],
+)

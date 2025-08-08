@@ -1,0 +1,13 @@
+MoveData(
+    name: "Dream Eater",
+    move_type: Psychic,
+    power: Some(120),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        Nightmare,
+        Drain(100),
+        IgnoreDef(50),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Tackle",
+    move_type: Normal,
+    power: Some(60),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        Exhaust(10),
+    ],
+)

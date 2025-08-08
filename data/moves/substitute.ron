@@ -1,0 +1,11 @@
+MoveData(
+    name: "Substitute",
+    move_type: Normal,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 20,
+    effects: [
+        Substitute,
+    ],
+)

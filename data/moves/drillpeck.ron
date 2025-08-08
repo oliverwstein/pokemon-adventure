@@ -1,0 +1,11 @@
+MoveData(
+    name: "Drill Peck",
+    move_type: Flying,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Flinch(20),
+    ],
+)

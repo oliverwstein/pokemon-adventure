@@ -1,0 +1,11 @@
+MoveData(
+    name: "Struggle",
+    move_type: Normal,
+    power: Some(40),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 0,
+    effects: [
+        Recoil(50),
+    ],
+)

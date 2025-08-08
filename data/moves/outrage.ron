@@ -1,0 +1,11 @@
+MoveData(
+    name: "Outrage",
+    move_type: Dragon,
+    power: Some(120),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Rampage("Confuse"),
+    ],
+)

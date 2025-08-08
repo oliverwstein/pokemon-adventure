@@ -1,6 +1,7 @@
 mod moves;
 mod pokemon;
 mod player;
+mod move_data;
 
 use std::path::Path;
 use pokemon::{PokemonSpecies, PokemonInst};

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Rolling Kick",
+    move_type: Fighting,
+    power: Some(70),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [
+        Flinch(30),
+    ],
+)

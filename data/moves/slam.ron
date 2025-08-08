@@ -1,0 +1,9 @@
+MoveData(
+    name: "Slam",
+    move_type: Normal,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 20,
+    effects: [],
+)

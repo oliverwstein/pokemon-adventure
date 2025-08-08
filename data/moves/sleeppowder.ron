@@ -1,0 +1,11 @@
+MoveData(
+    name: "Sleep Powder",
+    move_type: Grass,
+    power: None,
+    category: Status,
+    accuracy: Some(90),
+    max_pp: 20,
+    effects: [
+        Sedate(100),
+    ],
+)

@@ -1,0 +1,11 @@
+MoveData(
+    name: "Razor Leaf",
+    move_type: Grass,
+    power: Some(50),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 30,
+    effects: [
+        Crit(3),
+    ],
+)

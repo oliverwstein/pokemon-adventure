@@ -1,0 +1,11 @@
+MoveData(
+    name: "Light Screen",
+    move_type: Psychic,
+    power: None,
+    category: Status,
+    accuracy: None,
+    max_pp: 10,
+    effects: [
+        Reflect("Special"),
+    ],
+)

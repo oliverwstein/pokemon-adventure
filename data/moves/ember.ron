@@ -1,0 +1,11 @@
+MoveData(
+    name: "Ember",
+    move_type: Fire,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 40,
+    effects: [
+        Burn(10),
+    ],
+)

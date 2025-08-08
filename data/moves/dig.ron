@@ -1,0 +1,12 @@
+MoveData(
+    name: "Dig",
+    move_type: Ground,
+    power: Some(80),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 15,
+    effects: [
+        Underground,
+        ChargeUp,
+    ],
+)

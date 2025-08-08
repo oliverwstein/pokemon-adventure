@@ -1,0 +1,12 @@
+MoveData(
+    name: "Sky Attack",
+    move_type: Flying,
+    power: Some(140),
+    category: Physical,
+    accuracy: Some(100),
+    max_pp: 10,
+    effects: [
+        StatChange(User, Eva, 1, 50),
+        ChargeUp,
+    ],
+)

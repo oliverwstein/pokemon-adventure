@@ -1,0 +1,11 @@
+MoveData(
+    name: "Poison Powder",
+    move_type: Grass,
+    power: None,
+    category: Status,
+    accuracy: Some(90),
+    max_pp: 20,
+    effects: [
+        Poison(100),
+    ],
+)

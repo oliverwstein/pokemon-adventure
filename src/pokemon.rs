@@ -1,4 +1,4 @@
-use crate::moves::{Move, MoveInstance};
+use crate::moves::Move;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
@@ -34,7 +34,7 @@ pub enum Item {
     // Add more items as needed
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StatusCondition {
     Sleep(u8),
     Poison(u8),
@@ -43,9 +43,13 @@ pub enum StatusCondition {
     Paralysis,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MoveInstance {
+    pub move_: Move,
+    pub pp: u8,
+}
 
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PokemonInst {
     pub name: String,                    // Species name if no nickname
     pub species: String,                 // Key for looking up species data (e.g., "PIKACHU")
@@ -215,6 +219,31 @@ impl PokemonSpecies {
         }
         
         Ok(map)
+    }
+}
+
+impl MoveInstance {
+    /// Create a new move instance with max PP
+    pub fn new(move_: Move) -> Self {
+        MoveInstance {
+            move_,
+            pp: 30, // TODO: Get actual max PP from move data
+        }
+    }
+    
+    /// Use the move (decrease PP)
+    pub fn use_move(&mut self) -> bool {
+        if self.pp > 0 {
+            self.pp -= 1;
+            true
+        } else {
+            false
+        }
+    }
+    
+    /// Restore PP
+    pub fn restore_pp(&mut self, amount: u8) {
+        self.pp = (self.pp + amount).min(30); // TODO: Use actual max PP
     }
 }
 

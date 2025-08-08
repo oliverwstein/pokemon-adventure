@@ -25,7 +25,7 @@ PokemonSpecies(
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
             Rage, Mimic, DoubleTeam, Reflect, Bide, FireBlast,
-            Swift, Rest, Substitute, Shadow
+            Swift, Rest, Substitute, ShadowBall, 
         ],
     ),
     catch_rate: 45,

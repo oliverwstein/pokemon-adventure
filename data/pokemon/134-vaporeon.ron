@@ -26,7 +26,7 @@ PokemonSpecies(
             BodySlam, TakeDown, DoubleEdge, HyperBeam,
             Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
             Toxic, Rage, Mimic, DoubleTeam, Reflect,
-            Bide, Swift, Rest, Substitute, Shadow
+            Bide, Swift, Rest, Substitute, ShadowBall, 
         ],
     ),
     catch_rate: 45,

@@ -15,7 +15,7 @@ PokemonSpecies(
             1: [Constrict, Withdraw],
             34: [HornAttack],
             39: [Leer],
-            46: [Spike],
+            46: [SpikeCannon],
             53: [HydroPump],
         },
         signature: None,

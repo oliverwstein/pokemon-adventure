@@ -16,7 +16,7 @@ PokemonSpecies(
             20: [Vicegrip],
             25: [Guillotine],
             34: [Stomp],
-            42: [CrabHammer],
+            42: [Bubblehammer],
             49: [Harden],
         },
         signature: Some(Bubblehammer),

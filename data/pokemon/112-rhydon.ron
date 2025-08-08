@@ -12,9 +12,9 @@ PokemonSpecies(
     ),
     learnset: (
         level_up: {
-            1: [HornAttack, Stomp, Fury],
+            1: [HornAttack, Stomp, FuryAttack],
             30: [Stomp],
-            35: [Fury],
+            35: [FuryAttack],
             40: [HornDrill],
             48: [Leer],
             58: [TakeDown],

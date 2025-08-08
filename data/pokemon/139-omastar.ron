@@ -15,7 +15,7 @@ PokemonSpecies(
             1: [Constrict, Withdraw, HornAttack],
             34: [HornAttack],
             39: [Leer],
-            44: [Spike],
+            44: [SpikeCannon],
             49: [HydroPump],
         },
         signature: Some(AncientPower),

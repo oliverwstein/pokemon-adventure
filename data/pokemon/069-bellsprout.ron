@@ -18,7 +18,7 @@ PokemonSpecies(
             18: [SleepPowder],
             21: [StunSpore],
             26: [Acid],
-            33: [Razor],
+            33: [RazorLeaf],
             42: [Slam],
         },
         signature: None,

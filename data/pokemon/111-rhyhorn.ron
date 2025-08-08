@@ -14,7 +14,7 @@ PokemonSpecies(
         level_up: {
             1: [HornAttack],
             30: [Stomp],
-            35: [Fury],
+            35: [FuryAttack],
             40: [HornDrill],
             45: [Leer],
             50: [TakeDown],

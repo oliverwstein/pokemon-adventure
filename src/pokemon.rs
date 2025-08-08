@@ -1,4 +1,4 @@
-use crate::moves::Move;
+use crate::moves::{Move, MoveInstance};
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
@@ -41,6 +41,20 @@ pub enum StatusCondition {
     Burn,
     Freeze,
     Paralysis,
+}
+
+
+
+#[derive(Debug, Clone)]
+pub struct PokemonInst {
+    pub name: String,                    // Species name if no nickname
+    pub species: String,                 // Key for looking up species data (e.g., "PIKACHU")
+    pub curr_exp: u8,                    // Only really relevant for single-player
+    pub ivs: Vec<u8>,                    // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub evs: Vec<u8>,                    // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub curr_stats: Vec<u8>,             // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub moves: Vec<MoveInstance>,        // Length 4: Move and PP pairs
+    pub status: Option<StatusCondition>, // Status condition with optional parameter
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,3 +217,109 @@ impl PokemonSpecies {
         Ok(map)
     }
 }
+
+impl PokemonInst {
+    /// Create a new Pokemon instance from species data
+    pub fn new(
+        species_key: String,
+        species_data: &PokemonSpecies,
+        level: u8,
+        ivs: Option<Vec<u8>>,
+        moves: Option<Vec<Move>>,
+    ) -> Self {
+        // Generate random IVs if not provided (0-31 range)
+        let ivs = ivs.unwrap_or_else(|| vec![0; 6]); // TODO: Add random generation
+        
+        // Initialize EVs to 0
+        let evs = vec![0; 6];
+        
+        // Calculate current stats based on level, IVs, EVs, and base stats
+        let curr_stats = Self::calculate_stats(&species_data.base_stats, level, &ivs, &evs);
+        
+        // Derive moves from learnset if not provided
+        let moves = moves.unwrap_or_else(|| Self::derive_moves_from_learnset(&species_data.learnset, level));
+        
+        // Create move instances with max PP (TODO: get actual max PP from move data)
+        let move_instances: Vec<MoveInstance> = moves
+            .into_iter()
+            .take(4) // Max 4 moves
+            .map(|move_| MoveInstance {
+                move_,
+                pp: 30, // TODO: Get actual max PP from move data
+            })
+            .collect();
+        
+        PokemonInst {
+            name: species_data.name.clone(),
+            species: species_key,
+            curr_exp: 0, // TODO: Calculate from level
+            ivs,
+            evs,
+            curr_stats,
+            moves: move_instances,
+            status: None,
+        }
+    }
+    
+    /// Calculate current stats based on base stats, level, IVs, and EVs
+    /// Uses Gen 3+ stat calculation formula without natures
+    fn calculate_stats(base_stats: &BaseStats, level: u8, ivs: &[u8], evs: &[u8]) -> Vec<u8> {
+        let base = [
+            base_stats.hp,
+            base_stats.attack,
+            base_stats.defense,
+            base_stats.sp_attack,
+            base_stats.sp_defense,
+            base_stats.speed,
+        ];
+        
+        let mut stats = Vec::with_capacity(6);
+        
+        for i in 0..6 {
+            let stat = if i == 0 {
+                // HP = floor(0.01 * (2 * Base + IV + floor(0.25 * EV)) * Level) + Level + 10
+                let base_calculation = 2 * base[i] as u16 + ivs[i] as u16 + (evs[i] as u16 / 4);
+                let hp = (base_calculation * level as u16) / 100 + level as u16 + 10;
+                hp
+            } else {
+                // Other Stat = floor(0.01 * (2 * Base + IV + floor(0.25 * EV)) * Level) + 5
+                let base_calculation = 2 * base[i] as u16 + ivs[i] as u16 + (evs[i] as u16 / 4);
+                let other_stat = (base_calculation * level as u16) / 100 + 5;
+                other_stat
+            };
+            
+            stats.push(stat.min(65535).min(255) as u8); // Cap at 255 for u8 storage
+        }
+        
+        stats
+    }
+    
+    /// Derive moves from learnset based on current level
+    /// Returns the 4 most recent moves the Pokemon would know at this level
+    fn derive_moves_from_learnset(learnset: &Learnset, level: u8) -> Vec<Move> {
+        let mut learned_moves = Vec::new();
+        
+        // Collect all moves learned at or before the current level
+        for learn_level in 1..=level {
+            if let Some(moves_at_level) = learnset.level_up.get(&learn_level) {
+                for &move_ in moves_at_level {
+                    learned_moves.push(move_);
+                }
+            }
+        }
+        
+        // Pokemon can only know 4 moves, so take the 4 most recently learned
+        // If fewer than 4 moves learned, return all of them
+        if learned_moves.len() <= 4 {
+            learned_moves
+        } else {
+            learned_moves.into_iter().rev().take(4).rev().collect()
+        }
+    }
+    
+    /// Get the species data for this Pokemon instance
+    pub fn get_species_data<'a>(&self, species_map: &'a HashMap<String, PokemonSpecies>) -> Option<&'a PokemonSpecies> {
+        species_map.get(&self.species)
+    }
+}
+

@@ -87,6 +87,8 @@ pub enum MoveEffect {
     Nightmare,
     Reckless(u8),
     Disable(u8),
+    InAir,
+    Underground,
 
     // No parameters
     Struggle,

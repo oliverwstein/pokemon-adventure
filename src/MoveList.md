@@ -186,7 +186,7 @@
  * WHIRLWIND  (Flying, 20, SPECIAL, 90, 20)
     * Teleport(100)
  * FLY (Flying, 90, PHYS, 100, 15)
-    * Teleport(100)
+    * InAir
     * ChargeUp
  * PECK (Flying, 40, PHYS, 100, 30)
     * Flinch(10)
@@ -214,7 +214,7 @@
  * FISSURE (Ground, --, OTHER, 30, 5)
     * OHKO
  * DIG (Ground, 80, PHYS, 100, 15)
-    * Teleport(100)
+    * Underground
     * Charge
  * BONE CLUB (Ground, 25, PHYS, 100, 20)
     * Multihit(2, 5)

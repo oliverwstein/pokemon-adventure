@@ -210,3 +210,33 @@ pub enum Move {
     // Typeless
     Struggle,
 }
+
+#[derive(Debug, Clone)]
+pub struct MoveInstance {
+    pub move_: Move,
+    pub pp: u8,
+}
+impl MoveInstance {
+    /// Create a new move instance with max PP
+    pub fn new(move_: Move) -> Self {
+        MoveInstance {
+            move_,
+            pp: 30, // TODO: Get actual max PP from move data
+        }
+    }
+    
+    /// Use the move (decrease PP)
+    pub fn use_move(&mut self) -> bool {
+        if self.pp > 0 {
+            self.pp -= 1;
+            true
+        } else {
+            false
+        }
+    }
+    
+    /// Restore PP
+    pub fn restore_pp(&mut self, amount: u8) {
+        self.pp = (self.pp + amount).min(30); // TODO: Use actual max PP
+    }
+}

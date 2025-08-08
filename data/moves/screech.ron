@@ -7,7 +7,7 @@ MoveData(
     max_pp: 10,
     effects: [
         StatChange(Target, Spe, -2, 100),
-        CureStatus(Target, "Sleep"),
+        CureStatus(Target, Sleep),
         Flinch(50),
     ],
 )

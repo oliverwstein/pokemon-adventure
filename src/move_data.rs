@@ -59,6 +59,27 @@ pub enum Target {
     Target,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ReflectType {
+    Physical,
+    Special,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RampageEndCondition {
+    Confuse,
+    Exhaust,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StatusType {
+    Sleep,
+    Poison,
+    Burn,
+    Freeze,
+    Paralysis,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MoveEffect {
     // Basic effects
@@ -110,18 +131,18 @@ pub enum MoveEffect {
     Rest(u8),                                      // sleep for X turns, full heal
     Bide(u8),                                      // store damage for X turns
     Rage(u8),                                      // chance % to enter rage mode
-    Rampage(String),                               // rampage with end condition
+    Rampage(RampageEndCondition),                  // rampage with end condition
     
     // Field effects
     Haze(u8),                                      // remove all stat changes, chance %
-    Reflect(String),                               // reduce physical/special damage
+    Reflect(ReflectType),                          // reduce physical/special damage
     Mist,                                          // prevent stat reduction
     Seed(u8),                                      // leech seed effect, chance %
     Nightmare,                                     // only works on sleeping targets
     
     // Utility
     Heal(u8),                                      // heal % of max HP
-    CureStatus(Target, String),                    // cure specific status
+    CureStatus(Target, StatusType),                // cure specific status
     Ante(u8),                                      // gain money (Pay Day effect)
 }
 

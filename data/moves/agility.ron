@@ -6,7 +6,7 @@ MoveData(
     accuracy: None,
     max_pp: 20,
     effects: [
-        CureStatus(User, "Paralysis"),
+        CureStatus(User, Paralysis),
         StatChange(User, Spe, 2, 100),
     ],
 )

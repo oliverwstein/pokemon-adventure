@@ -100,7 +100,7 @@ fn main() {
                     "PIKACHU".to_string(),
                     pikachu_species,
                     25,
-                    Some(vec![15, 20, 10, 25, 18, 30]), // Custom IVs
+                    Some([15, 20, 10, 25, 18, 30]), // Custom IVs
                     Some(pikachu_moves), // Custom moves
                 );
                 
@@ -111,8 +111,10 @@ fn main() {
                          my_pikachu.curr_stats[0], my_pikachu.curr_stats[1], my_pikachu.curr_stats[2],
                          my_pikachu.curr_stats[3], my_pikachu.curr_stats[4], my_pikachu.curr_stats[5]);
                 println!("  Moves:");
-                for (i, move_inst) in my_pikachu.moves.iter().enumerate() {
-                    println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
+                for (i, move_slot) in my_pikachu.moves.iter().enumerate() {
+                    if let Some(move_inst) = move_slot {
+                        println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
+                    }
                 }
                 
                 println!();
@@ -132,8 +134,10 @@ fn main() {
                          auto_pikachu.curr_stats[0], auto_pikachu.curr_stats[1], auto_pikachu.curr_stats[2],
                          auto_pikachu.curr_stats[3], auto_pikachu.curr_stats[4], auto_pikachu.curr_stats[5]);
                 println!("  Moves (auto-derived from level {} learnset):", 25);
-                for (i, move_inst) in auto_pikachu.moves.iter().enumerate() {
-                    println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
+                for (i, move_slot) in auto_pikachu.moves.iter().enumerate() {
+                    if let Some(move_inst) = move_slot {
+                        println!("    {}: {:?} (PP: {})", i + 1, move_inst.move_, move_inst.pp);
+                    }
                 }
             }
         }

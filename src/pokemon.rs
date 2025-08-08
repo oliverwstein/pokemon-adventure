@@ -55,10 +55,10 @@ pub struct PokemonInst {
     pub name: String,                    // Species name if no nickname
     pub species: String,                 // Key for looking up species data (e.g., "PIKACHU")
     pub curr_exp: u8,                    // Only really relevant for single-player
-    pub ivs: Vec<u8>,                    // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub evs: Vec<u8>,                    // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub curr_stats: Vec<u8>,             // Length 6: HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub moves: Vec<MoveInstance>,        // Length 4: Move and PP pairs
+    pub ivs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub evs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub curr_stats: [u16; 6],            // HP, ATK, DEF, SP.ATK, SP.DEF, SPD (can exceed 255)
+    pub moves: [Option<MoveInstance>; 4], // Up to 4 moves
     pub status: Option<StatusCondition>, // Status condition with optional parameter
 }
 
@@ -262,14 +262,14 @@ impl PokemonInst {
         species_key: String,
         species_data: &PokemonSpecies,
         level: u8,
-        ivs: Option<Vec<u8>>,
+        ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
     ) -> Self {
-        // Generate random IVs if not provided (0-31 range)
-        let ivs = ivs.unwrap_or_else(|| vec![0; 6]); // TODO: Add random generation
+        // Generate default IVs if not provided (0-31 range)
+        let ivs = ivs.unwrap_or([0; 6]); // TODO: Add random generation
         
         // Initialize EVs to 0
-        let evs = vec![0; 6];
+        let evs = [0; 6];
         
         // Calculate current stats based on level, IVs, EVs, and base stats
         let curr_stats = Self::calculate_stats(&species_data.base_stats, level, &ivs, &evs);
@@ -278,11 +278,10 @@ impl PokemonInst {
         let moves = moves.unwrap_or_else(|| Self::derive_moves_from_learnset(&species_data.learnset, level));
         
         // Create move instances with max PP from move data
-        let move_instances: Vec<MoveInstance> = moves
-            .into_iter()
-            .take(4) // Max 4 moves
-            .map(|move_| MoveInstance::new(move_))
-            .collect();
+        let mut move_array = [const { None }; 4];
+        for (i, move_) in moves.into_iter().take(4).enumerate() {
+            move_array[i] = Some(MoveInstance::new(move_));
+        }
         
         PokemonInst {
             name: species_data.name.clone(),
@@ -291,14 +290,14 @@ impl PokemonInst {
             ivs,
             evs,
             curr_stats,
-            moves: move_instances,
+            moves: move_array,
             status: None,
         }
     }
     
     /// Calculate current stats based on base stats, level, IVs, and EVs
     /// Uses Gen 3+ stat calculation formula without natures
-    fn calculate_stats(base_stats: &BaseStats, level: u8, ivs: &[u8], evs: &[u8]) -> Vec<u8> {
+    fn calculate_stats(base_stats: &BaseStats, level: u8, ivs: &[u8; 6], evs: &[u8; 6]) -> [u16; 6] {
         let base = [
             base_stats.hp,
             base_stats.attack,
@@ -308,7 +307,7 @@ impl PokemonInst {
             base_stats.speed,
         ];
         
-        let mut stats = Vec::with_capacity(6);
+        let mut stats = [0u16; 6];
         
         for i in 0..6 {
             let stat = if i == 0 {
@@ -323,7 +322,7 @@ impl PokemonInst {
                 other_stat
             };
             
-            stats.push(stat.min(65535).min(255) as u8); // Cap at 255 for u8 storage
+            stats[i] = stat.min(65535); // Cap at max u16 value
         }
         
         stats

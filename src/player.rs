@@ -69,7 +69,7 @@ pub struct BattlePlayer {
     pub player_name: String,
 
     // The player's full team of up to 6 Pokémon instances.
-    pub team: Vec<PokemonInst>,
+    pub team: [Option<PokemonInst>; 6],
     
     // The index (0-5) of the Pokémon in the `team` vector that is currently active.
     pub active_pokemon_index: usize,
@@ -86,10 +86,15 @@ pub struct BattlePlayer {
 impl BattlePlayer {
     /// Create a new BattlePlayer
     pub fn new(player_id: String, player_name: String, team: Vec<PokemonInst>) -> Self {
+        let mut team_array = [const { None }; 6];
+        for (i, pokemon) in team.into_iter().take(6).enumerate() {
+            team_array[i] = Some(pokemon);
+        }
+        
         BattlePlayer {
             player_id,
             player_name,
-            team,
+            team: team_array,
             active_pokemon_index: 0,
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
@@ -100,11 +105,13 @@ impl BattlePlayer {
     /// Get the currently active Pokemon
     pub fn active_pokemon(&self) -> Option<&PokemonInst> {
         self.team.get(self.active_pokemon_index)
+            .and_then(|slot| slot.as_ref())
     }
     
     /// Get the currently active Pokemon mutably
     pub fn active_pokemon_mut(&mut self) -> Option<&mut PokemonInst> {
         self.team.get_mut(self.active_pokemon_index)
+            .and_then(|slot| slot.as_mut())
     }
     
     /// Check if the active Pokemon has a specific condition type
@@ -134,8 +141,8 @@ impl BattlePlayer {
     
     /// Switch the active Pokemon
     pub fn switch_pokemon(&mut self, new_index: usize) -> Result<(), String> {
-        if new_index >= self.team.len() {
-            return Err("Invalid Pokemon index".to_string());
+        if new_index >= 6 || self.team[new_index].is_none() {
+            return Err("Invalid Pokemon index or empty slot".to_string());
         }
         
         // Clear active Pokemon conditions when switching

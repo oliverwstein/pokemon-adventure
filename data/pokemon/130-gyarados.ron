@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 130,
+    name: "Gyarados",
+    types: [Water, Flying],
+    base_stats: (
+        hp: 95,
+        attack: 125,
+        defense: 79,
+        sp_attack: 60,
+        sp_defense: 100,
+        speed: 81,
+    ),
+    learnset: (
+        level_up: {
+            1: [Thrash],
+            20: [Bite],
+            25: [DragonRage],
+            32: [Leer],
+            41: [HydroPump],
+            52: [HyperBeam],
+        },
+        signature: Some(Waterfall),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Thunderclap, Mimic,
+            DoubleTeam, Reflect, Bide, FireBlast, SkullBash,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 214,
+    description: "Rarely seen in the wild. Huge and vicious, it is capable of destroying entire cities in a rage.",
+    evolution_data: None,
+)

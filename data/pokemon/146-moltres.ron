@@ -1,0 +1,31 @@
+PokemonSpecies(
+    pokedex_number: 146,
+    name: "Moltres",
+    types: [Fire, Flying],
+    base_stats: (
+        hp: 90,
+        attack: 100,
+        defense: 90,
+        sp_attack: 125,
+        sp_defense: 85,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [WingAttack, Ember],
+            51: [Leer],
+            55: [Agility],
+            60: [SkyAttack],
+        },
+        signature: Some(FireBlast),
+        can_learn: [
+            RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, Mimic, DoubleTeam, Reflect, Bide,
+            FireBlast, Swift, SkyAttack, Rest, Substitute
+        ],
+    ),
+    catch_rate: 3,
+    base_exp: 217,
+    description: "Known as the legendary bird of fire. Every flap of its wings creates a dazzling flash of flames.",
+    evolution_data: None,
+)

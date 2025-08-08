@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 31,
+    name: "Nidoqueen",
+    types: [Poison, Ground],
+    base_stats: (
+        hp: 90,
+        attack: 92,
+        defense: 87,
+        sp_attack: 75,
+        sp_defense: 85,
+        speed: 76,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Scratch, TailWhip, BodySlam],
+            23: [BodySlam],
+        },
+        signature: Some(BodySlam),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Blizzard, IceBeam, Bubblebeam,
+            WaterGun, Surf, Toxic, Rage, Thunderclap,
+            Earthquake, Fissure, Dig, Mimic, DoubleTeam,
+            Reflect, Bide, FireBlast, SkullBash, Rest,
+            RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 194,
+    description: "Its hard scales provide strong protection. It uses its hefty bulk to execute powerful moves.",
+    evolution_data: None,
+)

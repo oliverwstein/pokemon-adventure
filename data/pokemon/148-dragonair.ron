@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 148,
+    name: "Dragonair",
+    types: [Dragon],
+    base_stats: (
+        hp: 61,
+        attack: 84,
+        defense: 65,
+        sp_attack: 70,
+        sp_defense: 70,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Wrap, Leer, ThunderWave],
+            10: [ThunderWave],
+            20: [Agility],
+            35: [Slam],
+            45: [DragonRage],
+            55: [HyperBeam],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Rage, Thunderclap, Mimic, DoubleTeam,
+            Reflect, Bide, FireBlast, Swift, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 144,
+    description: "A mystical Pokemon that exudes a gentle aura. Has the ability to change climate conditions.",
+    evolution_data: Some((
+        evolves_into: "Dragonite",
+        method: Level(55),
+    )),
+)

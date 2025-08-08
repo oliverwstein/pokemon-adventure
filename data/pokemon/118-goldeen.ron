@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 118,
+    name: "Goldeen",
+    types: [Water],
+    base_stats: (
+        hp: 45,
+        attack: 67,
+        defense: 60,
+        sp_attack: 35,
+        sp_defense: 50,
+        speed: 63,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, TailWhip],
+            19: [Supersonic],
+            24: [HornAttack],
+            30: [FuryAttack],
+            37: [Waterfall],
+            45: [HornDrill],
+            54: [Agility],
+        },
+        signature: None,
+        can_learn: [
+            TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, Surf, Toxic, Rage, Mimic,
+            DoubleTeam, Bide, Swift, SkullBash, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 225,
+    base_exp: 111,
+    description: "Its tail fin billows like an elegant ballroom dress, giving it the nickname of the Water Queen.",
+    evolution_data: Some((
+        evolves_into: "Seaking",
+        method: Level(33),
+    )),
+)

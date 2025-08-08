@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 108,
+    name: "Lickitung",
+    types: [Normal],
+    base_stats: (
+        hp: 90,
+        attack: 55,
+        defense: 75,
+        sp_attack: 60,
+        sp_defense: 75,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Wrap, Supersonic],
+            7: [Stomp],
+            15: [Disable],
+            23: [DefenseCurl],
+            31: [Slam],
+            39: [Screech],
+        },
+        signature: Some(Lick),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Submission,
+            Counter, Surf, Toxic, Rage, Earthquake, Fissure,
+            Mimic, DoubleTeam, Bide, FireBlast, SkullBash,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 127,
+    description: "Its tongue can be extended like a chameleon's. It leaves a tingling sensation when it licks enemies.",
+    evolution_data: None,
+)

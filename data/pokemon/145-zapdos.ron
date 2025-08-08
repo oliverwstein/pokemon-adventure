@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 145,
+    name: "Zapdos",
+    types: [Electric, Flying],
+    base_stats: (
+        hp: 90,
+        attack: 90,
+        defense: 85,
+        sp_attack: 125,
+        sp_defense: 90,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Shock, DrillPeck],
+            51: [Thunderclap],
+            55: [Agility],
+            60: [LightScreen],
+        },
+        signature: Some(Thunderclap),
+        can_learn: [
+            RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, Thunderclap, Mimic, DoubleTeam,
+            Reflect, Bide, Swift, SkyAttack, Rest, Substitute,
+            Flash
+        ],
+    ),
+    catch_rate: 3,
+    base_exp: 216,
+    description: "A legendary bird Pokemon that is said to appear from clouds while dropping enormous lightning bolts.",
+    evolution_data: None,
+)

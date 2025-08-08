@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 126,
+    name: "Magmar",
+    types: [Fire],
+    base_stats: (
+        hp: 65,
+        attack: 95,
+        defense: 57,
+        sp_attack: 100,
+        sp_defense: 85,
+        speed: 93,
+    ),
+    learnset: (
+        level_up: {
+            1: [Ember],
+            36: [Leer],
+            39: [ConfuseRay],
+            43: [FirePunch],
+            48: [Smokescreen],
+            52: [Smog],
+            55: [Flamethrower],
+        },
+        signature: Some(FirePunch),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Toxic, Psychic, Rage, Mimic,
+            DoubleTeam, Bide, Metronome, FireBlast, SkullBash,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 167,
+    description: "Its body always burns with an orange glow that enables it to hide perfectly among flames.",
+    evolution_data: None,
+)

@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 73,
+    name: "Tentacruel",
+    types: [Water, Poison],
+    base_stats: (
+        hp: 80,
+        attack: 70,
+        defense: 65,
+        sp_attack: 80,
+        sp_defense: 120,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Acid, Supersonic, Wrap],
+            7: [Supersonic],
+            13: [Wrap],
+            18: [PoisonSting],
+            22: [WaterGun],
+            27: [Constrict],
+            35: [Barrier],
+            43: [Screech],
+            50: [HydroPump],
+        },
+        signature: Some(AcidArmor),
+        can_learn: [
+            Cut, SwordsDance, BodySlam, TakeDown, DoubleEdge,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, HyperBeam,
+            Surf, Toxic, Rage, MegaDrain, Mimic, DoubleTeam,
+            Reflect, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 205,
+    description: "The tentacles are normally kept short. On hunts, they are extended to ensnare and immobilize prey.",
+    evolution_data: None,
+)

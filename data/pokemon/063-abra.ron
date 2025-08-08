@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 63,
+    name: "Abra",
+    types: [Psychic],
+    base_stats: (
+        hp: 25,
+        attack: 20,
+        defense: 15,
+        sp_attack: 105,
+        sp_defense: 55,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Teleport],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Toxic, Psychic, Rage, Teleport, Mimic, DoubleTeam,
+            Reflect, Bide, SkullBash, Rest, TriAttack, Substitute,
+            Flash
+        ],
+    ),
+    catch_rate: 200,
+    base_exp: 73,
+    description: "Using its ability to read minds, it will identify impending danger and teleport to safety.",
+    evolution_data: Some((
+        evolves_into: "Kadabra",
+        method: Level(16),
+    )),
+)

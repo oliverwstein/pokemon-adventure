@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 94,
+    name: "Gengar",
+    types: [Ghost, Poison],
+    base_stats: (
+        hp: 60,
+        attack: 65,
+        defense: 60,
+        sp_attack: 130,
+        sp_defense: 75,
+        speed: 110,
+    ),
+    learnset: (
+        level_up: {
+            1: [Lick, ConfuseRay, NightShade],
+            29: [NightShade],
+            38: [Hypnosis],
+            55: [DreamEater],
+        },
+        signature: Some(ShadowBall),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Psychic,
+            Mimic, DoubleTeam, Bide, Metronome, SelfDestruct, DreamEater,
+            Rest, Substitute, Explosion, Strength
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 190,
+    description: "Under a full moon, this Pokémon likes to mimic the shadows of people and laugh at their fright.",
+    evolution_data: None,
+)

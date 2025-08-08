@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 109,
+    name: "Koffing",
+    types: [Poison],
+    base_stats: (
+        hp: 40,
+        attack: 65,
+        defense: 95,
+        sp_attack: 60,
+        sp_defense: 45,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [PoisonGas, Tackle],
+            32: [Sludge],
+            37: [Smokescreen],
+            40: [SelfDestruct],
+            45: [Haze],
+            48: [Explosion],
+        },
+        signature: None,
+        can_learn: [
+            TakeDown, DoubleEdge, Toxic, Rage, Thunderclap,
+            Thunderclap, Mimic, DoubleTeam, Bide, SelfDestruct,
+            FireBlast, Rest, Explosion, Substitute, Flash
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 114,
+    description: "Because it stores several kinds of toxic gases in its body, it is prone to exploding without warning.",
+    evolution_data: Some((
+        evolves_into: "Weezing",
+        method: Level(35),
+    )),
+)

@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 49,
+    name: "Venomoth",
+    types: [Bug, Poison],
+    base_stats: (
+        hp: 70,
+        attack: 65,
+        defense: 60,
+        sp_attack: 90,
+        sp_defense: 75,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Disable, PoisonPowder, LeechLife],
+            24: [PoisonPowder],
+            27: [LeechLife],
+            30: [StunSpore],
+            38: [Psybeam],
+            43: [SleepPowder],
+            50: [Psychic],
+        },
+        signature: Some(Haze),
+        can_learn: [
+            RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, MegaDrain, Solarbeam, Psychic, Mimic,
+            DoubleTeam, Reflect, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 138,
+    description: "The dustlike scales covering its wings are color coded to indicate the kinds of poison it has.",
+    evolution_data: None,
+)

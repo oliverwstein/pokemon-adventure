@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 97,
+    name: "Hypno",
+    types: [Psychic],
+    base_stats: (
+        hp: 85,
+        attack: 73,
+        defense: 70,
+        sp_attack: 73,
+        sp_defense: 115,
+        speed: 67,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Hypnosis, Disable],
+            12: [Disable],
+            17: [Confusion],
+            24: [Headbutt],
+            33: [PoisonGas],
+            37: [Meditate],
+            43: [Psychic],
+            51: [Psywave],
+        },
+        signature: Some(Hypnosis),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Psychic,
+            Teleport, Mimic, DoubleTeam, Reflect, Bide, Metronome,
+            SkullBash, DreamEater, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 165,
+    description: "When it locks eyes with an enemy, it will use a mix of psi powers such as hypnosis and confusion.",
+    evolution_data: None,
+)

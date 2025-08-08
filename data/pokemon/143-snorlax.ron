@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 143,
+    name: "Snorlax",
+    types: [Normal],
+    base_stats: (
+        hp: 160,
+        attack: 110,
+        defense: 65,
+        sp_attack: 65,
+        sp_defense: 110,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Headbutt, Amnesia],
+            35: [Rest],
+            41: [BodySlam],
+            48: [Harden],
+            56: [DoubleEdge],
+            64: [HyperBeam],
+        },
+        signature: Some(Rest),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Submission,
+            Counter, Surf, Toxic, Psychic, Rage, Solarbeam,
+            Thunderclap, Earthquake, Fissure, Mimic,
+            DoubleTeam, Reflect, Bide, Metronome, SelfDestruct,
+            FireBlast, SkullBash, Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 25,
+    base_exp: 154,
+    description: "Very lazy. Just eats and sleeps. As its rotund bulk builds, it becomes steadily more slothful.",
+    evolution_data: None,
+)

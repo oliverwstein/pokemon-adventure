@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 80,
+    name: "Slowbro",
+    types: [Water, Psychic],
+    base_stats: (
+        hp: 95,
+        attack: 75,
+        defense: 110,
+        sp_attack: 100,
+        sp_defense: 80,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Confusion, Disable, Headbutt],
+            18: [Headbutt],
+            22: [Growl],
+            27: [WaterGun],
+            33: [Amnesia],
+            37: [Withdraw],
+            44: [Psychic],
+            55: [Psywave],
+        },
+        signature: Some(Amnesia),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, HyperBeam, HydroPump,
+            Surf, Submission, Counter, SeismicToss, Rage, Earthquake,
+            Fissure, Psychic, Teleport, Dig, Mimic, DoubleTeam, Reflect,
+            Bide, Metronome, FireBlast, Swift, SkullBash, Rest, TriAttack,
+            Substitute, Flash, Strength
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 164,
+    description: "The Shellder that is latched onto Slowpoke's tail is said to feed on the host's left over scraps.",
+    evolution_data: None,
+)

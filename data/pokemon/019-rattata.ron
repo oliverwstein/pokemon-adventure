@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 19,
+    name: "Rattata",
+    types: [Normal],
+    base_stats: (
+        hp: 30,
+        attack: 56,
+        defense: 35,
+        sp_attack: 25,
+        sp_defense: 35,
+        speed: 72,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip],
+            7: [QuickAttack],
+            14: [HyperFang],
+            23: [FocusEnergy],
+            34: [SuperFang],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun, 
+            Blizzard, IceBeam, Toxic, Rage, Mimic, DoubleTeam,
+            Bide, Swift, SkullBash, Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 57,
+    description: "Bites anything when it attacks. Small and very quick, it is a common sight in many places.",
+    evolution_data: Some((
+        evolves_into: "Raticate",
+        method: Level(20),
+    )),
+)

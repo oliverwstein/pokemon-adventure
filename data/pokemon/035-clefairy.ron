@@ -1,0 +1,40 @@
+PokemonSpecies(
+    pokedex_number: 35,
+    name: "Clefairy",
+    types: [Normal],
+    base_stats: (
+        hp: 70,
+        attack: 45,
+        defense: 48,
+        sp_attack: 60,
+        sp_defense: 65,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Growl],
+            13: [Sing],
+            18: [Doubleslap],
+            24: [Minimize],
+            31: [Metronome],
+            39: [DefenseCurl],
+            48: [LightScreen],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, Submission, Counter, Toxic,
+            Psychic, Rage, Solarbeam, Thunderclap,
+            Mimic, DoubleTeam, Reflect, Bide, Metronome,
+            FireBlast, SkullBash, Rest, TriAttack, Substitute,
+            Flash
+        ],
+    ),
+    catch_rate: 150,
+    base_exp: 113,
+    description: "Its magical and cute appeal has many admirers. It is rare and found only in certain areas.",
+    evolution_data: Some((
+        evolves_into: "Clefable",
+        method: Item(Moonstone),
+    )),
+)

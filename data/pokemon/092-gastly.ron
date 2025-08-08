@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 92,
+    name: "Gastly",
+    types: [Ghost, Poison],
+    base_stats: (
+        hp: 30,
+        attack: 35,
+        defense: 30,
+        sp_attack: 100,
+        sp_defense: 35,
+        speed: 80,
+    ),
+    learnset: (
+        level_up: {
+            1: [Lick, ConfuseRay],
+            27: [NightShade],
+            35: [Hypnosis],
+            43: [DreamEater],
+        },
+        signature: Some(ShadowBall),
+        can_learn: [
+            Toxic, Rage, Psychic, Mimic, DoubleTeam, Bide, SelfDestruct,
+            DreamEater, Rest, Substitute, Explosion
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 95,
+    description: "Almost invisible, this gaseous Pokémon cloaks the target and puts it to sleep without notice.",
+    evolution_data: Some((
+        evolves_into: "Haunter",
+        method: Level(25),
+    )),
+)

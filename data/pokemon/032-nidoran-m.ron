@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 32,
+    name: "Nidoran♂",
+    types: [Poison],
+    base_stats: (
+        hp: 46,
+        attack: 57,
+        defense: 40,
+        sp_attack: 40,
+        sp_defense: 40,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [Leer, Tackle],
+            8: [HornAttack],
+            14: [PoisonSting],
+            21: [FocusEnergy],
+            29: [FuryAttack],
+            36: [HornDrill],
+            43: [DoubleKick],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Blizzard, Toxic,
+            Rage, Thunderclap, Mimic, DoubleTeam,
+            Reflect, Bide, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 235,
+    base_exp: 60,
+    description: "Stiffens its ears to sense danger. The larger its horns, the more powerful its secreted venom.",
+    evolution_data: Some((
+        evolves_into: "Nidorino",
+        method: Level(16),
+    )),
+)

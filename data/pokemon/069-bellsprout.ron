@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 69,
+    name: "Bellsprout",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 50,
+        attack: 75,
+        defense: 35,
+        sp_attack: 70,
+        sp_defense: 30,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [VineWhip, Growth],
+            13: [Wrap],
+            15: [PoisonPowder],
+            18: [SleepPowder],
+            21: [StunSpore],
+            26: [Acid],
+            33: [Razor],
+            42: [Slam],
+        },
+        signature: None,
+        can_learn: [
+            Cut, SwordsDance, TakeDown, DoubleEdge, Toxic, Rage,
+            MegaDrain, Solarbeam, Mimic, DoubleTeam, Reflect,
+            Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 84,
+    description: "A carnivorous Pokemon that traps and eats bugs. It uses its root feet to soak up needed moisture.",
+    evolution_data: Some((
+        evolves_into: "Weepinbell",
+        method: Level(21),
+    )),
+)

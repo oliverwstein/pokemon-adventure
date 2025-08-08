@@ -1,0 +1,25 @@
+PokemonSpecies(
+    pokedex_number: 132,
+    name: "Ditto",
+    types: [Normal],
+    base_stats: (
+        hp: 48,
+        attack: 48,
+        defense: 48,
+        sp_attack: 48,
+        sp_defense: 48,
+        speed: 48,
+    ),
+    learnset: (
+        level_up: {
+            1: [Transform],
+        },
+        signature: Some(Transform),
+        can_learn: [
+        ],
+    ),
+    catch_rate: 35,
+    base_exp: 61,
+    description: "Capable of copying an enemy's genetic code to instantly transform itself into a duplicate of the enemy.",
+    evolution_data: None,
+)

@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 22,
+    name: "Fearow",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 65,
+        attack: 90,
+        defense: 65,
+        sp_attack: 61,
+        sp_defense: 61,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, Growl, Leer],
+            9: [Leer],
+            15: [FuryAttack],
+            25: [MirrorMove],
+            34: [DrillPeck],
+            43: [Agility],
+        },
+        signature: Some(RazorWind),
+        can_learn: [
+            RazorWind, Whirlwind, Fly, HyperBeam, Toxic, TakeDown,
+            DoubleEdge, Rage, Mimic, DoubleTeam, Bide, Swift,
+            SkyAttack, Rest, Substitute
+        ],
+    ),
+    catch_rate: 90,
+    base_exp: 162,
+    description: "With its huge and magnificent wings, it can keep aloft without ever having to land for rest.",
+    evolution_data: None,
+)

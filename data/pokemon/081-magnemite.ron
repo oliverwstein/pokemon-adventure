@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 81,
+    name: "Magnemite",
+    types: [Electric],
+    base_stats: (
+        hp: 25,
+        attack: 35,
+        defense: 70,
+        sp_attack: 95,
+        sp_defense: 55,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle],
+            21: [SonicBoom],
+            25: [Shock],
+            29: [Supersonic],
+            35: [ThunderWave],
+            41: [Swift],
+            47: [Screech],
+        },
+        signature: Some(ChargeBeam),
+        can_learn: [
+            Toxic, TakeDown, DoubleEdge, Rage, Thunderclap, Discharge,
+            Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift, Rest,
+            ThunderWave, Substitute, Flash
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 65,
+    description: "Uses anti-gravity to stay suspended. Appears without warning and uses Thunder Wave and similar moves.",
+    evolution_data: Some((
+        evolves_into: "Magneton",
+        method: Level(30),
+    )),
+)

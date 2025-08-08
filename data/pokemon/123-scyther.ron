@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 123,
+    name: "Scyther",
+    types: [Bug, Flying],
+    base_stats: (
+        hp: 70,
+        attack: 110,
+        defense: 80,
+        sp_attack: 55,
+        sp_defense: 80,
+        speed: 105,
+    ),
+    learnset: (
+        level_up: {
+            1: [QuickAttack],
+            17: [Leer],
+            20: [FocusEnergy],
+            24: [DoubleTeam],
+            29: [Slash],
+            35: [SwordsDance],
+            42: [Agility],
+        },
+        signature: Some(SwordsDance),
+        can_learn: [
+            SwordsDance, TakeDown, DoubleEdge, HyperBeam, Toxic,
+            Rage, Mimic, DoubleTeam, Bide, Swift, SkullBash,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 187,
+    description: "With ninja-like agility and speed, it can create the illusion that there is more than one.",
+    evolution_data: None,
+)

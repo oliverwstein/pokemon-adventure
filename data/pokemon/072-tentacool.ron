@@ -1,0 +1,40 @@
+PokemonSpecies(
+    pokedex_number: 72,
+    name: "Tentacool",
+    types: [Water, Poison],
+    base_stats: (
+        hp: 40,
+        attack: 40,
+        defense: 35,
+        sp_attack: 50,
+        sp_defense: 100,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Acid],
+            7: [Supersonic],
+            13: [Wrap],
+            18: [PoisonSting],
+            22: [WaterGun],
+            27: [Constrict],
+            33: [Barrier],
+            40: [Screech],
+            48: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            Cut, SwordsDance, TakeDown, DoubleEdge, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, HyperBeam, Surf,
+            Toxic, Rage, MegaDrain, Mimic, DoubleTeam,
+            Reflect, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 105,
+    description: "Drifts in shallow seas. Anglers who hook them by accident are often punished by its stinging acid.",
+    evolution_data: Some((
+        evolves_into: "Tentacruel",
+        method: Level(30),
+    )),
+)

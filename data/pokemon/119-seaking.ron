@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 119,
+    name: "Seaking",
+    types: [Water],
+    base_stats: (
+        hp: 80,
+        attack: 92,
+        defense: 65,
+        sp_attack: 65,
+        sp_defense: 80,
+        speed: 68,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, TailWhip, Supersonic],
+            19: [Supersonic],
+            24: [HornAttack],
+            30: [FuryAttack],
+            39: [Waterfall],
+            48: [HornDrill],
+            54: [Agility],
+        },
+        signature: Some(HornAttack),
+        can_learn: [
+            TakeDown, DoubleEdge, HyperBeam, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Rage, Mimic, DoubleTeam, Bide, Swift,
+            SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 170,
+    description: "In the autumn spawning season, they can be seen swimming powerfully up rivers and creeks.",
+    evolution_data: None,
+)

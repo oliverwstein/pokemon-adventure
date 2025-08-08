@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 122,
+    name: "Mr. Mime",
+    types: [Psychic],
+    base_stats: (
+        hp: 40,
+        attack: 45,
+        defense: 65,
+        sp_attack: 100,
+        sp_defense: 120,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Confusion, Barrier],
+            15: [Confusion],
+            23: [LightScreen],
+            31: [Doubleslap],
+            39: [Meditate],
+            47: [Substitute],
+        },
+        signature: Some(Mimic),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
+            Counter, Toxic, Psychic, Rage, Solarbeam, Thunderclap,
+            Thunderclap, Teleport, Mimic, DoubleTeam, Reflect,
+            Bide, Metronome, SkullBash, Rest, Substitute, Flash
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 136,
+    description: "If interrupted while it is miming, it will slap around the offender with its broad hands.",
+    evolution_data: None,
+)

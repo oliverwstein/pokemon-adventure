@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 138,
+    name: "Omanyte",
+    types: [Rock, Water],
+    base_stats: (
+        hp: 35,
+        attack: 40,
+        defense: 100,
+        sp_attack: 90,
+        sp_defense: 55,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [Constrict, Withdraw],
+            34: [HornAttack],
+            39: [Leer],
+            46: [Spike],
+            53: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Rage, Mimic, DoubleTeam, Reflect, Bide,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 120,
+    description: "Although long extinct, in rare cases, it can be genetically resurrected from fossils.",
+    evolution_data: Some((
+        evolves_into: "Omastar",
+        method: Level(40),
+    )),
+)

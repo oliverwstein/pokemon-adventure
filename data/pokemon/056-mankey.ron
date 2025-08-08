@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 56,
+    name: "Mankey",
+    types: [Fighting],
+    base_stats: (
+        hp: 40,
+        attack: 80,
+        defense: 35,
+        sp_attack: 35,
+        sp_defense: 45,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Leer],
+            15: [KarateChop],
+            21: [FurySwipes],
+            27: [FocusEnergy],
+            33: [Seismic],
+            39: [Thrash],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Toxic, Rage, Thunderclap, Dig, Mimic,
+            DoubleTeam, Bide, Swift, SkullBash, Rest, RockSlide,
+            Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 74,
+    description: "Extremely quick to anger. It could be docile one moment then thrashing away the next instant.",
+    evolution_data: Some((
+        evolves_into: "Primeape",
+        method: Level(28),
+    )),
+)

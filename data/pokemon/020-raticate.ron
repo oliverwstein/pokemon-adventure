@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 20,
+    name: "Raticate",
+    types: [Normal],
+    base_stats: (
+        hp: 55,
+        attack: 81,
+        defense: 60,
+        sp_attack: 50,
+        sp_defense: 70,
+        speed: 97,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, QuickAttack],
+            7: [QuickAttack],
+            14: [HyperFang],
+            27: [FocusEnergy],
+            41: [SuperFang],
+        },
+        signature: Some(SuperFang),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            Blizzard, IceBeam, HyperBeam, Toxic, Rage, Mimic, DoubleTeam, Bide, Swift, SkullBash,
+            Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 127,
+    base_exp: 116,
+    description: "It uses its whiskers to maintain its balance. It apparently slows down if they are cut off.",
+    evolution_data: None,
+)

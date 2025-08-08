@@ -1,0 +1,28 @@
+PokemonSpecies(
+    pokedex_number: 45,
+    name: "Vileplume",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 75,
+        attack: 80,
+        defense: 85,
+        sp_attack: 110,
+        sp_defense: 90,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [StunSpore, SleepPowder, PetalDance],
+        },
+        signature: Some(PetalDance),
+        can_learn: [
+            Cut, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, MegaDrain, Solarbeam, Mimic,
+            DoubleTeam, Reflect, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 184,
+    description: "The larger its petals, the more toxic pollen it contains. It has the largest petals in the world.",
+    evolution_data: None,
+)

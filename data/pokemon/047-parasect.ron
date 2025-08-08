@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 47,
+    name: "Parasect",
+    types: [Bug, Grass],
+    base_stats: (
+        hp: 60,
+        attack: 95,
+        defense: 80,
+        sp_attack: 60,
+        sp_defense: 80,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, StunSpore, LeechLife],
+            7: [StunSpore],
+            13: [LeechLife],
+            20: [Spore],
+            30: [Slash],
+            39: [Growth],
+        },
+        signature: Some(Spore),
+        can_learn: [
+            Cut, Strength, BodySlam, TakeDown, DoubleEdge,
+            HyperBeam, Toxic, Rage, MegaDrain, Solarbeam,
+            Dig, Mimic, DoubleTeam, Reflect, Bide, SkullBash,
+            Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 128,
+    description: "A host-parasite pair in which the parasite mushroom has taken over the host bug. Prefers damp places.",
+    evolution_data: None,
+)

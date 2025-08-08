@@ -298,7 +298,7 @@
     * Blizzard
 
 * ZAPDOS
-    * Thunderbolt
+    * Thunderclap
 
 * MOLTRES
     * Fire Blast

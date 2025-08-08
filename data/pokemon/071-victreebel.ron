@@ -1,0 +1,28 @@
+PokemonSpecies(
+    pokedex_number: 71,
+    name: "Victreebel",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 80,
+        attack: 105,
+        defense: 65,
+        sp_attack: 100,
+        sp_defense: 70,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [StunSpore, SleepPowder, VineWhip, Acid],
+        },
+        signature: Some(VineWhip),
+        can_learn: [
+            Cut, SwordsDance, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, MegaDrain, Solarbeam, Mimic, DoubleTeam,
+            Reflect, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 191,
+    description: "Said to live in huge colonies deep in jungles, although no one has ever returned from there.",
+    evolution_data: None,
+)

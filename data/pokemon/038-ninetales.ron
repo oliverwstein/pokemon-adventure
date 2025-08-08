@@ -1,0 +1,28 @@
+PokemonSpecies(
+    pokedex_number: 38,
+    name: "Ninetales",
+    types: [Fire],
+    base_stats: (
+        hp: 73,
+        attack: 76,
+        defense: 75,
+        sp_attack: 81,
+        sp_defense: 100,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Ember, TailWhip, QuickAttack, Roar],
+        },
+        signature: Some(WillOWisp),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
+            Rage, Dig, Mimic, DoubleTeam, Reflect, Bide,
+            FireBlast, Swift, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 178,
+    description: "Very smart and vengeful. Grabbing one of its many tails could result in a 1000-year curse.",
+    evolution_data: None,
+)

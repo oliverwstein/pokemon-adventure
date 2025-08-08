@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 136,
+    name: "Flareon",
+    types: [Fire],
+    base_stats: (
+        hp: 65,
+        attack: 130,
+        defense: 60,
+        sp_attack: 95,
+        sp_defense: 110,
+        speed: 65,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, Ember],
+            27: [QuickAttack],
+            31: [Ember],
+            37: [Bite],
+            40: [Leer],
+            42: [FireSpin],
+            44: [Rage],
+            48: [Flamethrower],
+        },
+        signature: Some(FireFang),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
+            Rage, Mimic, DoubleTeam, Reflect, Bide, FireBlast,
+            Swift, Rest, Substitute, Shadow
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 198,
+    description: "When storing thermal energy in its body, its temperature could soar to over 1600 degrees.",
+    evolution_data: None,
+)

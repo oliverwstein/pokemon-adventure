@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 58,
+    name: "Growlithe",
+    types: [Fire],
+    base_stats: (
+        hp: 55,
+        attack: 70,
+        defense: 45,
+        sp_attack: 70,
+        sp_defense: 50,
+        speed: 60,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bite, Roar],
+            18: [Ember],
+            23: [Leer],
+            30: [TakeDown],
+            39: [Agility],
+            50: [Flamethrower],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Toxic, Rage,
+            Dig, Mimic, DoubleTeam, Reflect, Bide, FireBlast,
+            Swift, SkullBash, Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 91,
+    description: "Very protective of its territory. It will bark and bite to repel intruders from its space.",
+    evolution_data: Some((
+        evolves_into: "Arcanine",
+        method: Item(Firestone),
+    )),
+)

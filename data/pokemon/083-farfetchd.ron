@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 83,
+    name: "Farfetch'd",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 52,
+        attack: 90,
+        defense: 55,
+        sp_attack: 58,
+        sp_defense: 62,
+        speed: 60,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, SandAttack],
+            7: [Leer],
+            15: [FuryAttack],
+            23: [SwordsDance],
+            31: [Agility],
+            39: [Slash],
+        },
+        signature: None,
+        can_learn: [
+            RazorWind, Whirlwind, SkyAttack, Fly, Toxic, BodySlam, TakeDown,
+            DoubleEdge, Rage, Mimic, DoubleTeam, Bide, Swift, SkullBash,
+            Rest, Substitute, Cut
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 94,
+    description: "The plant stalk it holds is its weapon. The stalk is used generously to perform many different moves.",
+    evolution_data: None,
+)

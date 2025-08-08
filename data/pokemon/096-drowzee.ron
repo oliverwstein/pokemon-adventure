@@ -1,0 +1,39 @@
+PokemonSpecies(
+    pokedex_number: 96,
+    name: "Drowzee",
+    types: [Psychic],
+    base_stats: (
+        hp: 60,
+        attack: 48,
+        defense: 45,
+        sp_attack: 43,
+        sp_defense: 90,
+        speed: 42,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Hypnosis],
+            12: [Disable],
+            17: [Confusion],
+            24: [Headbutt],
+            29: [PoisonGas],
+            32: [Meditate],
+            37: [Psychic],
+            43: [Psywave],
+        },
+        signature: Some(Hypnosis),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Submission, Counter, SeismicToss, Rage, Psychic, Teleport,
+            Mimic, DoubleTeam, Reflect, Bide, Metronome, SkullBash,
+            DreamEater, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 102,
+    description: "Puts enemies to sleep then eats their dreams. Occasionally gets sick from eating bad dreams.",
+    evolution_data: Some((
+        evolves_into: "Hypno",
+        method: Level(26),
+    )),
+)

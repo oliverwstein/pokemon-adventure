@@ -1,0 +1,39 @@
+PokemonSpecies(
+    pokedex_number: 79,
+    name: "Slowpoke",
+    types: [Water, Psychic],
+    base_stats: (
+        hp: 90,
+        attack: 65,
+        defense: 65,
+        sp_attack: 40,
+        sp_defense: 40,
+        speed: 15,
+    ),
+    learnset: (
+        level_up: {
+            1: [Confusion, Disable],
+            18: [Headbutt],
+            22: [Growl],
+            27: [WaterGun],
+            33: [Amnesia],
+            40: [Psychic],
+            48: [Psywave],
+        },
+        signature: Some(Amnesia),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun, IceBeam,
+            Blizzard, HydroPump, Surf, Flamethrower, Psychic, Teleport,
+            Rage, Earthquake, Fissure, Dig, Mimic, DoubleTeam, Reflect,
+            Bide, FireBlast, Swift, Rest, TriAttack, Substitute, Flash,
+            Strength
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 99,
+    description: "Incredibly slow and dopey. It takes five seconds for it to feel pain when under attack.",
+    evolution_data: Some((
+        evolves_into: "Slowbro",
+        method: Level(37),
+    )),
+)

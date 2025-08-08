@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 64,
+    name: "Kadabra",
+    types: [Psychic],
+    base_stats: (
+        hp: 40,
+        attack: 35,
+        defense: 30,
+        sp_attack: 120,
+        sp_defense: 70,
+        speed: 105,
+    ),
+    learnset: (
+        level_up: {
+            1: [Teleport, Kinesis],
+            16: [Kinesis],
+            20: [Confusion],
+            27: [Disable],
+            31: [Psybeam],
+            38: [Recover],
+            42: [Psychic],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Toxic, Psychic, Rage, Teleport, Mimic, DoubleTeam,
+            Reflect, Bide, SkullBash, Rest, TriAttack, Substitute,
+            Flash
+        ],
+    ),
+    catch_rate: 100,
+    base_exp: 145,
+    description: "It emits special alpha waves from its body that induce headaches just by being close by.",
+    evolution_data: Some((
+        evolves_into: "Alakazam",
+        method: Level(36),
+    )),
+)

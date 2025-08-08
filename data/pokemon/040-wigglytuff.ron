@@ -1,0 +1,30 @@
+PokemonSpecies(
+    pokedex_number: 40,
+    name: "Wigglytuff",
+    types: [Normal],
+    base_stats: (
+        hp: 140,
+        attack: 70,
+        defense: 45,
+        sp_attack: 85,
+        sp_defense: 50,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Sing, Disable, DefenseCurl, Doubleslap],
+        },
+        signature: Some(Sing),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Submission,
+            Counter, Toxic, Psychic, Rage, Solarbeam, Thunderclap,
+            Thunderclap, Mimic, DoubleTeam, Reflect, Bide, FireBlast,
+            SkullBash, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 50,
+    base_exp: 109,
+    description: "The body is soft and rubbery. When angered, it will suck in air and inflate itself to an enormous size.",
+    evolution_data: None,
+)

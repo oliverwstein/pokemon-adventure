@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 53,
+    name: "Persian",
+    types: [Normal],
+    base_stats: (
+        hp: 65,
+        attack: 70,
+        defense: 60,
+        sp_attack: 65,
+        sp_defense: 65,
+        speed: 115,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Growl, Bite, Screech],
+            12: [Bite],
+            17: [PayDay],
+            24: [Screech],
+            37: [FurySwipes],
+            51: [Slash],
+        },
+        signature: Some(PayDay),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            HyperBeam, Toxic, Rage, Thunderclap, Mimic,
+            DoubleTeam, Bide, Swift, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 90,
+    base_exp: 148,
+    description: "Although its fur has many admirers, it is tough to raise as a pet because of its fickle meanness.",
+    evolution_data: None,
+)

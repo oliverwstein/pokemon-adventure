@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 87,
+    name: "Dewgong",
+    types: [Water, Ice],
+    base_stats: (
+        hp: 90,
+        attack: 70,
+        defense: 80,
+        sp_attack: 70,
+        sp_defense: 95,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Headbutt, Growl, AuroraBeam],
+            16: [Growl],
+            21: [AuroraBeam],
+            32: [Rest],
+            38: [TakeDown],
+            51: [IceBeam],
+        },
+        signature: Some(AuroraBeam),
+        can_learn: [
+            Toxic, BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, HyperBeam, HydroPump, Surf, Rage, Mimic,
+            DoubleTeam, Bide, Swift, SkullBash, Rest, Substitute, Strength
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 176,
+    description: "Stores thermal energy in its body. Swims at a steady 8 knots even in intensely cold waters.",
+    evolution_data: None,
+)

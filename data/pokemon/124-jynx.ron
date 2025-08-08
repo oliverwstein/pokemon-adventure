@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 124,
+    name: "Jynx",
+    types: [Ice, Psychic],
+    base_stats: (
+        hp: 65,
+        attack: 50,
+        defense: 35,
+        sp_attack: 115,
+        sp_defense: 95,
+        speed: 95,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, LovelyKiss],
+            18: [Lick],
+            23: [Doubleslap],
+            31: [IcePunch],
+            39: [BodySlam],
+            47: [Thrash],
+            58: [Blizzard],
+        },
+        signature: Some(LovelyKiss),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
+            Counter, Bubblebeam, WaterGun, IceBeam, Blizzard,
+            Toxic, Psychic, Rage, Teleport, Mimic, DoubleTeam,
+            Reflect, Bide, Metronome, SkullBash, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 137,
+    description: "It seductively wiggles its hips as it walks. It can cause people to dance in unison with it.",
+    evolution_data: None,
+)

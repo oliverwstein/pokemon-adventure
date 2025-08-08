@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 149,
+    name: "Dragonite",
+    types: [Dragon, Flying],
+    base_stats: (
+        hp: 91,
+        attack: 134,
+        defense: 95,
+        sp_attack: 100,
+        sp_defense: 100,
+        speed: 80,
+    ),
+    learnset: (
+        level_up: {
+            1: [Wrap, Leer, ThunderWave, Agility],
+            10: [ThunderWave],
+            20: [Agility],
+            35: [Slam],
+            45: [DragonRage],
+            60: [HyperBeam],
+        },
+        signature: Some(Outrage),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Thunderclap, Mimic,
+            DoubleTeam, Reflect, Bide, FireBlast, Swift,
+            SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 218,
+    description: "An extremely rarely seen marine Pokemon. Its intelligence is said to match that of humans.",
+    evolution_data: None,
+)

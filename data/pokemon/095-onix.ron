@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 95,
+    name: "Onix",
+    types: [Rock, Ground],
+    base_stats: (
+        hp: 35,
+        attack: 45,
+        defense: 160,
+        sp_attack: 30,
+        sp_defense: 45,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Screech],
+            15: [Bind],
+            19: [RockThrow],
+            25: [Rage],
+            33: [Slam],
+            43: [Harden],
+        },
+        signature: Some(Vicegrip),
+        can_learn: [
+            Toxic, BodySlam, TakeDown, DoubleEdge, Rage, Earthquake,
+            Fissure, Dig, Mimic, DoubleTeam, Bide, SelfDestruct,
+            Rest, RockSlide, Substitute, Explosion
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 108,
+    description: "As it grows, the stone portions of its body harden to become similar to a diamond, but colored black.",
+    evolution_data: None,
+)

@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 66,
+    name: "Machop",
+    types: [Fighting],
+    base_stats: (
+        hp: 70,
+        attack: 80,
+        defense: 50,
+        sp_attack: 35,
+        sp_defense: 35,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [KarateChop],
+            20: [LowKick],
+            25: [Leer],
+            32: [FocusEnergy],
+            39: [Seismic],
+            46: [Submission],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Toxic, Rage, Earthquake, Fissure, Dig, Mimic,
+            DoubleTeam, Bide, FireBlast, SkullBash, Rest,
+            RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 180,
+    base_exp: 88,
+    description: "Loves to build its muscles. It trains in all styles of martial arts to become even stronger.",
+    evolution_data: Some((
+        evolves_into: "Machoke",
+        method: Level(28),
+    )),
+)

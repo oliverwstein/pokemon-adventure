@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 147,
+    name: "Dratini",
+    types: [Dragon],
+    base_stats: (
+        hp: 41,
+        attack: 64,
+        defense: 45,
+        sp_attack: 50,
+        sp_defense: 50,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [Wrap, Leer],
+            10: [ThunderWave],
+            20: [Agility],
+            30: [Slam],
+            40: [DragonRage],
+            50: [HyperBeam],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Rage, Thunderclap, Mimic, DoubleTeam,
+            Reflect, Bide, FireBlast, Swift, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 67,
+    description: "Long considered a mythical Pokemon until recently when a small colony was found living underwater.",
+    evolution_data: Some((
+        evolves_into: "Dragonair",
+        method: Level(30),
+    )),
+)

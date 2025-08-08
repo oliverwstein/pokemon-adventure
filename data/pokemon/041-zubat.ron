@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 41,
+    name: "Zubat",
+    types: [Poison, Flying],
+    base_stats: (
+        hp: 40,
+        attack: 45,
+        defense: 35,
+        sp_attack: 30,
+        sp_defense: 40,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [LeechLife],
+            10: [Supersonic],
+            15: [Bite],
+            21: [ConfuseRay],
+            28: [WingAttack],
+            36: [Haze],
+        },
+        signature: None,
+        can_learn: [
+            RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
+            Rage, Mimic, DoubleTeam, Bide, Swift, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 54,
+    description: "Forms colonies in perpetually dark places. Uses ultrasonic waves to identify and approach targets.",
+    evolution_data: Some((
+        evolves_into: "Golbat",
+        method: Level(22),
+    )),
+)

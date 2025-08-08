@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 137,
+    name: "Porygon",
+    types: [Normal],
+    base_stats: (
+        hp: 65,
+        attack: 60,
+        defense: 70,
+        sp_attack: 85,
+        sp_defense: 75,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [Conversion, Tackle, Sharpen],
+            23: [Psybeam],
+            28: [Recover],
+            35: [Agility],
+            42: [TriAttack],
+        },
+        signature: Some(Conversion),
+        can_learn: [
+            TakeDown, DoubleEdge, HyperBeam, Toxic, Psychic,
+            Rage, Thunderclap, Teleport, Mimic,
+            DoubleTeam, Reflect, Bide, Swift, SkullBash,
+            Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 130,
+    description: "A Pokemon that consists entirely of programming code. Capable of moving freely in cyberspace.",
+    evolution_data: None,
+)

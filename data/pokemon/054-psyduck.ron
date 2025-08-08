@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 54,
+    name: "Psyduck",
+    types: [Water],
+    base_stats: (
+        hp: 50,
+        attack: 52,
+        defense: 48,
+        sp_attack: 65,
+        sp_defense: 50,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch],
+            28: [TailWhip],
+            31: [Disable],
+            36: [ConfuseRay],
+            43: [Psychic],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Psychic, Mimic, DoubleTeam, Bide,
+            Swift, Rest, Substitute, Flash
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 80,
+    description: "While lulling its enemies with its vacant look, this wily Pokemon will use psychokinetic powers.",
+    evolution_data: Some((
+        evolves_into: "Golduck",
+        method: Level(33),
+    )),
+)

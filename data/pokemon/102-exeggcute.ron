@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 102,
+    name: "Exeggcute",
+    types: [Grass, Psychic],
+    base_stats: (
+        hp: 60,
+        attack: 40,
+        defense: 80,
+        sp_attack: 60,
+        sp_defense: 45,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [Barrage, Hypnosis],
+            25: [Reflect],
+            28: [LeechSeed],
+            32: [StunSpore],
+            37: [PoisonPowder],
+            42: [Solarbeam],
+            48: [SleepPowder],
+        },
+        signature: None,
+        can_learn: [
+            Strength, Toxic, TakeDown, DoubleEdge, Psychic,
+            Rage, MegaDrain, Solarbeam, Teleport, Mimic,
+            DoubleTeam, Reflect, Bide, SelfDestruct, EggBomb,
+            Rest, Explosion, Substitute
+        ],
+    ),
+    catch_rate: 90,
+    base_exp: 98,
+    description: "Often mistaken for eggs. When disturbed, they quickly gather and attack in swarms.",
+    evolution_data: Some((
+        evolves_into: "Exeggutor",
+        method: Item(Leafstone),
+    )),
+)

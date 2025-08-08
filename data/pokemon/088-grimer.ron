@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 88,
+    name: "Grimer",
+    types: [Poison],
+    base_stats: (
+        hp: 80,
+        attack: 80,
+        defense: 50,
+        sp_attack: 40,
+        sp_defense: 50,
+        speed: 25,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Disable],
+            30: [PoisonGas],
+            33: [Minimize],
+            37: [Sludge],
+            42: [Harden],
+            48: [Screech],
+            55: [Toxic],
+        },
+        signature: Some(Sludge),
+        can_learn: [
+            MegaPunch, Toxic, BodySlam, TakeDown, DoubleEdge, Rage,
+            Thunderclap, Discharge, Mimic, DoubleTeam, SelfDestruct,
+            Bide, Metronome, FirePunch, Rest, Explosion, Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 90,
+    description: "Appears in filthy areas. Thrives by sucking up polluted sludge that is pumped out of factories.",
+    evolution_data: Some((
+        evolves_into: "Muk",
+        method: Level(38),
+    )),
+)

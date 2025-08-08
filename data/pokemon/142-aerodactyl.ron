@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 142,
+    name: "Aerodactyl",
+    types: [Rock, Flying],
+    base_stats: (
+        hp: 80,
+        attack: 105,
+        defense: 65,
+        sp_attack: 60,
+        sp_defense: 75,
+        speed: 130,
+    ),
+    learnset: (
+        level_up: {
+            1: [WingAttack, Agility],
+            33: [Supersonic],
+            38: [Bite],
+            45: [TakeDown],
+            54: [HyperBeam],
+        },
+        signature: Some(RockSlide),
+        can_learn: [
+            RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
+            Rage, Mimic, DoubleTeam, Reflect, Bide, FireBlast,
+            Swift, SkyAttack, Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 202,
+    description: "A ferocious, prehistoric Pokemon that goes for the enemy's throat with its serrated saw-like fangs.",
+    evolution_data: None,
+)

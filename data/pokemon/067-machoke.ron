@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 67,
+    name: "Machoke",
+    types: [Fighting],
+    base_stats: (
+        hp: 80,
+        attack: 100,
+        defense: 70,
+        sp_attack: 50,
+        sp_defense: 60,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [KarateChop, LowKick],
+            20: [LowKick],
+            25: [Leer],
+            36: [FocusEnergy],
+            44: [Seismic],
+            52: [Submission],
+        },
+        signature: None,
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, Submission,
+            Counter, Toxic, Rage, Earthquake, Fissure, Dig,
+            Mimic, DoubleTeam, Bide, FireBlast, SkullBash,
+            Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 90,
+    base_exp: 146,
+    description: "Its muscular body is so powerful, it must wear a power save belt to be able to regulate its motions.",
+    evolution_data: Some((
+        evolves_into: "Machamp",
+        method: Level(36),
+    )),
+)

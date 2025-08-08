@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 111,
+    name: "Rhyhorn",
+    types: [Ground, Rock],
+    base_stats: (
+        hp: 80,
+        attack: 85,
+        defense: 95,
+        sp_attack: 30,
+        sp_defense: 30,
+        speed: 25,
+    ),
+    learnset: (
+        level_up: {
+            1: [HornAttack],
+            30: [Stomp],
+            35: [Fury],
+            40: [HornDrill],
+            45: [Leer],
+            50: [TakeDown],
+        },
+        signature: None,
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, Toxic,
+            Rage, Thunderclap, Earthquake, Fissure,
+            Dig, Mimic, DoubleTeam, Bide, FireBlast, SkullBash,
+            Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 135,
+    description: "Its massive bones are 1000 times harder than human bones. It can easily knock a trailer truck flying.",
+    evolution_data: Some((
+        evolves_into: "Rhydon",
+        method: Level(42),
+    )),
+)

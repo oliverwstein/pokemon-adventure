@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 116,
+    name: "Horsea",
+    types: [Water],
+    base_stats: (
+        hp: 30,
+        attack: 40,
+        defense: 70,
+        sp_attack: 70,
+        sp_defense: 25,
+        speed: 60,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam],
+            19: [Smokescreen],
+            24: [Leer],
+            30: [WaterGun],
+            37: [Agility],
+            45: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, Surf, Toxic, Rage, Mimic,
+            DoubleTeam, Bide, Swift, Rest, Substitute
+        ],
+    ),
+    catch_rate: 225,
+    base_exp: 83,
+    description: "Known to shoot down flying bugs with precision blasts of ink from the surface of the water.",
+    evolution_data: Some((
+        evolves_into: "Seadra",
+        method: Level(32),
+    )),
+)

@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 89,
+    name: "Muk",
+    types: [Poison],
+    base_stats: (
+        hp: 105,
+        attack: 105,
+        defense: 75,
+        sp_attack: 65,
+        sp_defense: 100,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Disable, PoisonGas],
+            30: [PoisonGas],
+            33: [Minimize],
+            37: [Sludge],
+            45: [Harden],
+            53: [Screech],
+            62: [Toxic],
+        },
+        signature: Some(Sludge),
+        can_learn: [
+            MegaPunch, Toxic, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Rage, Thunderclap, Discharge, Mimic, DoubleTeam, SelfDestruct,
+            Bide, Metronome, FirePunch, Rest, Explosion, Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 157,
+    description: "Thickly covered with a filthy, vile sludge. It is so toxic, even its footprints contain poison.",
+    evolution_data: None,
+)

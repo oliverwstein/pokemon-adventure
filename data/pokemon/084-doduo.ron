@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 84,
+    name: "Doduo",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 35,
+        attack: 85,
+        defense: 45,
+        sp_attack: 35,
+        sp_defense: 35,
+        speed: 75,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, Growl],
+            20: [FuryAttack],
+            24: [DrillPeck],
+            30: [Rage],
+            36: [TriAttack],
+            40: [Agility],
+        },
+        signature: Some(DrillPeck),
+        can_learn: [
+            Whirlwind, SkyAttack, Toxic, TakeDown, DoubleEdge, Rage,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, Rest, Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 96,
+    description: "A bird that makes up for its poor flying with its fast foot speed. Leaves giant footprints.",
+    evolution_data: Some((
+        evolves_into: "Dodrio",
+        method: Level(31),
+    )),
+)

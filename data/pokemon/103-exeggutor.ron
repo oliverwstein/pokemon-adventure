@@ -1,0 +1,30 @@
+PokemonSpecies(
+    pokedex_number: 103,
+    name: "Exeggutor",
+    types: [Grass, Psychic],
+    base_stats: (
+        hp: 95,
+        attack: 95,
+        defense: 85,
+        sp_attack: 125,
+        sp_defense: 75,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [Barrage, Hypnosis, Stomp],
+            28: [Stomp],
+        },
+        signature: Some(EggBomb),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Psychic, Rage, MegaDrain, Solarbeam, Teleport,
+            Mimic, DoubleTeam, Reflect, Bide, SelfDestruct,
+            EggBomb, Rest, Explosion, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 212,
+    description: "Legend has it that on rare occasions, one of its heads will drop off and continue living as an Exeggcute.",
+    evolution_data: None,
+)

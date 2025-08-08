@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 78,
+    name: "Rapidash",
+    types: [Fire],
+    base_stats: (
+        hp: 65,
+        attack: 100,
+        defense: 70,
+        sp_attack: 80,
+        sp_defense: 80,
+        speed: 105,
+    ),
+    learnset: (
+        level_up: {
+            1: [Ember, Growl, TailWhip, Stomp],
+            30: [TailWhip],
+            32: [Stomp],
+            35: [Agility],
+            39: [TakeDown],
+            47: [BlazeKick],
+            55: [FireSpin],
+            63: [FireBlast],
+        },
+        signature: Some(BlazeKick),
+        can_learn: [
+            Toxic, BodySlam, TakeDown, DoubleEdge, HyperBeam, Rage,
+            Mimic, DoubleTeam, Reflect, Bide, FireBlast, Swift, Rest,
+            Substitute, Strength, Flamethrower
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 175,
+    description: "Very competitive, this Pokémon will chase anything that moves fast in the hopes of racing it.",
+    evolution_data: None,
+)

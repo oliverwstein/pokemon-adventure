@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 60,
+    name: "Poliwag",
+    types: [Water],
+    base_stats: (
+        hp: 40,
+        attack: 50,
+        defense: 40,
+        sp_attack: 40,
+        sp_defense: 40,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam],
+            16: [Hypnosis],
+            19: [WaterGun],
+            25: [Doubleslap],
+            31: [BodySlam],
+            38: [Amnesia],
+            45: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Psychic, Rage, Mimic, DoubleTeam, Bide,
+            SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 77,
+    description: "Its newly grown legs prevent it from running. It appears to prefer swimming than trying to stand.",
+    evolution_data: Some((
+        evolves_into: "Poliwhirl",
+        method: Level(25),
+    )),
+)

@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 99,
+    name: "Kingler",
+    types: [Water],
+    base_stats: (
+        hp: 55,
+        attack: 130,
+        defense: 115,
+        sp_attack: 50,
+        sp_defense: 50,
+        speed: 75,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam, Leer, Vicegrip],
+            20: [Vicegrip],
+            25: [Guillotine],
+            34: [Stomp],
+            42: [CrabHammer],
+            49: [Harden],
+        },
+        signature: Some(Bubblehammer),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Mimic, DoubleTeam, Bide, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 206,
+    description: "The large pincer has 10000-horsepower strength. However, it is too heavy to be moved freely.",
+    evolution_data: None,
+)

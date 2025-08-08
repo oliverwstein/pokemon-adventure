@@ -1,0 +1,39 @@
+PokemonSpecies(
+    pokedex_number: 75,
+    name: "Graveler",
+    types: [Rock, Ground],
+    base_stats: (
+        hp: 55,
+        attack: 95,
+        defense: 115,
+        sp_attack: 45,
+        sp_defense: 45,
+        speed: 35,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, DefenseCurl],
+            11: [RockThrow],
+            16: [Bind],
+            21: [Harden],
+            29: [RockSlide],
+            36: [SelfDestruct],
+            43: [Earthquake],
+            50: [Explosion],
+        },
+        signature: Some(Fissure),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            Submission, Counter, SeismicToss, Rage, Earthquake, Fissure,
+            Dig, Mimic, DoubleTeam, Bide, Metronome, SelfDestruct,
+            FirePunch, Rest, Explosion, RockSlide, Substitute, Strength
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 134,
+    description: "Rolls down slopes to move. It rolls over any obstacle without slowing or changing its direction.",
+    evolution_data: Some((
+        evolves_into: "Golem",
+        method: Level(40),
+    )),
+)

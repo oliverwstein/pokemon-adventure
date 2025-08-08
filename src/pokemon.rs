@@ -32,6 +32,15 @@ pub enum Item {
     // Add more items as needed
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum StatusCondition {
+    Sleep(u8),
+    Poison(u8),
+    Burn,
+    Freeze,
+    Paralysis,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaseStats {
     pub hp: u8,

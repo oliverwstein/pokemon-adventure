@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 117,
+    name: "Seadra",
+    types: [Water],
+    base_stats: (
+        hp: 55,
+        attack: 65,
+        defense: 95,
+        sp_attack: 95,
+        sp_defense: 45,
+        speed: 85,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam, Smokescreen, Leer],
+            19: [Smokescreen],
+            24: [Leer],
+            30: [WaterGun],
+            41: [Agility],
+            52: [HydroPump],
+        },
+        signature: Some(DragonRage),
+        can_learn: [
+            TakeDown, DoubleEdge, HyperBeam, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Rage, Mimic, DoubleTeam, Bide, Swift, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 155,
+    description: "Capable of swimming backwards by rapidly flapping its wing-like pectoral fins and stout tail.",
+    evolution_data: None,
+)

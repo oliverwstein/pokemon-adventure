@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 100,
+    name: "Voltorb",
+    types: [Electric],
+    base_stats: (
+        hp: 40,
+        attack: 30,
+        defense: 50,
+        sp_attack: 55,
+        sp_defense: 55,
+        speed: 100,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle],
+            17: [SonicBoom],
+            22: [SelfDestruct],
+            29: [LightScreen],
+            36: [Swift],
+            43: [Explosion],
+        },
+        signature: None,
+        can_learn: [
+            TakeDown, Toxic, Rage, Thunderclap, Teleport,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, Rest,
+            Thunderclap, Substitute, Flash
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 103,
+    description: "Usually found in power plants. Easily mistaken for a Poke Ball, they have zapped many people.",
+    evolution_data: Some((
+        evolves_into: "Electrode",
+        method: Level(30),
+    )),
+)

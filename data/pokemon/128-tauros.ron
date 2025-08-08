@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 128,
+    name: "Tauros",
+    types: [Normal],
+    base_stats: (
+        hp: 75,
+        attack: 100,
+        defense: 95,
+        sp_attack: 40,
+        sp_defense: 70,
+        speed: 110,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle],
+            21: [Stomp],
+            28: [TailWhip],
+            35: [Leer],
+            44: [Rage],
+            51: [TakeDown],
+        },
+        signature: Some(Stomp),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Toxic, Rage, Earthquake, Fissure, Mimic,
+            DoubleTeam, Bide, FireBlast, SkullBash, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 211,
+    description: "When it targets an enemy, it charges furiously while whipping its body with its long tails.",
+    evolution_data: None,
+)

@@ -1,0 +1,29 @@
+PokemonSpecies(
+    pokedex_number: 59,
+    name: "Arcanine",
+    types: [Fire],
+    base_stats: (
+        hp: 90,
+        attack: 110,
+        defense: 80,
+        sp_attack: 100,
+        sp_defense: 80,
+        speed: 95,
+    ),
+    learnset: (
+        level_up: {
+            1: [Roar, Ember, Leer, TakeDown],
+        },
+        signature: Some(Roar),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
+            Rage, Dig, Mimic, DoubleTeam, Reflect, Bide,
+            FireBlast, Swift, SkullBash, Rest, RockSlide,
+            Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 213,
+    description: "A Pokemon that has been admired since the past for its beauty. It runs agilely as if on wings.",
+    evolution_data: None,
+)

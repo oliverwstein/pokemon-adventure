@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 107,
+    name: "Hitmonchan",
+    types: [Fighting],
+    base_stats: (
+        hp: 50,
+        attack: 105,
+        defense: 79,
+        sp_attack: 35,
+        sp_defense: 110,
+        speed: 76,
+    ),
+    learnset: (
+        level_up: {
+            1: [CometPunch, Agility],
+            33: [FirePunch],
+            38: [IcePunch],
+            43: [ThunderPunch],
+            48: [MegaPunch],
+            53: [Counter],
+        },
+        signature: Some(CometPunch),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
+            Counter, Toxic, Rage, Mimic, DoubleTeam, Bide,
+            Swift, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 140,
+    description: "While apparently doing nothing, it fires punches in lightning fast volleys that are impossible to see.",
+    evolution_data: None,
+)

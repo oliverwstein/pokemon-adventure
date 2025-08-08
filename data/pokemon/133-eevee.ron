@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 133,
+    name: "Eevee",
+    types: [Normal],
+    base_stats: (
+        hp: 55,
+        attack: 55,
+        defense: 50,
+        sp_attack: 45,
+        sp_defense: 65,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip],
+            27: [QuickAttack],
+            31: [SandAttack],
+            37: [Bite],
+            45: [FocusEnergy],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Toxic, Rage,
+            Mimic, DoubleTeam, Reflect, Bide, Swift,
+            SkullBash, Rest, Substitute, Shadow
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 92,
+    description: "Its genetic code is irregular. It may mutate if it is exposed to radiation from element stones.",
+    evolution_data: None,
+)

@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 139,
+    name: "Omastar",
+    types: [Rock, Water],
+    base_stats: (
+        hp: 70,
+        attack: 60,
+        defense: 125,
+        sp_attack: 115,
+        sp_defense: 70,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [Constrict, Withdraw, HornAttack],
+            34: [HornAttack],
+            39: [Leer],
+            44: [Spike],
+            49: [HydroPump],
+        },
+        signature: Some(AncientPower),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Mimic, DoubleTeam, Reflect,
+            Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 199,
+    description: "A prehistoric Pokemon that died out when its heavy shell made it impossible to catch prey.",
+    evolution_data: None,
+)

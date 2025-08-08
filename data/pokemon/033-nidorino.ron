@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 33,
+    name: "Nidorino",
+    types: [Poison],
+    base_stats: (
+        hp: 61,
+        attack: 72,
+        defense: 57,
+        sp_attack: 55,
+        sp_defense: 55,
+        speed: 65,
+    ),
+    learnset: (
+        level_up: {
+            1: [Leer, Tackle, HornAttack],
+            8: [HornAttack],
+            14: [PoisonSting],
+            23: [FocusEnergy],
+            32: [FuryAttack],
+            41: [HornDrill],
+            50: [DoubleKick],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Blizzard, IceBeam,
+            Bubblebeam, WaterGun, Toxic, Rage, Thunderclap,
+            Thunderclap, Mimic, DoubleTeam, Reflect, Bide,
+            SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 118,
+    description: "An aggressive Pokemon that is quick to attack. The horn on its head secretes a powerful venom.",
+    evolution_data: Some((
+        evolves_into: "Nidoking",
+        method: Item(Moonstone),
+    )),
+)

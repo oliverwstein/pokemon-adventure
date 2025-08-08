@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 150,
+    name: "Mewtwo",
+    types: [Psychic],
+    base_stats: (
+        hp: 106,
+        attack: 110,
+        defense: 90,
+        sp_attack: 154,
+        sp_defense: 90,
+        speed: 130,
+    ),
+    learnset: (
+        level_up: {
+            1: [Confusion, Disable, Psychic, Recover],
+            63: [Barrier],
+            66: [Psychic],
+            70: [Recover],
+            75: [Mist],
+            81: [Amnesia],
+        },
+        signature: Some(Psychic),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Bubblebeam, WaterGun, IceBeam,
+            Blizzard, Surf, Toxic, Psychic, Rage, Solarbeam,
+            Thunderclap, Earthquake, Fissure, Dig,
+            Teleport, Mimic, DoubleTeam, Reflect, Bide,
+            Metronome, SelfDestruct, FireBlast, Swift,
+            SkullBash, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 3,
+    base_exp: 220,
+    description: "It was created by a scientist after years of horrific gene splicing and DNA engineering experiments.",
+    evolution_data: None,
+)

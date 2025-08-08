@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 110,
+    name: "Weezing",
+    types: [Poison],
+    base_stats: (
+        hp: 65,
+        attack: 90,
+        defense: 120,
+        sp_attack: 85,
+        sp_defense: 70,
+        speed: 60,
+    ),
+    learnset: (
+        level_up: {
+            1: [PoisonGas, Tackle, Sludge],
+            32: [Sludge],
+            39: [Smokescreen],
+            43: [SelfDestruct],
+            49: [Haze],
+            53: [Explosion],
+        },
+        signature: Some(Explosion),
+        can_learn: [
+            TakeDown, DoubleEdge, HyperBeam, Toxic, Rage,
+            Thunderclap, Mimic, DoubleTeam, Bide,
+            SelfDestruct, FireBlast, Rest, Explosion,
+            Substitute, Flash
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 173,
+    description: "Where two kinds of poison gases meet, 2 Koffings can fuse into a Weezing over many years.",
+    evolution_data: None,
+)

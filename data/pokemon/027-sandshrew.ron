@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 27,
+    name: "Sandshrew",
+    types: [Ground],
+    base_stats: (
+        hp: 50,
+        attack: 75,
+        defense: 85,
+        sp_attack: 20,
+        sp_defense: 30,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch],
+            10: [SandAttack],
+            17: [Slash],
+            24: [PoisonSting],
+            31: [Swift],
+            38: [FurySwipes],
+        },
+        signature: None,
+        can_learn: [
+            SwordsDance, BodySlam, TakeDown, DoubleEdge, Toxic,
+            Rage, Earthquake, Fissure, Dig, Mimic, DoubleTeam,
+            Bide, Swift, SkullBash, Rest, RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 93,
+    description: "Burrows deep underground in arid locations far from water. It only emerges to hunt for food.",
+    evolution_data: Some((
+        evolves_into: "Sandslash",
+        method: Level(22),
+    )),
+)

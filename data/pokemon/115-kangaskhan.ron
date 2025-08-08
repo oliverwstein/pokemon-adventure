@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 115,
+    name: "Kangaskhan",
+    types: [Normal],
+    base_stats: (
+        hp: 105,
+        attack: 95,
+        defense: 80,
+        sp_attack: 40,
+        sp_defense: 80,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [CometPunch, Rage],
+            26: [Bite],
+            31: [TailWhip],
+            36: [MegaPunch],
+            41: [Leer],
+            46: [DizzyPunch],
+        },
+        signature: Some(MegaPunch),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Bubblebeam, WaterGun, IceBeam,
+            Blizzard, Surf, Toxic, Rage, Thunderclap,
+            Earthquake, Fissure, Dig, Mimic, DoubleTeam,
+            Bide, FireBlast, SkullBash, Rest, RockSlide,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 175,
+    description: "The infant rarely ventures out of its mother's protective pouch until it is 3 years old.",
+    evolution_data: None,
+)

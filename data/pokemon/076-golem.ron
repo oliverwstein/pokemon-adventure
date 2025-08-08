@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 76,
+    name: "Golem",
+    types: [Rock, Ground],
+    base_stats: (
+        hp: 80,
+        attack: 120,
+        defense: 130,
+        sp_attack: 55,
+        sp_defense: 65,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, DefenseCurl, RockThrow, Bind],
+            11: [RockThrow],
+            16: [Bind],
+            21: [Harden],
+            29: [RockSlide],
+            36: [SelfDestruct],
+            46: [Earthquake],
+            54: [Explosion],
+        },
+        signature: Some(Fissure),
+        can_learn: [
+            MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Earthquake,
+            Fissure, Dig, Mimic, DoubleTeam, Bide, Metronome, SelfDestruct,
+            FirePunch, Rest, Explosion, RockSlide, Substitute, Strength
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 177,
+    description: "Its boulder-like body is extremely hard. It can easily withstand dynamite blasts without damage.",
+    evolution_data: None,
+)

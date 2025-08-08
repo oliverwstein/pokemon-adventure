@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 105,
+    name: "Marowak",
+    types: [Ground],
+    base_stats: (
+        hp: 60,
+        attack: 80,
+        defense: 110,
+        sp_attack: 50,
+        sp_defense: 80,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [BoneClub, Leer, FocusEnergy],
+            25: [Leer],
+            33: [FocusEnergy],
+            41: [Thrash],
+            48: [Bonemerang],
+            55: [Rage],
+        },
+        signature: Some(Bonemerang),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Bubblebeam, WaterGun, IceBeam,
+            Blizzard, Toxic, Rage, Earthquake, Fissure, Dig,
+            Mimic, DoubleTeam, Bide, FireBlast, SkullBash,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 124,
+    description: "The bone it holds is its key weapon. It throws the bone skillfully like a boomerang to KO targets.",
+    evolution_data: None,
+)

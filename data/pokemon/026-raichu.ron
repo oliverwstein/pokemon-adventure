@@ -1,0 +1,29 @@
+PokemonSpecies(
+    pokedex_number: 26,
+    name: "Raichu",
+    types: [Electric],
+    base_stats: (
+        hp: 60,
+        attack: 90,
+        defense: 55,
+        sp_attack: 90,
+        sp_defense: 80,
+        speed: 110,
+    ),
+    learnset: (
+        level_up: {
+            1: [Shock, Growl, TailWhip, ThunderWave],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Submission,
+            Counter, Seismic, Toxic, Rage, Lightning,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, SkullBash,
+            Rest, Thunderclap, Substitute, Flash
+        ],
+    ),
+    catch_rate: 75,
+    base_exp: 122,
+    description: "Its long tail serves as a ground to protect itself from its own high voltage power.",
+    evolution_data: None,
+)

@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 141,
+    name: "Kabutops",
+    types: [Rock, Water],
+    base_stats: (
+        hp: 60,
+        attack: 115,
+        defense: 105,
+        sp_attack: 65,
+        sp_defense: 70,
+        speed: 80,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch, Harden, Absorb],
+            34: [Absorb],
+            39: [Slash],
+            46: [Leer],
+            53: [HydroPump],
+        },
+        signature: Some(SkullBash),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Dig, Mimic, DoubleTeam, Reflect,
+            Bide, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 201,
+    description: "Its sleek shape is perfect for swimming. It slashes prey with its claws and drains the body fluids.",
+    evolution_data: None,
+)

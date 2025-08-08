@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 42,
+    name: "Golbat",
+    types: [Poison, Flying],
+    base_stats: (
+        hp: 75,
+        attack: 80,
+        defense: 70,
+        sp_attack: 65,
+        sp_defense: 75,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [LeechLife, Screech, Supersonic],
+            10: [Supersonic],
+            15: [Bite],
+            21: [ConfuseRay],
+            32: [WingAttack],
+            43: [Haze],
+        },
+        signature: Some(ConfuseRay),
+        can_learn: [
+            RazorWind, Whirlwind, HyperBeam, Toxic, TakeDown,
+            DoubleEdge, Rage, Mimic, DoubleTeam, Bide, Swift,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 90,
+    base_exp: 171,
+    description: "Once it strikes, it will not stop draining energy from the victim even if it gets too heavy to fly.",
+    evolution_data: None,
+)

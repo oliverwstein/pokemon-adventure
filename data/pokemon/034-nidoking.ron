@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 34,
+    name: "Nidoking",
+    types: [Poison, Ground],
+    base_stats: (
+        hp: 81,
+        attack: 102,
+        defense: 77,
+        sp_attack: 85,
+        sp_defense: 75,
+        speed: 85,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, HornAttack, PoisonJab],
+            23: [PoisonJab],
+        },
+        signature: Some(PoisonJab),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Blizzard, IceBeam, Bubblebeam,
+            WaterGun, Surf, Toxic, Rage, Thunderclap,
+            Earthquake, Fissure, Dig, Mimic, DoubleTeam,
+            Reflect, Bide, FireBlast, SkullBash, Rest,
+            RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 195,
+    description: "It uses its powerful tail in battle to smash, constrict, then break the prey's bones.",
+    evolution_data: None,
+)

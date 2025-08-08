@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 135,
+    name: "Jolteon",
+    types: [Electric],
+    base_stats: (
+        hp: 65,
+        attack: 65,
+        defense: 60,
+        sp_attack: 110,
+        sp_defense: 95,
+        speed: 130,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, Shock],
+            27: [QuickAttack],
+            31: [Shock],
+            37: [PinMissile],
+            40: [Agility],
+            42: [Thunderclap],
+            44: [DoubleKick],
+        },
+        signature: Some(ThunderWave),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
+            Rage, Thunderclap, Mimic, DoubleTeam,
+            Reflect, Bide, Swift, Rest, Substitute, ShadowBall,
+            Flash
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 197,
+    description: "It accumulates negative ions in the atmosphere to blast out 10000-volt lightning bolts.",
+    evolution_data: None,
+)

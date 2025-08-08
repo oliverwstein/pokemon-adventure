@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 134,
+    name: "Vaporeon",
+    types: [Water],
+    base_stats: (
+        hp: 130,
+        attack: 65,
+        defense: 60,
+        sp_attack: 110,
+        sp_defense: 95,
+        speed: 65,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, TailWhip, WaterGun],
+            27: [QuickAttack],
+            31: [WaterGun],
+            37: [AuroraBeam],
+            40: [Haze],
+            42: [AcidArmor],
+            44: [Mist],
+            48: [HydroPump],
+        },
+        signature: Some(Mist),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Surf,
+            Toxic, Rage, Mimic, DoubleTeam, Reflect,
+            Bide, Swift, Rest, Substitute, Shadow
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 196,
+    description: "Lives close to water. Its long tail is ridged with a fin which is often mistaken for a mermaid's.",
+    evolution_data: None,
+)

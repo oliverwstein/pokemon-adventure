@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 65,
+    name: "Alakazam",
+    types: [Psychic],
+    base_stats: (
+        hp: 55,
+        attack: 50,
+        defense: 45,
+        sp_attack: 135,
+        sp_defense: 95,
+        speed: 120,
+    ),
+    learnset: (
+        level_up: {
+            1: [Teleport, Kinesis, Confusion],
+            16: [Kinesis],
+            20: [Confusion],
+            27: [Disable],
+            31: [Psybeam],
+            38: [Recover],
+            42: [Psychic],
+        },
+        signature: Some(Kinesis),
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Submission, Counter,
+            HyperBeam, Toxic, Psychic, Rage, Teleport, Mimic,
+            DoubleTeam, Reflect, Bide, SkullBash, Rest, TriAttack,
+            Substitute, Flash
+        ],
+    ),
+    catch_rate: 50,
+    base_exp: 186,
+    description: "Its brain can outperform a supercomputer. Its intelligence quotient is said to be 5000.",
+    evolution_data: None,
+)

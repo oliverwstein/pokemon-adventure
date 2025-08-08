@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 98,
+    name: "Krabby",
+    types: [Water],
+    base_stats: (
+        hp: 30,
+        attack: 105,
+        defense: 90,
+        sp_attack: 25,
+        sp_defense: 25,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam, Leer],
+            20: [Vicegrip],
+            25: [Guillotine],
+            30: [Stomp],
+            35: [CrabHammer],
+            40: [Harden],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, Surf, Toxic, Rage, Mimic,
+            DoubleTeam, Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 225,
+    base_exp: 115,
+    description: "Its pincers are not only powerful, they are also very dexterous. It can catch prey or fight enemies.",
+    evolution_data: Some((
+        evolves_into: "Kingler",
+        method: Level(28),
+    )),
+)

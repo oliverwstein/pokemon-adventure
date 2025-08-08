@@ -1,0 +1,30 @@
+PokemonSpecies(
+    pokedex_number: 121,
+    name: "Starmie",
+    types: [Water, Psychic],
+    base_stats: (
+        hp: 60,
+        attack: 75,
+        defense: 85,
+        sp_attack: 100,
+        sp_defense: 85,
+        speed: 115,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Harden, Recover, Swift],
+        },
+        signature: Some(Recover),
+        can_learn: [
+            TakeDown, DoubleEdge, HyperBeam, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, Surf, Toxic,
+            Psychic, Rage, Thunderclap, Teleport,
+            Mimic, DoubleTeam, Reflect, Bide, Swift,
+            SkullBash, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 207,
+    description: "Its central core glows with the seven colors of the rainbow. Some people value the core as a gem.",
+    evolution_data: None,
+)

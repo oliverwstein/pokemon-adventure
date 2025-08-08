@@ -1,0 +1,36 @@
+PokemonSpecies(
+    pokedex_number: 21,
+    name: "Spearow",
+    types: [Normal, Flying],
+    base_stats: (
+        hp: 40,
+        attack: 60,
+        defense: 30,
+        sp_attack: 31,
+        sp_defense: 31,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, Growl],
+            9: [Leer],
+            15: [FuryAttack],
+            22: [MirrorMove],
+            29: [DrillPeck],
+            36: [Agility],
+        },
+        signature: None,
+        can_learn: [
+            RazorWind, Whirlwind, Fly, Toxic, TakeDown, DoubleEdge,
+            Rage, Mimic, DoubleTeam, Bide, Swift, SkyAttack,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 58,
+    description: "Eats bugs in grassy areas. It has to flap its short wings at high speed to stay airborne.",
+    evolution_data: Some((
+        evolves_into: "Fearow",
+        method: Level(20),
+    )),
+)

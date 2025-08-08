@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 113,
+    name: "Chansey",
+    types: [Normal],
+    base_stats: (
+        hp: 250,
+        attack: 5,
+        defense: 5,
+        sp_attack: 35,
+        sp_defense: 105,
+        speed: 50,
+    ),
+    learnset: (
+        level_up: {
+            1: [Pound, Growl],
+            24: [Sing],
+            30: [Growl],
+            38: [Minimize],
+            44: [DefenseCurl],
+            48: [LightScreen],
+            54: [DoubleEdge],
+        },
+        signature: Some(SoftBoiled),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, Bubblebeam,
+            WaterGun, IceBeam, Blizzard, HyperBeam, Submission,
+            Counter, Toxic, Psychic, Rage, Solarbeam, Thunderclap,
+            Thunderclap, Earthquake, Fissure, Teleport, Mimic,
+            DoubleTeam, Reflect, Bide, Metronome, SelfDestruct,
+            EggBomb, FireBlast, SkullBash, Rest, TriAttack,
+            Substitute, Flash
+        ],
+    ),
+    catch_rate: 30,
+    base_exp: 255,
+    description: "A rare and elusive Pokemon that is said to bring happiness to those who manage to get it.",
+    evolution_data: None,
+)

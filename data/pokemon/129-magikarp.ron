@@ -1,0 +1,29 @@
+PokemonSpecies(
+    pokedex_number: 129,
+    name: "Magikarp",
+    types: [Water],
+    base_stats: (
+        hp: 20,
+        attack: 10,
+        defense: 55,
+        sp_attack: 15,
+        sp_defense: 20,
+        speed: 80,
+    ),
+    learnset: (
+        level_up: {
+            1: [Splash],
+            15: [Tackle],
+        },
+        signature: Some(Splash),
+        can_learn: [
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 40,
+    description: "In the distant past, it was somewhat stronger than the horribly weak descendants that exist today.",
+    evolution_data: Some((
+        evolves_into: "Gyarados",
+        method: Level(20),
+    )),
+)

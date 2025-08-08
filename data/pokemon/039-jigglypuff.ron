@@ -1,0 +1,40 @@
+PokemonSpecies(
+    pokedex_number: 39,
+    name: "Jigglypuff",
+    types: [Normal],
+    base_stats: (
+        hp: 115,
+        attack: 45,
+        defense: 20,
+        sp_attack: 45,
+        sp_defense: 25,
+        speed: 20,
+    ),
+    learnset: (
+        level_up: {
+            1: [Sing],
+            3: [Pound],
+            9: [Disable],
+            14: [DefenseCurl],
+            19: [Doubleslap],
+            24: [Rest],
+            29: [BodySlam],
+            34: [DoubleEdge],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
+            IceBeam, Blizzard, Submission, Counter, Toxic,
+            Psychic, Rage, Solarbeam, Thunderclap,
+            Mimic, DoubleTeam, Reflect, Bide, FireBlast,
+            SkullBash, Rest, TriAttack, Substitute, Flash
+        ],
+    ),
+    catch_rate: 170,
+    base_exp: 95,
+    description: "When its huge eyes light up, it sings a mysteriously soothing melody that lulls its enemies to sleep.",
+    evolution_data: Some((
+        evolves_into: "Wigglytuff",
+        method: Item(Moonstone),
+    )),
+)

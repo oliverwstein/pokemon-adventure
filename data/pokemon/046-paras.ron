@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 46,
+    name: "Paras",
+    types: [Bug, Grass],
+    base_stats: (
+        hp: 35,
+        attack: 70,
+        defense: 55,
+        sp_attack: 45,
+        sp_defense: 55,
+        speed: 25,
+    ),
+    learnset: (
+        level_up: {
+            1: [Scratch],
+            7: [StunSpore],
+            13: [LeechLife],
+            20: [Spore],
+            27: [Slash],
+            34: [Growth],
+        },
+        signature: None,
+        can_learn: [
+            Cut, BodySlam, TakeDown, DoubleEdge, Toxic, Rage,
+            MegaDrain, Solarbeam, Dig, Mimic, DoubleTeam,
+            Reflect, Bide, SkullBash, Rest, RockSlide,
+            Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 70,
+    description: "Burrows to suck tree roots. The mushrooms on its back grow by drawing nutrients from the bug host.",
+    evolution_data: Some((
+        evolves_into: "Parasect",
+        method: Level(24),
+    )),
+)

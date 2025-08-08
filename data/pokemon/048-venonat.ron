@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 48,
+    name: "Venonat",
+    types: [Bug, Poison],
+    base_stats: (
+        hp: 60,
+        attack: 55,
+        defense: 50,
+        sp_attack: 40,
+        sp_defense: 55,
+        speed: 45,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, Disable],
+            24: [PoisonPowder],
+            27: [LeechLife],
+            30: [StunSpore],
+            35: [Psybeam],
+            38: [SleepPowder],
+            43: [Psychic],
+        },
+        signature: None,
+        can_learn: [
+            TakeDown, DoubleEdge, Toxic, Rage, MegaDrain,
+            Solarbeam, Psychic, Mimic, DoubleTeam, Reflect,
+            Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 75,
+    description: "Lives in the shadows of tall trees where it eats insects. It is attracted to light at night.",
+    evolution_data: Some((
+        evolves_into: "Venomoth",
+        method: Level(31),
+    )),
+)

@@ -1,0 +1,34 @@
+PokemonSpecies(
+    pokedex_number: 82,
+    name: "Magneton",
+    types: [Electric],
+    base_stats: (
+        hp: 50,
+        attack: 60,
+        defense: 95,
+        sp_attack: 120,
+        sp_defense: 70,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, SonicBoom, Shock],
+            21: [SonicBoom],
+            25: [Shock],
+            29: [Supersonic],
+            38: [ThunderWave],
+            46: [Swift],
+            54: [Screech],
+        },
+        signature: Some(ChargeBeam),
+        can_learn: [
+            Toxic, TakeDown, DoubleEdge, HyperBeam, Rage, Thunderclap,
+            Discharge, Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift,
+            Rest, ThunderWave, Substitute, Flash
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 161,
+    description: "Formed by several Magnemite linking together. They frequently appear when sunspots flare up.",
+    evolution_data: None,
+)

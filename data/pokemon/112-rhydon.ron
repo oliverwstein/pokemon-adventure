@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 112,
+    name: "Rhydon",
+    types: [Ground, Rock],
+    base_stats: (
+        hp: 105,
+        attack: 130,
+        defense: 120,
+        sp_attack: 45,
+        sp_defense: 45,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [HornAttack, Stomp, Fury],
+            30: [Stomp],
+            35: [Fury],
+            40: [HornDrill],
+            48: [Leer],
+            58: [TakeDown],
+        },
+        signature: Some(HornDrill),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Toxic, Rage, Thunderclap,
+            Thunderclap, Earthquake, Fissure, Dig, Mimic,
+            DoubleTeam, Bide, FireBlast, SkullBash, Rest,
+            RockSlide, Substitute
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 204,
+    description: "Protected by an armor-like hide, it is capable of living in molten lava of 3,600 degrees.",
+    evolution_data: None,
+)

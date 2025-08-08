@@ -1,0 +1,35 @@
+PokemonSpecies(
+    pokedex_number: 125,
+    name: "Electabuzz",
+    types: [Electric],
+    base_stats: (
+        hp: 65,
+        attack: 83,
+        defense: 57,
+        sp_attack: 95,
+        sp_defense: 85,
+        speed: 105,
+    ),
+    learnset: (
+        level_up: {
+            1: [QuickAttack, Leer],
+            34: [Shock],
+            37: [Screech],
+            42: [ThunderPunch],
+            49: [LightScreen],
+            54: [Thunderclap],
+        },
+        signature: Some(ThunderPunch),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Toxic, Psychic, Rage,
+            Thunderclap, Teleport, Mimic, DoubleTeam,
+            Reflect, Bide, Metronome, Swift, SkullBash,
+            Rest, Substitute, Flash
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 156,
+    description: "Normally found near power plants, they can wander away and cause major blackouts in cities.",
+    evolution_data: None,
+)

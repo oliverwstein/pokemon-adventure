@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 43,
+    name: "Oddish",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 45,
+        attack: 50,
+        defense: 55,
+        sp_attack: 75,
+        sp_defense: 65,
+        speed: 30,
+    ),
+    learnset: (
+        level_up: {
+            1: [Absorb],
+            15: [PoisonPowder],
+            17: [StunSpore],
+            19: [SleepPowder],
+            24: [Acid],
+            33: [PetalDance],
+            46: [Toxic],
+        },
+        signature: None,
+        can_learn: [
+            Cut, Toxic, TakeDown, DoubleEdge, Rage, MegaDrain,
+            Solarbeam, Mimic, DoubleTeam, Reflect, Bide, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 78,
+    description: "During the day, it keeps its face buried in the ground. At night, it wanders around sowing its seeds.",
+    evolution_data: Some((
+        evolves_into: "Gloom",
+        method: Level(21),
+    )),
+)

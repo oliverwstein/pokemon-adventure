@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 29,
+    name: "Nidoran♀",
+    types: [Poison],
+    base_stats: (
+        hp: 55,
+        attack: 47,
+        defense: 52,
+        sp_attack: 40,
+        sp_defense: 40,
+        speed: 41,
+    ),
+    learnset: (
+        level_up: {
+            1: [Growl, Tackle],
+            8: [Scratch],
+            14: [PoisonSting],
+            21: [TailWhip],
+            29: [Bite],
+            36: [FurySwipes],
+            43: [DoubleKick],
+        },
+        signature: None,
+        can_learn: [
+            BodySlam, TakeDown, DoubleEdge, Blizzard, Toxic,
+            Rage, Mimic, DoubleTeam,
+            Reflect, Bide, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 235,
+    base_exp: 59,
+    description: "Although small, its venomous barbs render this Pokemon dangerous. The female has smaller horns.",
+    evolution_data: Some((
+        evolves_into: "Nidorina",
+        method: Level(16),
+    )),
+)

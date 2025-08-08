@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 70,
+    name: "Weepinbell",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 65,
+        attack: 90,
+        defense: 50,
+        sp_attack: 85,
+        sp_defense: 45,
+        speed: 55,
+    ),
+    learnset: (
+        level_up: {
+            1: [VineWhip, Growth, Wrap],
+            13: [Wrap],
+            15: [PoisonPowder],
+            18: [SleepPowder],
+            23: [StunSpore],
+            29: [Acid],
+            38: [Razor],
+            49: [Slam],
+        },
+        signature: None,
+        can_learn: [
+            Cut, SwordsDance, TakeDown, DoubleEdge, Toxic, Rage,
+            MegaDrain, Solarbeam, Mimic, DoubleTeam, Reflect,
+            Bide, Rest, Substitute
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 151,
+    description: "It spits out PoisonPowder to immobilize the enemy and then finishes it with a spray of Acid.",
+    evolution_data: Some((
+        evolves_into: "Victreebel",
+        method: Item(Leafstone),
+    )),
+)

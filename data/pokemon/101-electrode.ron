@@ -1,0 +1,33 @@
+PokemonSpecies(
+    pokedex_number: 101,
+    name: "Electrode",
+    types: [Electric],
+    base_stats: (
+        hp: 60,
+        attack: 50,
+        defense: 70,
+        sp_attack: 80,
+        sp_defense: 80,
+        speed: 150,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle, SonicBoom, SelfDestruct],
+            17: [SonicBoom],
+            22: [SelfDestruct],
+            29: [LightScreen],
+            40: [Swift],
+            50: [Explosion],
+        },
+        signature: Some(SonicBoom),
+        can_learn: [
+            TakeDown, HyperBeam, Toxic, Rage, Thunderclap,
+            Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift,
+            Rest, Thunderclap, Substitute, Flash
+        ],
+    ),
+    catch_rate: 60,
+    base_exp: 150,
+    description: "It stores electric energy under very high pressure. It often explodes with little or no provocation.",
+    evolution_data: None,
+)

@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 144,
+    name: "Articuno",
+    types: [Ice, Flying],
+    base_stats: (
+        hp: 90,
+        attack: 85,
+        defense: 100,
+        sp_attack: 95,
+        sp_defense: 125,
+        speed: 85,
+    ),
+    learnset: (
+        level_up: {
+            1: [Peck, IceBeam],
+            51: [Blizzard],
+            55: [Agility],
+            60: [Mist],
+        },
+        signature: Some(Blizzard),
+        can_learn: [
+            RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
+            Bubblebeam, WaterGun, IceBeam, Blizzard, Rage,
+            Mimic, DoubleTeam, Reflect, Bide, Swift, SkyAttack,
+            Rest, Substitute
+        ],
+    ),
+    catch_rate: 3,
+    base_exp: 215,
+    description: "A legendary bird Pokemon that is said to appear to doomed people who are lost in icy mountains.",
+    evolution_data: None,
+)

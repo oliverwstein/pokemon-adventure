@@ -177,7 +177,7 @@ pub enum Move {
     Shock,
     Discharge,
     ThunderWave,
-    Thunderbolt,
+    Thunderclap,
     ChargeBeam,
     Flash,
 

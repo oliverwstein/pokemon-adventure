@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 61,
+    name: "Poliwhirl",
+    types: [Water],
+    base_stats: (
+        hp: 65,
+        attack: 65,
+        defense: 65,
+        sp_attack: 50,
+        sp_defense: 50,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Bubblebeam, Hypnosis, WaterGun],
+            16: [Hypnosis],
+            19: [WaterGun],
+            26: [Doubleslap],
+            33: [BodySlam],
+            41: [Amnesia],
+            49: [HydroPump],
+        },
+        signature: None,
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, Submission,
+            Counter, Bubblebeam, WaterGun, IceBeam, Blizzard,
+            Surf, Toxic, Psychic, Rage, Earthquake, Fissure,
+            Mimic, DoubleTeam, Bide, SkullBash, Rest, Substitute
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 131,
+    description: "Capable of living in or out of water. When out of water, it sweats to keep its body slimy.",
+    evolution_data: Some((
+        evolves_into: "Poliwrath",
+        method: Item(Waterstone),
+    )),
+)

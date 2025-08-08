@@ -1,0 +1,32 @@
+PokemonSpecies(
+    pokedex_number: 62,
+    name: "Poliwrath",
+    types: [Water, Fighting],
+    base_stats: (
+        hp: 90,
+        attack: 95,
+        defense: 95,
+        sp_attack: 70,
+        sp_defense: 90,
+        speed: 70,
+    ),
+    learnset: (
+        level_up: {
+            1: [Hypnosis, WaterGun, Doubleslap, BodySlam],
+            16: [Hypnosis],
+            19: [WaterGun],
+        },
+        signature: Some(Counter),
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
+            Submission, Counter, Bubblebeam, WaterGun, IceBeam,
+            Blizzard, Surf, Toxic, Psychic, Rage, Earthquake,
+            Fissure, Mimic, DoubleTeam, Bide, SkullBash, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 45,
+    base_exp: 185,
+    description: "An adept swimmer at both the front crawl and breast stroke. Easily overtakes the best human swimmers.",
+    evolution_data: None,
+)

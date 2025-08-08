@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 77,
+    name: "Ponyta",
+    types: [Fire],
+    base_stats: (
+        hp: 50,
+        attack: 85,
+        defense: 55,
+        sp_attack: 65,
+        sp_defense: 65,
+        speed: 90,
+    ),
+    learnset: (
+        level_up: {
+            1: [Ember, Growl],
+            30: [TailWhip],
+            32: [Stomp],
+            35: [Agility],
+            39: [TakeDown],
+            43: [BlazeKick],
+            47: [FireSpin],
+            53: [FireBlast],
+        },
+        signature: Some(BlazeKick),
+        can_learn: [
+            Toxic, BodySlam, TakeDown, DoubleEdge, Rage, Mimic,
+            DoubleTeam, Reflect, Bide, FireBlast, Swift, Rest,
+            Substitute, Strength, Flamethrower
+        ],
+    ),
+    catch_rate: 190,
+    base_exp: 82,
+    description: "Its hooves are 10 times harder than diamonds. It can trample anything completely flat in little time.",
+    evolution_data: Some((
+        evolves_into: "Rapidash",
+        method: Level(40),
+    )),
+)

@@ -1,0 +1,38 @@
+PokemonSpecies(
+    pokedex_number: 74,
+    name: "Geodude",
+    types: [Rock, Ground],
+    base_stats: (
+        hp: 40,
+        attack: 80,
+        defense: 100,
+        sp_attack: 30,
+        sp_defense: 30,
+        speed: 20,
+    ),
+    learnset: (
+        level_up: {
+            1: [Tackle],
+            11: [DefenseCurl],
+            16: [RockThrow],
+            21: [SelfDestruct],
+            26: [Harden],
+            31: [Earthquake],
+            36: [Explosion],
+        },
+        signature: None,
+        can_learn: [
+            Strength, BodySlam, TakeDown, DoubleEdge, Submission,
+            Counter, Toxic, Rage, Earthquake, Fissure, Dig,
+            Mimic, DoubleTeam, Bide, FireBlast, Rest, RockSlide,
+            Substitute
+        ],
+    ),
+    catch_rate: 255,
+    base_exp: 73,
+    description: "Found in fields and mountains. Mistaking them for boulders, people often step or trip on them.",
+    evolution_data: Some((
+        evolves_into: "Graveler",
+        method: Level(25),
+    )),
+)

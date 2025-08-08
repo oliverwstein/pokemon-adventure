@@ -1,0 +1,37 @@
+PokemonSpecies(
+    pokedex_number: 44,
+    name: "Gloom",
+    types: [Grass, Poison],
+    base_stats: (
+        hp: 60,
+        attack: 65,
+        defense: 70,
+        sp_attack: 85,
+        sp_defense: 75,
+        speed: 40,
+    ),
+    learnset: (
+        level_up: {
+            1: [Absorb, PoisonPowder, StunSpore],
+            15: [PoisonPowder],
+            17: [StunSpore],
+            19: [SleepPowder],
+            28: [Acid],
+            38: [PetalDance],
+            52: [Toxic],
+        },
+        signature: None,
+        can_learn: [
+            Cut, Toxic, TakeDown, DoubleEdge, Rage, MegaDrain,
+            Solarbeam, Mimic, DoubleTeam, Reflect, Bide, Rest,
+            Substitute
+        ],
+    ),
+    catch_rate: 120,
+    base_exp: 132,
+    description: "The fluid that oozes from its mouth isn't drool. It is a nectar that is used to attract prey.",
+    evolution_data: Some((
+        evolves_into: "Vileplume",
+        method: Item(Leafstone),
+    )),
+)

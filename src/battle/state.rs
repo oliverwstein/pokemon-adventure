@@ -1,4 +1,6 @@
-use crate::player::{BattlePlayer, PlayerAction};
+use crate::player::{BattlePlayer, PlayerAction, StatType, PokemonCondition};
+use crate::moves::Move;
+use crate::species::Species;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -11,13 +13,117 @@ pub enum GameState {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum BattleEvent {
+    // Turn Management
+    TurnStarted { turn_number: u32 },
+    TurnEnded,
+    
+    // Pokemon Actions
+    PokemonSwitched { player_index: usize, old_pokemon: Species, new_pokemon: Species },
+    MoveMissed { attacker: Species, defender: Species, move_used: Move },
+    MoveHit { attacker: Species, defender: Species, move_used: Move },
+    DamageDealt { target: Species, damage: u16, remaining_hp: u16 },
+    
+    // Status Effects
+    StatusApplied { target: Species, status: PokemonCondition },
+    StatusRemoved { target: Species, status: PokemonCondition },
+    StatusDamage { target: Species, status: PokemonCondition, damage: u16 },
+    
+    // Stat Changes
+    StatStageChanged { target: Species, stat: StatType, old_stage: i8, new_stage: i8 },
+    
+    // Action Failures
+    ActionFailed { reason: ActionFailureReason },
+    
+    // Battle End
+    PlayerDefeated { player_index: usize },
+    BattleEnded { winner: Option<usize> },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ActionFailureReason {
+    IsAsleep,
+    IsParalyzed,
+    IsFlinching,
+    IsConfused,
+    NoValidTarget,
+    NoPPRemaining,
+}
+
+#[derive(Debug, Clone)]
+pub struct EventBus {
+    events: Vec<BattleEvent>,
+}
+
+impl EventBus {
+    pub fn new() -> Self {
+        Self {
+            events: Vec::new(),
+        }
+    }
+    
+    pub fn push(&mut self, event: BattleEvent) {
+        self.events.push(event);
+    }
+    
+    pub fn events(&self) -> &[BattleEvent] {
+        &self.events
+    }
+    
+    pub fn clear(&mut self) {
+        self.events.clear();
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TurnRng {
+    outcomes: Vec<u8>,
+    index: usize,
+}
+
+impl TurnRng {
+    pub fn new_for_test(outcomes: Vec<u8>) -> Self {
+        Self {
+            outcomes,
+            index: 0,
+        }
+    }
+    
+    pub fn new_random() -> Self {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        // Pre-generate a reasonable number of random values for a turn
+        let outcomes: Vec<u8> = (0..100).map(|_| rng.gen_range(1..=100)).collect();
+        Self {
+            outcomes,
+            index: 0,
+        }
+    }
+    
+    pub fn next_outcome(&mut self) -> u8 {
+        if self.index >= self.outcomes.len() {
+            panic!("TurnRng exhausted! Need more random values for this turn.");
+        }
+        let outcome = self.outcomes[self.index];
+        self.index += 1;
+        outcome
+    }
+    
+    pub fn peek_outcome(&self) -> u8 {
+        if self.index >= self.outcomes.len() {
+            panic!("TurnRng exhausted! Need more random values for this turn.");
+        }
+        self.outcomes[self.index]
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BattleState {
     pub battle_id: String,
     pub players: [BattlePlayer; 2],
     pub turn_number: u32,
     pub game_state: GameState,
     pub action_queue: [Option<PlayerAction>; 2],
-    pub turn_log: Vec<String>,
 }
 
 impl BattleState {
@@ -28,7 +134,6 @@ impl BattleState {
             turn_number: 1,
             game_state: GameState::WaitingForBothActions,
             action_queue: [None, None],
-            turn_log: Vec::new(),
         }
     }
 }

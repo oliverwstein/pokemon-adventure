@@ -92,7 +92,7 @@ The `resolve_turn` function will execute the following sequence:
         *   Determine the move execution order based on **Move Priority**, then **Pokémon Speed** as a tiebreaker.
         *   Iterate through the ordered move actions. For each action:
             a.  **Pre-Action Check:** (As you've described: sleep, paralysis, etc.). If failed, push event and `continue` to the next action.
-            b.  **Valid Target Check:** (As you've described).
+            b.  **Enemy Present Check:** Verify opponent-targeting moves have a valid opponent available. If failed, push event and `continue` to the next action.
             c.  **Execute Move:** (As you've described: accuracy, damage, effects, etc.).
             d.  **Post-Action Faint Check:** After the move resolves, check if either the attacker (from recoil/Explosion) or the defender has fainted.
                 *   If a player's entire team has fainted as a result of this move, immediately end the Action Loop and proceed to the "Cleanup & Finalization" step.

@@ -3,6 +3,7 @@ mod pokemon;
 mod player;
 mod move_data;
 mod species;
+mod battle;
 
 use std::path::Path;
 use pokemon::{PokemonSpecies, PokemonInst, initialize_species_data, get_species_data};

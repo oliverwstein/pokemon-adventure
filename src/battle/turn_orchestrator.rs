@@ -3,21 +3,45 @@ use crate::player::PlayerAction;
 
 /// Prepares a battle state for turn resolution by collecting actions from both players
 /// This function should be called before resolve_turn()
+/// For now, implements a basic deterministic AI that selects first available move
 pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), String> {
     // Ensure we're in the right state to collect actions
     if battle_state.game_state != GameState::WaitingForBothActions {
         return Err("Cannot collect actions: battle is not waiting for actions".to_string());
     }
     
-    // TODO: This is where we'd implement the actual action collection logic
-    // For now, this is a placeholder that assumes actions are somehow provided
-    
-    // Check if both players have provided actions
-    if battle_state.action_queue[0].is_none() || battle_state.action_queue[1].is_none() {
-        return Err("Both players must provide actions before turn resolution".to_string());
+    // Generate deterministic actions for any players that haven't provided one
+    for player_index in 0..2 {
+        if battle_state.action_queue[player_index].is_none() {
+            let action = generate_deterministic_action(&battle_state.players[player_index])?;
+            battle_state.action_queue[player_index] = Some(action);
+        }
     }
     
     Ok(())
+}
+
+/// Generates a deterministic action for a player (basic AI)
+/// Uses first available move (with PP > 0), or Struggle if no moves have PP
+fn generate_deterministic_action(
+    player: &crate::player::BattlePlayer,
+) -> Result<PlayerAction, String> {
+    // Get the active pokemon
+    let active_pokemon = player.team[player.active_pokemon_index].as_ref()
+        .ok_or("No active pokemon")?;
+    
+    // Find first move with PP > 0
+    for (move_index, move_opt) in active_pokemon.moves.iter().enumerate() {
+        if let Some(move_instance) = move_opt {
+            if move_instance.pp > 0 {
+                return Ok(PlayerAction::UseMove { move_index });
+            }
+        }
+    }
+    
+    // No moves have PP - should use Struggle
+    // TODO: Implement Struggle move - for now return error
+    Err("No moves with PP available - need to implement Struggle".to_string())
 }
 
 /// Sets a player's action in the battle state

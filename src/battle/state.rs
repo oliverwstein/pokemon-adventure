@@ -46,7 +46,7 @@ pub enum ActionFailureReason {
     IsParalyzed,
     IsFlinching,
     IsConfused,
-    NoValidTarget,
+    NoEnemyPresent, // When opponent-targeting move can't execute (e.g., opponent fainted, only self-targeting moves allowed)
     NoPPRemaining,
 }
 

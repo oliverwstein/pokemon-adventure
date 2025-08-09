@@ -1,5 +1,7 @@
 use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent};
+use crate::battle::stats::effective_speed;
 use crate::player::PlayerAction;
+use crate::move_data::get_move_data;
 
 /// Prepares a battle state for turn resolution by collecting actions from both players
 /// This function should be called before resolve_turn()
@@ -105,11 +107,92 @@ fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
 }
 
 fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {
-    // TODO: Implement action prioritization logic
-    // - Switch actions first
-    // - Item actions second  
-    // - Move actions by priority, then speed
-    vec![0, 1] // Placeholder
+    let mut player_priorities = Vec::new();
+    
+    // Calculate priority for each player's action
+    for (player_index, action_opt) in battle_state.action_queue.iter().enumerate() {
+        if let Some(action) = action_opt {
+            let priority = calculate_action_priority(player_index, action, battle_state);
+            player_priorities.push((player_index, priority));
+        }
+    }
+    
+    // Sort by priority (higher priority first), then by speed (higher speed first)
+    player_priorities.sort_by(|a, b| {
+        // First sort by action priority (higher first)
+        let priority_cmp = b.1.action_priority.cmp(&a.1.action_priority);
+        if priority_cmp != std::cmp::Ordering::Equal {
+            return priority_cmp;
+        }
+        
+        // Then by move priority if both are moves (higher first)
+        let move_priority_cmp = b.1.move_priority.cmp(&a.1.move_priority);
+        if move_priority_cmp != std::cmp::Ordering::Equal {
+            return move_priority_cmp;
+        }
+        
+        // Finally by speed (higher first)
+        b.1.speed.cmp(&a.1.speed)
+    });
+    
+    // Return the sorted player indices
+    player_priorities.into_iter().map(|(player_index, _)| player_index).collect()
+}
+
+#[derive(Debug, Clone)]
+struct ActionPriority {
+    action_priority: i8, // Switch: 6, Item: 5, Move: varies
+    move_priority: i8,   // Only relevant for moves
+    speed: u16,          // Effective speed for tiebreaking
+}
+
+fn calculate_action_priority(player_index: usize, action: &PlayerAction, battle_state: &BattleState) -> ActionPriority {
+    match action {
+        PlayerAction::SwitchPokemon { .. } => {
+            let speed = get_player_speed(player_index, battle_state);
+            ActionPriority {
+                action_priority: 6, // Switches go first
+                move_priority: 0,   // N/A for switches
+                speed,
+            }
+        }
+        PlayerAction::UseItem { .. } => {
+            let speed = get_player_speed(player_index, battle_state);
+            ActionPriority {
+                action_priority: 5, // Items go second
+                move_priority: 0,   // N/A for items
+                speed,
+            }
+        }
+        PlayerAction::UseMove { move_index } => {
+            let player = &battle_state.players[player_index];
+            let active_pokemon = &player.team[player.active_pokemon_index].as_ref()
+                .expect("Active pokemon should exist");
+            
+            let move_instance = &active_pokemon.moves[*move_index].as_ref()
+                .expect("Move should exist");
+            
+            let move_data = get_move_data(&move_instance.move_)
+                .expect("Move data should exist");
+            
+            let speed = effective_speed(active_pokemon, player);
+            
+            ActionPriority {
+                action_priority: 0,         // Moves go last
+                move_priority: move_data.priority,
+                speed,
+            }
+        }
+    }
+}
+
+fn get_player_speed(player_index: usize, battle_state: &BattleState) -> u16 {
+    let player = &battle_state.players[player_index];
+    if let Some(active_pokemon) = &player.team[player.active_pokemon_index] {
+        effective_speed(active_pokemon, player)
+    } else {
+        0 // Should not happen, but safety fallback
+    }
 }
 
 fn execute_switch_phase(

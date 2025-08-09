@@ -1,5 +1,6 @@
 pub mod state;
 pub mod turn_orchestrator;
+pub mod stats;
 
 #[cfg(test)]
 mod test_resolve_turn;

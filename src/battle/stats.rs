@@ -5,7 +5,7 @@ use crate::moves::Move;
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(&move_).expect("Move data should exist");
+    let move_data = get_move_data(move_).expect("Move data should exist");
     
     let base_attack = match move_data.category {
         MoveCategory::Physical => pokemon.curr_stats[1], // Attack
@@ -35,7 +35,7 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 
 /// Calculate effective defense stat including stat stages, conditions, and other modifiers
 pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(&move_).expect("Move data should exist");
+    let move_data = get_move_data(move_).expect("Move data should exist");
     
     let base_defense = match move_data.category {
         MoveCategory::Physical => pokemon.curr_stats[2], // Defense
@@ -130,14 +130,14 @@ mod tests {
             ivs: [15; 6],
             evs: [0; 6],
             curr_stats: [100, 80, 80, 80, 80, 100], // Speed = 100
-            moves: [None; 4],
+            moves: [const { None }; 4],
             status: Some(crate::pokemon::StatusCondition::Paralysis),
         };
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
-            team: [None; 6],
+            team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
             team_conditions: HashMap::new(),

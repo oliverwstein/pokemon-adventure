@@ -141,7 +141,7 @@ fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {
 
 #[derive(Debug, Clone)]
 struct ActionPriority {
-    action_priority: i8, // Switch: 6, Item: 5, Move: varies
+    action_priority: i8, // Forfeit: 10, Switch: 6, Move: varies
     move_priority: i8,   // Only relevant for moves
     speed: u16,          // Effective speed for tiebreaking
 }
@@ -156,12 +156,11 @@ fn calculate_action_priority(player_index: usize, action: &PlayerAction, battle_
                 speed,
             }
         }
-        PlayerAction::UseItem { .. } => {
-            let speed = get_player_speed(player_index, battle_state);
+        PlayerAction::Forfeit => {
             ActionPriority {
-                action_priority: 5, // Items go second
-                move_priority: 0,   // N/A for items
-                speed,
+                action_priority: 10, // Forfeit goes first, before everything else
+                move_priority: 0,    // N/A for forfeit
+                speed: 0,
             }
         }
         PlayerAction::UseMove { move_index } => {
@@ -172,14 +171,22 @@ fn calculate_action_priority(player_index: usize, action: &PlayerAction, battle_
             let move_instance = &active_pokemon.moves[*move_index].as_ref()
                 .expect("Move should exist");
             
-            let move_data = get_move_data(&move_instance.move_)
+            let move_data = get_move_data(move_instance.move_)
                 .expect("Move data should exist");
             
             let speed = effective_speed(active_pokemon, player);
             
+            // Extract priority from move effects
+            let move_priority = move_data.effects.iter()
+                .find_map(|effect| match effect {
+                    crate::move_data::MoveEffect::Priority(priority) => Some(*priority),
+                    _ => None,
+                })
+                .unwrap_or(0); // Default priority is 0
+            
             ActionPriority {
                 action_priority: 0,         // Moves go last
-                move_priority: move_data.priority,
+                move_priority,
                 speed,
             }
         }

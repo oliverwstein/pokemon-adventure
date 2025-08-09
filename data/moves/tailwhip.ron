@@ -2,7 +2,7 @@ MoveData(
     name: "Tail Whip",
     move_type: Normal,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(100),
     max_pp: 30,
     effects: [

@@ -2,7 +2,7 @@ MoveData(
     name: "Stun Spore",
     move_type: Grass,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(90),
     max_pp: 20,
     effects: [

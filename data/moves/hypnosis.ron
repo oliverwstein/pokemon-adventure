@@ -2,7 +2,7 @@ MoveData(
     name: "Hypnosis",
     move_type: Psychic,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(100),
     max_pp: 10,
     effects: [

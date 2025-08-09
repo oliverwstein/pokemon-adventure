@@ -2,7 +2,7 @@ MoveData(
     name: "Sing",
     move_type: Normal,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(80),
     max_pp: 10,
     effects: [

@@ -2,7 +2,7 @@ MoveData(
     name: "String Shot",
     move_type: Bug,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(100),
     max_pp: 10,
     effects: [

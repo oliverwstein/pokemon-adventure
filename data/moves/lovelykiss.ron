@@ -2,7 +2,7 @@ MoveData(
     name: "Lovely Kiss",
     move_type: Psychic,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(100),
     max_pp: 15,
     effects: [

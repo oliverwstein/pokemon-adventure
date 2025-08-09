@@ -2,7 +2,7 @@ MoveData(
     name: "Will-O-Wisp",
     move_type: Fire,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(85),
     max_pp: 15,
     effects: [

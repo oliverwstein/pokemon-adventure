@@ -2,7 +2,7 @@ MoveData(
     name: "Supersonic",
     move_type: Normal,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(70),
     max_pp: 15,
     effects: [

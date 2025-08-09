@@ -2,7 +2,7 @@ MoveData(
     name: "Bide",
     move_type: Normal,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: None,
     max_pp: 20,
     effects: [

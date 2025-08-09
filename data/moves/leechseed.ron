@@ -2,7 +2,7 @@ MoveData(
     name: "Leech Seed",
     move_type: Grass,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: Some(100),
     max_pp: 15,
     effects: [

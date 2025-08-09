@@ -2,7 +2,7 @@ MoveData(
     name: "Flash",
     move_type: Electric,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: None,
     max_pp: 15,
     effects: [

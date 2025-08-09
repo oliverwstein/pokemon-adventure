@@ -2,7 +2,7 @@ MoveData(
     name: "Smokescreen",
     move_type: Fire,
     power: None,
-    category: Status,
+    category: Other,
     accuracy: None,
     max_pp: 20,
     effects: [

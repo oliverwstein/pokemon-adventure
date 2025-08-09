@@ -73,24 +73,29 @@ The `resolve_turn` function will execute the following sequence:
     *   Determine the final action order (e.g., `[player_1_index, player_2_index]`).
 
 3.  **Main Action Loop (Iterate through ordered players):**
-    *   If `SwitchPokemon`: ... (emit events and mutate state).
-    *   If it is an attack:
-        a.  **Pre-Action Check:** Check for non-volatile statuses (sleep, paralysis, freeze, fainted) that would prevent action. If the action is prevented, `bus.push(BattleEvent::ActionFailed)` and proceed to the next player.
-        b.  **Volatile Status Check:** Check for volatile statuses (confusion, flinch). If the action is prevented, `bus.push(BattleEvent::ActionFailed)` and proceed. Note that the ActionFailed event should record why.
-        c.  **Valid Target Check:** If the move is not a status move (that is, if it does not only affect the user), check if the target has fainted. If it has, cancel the attack and `bus.push(BattleEvent::ActionFailed)` 
-        d.  **Execute Action:**
-            *   If `UseMove`:
-                i.  `bus.push(BattleEvent::MoveUsed)`
-                ii.  Perform accuracy check using the `TurnRng` oracle. If it fails, `bus.push(BattleEvent::MoveMissed)` and the action ends.
-                iii. Calculate damage, critical hits, and type effectiveness using the `TurnRng` oracle.
-                iv. `bus.push(BattleEvent::DamageDealt)`.
-                v.  **Mutate** the target's HP in the `BattleState`.
-                vi. Iterate through the move's `effects` list. For each effect:
-                    - Check if the effect can apply (e.g., can't poison a Poison-type).
-                    - Use the `TurnRng` oracle to check the probability.
-                    - If it succeeds, `bus.push(BattleEvent::EffectApplied)` and **mutate** the target's state.
-                    - If it fails, `bus.push(BattleEvent::EffectFailed)`.
-    *   **Post-Action Check:** Check if the target Pokémon has fainted. If so, `bus.push(BattleEvent::PokemonFainted)`. 
+    1.  **Switch Bracket:**
+        *   Identify any `PlayerAction::SwitchPokemon` actions from the `action_queue`.
+        *   If both players are switching, determine their order based on their active Pokémon's speed.
+        *   Execute the switch actions in order. For each switch:
+            *   `bus.push(BattleEvent::PokemonSwitched)`.
+            *   Mutate the player's `active_pokemon_index`.
+            *   Clear the switched-out Pokémon's volatile statuses and stat stages.
+        *   Remove switch actions from further consideration.
+
+    2.  **Item Use Bracket:** (Not Yet Implemented)
+        *   Identify any `PlayerAction::UseItem` actions.
+        *   Determine order based on speed.
+        *   Execute item actions.
+
+    3.  **Move Bracket:**
+        *   Identify the remaining `PlayerAction::UseMove` actions.
+        *   Determine the move execution order based on **Move Priority**, then **Pokémon Speed** as a tiebreaker.
+        *   Iterate through the ordered move actions. For each action:
+            a.  **Pre-Action Check:** (As you've described: sleep, paralysis, etc.). If failed, push event and `continue` to the next action.
+            b.  **Valid Target Check:** (As you've described).
+            c.  **Execute Move:** (As you've described: accuracy, damage, effects, etc.).
+            d.  **Post-Action Faint Check:** After the move resolves, check if either the attacker (from recoil/Explosion) or the defender has fainted.
+                *   If a player's entire team has fainted as a result of this move, immediately end the Action Loop and proceed to the "Cleanup & Finalization" step.
 
 4.  **End-of-Turn Phase:**
     *   Iterate through both active Pokémon.

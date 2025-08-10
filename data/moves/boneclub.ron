@@ -3,7 +3,7 @@ MoveData(
     move_type: Ground,
     power: Some(25),
     category: Physical,
-    accuracy: Some(100),
+    accuracy: Some(90),
     max_pp: 20,
     effects: [
         MultiHit(2, 5),

@@ -182,7 +182,7 @@ impl MoveData {
             move_type: PokemonType::Typeless,
             power: Some(50),
             category: MoveCategory::Physical,
-            accuracy: None, // Always hits
+            accuracy: Some(90),
             max_pp: 0,      // Not a real move, no PP
             effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
         };

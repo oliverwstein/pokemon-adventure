@@ -124,7 +124,7 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80, 85, 70, 65, 95, 88, 92]); // 49 < 50, so confused (50% chance) + many extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
-        execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
+        execute_attack_hit(0, 1, Move::Ember, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
         
         // When confused, the Pokemon should add a self-attack to the action stack
         // We need to process that action to see the self-damage
@@ -139,7 +139,7 @@ mod tests {
                     // This should be a self-attack (attacker_index == defender_index)
                     assert_eq!(attacker_index, defender_index);
                     assert_eq!(attacker_index, 0);
-                    
+                    assert_eq!(move_used, Move::HittingItself);
                     execute_attack_hit(attacker_index, defender_index, move_used, hit_number, 
                                      &mut action_stack, &mut bus, &mut rng, &mut battle_state);
                 }

@@ -20,6 +20,7 @@ pub enum BattleEvent {
     
     // Pokemon Actions
     PokemonSwitched { player_index: usize, old_pokemon: Species, new_pokemon: Species },
+    MoveUsed { player_index: usize, pokemon: Species, move_used: Move },
     MoveMissed { attacker: Species, defender: Species, move_used: Move },
     MoveHit { attacker: Species, defender: Species, move_used: Move },
     DamageDealt { target: Species, damage: u16, remaining_hp: u16 },

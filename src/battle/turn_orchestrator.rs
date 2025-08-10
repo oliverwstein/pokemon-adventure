@@ -106,7 +106,7 @@ fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     bus.push(BattleEvent::TurnStarted { turn_number: battle_state.turn_number });
 }
 
-fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {
+pub fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {
     let mut player_priorities = Vec::new();
     
     // Calculate priority for each player's action
@@ -224,10 +224,26 @@ fn execute_move_phase(
     battle_state: &mut BattleState,
     action_order: &[usize],
     bus: &mut EventBus, 
-    rng: &mut TurnRng,
+    _rng: &mut TurnRng,
 ) {
-    // TODO: Handle move execution
-    // This will be the most complex phase
+    // Execute moves in the determined order
+    for &player_index in action_order {
+        if let Some(PlayerAction::UseMove { move_index }) = &battle_state.action_queue[player_index] {
+            let player = &battle_state.players[player_index];
+            let active_pokemon = player.team[player.active_pokemon_index].as_ref()
+                .expect("Active pokemon should exist");
+            
+            let move_instance = &active_pokemon.moves[*move_index].as_ref()
+                .expect("Move should exist");
+            
+            // For now, just generate a MoveUsed event - no damage, accuracy, effects, etc.
+            bus.push(BattleEvent::MoveUsed {
+                player_index,
+                pokemon: active_pokemon.species,
+                move_used: move_instance.move_,
+            });
+        }
+    }
 }
 
 fn execute_end_turn_phase(

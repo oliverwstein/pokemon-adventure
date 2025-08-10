@@ -380,6 +380,9 @@ mod tests {
 
     #[test]
     fn test_cannot_switch_to_fainted_pokemon() {
+        // Note: This is a test of whether you can try to switch to a fainted pokemon, 
+        // not what happens when a pokemon faints.
+        
         // Initialize move data
         use std::path::Path;
         let data_path = Path::new("data");

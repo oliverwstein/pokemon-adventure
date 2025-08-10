@@ -25,10 +25,19 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
     let stage = player.get_stat_stage(attack_stat);
     let mut multiplied_attack = apply_stat_stage_multiplier(base_attack, stage);
     
+    // Apply burn status (halves physical attack only)
+    if matches!(move_data.category, MoveCategory::Physical) {
+        if let Some(status) = &pokemon.status {
+            if matches!(status, crate::pokemon::StatusCondition::Burn) {
+                multiplied_attack /= 2;
+            }
+        }
+    }
+    
     // TODO: Apply move-specific modifiers based on move_data
     // Examples: Foul Play uses target's attack instead, Psyshock uses special attack vs physical defense
     
-    // TODO: Apply other modifiers (burn for physical attacks, items, abilities, etc.)
+    // TODO: Apply other modifiers (items, abilities, etc.)
     
     multiplied_attack
 }
@@ -266,6 +275,47 @@ mod tests {
         // Test without paralysis
         pokemon.status = None;
         assert_eq!(effective_speed(&pokemon, &player), 100);
+    }
+
+    #[test] 
+    fn test_effective_attack_burn() {
+        // Initialize move data (required for get_move_data to work)
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
+        let mut pokemon = crate::pokemon::PokemonInst {
+            name: "Test".to_string(),
+            species: Species::Charmander,
+            curr_exp: 0,
+            ivs: [15; 6],
+            evs: [0; 6],
+            curr_stats: [100, 80, 80, 80, 80, 100], // Attack = 80
+            moves: [const { None }; 4],
+            status: Some(crate::pokemon::StatusCondition::Burn),
+        };
+        
+        let player = crate::player::BattlePlayer {
+            player_id: "test".to_string(),
+            player_name: "Test".to_string(),
+            team: [const { None }; 6],
+            active_pokemon_index: 0,
+            stat_stages: HashMap::new(),
+            team_conditions: HashMap::new(),
+            active_pokemon_conditions: HashMap::new(),
+            last_move: None,
+        };
+        
+        // Burn should halve physical attack: 80 / 2 = 40
+        assert_eq!(effective_attack(&pokemon, &player, crate::moves::Move::Tackle), 40);
+        
+        // Burn should NOT affect special attacks
+        assert_eq!(effective_attack(&pokemon, &player, crate::moves::Move::Ember), 80);
+        
+        // Test without burn
+        pokemon.status = None;
+        assert_eq!(effective_attack(&pokemon, &player, crate::moves::Move::Tackle), 80);
+        assert_eq!(effective_attack(&pokemon, &player, crate::moves::Move::Ember), 80);
     }
     
     #[test]

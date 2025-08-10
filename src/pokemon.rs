@@ -608,5 +608,58 @@ impl PokemonInst {
             self.status = None; // Remove faint status
         }
     }
+    
+    /// Update status condition timers and return events that should be generated
+    /// Returns (status_damage, should_cure, status_changed)
+    pub fn tick_status(&mut self) -> (u16, bool, bool) {
+        let max_hp = self.max_hp(); // Get max HP once to avoid borrowing issues
+        
+        match self.status {
+            Some(StatusCondition::Sleep(mut turns)) => {
+                if turns > 0 {
+                    turns -= 1;
+                    if turns == 0 {
+                        // Wake up
+                        self.status = None;
+                        (0, true, true) // No damage, cure status, status changed
+                    } else {
+                        // Update turn counter
+                        self.status = Some(StatusCondition::Sleep(turns));
+                        (0, false, true) // No damage, don't cure, turns changed  
+                    }
+                } else {
+                    (0, false, false) // Already at 0, no change
+                }
+            },
+            Some(StatusCondition::Poison(mut severity)) => {
+                let damage = if severity == 0 {
+                    // Regular poison: 1/16 of max HP
+                    (max_hp / 16).max(1)
+                } else {
+                    // Badly poisoned: severity/16 of max HP (severity increases each turn)
+                    severity += 1;
+                    self.status = Some(StatusCondition::Poison(severity)); // Update severity
+                    let poison_damage = (max_hp * (severity as u16) / 16).max(1);
+                    poison_damage
+                };
+                
+                // Apply poison damage
+                let fainted = self.take_damage(damage);
+                if fainted {
+                    (damage, false, true) // Damage dealt, don't cure (fainting handles status), status changed to Faint
+                } else {
+                    (damage, false, severity > 0) // Damage dealt, don't cure, status changed if badly poisoned
+                }
+            },
+            Some(StatusCondition::Burn) => {
+                let damage = (max_hp / 16).max(1); // 1/16 of max HP
+                
+                // Apply burn damage
+                let fainted = self.take_damage(damage);
+                (damage, false, fainted) // Damage dealt, don't cure (unless fainted), status might change to Faint
+            },
+            _ => (0, false, false) // No timing effects for Freeze, Paralysis, Faint
+        }
+    }
 }
 

@@ -35,6 +35,14 @@ pub enum BattleEvent {
     StatusRemoved { target: Species, status: PokemonCondition },
     StatusDamage { target: Species, status: PokemonCondition, damage: u16 },
     
+    // Pokemon Status Conditions (Sleep, Poison, Burn, etc.)
+    PokemonStatusApplied { target: Species, status: crate::pokemon::StatusCondition },
+    PokemonStatusRemoved { target: Species, status: crate::pokemon::StatusCondition },  
+    PokemonStatusDamage { target: Species, status: crate::pokemon::StatusCondition, damage: u16, remaining_hp: u16 },
+    
+    // Active Condition Updates
+    ConditionExpired { target: Species, condition: PokemonCondition },
+    
     // Stat Changes
     StatStageChanged { target: Species, stat: StatType, old_stage: i8, new_stage: i8 },
     

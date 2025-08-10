@@ -13,3 +13,6 @@ mod test_fainting;
 
 #[cfg(test)]
 mod test_multi_attacks;
+
+#[cfg(test)]
+mod test_end_of_turn;

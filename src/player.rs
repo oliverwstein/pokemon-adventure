@@ -38,19 +38,19 @@ pub enum StatType {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PokemonCondition {
     Flinched,
-    Confused,
+    Confused { turns_remaining: u8 }, // Counts down each turn
     Seeded,
     Underground,
     InAir,
     Teleported,
     Enraged,
-    Exhausted,
+    Exhausted { turns_remaining: u8 }, // Prevents acting for specified turns
     Trapped { turns_remaining: u8 },
     Charging { pokemon_move: Move },
     Rampaging { turns_remaining: u8 },
     Transformed { target: PokemonInst },
     Converted { pokemon_type: PokemonType },
-    Disabled { pokemon_move: Move },
+    Disabled { pokemon_move: Move, turns_remaining: u8 }, // Counts down each turn
     Substitute { hp: u8 },
     Biding { turns_remaining: u8, damage: u16 },
     Countering { damage: u16 },
@@ -225,5 +225,117 @@ impl BattlePlayer {
     /// Get all current stat stages (for debugging/display)
     pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
         &self.stat_stages
+    }
+    
+    /// Update active Pokemon condition timers and return which conditions should be removed
+    /// Returns a vector of conditions that expired and should be removed
+    pub fn tick_active_conditions(&mut self) -> Vec<PokemonCondition> {
+        let mut expired_conditions = Vec::new();
+        let mut updated_conditions = Vec::new();
+        
+        // Process each condition and check for expiration/updates
+        for (key, condition) in self.active_pokemon_conditions.iter() {
+            match condition {
+                // Conditions that expire after one turn (cleared at end-of-turn)
+                PokemonCondition::Flinched | 
+                PokemonCondition::Teleported => {
+                    expired_conditions.push(key.clone());
+                },
+                
+                // Multi-turn conditions with countdown timers
+                PokemonCondition::Confused { turns_remaining } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(),
+                            PokemonCondition::Confused { turns_remaining: turns_remaining - 1 }
+                        ));
+                    }
+                },
+                
+                PokemonCondition::Exhausted { turns_remaining } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(), 
+                            PokemonCondition::Exhausted { turns_remaining: turns_remaining - 1 }
+                        ));
+                    }
+                },
+                
+                PokemonCondition::Trapped { turns_remaining } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(), 
+                            PokemonCondition::Trapped { turns_remaining: turns_remaining - 1 }
+                        ));
+                    }
+                },
+                
+                PokemonCondition::Disabled { pokemon_move, turns_remaining } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(),
+                            PokemonCondition::Disabled { pokemon_move: *pokemon_move, turns_remaining: turns_remaining - 1 }
+                        ));
+                    }
+                },
+                
+                PokemonCondition::Rampaging { turns_remaining } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(),
+                            PokemonCondition::Rampaging { turns_remaining: turns_remaining - 1 }
+                        ));
+                    }
+                },
+                
+                PokemonCondition::Biding { turns_remaining, damage } => {
+                    if *turns_remaining <= 1 {
+                        expired_conditions.push(key.clone());
+                    } else {
+                        updated_conditions.push((
+                            key.clone(),
+                            PokemonCondition::Biding { turns_remaining: turns_remaining - 1, damage: *damage }
+                        ));
+                    }
+                },
+                
+                // Conditions that persist until explicitly removed
+                PokemonCondition::Seeded |
+                PokemonCondition::Underground |
+                PokemonCondition::InAir |
+                PokemonCondition::Enraged |
+                PokemonCondition::Charging { .. } |
+                PokemonCondition::Transformed { .. } |
+                PokemonCondition::Converted { .. } |
+                PokemonCondition::Substitute { .. } |
+                PokemonCondition::Countering { .. } => {
+                    // These don't have automatic expiration timers
+                    // They're removed by specific game events
+                }
+            }
+        }
+        
+        // Remove expired conditions
+        for condition in &expired_conditions {
+            self.active_pokemon_conditions.remove(condition);
+        }
+        
+        // Update conditions with decremented counters
+        for (old_key, updated_condition) in updated_conditions {
+            self.active_pokemon_conditions.remove(&old_key);
+            self.active_pokemon_conditions.insert(updated_condition.clone(), updated_condition);
+        }
+        
+        expired_conditions
     }
 }

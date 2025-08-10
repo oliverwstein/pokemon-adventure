@@ -738,12 +738,47 @@ fn execute_end_turn_phase(
                 continue;
             }
             
-            // TODO: Apply status damage (poison, burn), condition timers, etc.
-            // For example:
-            // if let Some(status) = pokemon.status {
-            //     if matches!(status, crate::pokemon::StatusCondition::Poison(_)) { ... }
-            // }
+            // 1. Process Pokemon status conditions (Sleep, Poison, Burn)
+            let (status_damage, should_cure, status_changed) = pokemon.tick_status();
+            
+            if status_damage > 0 {
+                // Generate status damage event
+                if let Some(status) = pokemon.status {
+                    bus.push(BattleEvent::PokemonStatusDamage { 
+                        target: pokemon.species, 
+                        status,
+                        damage: status_damage,
+                        remaining_hp: pokemon.curr_stats[0]
+                    });
+                }
+            }
+            
+            if should_cure && status_changed {
+                // Status was cured (e.g., sleep ended)
+                bus.push(BattleEvent::PokemonStatusRemoved { 
+                    target: pokemon.species, 
+                    status: crate::pokemon::StatusCondition::Sleep(0) // Will be the previous status
+                });
+            }
         }
+        
+        // 2. Process active Pokemon conditions (outside of pokemon borrow to avoid conflicts)
+        let player = &mut battle_state.players[player_index];
+        let expired_conditions = player.tick_active_conditions();
+        
+        // Generate events for expired conditions
+        if let Some(pokemon) = player.active_pokemon() {
+            for condition in expired_conditions {
+                bus.push(BattleEvent::ConditionExpired { 
+                    target: pokemon.species, 
+                    condition 
+                });
+            }
+        }
+        
+        // 3. Tick team conditions (Reflect, Light Screen, Mist)
+        let player = &mut battle_state.players[player_index];
+        player.tick_team_conditions();
     }
 }
 

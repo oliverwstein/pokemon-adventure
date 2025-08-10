@@ -61,16 +61,43 @@ impl ActionStack {
 /// This function should be called before resolve_turn()
 /// For now, implements a basic deterministic AI that selects first available move
 pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), String> {
-    // Ensure we're in the right state to collect actions
-    if battle_state.game_state != GameState::WaitingForBothActions {
-        return Err("Cannot collect actions: battle is not waiting for actions".to_string());
-    }
-    
-    // Generate deterministic actions for any players that haven't provided one
-    for player_index in 0..2 {
-        if battle_state.action_queue[player_index].is_none() {
-            let action = generate_deterministic_action(&battle_state.players[player_index])?;
-            battle_state.action_queue[player_index] = Some(action);
+    match battle_state.game_state {
+        GameState::WaitingForBothActions => {
+            // Generate deterministic actions for any players that haven't provided one
+            for player_index in 0..2 {
+                if battle_state.action_queue[player_index].is_none() {
+                    let action = generate_deterministic_action(&battle_state.players[player_index])?;
+                    battle_state.action_queue[player_index] = Some(action);
+                }
+            }
+        }
+        GameState::WaitingForPlayer1Replacement => {
+            // Player 1 needs to send out a replacement Pokemon
+            if battle_state.action_queue[0].is_none() {
+                let action = generate_replacement_action(&battle_state.players[0])?;
+                battle_state.action_queue[0] = Some(action);
+            }
+            // Player 2 already has their action or doesn't need one
+        }
+        GameState::WaitingForPlayer2Replacement => {
+            // Player 2 needs to send out a replacement Pokemon
+            if battle_state.action_queue[1].is_none() {
+                let action = generate_replacement_action(&battle_state.players[1])?;
+                battle_state.action_queue[1] = Some(action);
+            }
+            // Player 1 already has their action or doesn't need one
+        }
+        GameState::WaitingForBothReplacements => {
+            // Both players need to send out replacement Pokemon
+            for player_index in 0..2 {
+                if battle_state.action_queue[player_index].is_none() {
+                    let action = generate_replacement_action(&battle_state.players[player_index])?;
+                    battle_state.action_queue[player_index] = Some(action);
+                }
+            }
+        }
+        _ => {
+            return Err("Cannot collect actions: battle is not in a state that accepts actions".to_string());
         }
     }
     
@@ -86,6 +113,11 @@ fn generate_deterministic_action(
     let active_pokemon = player.team[player.active_pokemon_index].as_ref()
         .ok_or("No active pokemon")?;
     
+    // If active Pokemon is fainted, it cannot act
+    if active_pokemon.is_fainted() {
+        return Err("Active Pokemon is fainted and cannot act".to_string());
+    }
+    
     // Find first move with PP > 0
     for (move_index, move_opt) in active_pokemon.moves.iter().enumerate() {
         if let Some(move_instance) = move_opt {
@@ -100,6 +132,22 @@ fn generate_deterministic_action(
     Err("No moves with PP available - need to implement Struggle".to_string())
 }
 
+/// Generates a replacement Pokemon action for a player with a fainted active Pokemon
+fn generate_replacement_action(
+    player: &crate::player::BattlePlayer,
+) -> Result<PlayerAction, String> {
+    // Find first non-fainted Pokemon in team that isn't the current active Pokemon
+    for (team_index, pokemon_opt) in player.team.iter().enumerate() {
+        if let Some(pokemon) = pokemon_opt {
+            if !pokemon.is_fainted() && team_index != player.active_pokemon_index {
+                return Ok(PlayerAction::SwitchPokemon { team_index });
+            }
+        }
+    }
+    
+    Err("No non-fainted Pokemon available to switch to".to_string())
+}
+
 /// Sets a player's action in the battle state
 /// This would typically be called by the API layer when a player submits their action
 pub fn set_player_action(
@@ -111,8 +159,39 @@ pub fn set_player_action(
         return Err("Invalid player index".to_string());
     }
     
-    if battle_state.game_state != GameState::WaitingForBothActions {
-        return Err("Cannot set action: battle is not waiting for actions".to_string());
+    let valid_states = match player_index {
+        0 => matches!(battle_state.game_state, 
+            GameState::WaitingForBothActions | 
+            GameState::WaitingForPlayer1Replacement | 
+            GameState::WaitingForBothReplacements),
+        1 => matches!(battle_state.game_state, 
+            GameState::WaitingForBothActions | 
+            GameState::WaitingForPlayer2Replacement | 
+            GameState::WaitingForBothReplacements),
+        _ => false,
+    };
+    
+    if !valid_states {
+        return Err("Cannot set action: battle is not waiting for this player's action".to_string());
+    }
+    
+    // Validate that replacement actions are switches to non-fainted Pokemon
+    if matches!(battle_state.game_state, 
+        GameState::WaitingForPlayer1Replacement | 
+        GameState::WaitingForPlayer2Replacement | 
+        GameState::WaitingForBothReplacements) {
+        if let PlayerAction::SwitchPokemon { team_index } = &action {
+            let player = &battle_state.players[player_index];
+            if let Some(pokemon) = &player.team[*team_index] {
+                if pokemon.is_fainted() {
+                    return Err("Cannot switch to fainted Pokemon during forced replacement".to_string());
+                }
+            } else {
+                return Err("Cannot switch to empty team slot".to_string());
+            }
+        } else {
+            return Err("Only switch actions are allowed during forced replacement".to_string());
+        }
     }
     
     battle_state.action_queue[player_index] = Some(action);
@@ -121,9 +200,21 @@ pub fn set_player_action(
 
 /// Check if battle is ready for turn resolution (both players have provided actions)
 pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
-    battle_state.game_state == GameState::WaitingForBothActions
-        && battle_state.action_queue[0].is_some() 
-        && battle_state.action_queue[1].is_some()
+    match battle_state.game_state {
+        GameState::WaitingForBothActions => {
+            battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
+        }
+        GameState::WaitingForPlayer1Replacement => {
+            battle_state.action_queue[0].is_some()
+        }
+        GameState::WaitingForPlayer2Replacement => {
+            battle_state.action_queue[1].is_some()
+        }
+        GameState::WaitingForBothReplacements => {
+            battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
+        }
+        _ => false, // Other states are not ready for turn resolution
+    }
 }
 
 /// Main entry point for turn resolution
@@ -232,6 +323,20 @@ fn execute_battle_action(
         }
         
         BattleAction::Switch { player_index, target_pokemon_index } => {
+            // Check if current Pokemon is fainted (switching away from fainted Pokemon is allowed)
+            // But switching TO a fainted Pokemon should not be allowed
+            let target_pokemon = &battle_state.players[player_index].team[target_pokemon_index];
+            
+            if let Some(target_pokemon) = target_pokemon {
+                if target_pokemon.is_fainted() {
+                    // Cannot switch to a fainted Pokemon
+                    bus.push(BattleEvent::ActionFailed { 
+                        reason: crate::battle::state::ActionFailureReason::PokemonFainted
+                    });
+                    return;
+                }
+            }
+            
             execute_switch(player_index, target_pokemon_index, battle_state, bus);
         }
         
@@ -240,6 +345,20 @@ fn execute_battle_action(
         }
         
         BattleAction::AttackHit { attacker_index, defender_index, move_used, hit_number } => {
+            // Check if attacker is fainted (cannot act)
+            let attacker_player = &battle_state.players[attacker_index];
+            let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index].as_ref();
+            
+            if let Some(attacker_pokemon) = attacker_pokemon {
+                if attacker_pokemon.is_fainted() {
+                    // Skip action - attacker has fainted and cannot act
+                    bus.push(BattleEvent::ActionFailed { 
+                        reason: crate::battle::state::ActionFailureReason::PokemonFainted
+                    });
+                    return;
+                }
+            }
+            
             // Check if target is still valid (not fainted)
             let defender_player = &battle_state.players[defender_index];
             let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_ref();
@@ -395,6 +514,9 @@ fn execute_attack_hit(
                     player_index: defender_index,
                     pokemon: defender_pokemon.species,
                 });
+                
+                // After fainting, check if player needs to send out replacement Pokemon
+                check_and_handle_fainting_replacement(defender_index, battle_state);
             }
         }
         
@@ -521,7 +643,7 @@ fn execute_end_turn_phase(
 
 fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     // Check win conditions
-    // TODO: Implement win condition checking
+    check_win_conditions(battle_state, bus);
     
     // Clear action queue
     battle_state.action_queue = [None, None];
@@ -529,10 +651,94 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     // Increment turn number
     battle_state.turn_number += 1;
     
-    // Set state back to waiting for actions (unless battle ended)
-    if battle_state.game_state == GameState::TurnInProgress {
+    // Set state back to waiting for actions (unless battle ended or replacements needed)
+    if matches!(battle_state.game_state, GameState::TurnInProgress) {
         battle_state.game_state = GameState::WaitingForBothActions;
     }
+    // Don't override replacement states - they should stay until replacement is handled
     
     bus.push(BattleEvent::TurnEnded);
+}
+
+/// Check if either player needs to send out a replacement Pokemon after fainting
+fn check_and_handle_fainting_replacement(fainted_player_index: usize, battle_state: &mut BattleState) {
+    let player = &battle_state.players[fainted_player_index];
+    
+    // Check if the player has any non-fainted Pokemon to switch to
+    if !has_non_fainted_pokemon(player) {
+        // Player has no Pokemon left - they lose
+        battle_state.game_state = if fainted_player_index == 0 {
+            GameState::Player2Win
+        } else {
+            GameState::Player1Win
+        };
+        return;
+    }
+    
+    // Player needs to send out a replacement Pokemon
+    // Update game state to reflect that replacements are needed
+    match battle_state.game_state {
+        GameState::TurnInProgress => {
+            // Set state to indicate which player needs replacement
+            battle_state.game_state = if fainted_player_index == 0 {
+                GameState::WaitingForPlayer1Replacement
+            } else {
+                GameState::WaitingForPlayer2Replacement
+            };
+        }
+        GameState::WaitingForPlayer1Replacement => {
+            // If player 2 also fainted, both need replacements
+            if fainted_player_index == 1 {
+                battle_state.game_state = GameState::WaitingForBothReplacements;
+            }
+        }
+        GameState::WaitingForPlayer2Replacement => {
+            // If player 1 also fainted, both need replacements
+            if fainted_player_index == 0 {
+                battle_state.game_state = GameState::WaitingForBothReplacements;
+            }
+        }
+        _ => {} // Other states don't change
+    }
+}
+
+/// Check if a player has any non-fainted Pokemon in their team
+fn has_non_fainted_pokemon(player: &crate::player::BattlePlayer) -> bool {
+    player.team.iter().any(|pokemon_opt| {
+        if let Some(pokemon) = pokemon_opt {
+            !pokemon.is_fainted()
+        } else {
+            false
+        }
+    })
+}
+
+/// Check win conditions and update battle state accordingly
+fn check_win_conditions(battle_state: &mut BattleState, bus: &mut EventBus) {
+    let player1_has_pokemon = has_non_fainted_pokemon(&battle_state.players[0]);
+    let player2_has_pokemon = has_non_fainted_pokemon(&battle_state.players[1]);
+    
+    match (player1_has_pokemon, player2_has_pokemon) {
+        (false, false) => {
+            // Both players out of Pokemon - draw
+            battle_state.game_state = GameState::Draw;
+            bus.push(BattleEvent::BattleEnded { winner: None });
+        }
+        (false, true) => {
+            // Player 1 out of Pokemon - Player 2 wins
+            battle_state.game_state = GameState::Player2Win;
+            bus.push(BattleEvent::PlayerDefeated { player_index: 0 });
+            bus.push(BattleEvent::BattleEnded { winner: Some(1) });
+        }
+        (true, false) => {
+            // Player 2 out of Pokemon - Player 1 wins
+            battle_state.game_state = GameState::Player1Win;
+            bus.push(BattleEvent::PlayerDefeated { player_index: 1 });
+            bus.push(BattleEvent::BattleEnded { winner: Some(0) });
+        }
+        (true, true) => {
+            // Both players have Pokemon - continue battle
+            // No change to game state needed here
+        }
+    }
 }

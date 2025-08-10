@@ -90,7 +90,7 @@ mod tests {
             60, // FAIL! Stop the sequence.
 
             // Defender's turn (Pidgey) - needs rolls even if we don't care about the outcome
-            50, 90, 90,
+            50, 90, 90, 75, 80, 85, 55, 60, 70, 45,
         ]);
 
         let event_bus = resolve_turn(&mut battle_state, test_rng);

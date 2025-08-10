@@ -231,7 +231,7 @@ mod tests {
         let mut battle_state = create_test_battle_state(None, vec![]);
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![75, 60, 80]); // Good rolls for accuracy, etc.
+        let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]); // Good rolls for accuracy, etc.
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);

@@ -383,10 +383,11 @@ mod tests {
         // Note: This is a test of whether you can try to switch to a fainted pokemon, 
         // not what happens when a pokemon faints.
         
-        // Initialize move data
+        // Initialize move data and species data
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
         
         // Create player with multiple Pokemon, one fainted
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
@@ -421,7 +422,7 @@ mod tests {
         battle_state.action_queue[1] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
 
         // Create RNG
-        let test_rng = crate::battle::state::TurnRng::new_for_test(vec![50, 50, 50]);
+        let test_rng = crate::battle::state::TurnRng::new_for_test(vec![50, 50, 50, 60, 70, 80, 90, 40, 30, 20]);
 
         // Execute turn
         let event_bus = crate::battle::turn_orchestrator::resolve_turn(&mut battle_state, test_rng);

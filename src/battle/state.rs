@@ -7,6 +7,9 @@ use serde::{Serialize, Deserialize};
 pub enum GameState {
     WaitingForBothActions,
     TurnInProgress,
+    WaitingForPlayer1Replacement, // Player 1 needs to send out a new Pokemon after faint
+    WaitingForPlayer2Replacement, // Player 2 needs to send out a new Pokemon after faint
+    WaitingForBothReplacements,   // Both players need to send out new Pokemon after faints
     Player1Win,
     Player2Win,
     Draw,
@@ -51,6 +54,7 @@ pub enum ActionFailureReason {
     IsConfused,
     NoEnemyPresent, // When opponent-targeting move can't execute (e.g., opponent fainted, only self-targeting moves allowed)
     NoPPRemaining,
+    PokemonFainted, // When the acting Pokemon or target is fainted
 }
 
 #[derive(Debug, Clone)]
@@ -94,9 +98,9 @@ impl TurnRng {
     
     pub fn new_random() -> Self {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         // Pre-generate a reasonable number of random values for a turn
-        let outcomes: Vec<u8> = (0..100).map(|_| rng.gen_range(1..=100)).collect();
+        let outcomes: Vec<u8> = (0..100).map(|_| rng.random_range(1..=100)).collect();
         Self {
             outcomes,
             index: 0,

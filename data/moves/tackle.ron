@@ -3,7 +3,7 @@ MoveData(
     move_type: Normal,
     power: Some(60),
     category: Physical,
-    accuracy: Some(100),
+    accuracy: Some(95),
     max_pp: 40,
     effects: [
         Exhaust(10),

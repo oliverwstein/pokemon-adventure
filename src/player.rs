@@ -1,5 +1,5 @@
 
-use crate::pokemon::{PokemonInst, Type};
+use crate::pokemon::{PokemonInst, PokemonType};
 use crate::moves::Move;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
@@ -49,7 +49,7 @@ pub enum PokemonCondition {
     Charging { pokemon_move: Move },
     Rampaging { turns_remaining: u8 },
     Transformed { target: PokemonInst },
-    Converted { pokemon_type: Type },
+    Converted { pokemon_type: PokemonType },
     Disabled { pokemon_move: Move },
     Substitute { hp: u8 },
     Biding { turns_remaining: u8, damage: u16 },

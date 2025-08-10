@@ -348,7 +348,7 @@ fn execute_battle_action(
             // Check if attacker is fainted (cannot act)
             let attacker_player = &battle_state.players[attacker_index];
             let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index].as_ref();
-            
+
             if let Some(attacker_pokemon) = attacker_pokemon {
                 if attacker_pokemon.is_fainted() {
                     // Skip action - attacker has fainted and cannot act
@@ -358,17 +358,29 @@ fn execute_battle_action(
                     return;
                 }
             }
-            
-            // Check if target is still valid (not fainted). This is nuanced.
+            if hit_number == 0 {
+                let attacker_pokemon = battle_state.players[attacker_index].team[battle_state.players[attacker_index].active_pokemon_index]
+                    .as_mut()
+                    .expect("Attacker Pokemon must exist to use a move");
+
+                // Directly use the Move from the AttackHit action. No more index lookup!
+                if let Err(e) = attacker_pokemon.use_move(move_used) {
+                    let reason = match e {
+                        crate::pokemon::UseMoveError::NoPPRemaining => crate::battle::state::ActionFailureReason::NoPPRemaining,
+                        crate::pokemon::UseMoveError::MoveNotKnown => crate::battle::state::ActionFailureReason::NoPPRemaining,
+                    };
+                    bus.push(BattleEvent::ActionFailed { reason });
+                    return;
+                }
+            }
+            // Perform pre-hit checks on the defender.
             let defender_player = &battle_state.players[defender_index];
-            let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_ref();
-            
-            if let Some(defender_pokemon) = defender_pokemon {
+            if let Some(defender_pokemon) = defender_player.team[defender_player.active_pokemon_index].as_ref() {
+                let move_data = get_move_data(move_used)
+                    .expect("Move data should exist for the executing move");
+
                 if defender_pokemon.is_fainted() {
                     // Target has fainted. Only allow non-offensive moves (e.g., self-buffs).
-                    let move_data = get_move_data(move_used)
-                        .expect("Move data should exist for the executing move");
-
                     match move_data.category {
                         crate::move_data::MoveCategory::Physical |
                         crate::move_data::MoveCategory::Special |
@@ -383,9 +395,31 @@ fn execute_battle_action(
                             // This is a status move, it can proceed even if the opponent is fainted.
                         }
                     }
+                } else {
+                    // --- IMMUNITY CHECK ---
+                    // Target is not fainted, check for type immunity.
+                    let defender_species = defender_pokemon.get_species_data().expect("Defender species data must exist");
+                    let type_adv_multiplier = crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_species.types);
+
+                    if type_adv_multiplier < 0.01 { // Check for 0.0 immunity
+                        match move_data.category {
+                            crate::move_data::MoveCategory::Physical |
+                            crate::move_data::MoveCategory::Special |
+                            crate::move_data::MoveCategory::Other => {
+                                // This is an offensive action against an immune target. It fails.
+                                // Announce the immunity and stop the action.
+                                bus.push(BattleEvent::AttackTypeEffectiveness { multiplier: 0.0 });
+                                return;
+                            }
+                            crate::move_data::MoveCategory::Status => {
+                                // Status moves don't target the enemy, so they aren't affected by immunity.
+                            }
+                        }
+                    }
                 }
             }
             
+            // If all pre-hit checks pass, execute the hit.
             execute_attack_hit(attacker_index, defender_index, move_used, hit_number, 
                              action_stack, bus, rng, battle_state);
         }
@@ -482,10 +516,20 @@ fn execute_attack_hit(
             defender: defender_pokemon.species,
             move_used,
         });
-        
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        let defender_species = defender_pokemon.get_species_data().expect("Defender species data must exist");
+        let type_adv_multiplier = crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_species.types);
+        if (type_adv_multiplier - 1.0).abs() > 0.1 {
+            bus.push(BattleEvent::AttackTypeEffectiveness { multiplier: type_adv_multiplier });
+        }
+
         let damage = if let Some(special_damage) = 
             crate::battle::stats::calculate_special_attack_damage(move_used, attacker_pokemon, defender_pokemon) {
-            special_damage
+            if (type_adv_multiplier > 0.1) {
+                special_damage
+            } else {
+                0
+            }
         } else {
             let is_critical = move_is_critical_hit(
                 attacker_pokemon,
@@ -501,7 +545,8 @@ fn execute_attack_hit(
                     move_used,
                 });
             }
-
+            // Calculate type effectiveness multiplier.
+            
             crate::battle::stats::calculate_attack_damage(
                 attacker_pokemon,
                 defender_pokemon,

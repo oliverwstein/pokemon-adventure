@@ -1,4 +1,4 @@
-use crate::pokemon::PokemonInst;
+use crate::pokemon::{PokemonInst, PokemonType};
 use crate::player::{BattlePlayer, StatType};
 use crate::move_data::{get_move_data, MoveCategory};
 use crate::moves::Move;
@@ -217,6 +217,13 @@ fn apply_stat_stage_multiplier(base_stat: u16, stage: i8) -> u16 {
     ((base_stat as f64) * multiplier).round() as u16
 }
 
+pub fn get_type_effectiveness(attack_type: PokemonType, defense_types: &[PokemonType]) -> f64 {
+    defense_types
+        .iter()
+        .map(|&def_type| PokemonType::type_effectiveness(attack_type, def_type) as f64)
+        .product()
+}
+
 /// Formula: ((((2 * Level / 5 + 2) * Power * STAB * A / D) / 50 + 2) * CRIT * TYPE_ADV * RAND * MODIFIERS)
 pub fn calculate_attack_damage(
     attacker: &PokemonInst,
@@ -262,8 +269,8 @@ pub fn calculate_attack_damage(
     let crit_multiplier = if is_critical { 2.0 } else { 1.0 };
     
     // Type Advantage: Placeholder for now
-    let type_adv_multiplier = 1.0; // TODO: Implement type effectiveness chart
-    
+    let defender_species = defender.get_species_data().expect("Defender species data must exist");
+    let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_species.types);
     // Random Variance: A random multiplier between 0.85 and 1.00
     let random_multiplier = (85.0 + (rng.next_outcome() % 16) as f64) / 100.0;
     

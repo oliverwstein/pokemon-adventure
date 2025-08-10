@@ -29,7 +29,7 @@ pub enum BattleEvent {
     CriticalHit { attacker: Species, defender: Species, move_used: Move },
     DamageDealt { target: Species, damage: u16, remaining_hp: u16 },
     PokemonFainted { player_index: usize, pokemon: Species },
-    
+    AttackTypeEffectiveness { multiplier: f64 },
     // Status Effects
     StatusApplied { target: Species, status: PokemonCondition },
     StatusRemoved { target: Species, status: PokemonCondition },

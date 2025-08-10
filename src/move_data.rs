@@ -1,5 +1,5 @@
 use crate::moves::Move;
-use crate::pokemon::Type;
+use crate::pokemon::PokemonType;
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
@@ -149,7 +149,7 @@ pub enum MoveEffect {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MoveData {
     pub name: String,
-    pub move_type: Type,
+    pub move_type: PokemonType,
     pub power: Option<u8>,                         // None for no damage moves
     pub category: MoveCategory,
     pub accuracy: Option<u8>,                      // None for sure-hit moves

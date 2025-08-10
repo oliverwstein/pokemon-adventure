@@ -279,6 +279,48 @@ pub fn calculate_attack_damage(
     final_damage.max(1)
 }
 
+pub fn calculate_special_attack_damage(
+    move_used: Move,
+    attacker: &PokemonInst,
+    defender: &PokemonInst,
+) -> Option<u16> {
+    let move_data = get_move_data(move_used).expect("Move data must exist for special damage calculation");
+
+    // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
+    // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
+    let attacker_level: u16 = 50;
+    let defender_level: u16 = 50;
+
+    for effect in &move_data.effects {
+        match effect {
+            crate::move_data::MoveEffect::OHKO => {
+                // OHKO moves fail if the attacker's level is less than the defender's.
+                // Otherwise, they deal damage equal to the target's current HP.
+                if attacker_level < defender_level {
+                    return Some(0); // The move fails
+                } else {
+                    return Some(defender.current_hp());
+                }
+            }
+            crate::move_data::MoveEffect::SuperFang(_) => {
+                // Super Fang deals damage equal to half of the opponent's current HP.
+                return Some((defender.current_hp() / 2).max(1));
+            }
+            crate::move_data::MoveEffect::LevelDamage => {
+                // Deals damage equal to the user's level.
+                return Some(attacker_level);
+            }
+            crate::move_data::MoveEffect::SetDamage(fixed_damage) => {
+                // Deals a fixed amount of damage.
+                return Some(*fixed_damage);
+            }
+            _ => {} // Ignore other effects, continue searching.
+        }
+    }
+
+    // If the loop completes without finding a special damage effect, return None.
+    None
+}
 #[cfg(test)]
 mod tests {
     use super::*;

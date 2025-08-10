@@ -10,3 +10,6 @@ mod test_critical_hits;
 
 #[cfg(test)]
 mod test_fainting;
+
+#[cfg(test)]
+mod test_multi_attacks;

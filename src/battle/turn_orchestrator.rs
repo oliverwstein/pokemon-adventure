@@ -740,6 +740,75 @@ fn apply_move_effects(
     }
 }
 
+/// Apply damage-based effects that always trigger when damage is dealt (recoil, drain)
+fn apply_on_hit_effects(
+    attacker_index: usize,
+    move_data: &crate::move_data::MoveData,
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+    damage_dealt: u16,
+) {
+    if damage_dealt == 0 {
+        return; // No damage-based effects if no damage was dealt
+    }
+    
+    for effect in &move_data.effects {
+        match effect {
+            // Recoil damage to attacker
+            crate::move_data::MoveEffect::Recoil(percentage) => {
+                let recoil_damage = (damage_dealt * (*percentage as u16)) / 100;
+                if recoil_damage > 0 {
+                    let attacker_player = &mut battle_state.players[attacker_index];
+                    if let Some(attacker_pokemon) = attacker_player.team[attacker_player.active_pokemon_index].as_mut() {
+                        let attacker_species = attacker_pokemon.species;
+                        let fainted = attacker_pokemon.take_damage(recoil_damage);
+                        let remaining_hp = attacker_pokemon.current_hp();
+                        
+                        bus.push(BattleEvent::DamageDealt {
+                            target: attacker_species,
+                            damage: recoil_damage,
+                            remaining_hp,
+                        });
+                        
+                        if fainted {
+                            bus.push(BattleEvent::PokemonFainted {
+                                player_index: attacker_index,
+                                pokemon: attacker_species,
+                            });
+                        }
+                    }
+                }
+            },
+            
+            // Drain healing to attacker
+            crate::move_data::MoveEffect::Drain(percentage) => {
+                let heal_amount = (damage_dealt * (*percentage as u16)) / 100;
+                if heal_amount > 0 {
+                    let attacker_player = &mut battle_state.players[attacker_index];
+                    if let Some(attacker_pokemon) = attacker_player.team[attacker_player.active_pokemon_index].as_mut() {
+                        let attacker_species = attacker_pokemon.species;
+                        let old_hp = attacker_pokemon.current_hp();
+                        attacker_pokemon.heal(heal_amount);
+                        let new_hp = attacker_pokemon.current_hp();
+                        let actual_heal = new_hp - old_hp;
+                        
+                        if actual_heal > 0 {
+                            bus.push(BattleEvent::PokemonHealed {
+                                target: attacker_species,
+                                amount: actual_heal,
+                                new_hp,
+                            });
+                        }
+                    }
+                }
+            },
+            
+            // Other effects are handled elsewhere or don't apply to on-hit
+            _ => {}
+        }
+    }
+}
+
 /// Execute a single hit of an attack
 pub fn execute_attack_hit(
     attacker_index: usize,
@@ -879,6 +948,11 @@ pub fn execute_attack_hit(
         let move_data = get_move_data(move_used).expect("Move data must exist");
         if damage > 0 || matches!(move_data.category, crate::move_data::MoveCategory::Other | crate::move_data::MoveCategory::Status) {
             apply_move_effects(attacker_index, defender_index, &move_data, battle_state, bus, rng);
+        }
+        
+        // Apply damage-based effects (recoil, drain) when damage was dealt
+        if damage > 0 {
+            apply_on_hit_effects(attacker_index, &move_data, battle_state, bus, damage);
         }
         
         // If the defender faints, the multi-hit sequence stops.

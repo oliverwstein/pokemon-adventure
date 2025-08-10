@@ -22,3 +22,6 @@ mod test_action_prevention;
 
 #[cfg(test)]
 mod test_status_moves;
+
+#[cfg(test)]
+mod test_damage_effects;

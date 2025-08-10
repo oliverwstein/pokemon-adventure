@@ -450,7 +450,13 @@ fn execute_attack_hit(
     let defender_player = &battle_state.players[defender_index];
     let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_ref()
         .expect("Defender pokemon should exist");
-    
+
+    // If the defender has already fainted (e.g., from a previous hit in a multi-hit sequence),
+    // the subsequent hits should fail immediately.
+    if battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index].as_ref().unwrap().is_fainted() {
+        // We don't even log an ActionFailed event here, because the move sequence just silently stops.
+        return;
+    }
     // Generate MoveUsed event (only for first hit)
     if hit_number == 0 {
         bus.push(BattleEvent::MoveUsed {

@@ -105,7 +105,7 @@ pub enum MoveEffect {
     LevelDamage,                                   // damage = user level
     
     // Multi-hit
-    MultiHit(u8, u8),                              // min hits, max hits
+    MultiHit(u8, u8),                              // min hits, % chance of continuation
     
     // Status and conditions
     Trap(u8),                                      // chance % to trap

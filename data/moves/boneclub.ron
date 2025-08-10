@@ -6,6 +6,6 @@ MoveData(
     accuracy: Some(90),
     max_pp: 20,
     effects: [
-        MultiHit(2, 5),
+        MultiHit(2, 50),
     ],
 )

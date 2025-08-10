@@ -387,7 +387,7 @@ fn execute_battle_action(
             }
             
             execute_attack_hit(attacker_index, defender_index, move_used, hit_number, 
-                             battle_state, action_stack, bus, rng);
+                             action_stack, bus, rng, battle_state);
         }
     }
 }
@@ -438,10 +438,10 @@ fn execute_attack_hit(
     defender_index: usize,
     move_used: Move,
     hit_number: u8,
-    battle_state: &mut BattleState,
-    _action_stack: &mut ActionStack, // For future multi-hit injection
+    action_stack: &mut ActionStack, // Used for multi-hit injection
     bus: &mut EventBus,
     rng: &mut TurnRng,
+    battle_state: &mut BattleState, // Swapped order to satisfy linter/convention
 ) {
     let attacker_player = &battle_state.players[attacker_index];
     let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index].as_ref()
@@ -477,14 +477,10 @@ fn execute_attack_hit(
             move_used,
         });
         
-        // --- DAMAGE CALCULATION LOGIC ---
-        // First, try to calculate damage using special move rules, which cannot crit.
         let damage = if let Some(special_damage) = 
             crate::battle::stats::calculate_special_attack_damage(move_used, attacker_pokemon, defender_pokemon) {
-            // It's a special damage move (e.g., OHKO, Super Fang).
             special_damage
         } else {
-            // It's a standard move. Check for a critical hit and use the standard formula.
             let is_critical = move_is_critical_hit(
                 attacker_pokemon,
                 attacker_player,
@@ -511,17 +507,16 @@ fn execute_attack_hit(
             )
         };
         
-        if damage > 0 {
-            // Apply damage to defender. We get a new mutable reference here.
-            let defender_player = &mut battle_state.players[defender_index];
-            let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_mut()
+        let defender_fainted = if damage > 0 {
+            let defender_player_mut = &mut battle_state.players[defender_index];
+            let defender_pokemon_mut = defender_player_mut.team[defender_player_mut.active_pokemon_index].as_mut()
                 .expect("Defender pokemon should exist");
             
-            let did_faint = defender_pokemon.take_damage(damage);
-            let remaining_hp = defender_pokemon.current_hp();
+            let did_faint = defender_pokemon_mut.take_damage(damage);
+            let remaining_hp = defender_pokemon_mut.current_hp();
             
             bus.push(BattleEvent::DamageDealt {
-                target: defender_pokemon.species,
+                target: defender_pokemon_mut.species,
                 damage,
                 remaining_hp,
             });
@@ -529,13 +524,50 @@ fn execute_attack_hit(
             if did_faint {
                 bus.push(BattleEvent::PokemonFainted {
                     player_index: defender_index,
-                    pokemon: defender_pokemon.species,
+                    pokemon: defender_pokemon_mut.species,
                 });
             }
-        }
+            did_faint
+        } else {
+            false
+        };
         
-        // TODO: Apply move effects
-        // TODO: Check for other fainting conditions
+        // If the defender faints, the multi-hit sequence stops.
+        if defender_fainted {
+            return;
+        }
+
+        // --- PROBABILISTIC MULTI-HIT LOGIC ---
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        for effect in &move_data.effects {
+            if let crate::move_data::MoveEffect::MultiHit(guaranteed_hits, continuation_chance)= effect {
+                let next_hit_number = hit_number + 1;
+
+                // Check if we should queue another hit.
+                let should_queue_next_hit = if next_hit_number < *guaranteed_hits {
+                    // We haven't met the guaranteed number of hits yet, so always continue.
+                    true
+                } else {
+                    // We are past the guaranteed hits, so roll for continuation.
+                    rng.next_outcome() <= *continuation_chance
+                };
+
+                if should_queue_next_hit {
+                    action_stack.push_front(BattleAction::AttackHit {
+                        attacker_index,
+                        defender_index,
+                        move_used,
+                        hit_number: next_hit_number,
+                    });
+                }
+                
+                // We found the MultiHit effect, so we don't need to check other effects for this.
+                break;
+            }
+        }
+
+        // TODO: Apply non-multi-hit move effects
+        
     } else {
         bus.push(BattleEvent::MoveMissed {
             attacker: attacker_pokemon.species,
@@ -543,8 +575,6 @@ fn execute_attack_hit(
             move_used,
         });
     }
-    
-    // TODO: Multi-hit moves will inject additional AttackHit actions here
 }
 
 pub fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {

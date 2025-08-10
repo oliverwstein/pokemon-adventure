@@ -6,7 +6,7 @@ MoveData(
     accuracy: Some(100),
     max_pp: 25,
     effects: [
-        MultiHit(2, 2),
+        MultiHit(2, 0),
         Poison(30),
     ],
 )

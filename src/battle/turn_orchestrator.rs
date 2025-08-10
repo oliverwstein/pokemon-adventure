@@ -432,7 +432,7 @@ fn execute_switch(
     });
 }
 
-/// Execute a single hit of an attack - this is where the move accuracy/damage logic lives
+/// Execute a single hit of an attack - this is where the move accuracy/crit logic lives
 fn execute_attack_hit(
     attacker_index: usize,
     defender_index: usize,
@@ -493,22 +493,20 @@ fn execute_attack_hit(
             });
         }
         
-        // TODO: Calculate and apply damage (with critical hit multiplier if applicable)
-        // For now, apply a simple fixed damage for testing fainting mechanics
-        let base_damage = if let Some(move_data) = get_move_data(move_used) {
-            move_data.power.unwrap_or(0) as u16
-        } else {
-            0
-        };
+        // Calculate damage using the dedicated helper function from stats.rs
+        let damage = crate::battle::stats::calculate_attack_damage(
+            attacker_pokemon,
+            defender_pokemon,
+            attacker_player,
+            defender_player,
+            move_used,
+            is_critical,
+            rng,
+        );
         
-        if base_damage > 0 {
-            // Apply simple damage (this will be replaced with proper damage calculation later)
-            let mut damage = base_damage;
-            if is_critical {
-                damage = (damage * 3) / 2; // Critical hit multiplier
-            }
-            
-            // Apply damage to defender
+        if damage > 0 {
+            // Apply damage to defender. We get a new mutable reference here,
+            // after the immutable ones above are no longer needed.
             let defender_player = &mut battle_state.players[defender_index];
             let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_mut()
                 .expect("Defender pokemon should exist");

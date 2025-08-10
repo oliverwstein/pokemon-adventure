@@ -50,7 +50,7 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        
+        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
         // Create two test Pokemon
         let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);
@@ -97,7 +97,7 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        
+        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
         // Create two test Pokemon
         let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);

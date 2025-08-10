@@ -217,6 +217,68 @@ fn apply_stat_stage_multiplier(base_stat: u16, stage: i8) -> u16 {
     ((base_stat as f64) * multiplier).round() as u16
 }
 
+/// Formula: ((((2 * Level / 5 + 2) * Power * STAB * A / D) / 50 + 2) * CRIT * TYPE_ADV * RAND * MODIFIERS)
+pub fn calculate_attack_damage(
+    attacker: &PokemonInst,
+    defender: &PokemonInst,
+    attacker_player: &BattlePlayer,
+    defender_player: &BattlePlayer,
+    move_used: Move,
+    is_critical: bool,
+    rng: &mut crate::battle::state::TurnRng,
+) -> u16 {
+    let move_data = get_move_data(move_used).expect("Move data should exist for damage calculation");
+    
+    // 1. Get Power from move data. If no power, no damage.
+    let Some(power) = move_data.power else { return 0; };
+    if power == 0 { return 0; }
+
+    // 2. Determine effective Attack and Defense stats.
+    // These functions already account for stat stages, burn, etc.
+    let attack = effective_attack(attacker, attacker_player, move_used);
+    let defense = effective_defense(defender, defender_player, move_used);
+    
+    // Assume a fixed level for all battle calculations, a common standard for competitive play.
+    let level: u16 = 50;
+    
+    // 3. Calculate STAB (Same-Type Attack Bonus)
+    let stab_multiplier = {
+        let attacker_species = attacker.get_species_data().expect("Attacker species data must exist");
+        if attacker_species.types.contains(&move_data.move_type) {
+            1.5
+        } else {
+            1.0
+        }
+    };
+
+    // 4. Calculate the core part of the formula using integer arithmetic first.
+    let term1 = (2 * level / 5) + 2;
+    // We cast to f64 to incorporate the STAB multiplier before the main division.
+    let base_damage_part = (term1 as f64) * (power as f64) * (stab_multiplier) * (attack as f64) / (defense as f64);
+    let base_damage = (base_damage_part / 50.0) + 2.0;
+
+    // 5. Gather all final multipliers.
+    // Critical Hit: 2x multiplier
+    let crit_multiplier = if is_critical { 2.0 } else { 1.0 };
+    
+    // Type Advantage: Placeholder for now
+    let type_adv_multiplier = 1.0; // TODO: Implement type effectiveness chart
+    
+    // Random Variance: A random multiplier between 0.85 and 1.00
+    let random_multiplier = (85.0 + (rng.next_outcome() % 16) as f64) / 100.0;
+    
+    // Other modifiers (e.g., from items, abilities). Placeholder for now.
+    let other_modifiers = 1.0;
+
+    // 6. Apply all multipliers to the base damage.
+    let final_damage_float = base_damage * crit_multiplier * type_adv_multiplier * random_multiplier * other_modifiers;
+
+    // 7. Convert to integer and ensure damage is at least 1.
+    let final_damage = final_damage_float.round() as u16;
+
+    final_damage.max(1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

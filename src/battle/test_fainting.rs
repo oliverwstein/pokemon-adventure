@@ -294,7 +294,7 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        
+        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
         // Create a player with multiple Pokemon, where active Pokemon will faint
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20); // Will faint
         let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100); // Replacement
@@ -323,7 +323,7 @@ mod tests {
         collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
 
         // Create RNG that ensures a hit that will cause fainting
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
 
         // Execute turn - this should cause Player 1's Pikachu to faint
         let event_bus = resolve_turn(&mut battle_state, test_rng);

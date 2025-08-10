@@ -875,9 +875,9 @@ pub fn execute_attack_hit(
             false
         };
         
-        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other category moves)
+        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
         let move_data = get_move_data(move_used).expect("Move data must exist");
-        if damage > 0 || matches!(move_data.category, crate::move_data::MoveCategory::Other) {
+        if damage > 0 || matches!(move_data.category, crate::move_data::MoveCategory::Other | crate::move_data::MoveCategory::Status) {
             apply_move_effects(attacker_index, defender_index, &move_data, battle_state, bus, rng);
         }
         

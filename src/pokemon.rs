@@ -654,7 +654,7 @@ impl PokemonInst {
                 }
             },
             Some(StatusCondition::Burn) => {
-                let damage = (max_hp / 16).max(1); // 1/16 of max HP
+                let damage = (max_hp / 8).max(1); // 1/8 of max HP
                 
                 // Apply burn damage
                 let fainted = self.take_damage(damage);

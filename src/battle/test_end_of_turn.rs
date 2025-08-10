@@ -102,10 +102,10 @@ mod tests {
         // Apply burn
         pokemon.status = Some(StatusCondition::Burn);
         
-        // Tick status - should deal 1/16 of max HP damage
+        // Tick status - should deal 1/8 of max HP damage
         let (damage, should_cure, status_changed) = pokemon.tick_status();
         
-        assert_eq!(damage, (max_hp / 16).max(1));
+        assert_eq!(damage, (max_hp / 8).max(1));
         assert!(!should_cure);
         assert!(!status_changed); // Burn doesn't change
         assert_eq!(pokemon.curr_stats[0], initial_hp - damage);

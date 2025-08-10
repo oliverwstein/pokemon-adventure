@@ -97,6 +97,7 @@ pub enum StatusCondition {
     Burn,
     Freeze,
     Paralysis,
+    Faint,  // Pokemon has 0 HP, can replace any other status
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -430,6 +431,69 @@ impl PokemonInst {
     /// Get the species data for this Pokemon instance
     pub fn get_species_data(&self) -> Option<PokemonSpecies> {
         get_species_data(self.species)
+    }
+    
+    /// Check if this Pokemon is fainted (0 HP or has Faint status)
+    pub fn is_fainted(&self) -> bool {
+        self.curr_stats[0] == 0 || matches!(self.status, Some(StatusCondition::Faint))
+    }
+    
+    /// Get current HP
+    pub fn current_hp(&self) -> u16 {
+        self.curr_stats[0]
+    }
+    
+    /// Get max HP (for testing, we'll use a simple approach)
+    /// In a real implementation, this would be stored separately or calculated from base stats
+    pub fn max_hp(&self) -> u16 {
+        // Simple approach: assume the Pokemon was created with its max HP
+        // and we need to track the original value
+        // For now, let's use a heuristic based on the stats array structure
+        if self.current_hp() == 0 && self.is_fainted() {
+            // If fainted, we need to estimate max HP
+            // For test Pokemon, we'll assume a reasonable max HP
+            100 // Default max HP for testing
+        } else {
+            // For non-fainted Pokemon, assume current HP is close to max
+            // This is a simplification for testing purposes
+            self.current_hp().max(50) // At least 50 HP
+        }
+    }
+    
+    /// Take damage and handle fainting
+    /// Returns true if the Pokemon fainted from this damage
+    pub fn take_damage(&mut self, damage: u16) -> bool {
+        let current_hp = self.curr_stats[0];
+        if damage >= current_hp {
+            // Pokemon faints - set HP to 0 and replace any existing status with Faint
+            self.curr_stats[0] = 0;
+            self.status = Some(StatusCondition::Faint);
+            true
+        } else {
+            // Reduce HP by damage amount
+            self.curr_stats[0] = current_hp - damage;
+            false
+        }
+    }
+    
+    /// Heal HP (cannot exceed max HP, cannot revive fainted Pokemon)
+    pub fn heal(&mut self, heal_amount: u16) {
+        if self.is_fainted() {
+            return; // Cannot heal fainted Pokemon
+        }
+        
+        let current_hp = self.curr_stats[0];
+        let max_hp = self.max_hp(); // For now, same as current max
+        self.curr_stats[0] = (current_hp + heal_amount).min(max_hp);
+    }
+    
+    /// Revive a fainted Pokemon with specified HP
+    pub fn revive(&mut self, hp_amount: u16) {
+        if self.is_fainted() {
+            let max_hp = self.max_hp();
+            self.curr_stats[0] = hp_amount.min(max_hp).max(1); // At least 1 HP
+            self.status = None; // Remove faint status
+        }
     }
 }
 

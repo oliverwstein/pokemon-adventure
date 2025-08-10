@@ -7,3 +7,6 @@ mod test_resolve_turn;
 
 #[cfg(test)]
 mod test_critical_hits;
+
+#[cfg(test)]
+mod test_fainting;

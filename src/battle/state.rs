@@ -25,6 +25,7 @@ pub enum BattleEvent {
     MoveHit { attacker: Species, defender: Species, move_used: Move },
     CriticalHit { attacker: Species, defender: Species, move_used: Move },
     DamageDealt { target: Species, damage: u16, remaining_hp: u16 },
+    PokemonFainted { player_index: usize, pokemon: Species },
     
     // Status Effects
     StatusApplied { target: Species, status: PokemonCondition },

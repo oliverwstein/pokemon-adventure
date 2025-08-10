@@ -240,6 +240,20 @@ fn execute_battle_action(
         }
         
         BattleAction::AttackHit { attacker_index, defender_index, move_used, hit_number } => {
+            // Check if target is still valid (not fainted)
+            let defender_player = &battle_state.players[defender_index];
+            let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_ref();
+            
+            if let Some(defender_pokemon) = defender_pokemon {
+                if defender_pokemon.is_fainted() {
+                    // Skip action - target has fainted
+                    bus.push(BattleEvent::ActionFailed { 
+                        reason: crate::battle::state::ActionFailureReason::NoEnemyPresent 
+                    });
+                    return;
+                }
+            }
+            
             execute_attack_hit(attacker_index, defender_index, move_used, hit_number, 
                              battle_state, action_stack, bus, rng);
         }
@@ -348,8 +362,44 @@ fn execute_attack_hit(
         }
         
         // TODO: Calculate and apply damage (with critical hit multiplier if applicable)
+        // For now, apply a simple fixed damage for testing fainting mechanics
+        let base_damage = if let Some(move_data) = get_move_data(move_used) {
+            move_data.power.unwrap_or(0) as u16
+        } else {
+            0
+        };
+        
+        if base_damage > 0 {
+            // Apply simple damage (this will be replaced with proper damage calculation later)
+            let mut damage = base_damage;
+            if is_critical {
+                damage = (damage * 3) / 2; // Critical hit multiplier
+            }
+            
+            // Apply damage to defender
+            let defender_player = &mut battle_state.players[defender_index];
+            let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_mut()
+                .expect("Defender pokemon should exist");
+            
+            let did_faint = defender_pokemon.take_damage(damage);
+            let remaining_hp = defender_pokemon.current_hp();
+            
+            bus.push(BattleEvent::DamageDealt {
+                target: defender_pokemon.species,
+                damage,
+                remaining_hp,
+            });
+            
+            if did_faint {
+                bus.push(BattleEvent::PokemonFainted {
+                    player_index: defender_index,
+                    pokemon: defender_pokemon.species,
+                });
+            }
+        }
+        
         // TODO: Apply move effects
-        // TODO: Check for faint
+        // TODO: Check for other fainting conditions
     } else {
         bus.push(BattleEvent::MoveMissed {
             attacker: attacker_pokemon.species,

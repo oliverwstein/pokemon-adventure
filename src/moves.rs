@@ -211,4 +211,5 @@ pub enum Move {
 
     // Typeless
     Struggle,
+    HittingYourself,
 }

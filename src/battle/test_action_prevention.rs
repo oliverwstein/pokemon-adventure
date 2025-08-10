@@ -121,14 +121,44 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80]); // 49 < 50, so confused (50% chance) + extra values
+        let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80, 85, 70, 65, 95, 88, 92]); // 49 < 50, so confused (50% chance) + many extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
         
+        // When confused, the Pokemon should add a self-attack to the action stack
+        // We need to process that action to see the self-damage
+        if let Some(next_action) = action_stack.pop_front() {
+            match next_action {
+                crate::battle::turn_orchestrator::BattleAction::AttackHit { 
+                    attacker_index, 
+                    defender_index, 
+                    move_used, 
+                    hit_number 
+                } => {
+                    // This should be a self-attack (attacker_index == defender_index)
+                    assert_eq!(attacker_index, defender_index);
+                    assert_eq!(attacker_index, 0);
+                    
+                    execute_attack_hit(attacker_index, defender_index, move_used, hit_number, 
+                                     &mut action_stack, &mut bus, &mut rng, &mut battle_state);
+                }
+                _ => panic!("Expected AttackHit action from confusion"),
+            }
+        } else {
+            panic!("Expected confusion to add self-attack action to stack");
+        }
+        
         let events = bus.events();
-        assert_eq!(events.len(), 1);
+        // Should have both ActionFailed event AND self-damage events
+        assert!(events.len() >= 3); // ActionFailed + MoveUsed + DamageDealt at minimum
+        
+        // First event should be ActionFailed due to confusion
         assert!(matches!(events[0], BattleEvent::ActionFailed { reason: ActionFailureReason::IsConfused }));
+        
+        // Should also have events for self-damage (MoveUsed, DamageDealt)
+        assert!(events.iter().any(|e| matches!(e, BattleEvent::MoveUsed { .. })));
+        assert!(events.iter().any(|e| matches!(e, BattleEvent::DamageDealt { .. })));
     }
 
     #[test] 

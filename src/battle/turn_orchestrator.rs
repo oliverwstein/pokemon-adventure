@@ -9,7 +9,7 @@ use std::collections::VecDeque;
 /// Internal action types for the action stack
 /// These represent atomic actions that can be executed during battle resolution
 #[derive(Debug, Clone)]
-enum BattleAction {
+pub enum BattleAction {
     /// Player forfeits the battle
     Forfeit { player_index: usize },
     
@@ -40,15 +40,15 @@ impl ActionStack {
         }
     }
     
-    fn push_back(&mut self, action: BattleAction) {
+    pub fn push_back(&mut self, action: BattleAction) {
         self.actions.push_back(action);
     }
     
-    fn push_front(&mut self, action: BattleAction) {
+    pub fn push_front(&mut self, action: BattleAction) {
         self.actions.push_front(action);
     }
     
-    fn pop_front(&mut self) -> Option<BattleAction> {
+    pub fn pop_front(&mut self) -> Option<BattleAction> {
         self.actions.pop_front()
     }
     
@@ -511,11 +511,11 @@ fn check_action_preventing_conditions(
         }
     }
     
-    // Check confusion - 50% chance to hit self instead (this is more complex, handle separately)
+    // Check confusion - 50% chance to hit self instead
     for condition in player.active_pokemon_conditions.values() {
         if let crate::player::PokemonCondition::Confused { turns_remaining } = condition {
             if *turns_remaining > 0 {
-                let roll = rng.next_outcome(); // 0-100
+                let roll = rng.next_outcome(); // 1-100
                 if roll < 50 {
                     return Some(ActionFailureReason::IsConfused);
                 }
@@ -556,7 +556,19 @@ pub fn execute_attack_hit(
     
     // Check all action-preventing conditions
     if let Some(failure_reason) = check_action_preventing_conditions(attacker_index, battle_state, rng) {
-        bus.push(BattleEvent::ActionFailed { reason: failure_reason });
+        // Always generate ActionFailed event first
+        bus.push(BattleEvent::ActionFailed { reason: failure_reason.clone() });
+        
+        // Special case for confusion - also causes self-damage after the action fails
+        if matches!(failure_reason, ActionFailureReason::IsConfused) {
+            // Add confusion self-attack action to the stack
+            action_stack.push_front(BattleAction::AttackHit {
+                attacker_index,
+                defender_index: attacker_index, // Attack self
+                move_used,
+                hit_number: 0,
+            });
+        }
         return; // Attack is prevented
     }
     // Generate MoveUsed event (only for first hit)

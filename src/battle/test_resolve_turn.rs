@@ -99,7 +99,7 @@ mod tests {
 
         // Create deterministic RNG for testing
         let test_rng = TurnRng::new_for_test(vec![
-            50, 50, 50, 50, 50, 50, 50, 50, 50, 50, // Various rolls for the turn
+            95, 95, 95, 95, 50, 50, 50, 50, 50, 50, // Various rolls for the turn
         ]);
 
         // Execute turn

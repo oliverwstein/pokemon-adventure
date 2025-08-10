@@ -528,6 +528,218 @@ fn check_action_preventing_conditions(
     None // No conditions prevent action
 }
 
+/// Apply all chance-based move effects after a successful hit
+fn apply_move_effects(
+    attacker_index: usize,
+    defender_index: usize,
+    move_data: &crate::move_data::MoveData,
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+    rng: &mut TurnRng,
+) {
+    for effect in &move_data.effects {
+        match effect {
+            // Status effects on target
+            crate::move_data::MoveEffect::Burn(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_pokemon = &mut battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index];
+                    if let Some(pokemon) = target_pokemon {
+                        if pokemon.status.is_none() {
+                            pokemon.status = Some(crate::pokemon::StatusCondition::Burn);
+                            bus.push(BattleEvent::PokemonStatusApplied {
+                                target: pokemon.species,
+                                status: crate::pokemon::StatusCondition::Burn,
+                            });
+                        }
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Paralyze(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_pokemon = &mut battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index];
+                    if let Some(pokemon) = target_pokemon {
+                        if pokemon.status.is_none() {
+                            pokemon.status = Some(crate::pokemon::StatusCondition::Paralysis);
+                            bus.push(BattleEvent::PokemonStatusApplied {
+                                target: pokemon.species,
+                                status: crate::pokemon::StatusCondition::Paralysis,
+                            });
+                        }
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Freeze(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_pokemon = &mut battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index];
+                    if let Some(pokemon) = target_pokemon {
+                        if pokemon.status.is_none() {
+                            pokemon.status = Some(crate::pokemon::StatusCondition::Freeze);
+                            bus.push(BattleEvent::PokemonStatusApplied {
+                                target: pokemon.species,
+                                status: crate::pokemon::StatusCondition::Freeze,
+                            });
+                        }
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Poison(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_pokemon = &mut battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index];
+                    if let Some(pokemon) = target_pokemon {
+                        if pokemon.status.is_none() {
+                            pokemon.status = Some(crate::pokemon::StatusCondition::Poison(0));
+                            bus.push(BattleEvent::PokemonStatusApplied {
+                                target: pokemon.species,
+                                status: crate::pokemon::StatusCondition::Poison(0),
+                            });
+                        }
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Sedate(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_pokemon = &mut battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index];
+                    if let Some(pokemon) = target_pokemon {
+                        if pokemon.status.is_none() {
+                            // Sleep for 1-3 turns (random)
+                            let sleep_turns = (rng.next_outcome() % 3) + 1; // 1, 2, or 3 turns
+                            pokemon.status = Some(crate::pokemon::StatusCondition::Sleep(sleep_turns));
+                            bus.push(BattleEvent::PokemonStatusApplied {
+                                target: pokemon.species,
+                                status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
+                            });
+                        }
+                    }
+                }
+            },
+            
+            // Active conditions on target
+            crate::move_data::MoveEffect::Flinch(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_player = &mut battle_state.players[defender_index];
+                    if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        target_player.add_condition(crate::player::PokemonCondition::Flinched);
+                        bus.push(BattleEvent::StatusApplied {
+                            target: pokemon_species,
+                            status: crate::player::PokemonCondition::Flinched,
+                        });
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Confuse(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_player = &mut battle_state.players[defender_index];
+                    if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        // Confuse for 1-4 turns (random)
+                        let confuse_turns = (rng.next_outcome() % 4) + 1;
+                        target_player.add_condition(crate::player::PokemonCondition::Confused { turns_remaining: confuse_turns });
+                        bus.push(BattleEvent::StatusApplied {
+                            target: pokemon_species,
+                            status: crate::player::PokemonCondition::Confused { turns_remaining: confuse_turns },
+                        });
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Exhaust(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_player = &mut battle_state.players[defender_index];
+                    if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        target_player.add_condition(crate::player::PokemonCondition::Exhausted { turns_remaining: 1 });
+                        bus.push(BattleEvent::StatusApplied {
+                            target: pokemon_species,
+                            status: crate::player::PokemonCondition::Exhausted { turns_remaining: 1 },
+                        });
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::Trap(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_player = &mut battle_state.players[defender_index];
+                    if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        // Trap for 2-5 turns (random)
+                        let trap_turns = (rng.next_outcome() % 4) + 2;
+                        target_player.add_condition(crate::player::PokemonCondition::Trapped { turns_remaining: trap_turns });
+                        bus.push(BattleEvent::StatusApplied {
+                            target: pokemon_species,
+                            status: crate::player::PokemonCondition::Trapped { turns_remaining: trap_turns },
+                        });
+                    }
+                }
+            },
+            
+            // Stat changes
+            crate::move_data::MoveEffect::StatChange(target, stat, stages, chance) => {
+                if rng.next_outcome() <= *chance {
+                    let target_index = match target {
+                        crate::move_data::Target::User => attacker_index,
+                        crate::move_data::Target::Target => defender_index,
+                    };
+                    
+                    let player_stat = match stat {
+                        crate::move_data::StatType::Atk => crate::player::StatType::Attack,
+                        crate::move_data::StatType::Def => crate::player::StatType::Defense,
+                        crate::move_data::StatType::SpAtk => crate::player::StatType::SpecialAttack,
+                        crate::move_data::StatType::SpDef => crate::player::StatType::SpecialDefense,
+                        crate::move_data::StatType::Spe => crate::player::StatType::Speed,
+                        crate::move_data::StatType::Acc => crate::player::StatType::Accuracy,
+                        crate::move_data::StatType::Eva => crate::player::StatType::Evasion,
+                        crate::move_data::StatType::Crit => crate::player::StatType::Focus,
+                        _ => continue, // Skip unsupported stat types
+                    };
+                    
+                    let target_player = &mut battle_state.players[target_index];
+                    if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        let old_stage = target_player.get_stat_stage(player_stat);
+                        target_player.modify_stat_stage(player_stat, *stages);
+                        let new_stage = target_player.get_stat_stage(player_stat);
+                        
+                        if old_stage != new_stage {
+                            bus.push(BattleEvent::StatStageChanged {
+                                target: pokemon_species,
+                                stat: player_stat,
+                                old_stage,
+                                new_stage,
+                            });
+                        }
+                    }
+                }
+            },
+            crate::move_data::MoveEffect::RaiseAllStats(chance) => {
+                if rng.next_outcome() <= *chance {
+                    let attacker_player = &mut battle_state.players[attacker_index];
+                    if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                        let stats_to_raise = [
+                            crate::player::StatType::Attack,
+                            crate::player::StatType::Defense,
+                            crate::player::StatType::SpecialAttack,
+                            crate::player::StatType::SpecialDefense,
+                            crate::player::StatType::Speed,
+                        ];
+                        
+                        for stat in &stats_to_raise {
+                            let old_stage = attacker_player.get_stat_stage(*stat);
+                            attacker_player.modify_stat_stage(*stat, 1);
+                            let new_stage = attacker_player.get_stat_stage(*stat);
+                            
+                            if old_stage != new_stage {
+                                bus.push(BattleEvent::StatStageChanged {
+                                    target: pokemon_species,
+                                    stat: *stat,
+                                    old_stage,
+                                    new_stage,
+                                });
+                            }
+                        }
+                    }
+                }
+            },
+            
+            // Skip other effects that don't have chance percentages or are handled elsewhere
+            _ => {}
+        }
+    }
+}
+
 /// Execute a single hit of an attack
 pub fn execute_attack_hit(
     attacker_index: usize,
@@ -662,6 +874,12 @@ pub fn execute_attack_hit(
         } else {
             false
         };
+        
+        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other category moves)
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        if damage > 0 || matches!(move_data.category, crate::move_data::MoveCategory::Other) {
+            apply_move_effects(attacker_index, defender_index, &move_data, battle_state, bus, rng);
+        }
         
         // If the defender faints, the multi-hit sequence stops.
         if defender_fainted {

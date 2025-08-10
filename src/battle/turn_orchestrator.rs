@@ -1,5 +1,5 @@
 use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent};
-use crate::battle::stats::{effective_speed, move_hits};
+use crate::battle::stats::{effective_speed, move_hits, move_is_critical_hit};
 use crate::player::PlayerAction;
 use crate::move_data::get_move_data;
 use crate::moves::Move;
@@ -331,7 +331,23 @@ fn execute_attack_hit(
             move_used,
         });
         
-        // TODO: Calculate and apply damage
+        // Check if the hit is a critical hit
+        let is_critical = move_is_critical_hit(
+            attacker_pokemon,
+            attacker_player,
+            move_used,
+            rng,
+        );
+        
+        if is_critical {
+            bus.push(BattleEvent::CriticalHit {
+                attacker: attacker_pokemon.species,
+                defender: defender_pokemon.species,
+                move_used,
+            });
+        }
+        
+        // TODO: Calculate and apply damage (with critical hit multiplier if applicable)
         // TODO: Apply move effects
         // TODO: Check for faint
     } else {

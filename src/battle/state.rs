@@ -23,6 +23,7 @@ pub enum BattleEvent {
     MoveUsed { player_index: usize, pokemon: Species, move_used: Move },
     MoveMissed { attacker: Species, defender: Species, move_used: Move },
     MoveHit { attacker: Species, defender: Species, move_used: Move },
+    CriticalHit { attacker: Species, defender: Species, move_used: Move },
     DamageDealt { target: Species, damage: u16, remaining_hp: u16 },
     
     // Status Effects

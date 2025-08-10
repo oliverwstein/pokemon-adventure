@@ -83,6 +83,55 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
     multiplied_speed
 }
 
+/// Calculate if a move is a critical hit based on critical hit ratio and focus energy
+/// Returns true if the move is a critical hit
+pub fn move_is_critical_hit(
+    attacker: &PokemonInst,
+    attacker_player: &BattlePlayer,
+    move_: Move,
+    rng: &mut crate::battle::state::TurnRng,
+) -> bool {
+    let move_data = get_move_data(move_).expect("Move data should exist");
+    
+    // Status moves cannot be critical hits (with very rare exceptions)
+    if matches!(move_data.category, MoveCategory::Status) {
+        return false;
+    }
+    
+    // Base critical hit ratio - starts at 1 (1/24 chance in Gen 1)
+    let mut crit_ratio = 1u8;
+    
+    // Check for moves with increased critical hit ratio
+    for effect in &move_data.effects {
+        if let crate::move_data::MoveEffect::Crit(ratio_boost) = effect {
+            crit_ratio = crit_ratio.saturating_add(*ratio_boost);
+        }
+    }
+    
+    // Check for Focus Energy stat stage (increases crit ratio)
+    let focus_stage = attacker_player.get_stat_stage(StatType::Focus);
+    if focus_stage > 0 {
+        crit_ratio = crit_ratio.saturating_add(focus_stage as u8);
+    }
+    
+    // Calculate critical hit threshold based on ratio
+    // Gen 1 formula: (base_speed / 2) * crit_ratio / 256
+    // For simplicity, using fixed thresholds based on crit ratio
+    let crit_threshold = match crit_ratio {
+        1 => 4,    // ~1/24 chance (base rate)
+        2 => 12,   // ~1/8 chance (high crit moves like Slash)
+        3 => 25,   // ~1/4 chance
+        4 => 33,   // ~1/3 chance
+        5 => 50,   // ~1/2 chance
+        6 => 75,   // ~3/4 chance
+        _ => 90,   // Nearly guaranteed (7+ ratio)
+    };
+    
+    // Roll for critical hit
+    let roll = rng.next_outcome();
+    roll <= crit_threshold
+}
+
 /// Calculate if a move hits based on accuracy, evasion, and move accuracy
 /// Returns true if the move hits, false if it misses
 pub fn move_hits(
@@ -217,5 +266,56 @@ mod tests {
         // Test without paralysis
         pokemon.status = None;
         assert_eq!(effective_speed(&pokemon, &player), 100);
+    }
+    
+    #[test]
+    fn test_critical_hit_calculation() {
+        // Initialize move data (required for get_move_data to work)
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
+        let pokemon = crate::pokemon::PokemonInst {
+            name: "Test".to_string(),
+            species: Species::Pikachu,
+            curr_exp: 0,
+            ivs: [15; 6],
+            evs: [0; 6],
+            curr_stats: [100, 80, 80, 80, 80, 100],
+            moves: [const { None }; 4],
+            status: None,
+        };
+        
+        let mut player = crate::player::BattlePlayer {
+            player_id: "test".to_string(),
+            player_name: "Test".to_string(),
+            team: [const { None }; 6],
+            active_pokemon_index: 0,
+            stat_stages: HashMap::new(),
+            team_conditions: HashMap::new(),
+            active_pokemon_conditions: HashMap::new(),
+            last_move: None,
+        };
+        
+        // Test with deterministic RNG - low roll should not be critical hit
+        let mut rng_low = crate::battle::state::TurnRng::new_for_test(vec![10, 10, 10]);
+        let is_crit_low = move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_low);
+        assert!(!is_crit_low, "Low roll (10) should not be critical hit with base rate (threshold 4)");
+        
+        // Test with deterministic RNG - low roll should be critical hit
+        let mut rng_high = crate::battle::state::TurnRng::new_for_test(vec![3, 3, 3]);
+        let is_crit_high = move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_high);
+        assert!(is_crit_high, "Low roll (3) should be critical hit with base rate (threshold 4)");
+        
+        // Test with Focus Energy stat stage
+        player.set_stat_stage(StatType::Focus, 2);
+        let mut rng_focus = crate::battle::state::TurnRng::new_for_test(vec![20, 20, 20]);
+        let is_crit_focus = move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_focus);
+        assert!(is_crit_focus, "Focus Energy should increase critical hit chance (ratio 3, threshold 25)");
+        
+        // Test status moves cannot be critical hits
+        let mut rng_status = crate::battle::state::TurnRng::new_for_test(vec![99, 99, 99]);
+        let is_crit_status = move_is_critical_hit(&pokemon, &player, crate::moves::Move::Growl, &mut rng_status);
+        assert!(!is_crit_status, "Status moves should never be critical hits");
     }
 }

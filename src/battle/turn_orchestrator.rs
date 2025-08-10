@@ -793,10 +793,10 @@ fn get_player_speed(player_index: usize, battle_state: &BattleState) -> u16 {
 }
 
 
-fn execute_end_turn_phase(
+pub fn execute_end_turn_phase(
     battle_state: &mut BattleState,
     bus: &mut EventBus,
-    _rng: &mut TurnRng, // Rng needed for future effects like sleep counters
+    rng: &mut TurnRng,
 ) {
     for player_index in 0..2 {
         let player = &mut battle_state.players[player_index];
@@ -827,6 +827,18 @@ fn execute_end_turn_phase(
                     target: pokemon.species, 
                     status: crate::pokemon::StatusCondition::Sleep(0) // Will be the previous status
                 });
+            }
+            
+            // Check for frozen Pokemon defrosting (25% chance)
+            if matches!(pokemon.status, Some(crate::pokemon::StatusCondition::Freeze)) {
+                let defrost_roll = rng.next_outcome();
+                if defrost_roll <= 25 { // 25% chance (25/99)
+                    pokemon.status = None;
+                    bus.push(BattleEvent::PokemonStatusRemoved {
+                        target: pokemon.species,
+                        status: crate::pokemon::StatusCondition::Freeze
+                    });
+                }
             }
         }
         

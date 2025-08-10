@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::state::{BattleState, EventBus, TurnRng, BattleEvent, GameState};
+    use crate::battle::turn_orchestrator::execute_end_turn_phase;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data, initialize_species_data};
     use crate::move_data::initialize_move_data;
     use crate::player::{BattlePlayer, PokemonCondition};
@@ -15,6 +17,25 @@ mod tests {
             initialize_move_data(data_path).expect("Failed to initialize move data");
             initialize_species_data(data_path).expect("Failed to initialize species data");
         });
+    }
+
+    fn create_test_battle_state() -> BattleState {
+        let pikachu_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");
+        let charmander_data = get_species_data(Species::Charmander).expect("Failed to load Charmander data");
+        
+        let pikachu = PokemonInst::new(Species::Pikachu, &pikachu_data, 25, None, None);
+        let charmander = PokemonInst::new(Species::Charmander, &charmander_data, 25, None, None);
+        
+        let player1 = BattlePlayer::new("p1".to_string(), "Player 1".to_string(), vec![pikachu]);
+        let player2 = BattlePlayer::new("p2".to_string(), "Player 2".to_string(), vec![charmander]);
+        
+        BattleState {
+            battle_id: "test".to_string(),
+            players: [player1, player2],
+            turn_number: 1,
+            game_state: GameState::TurnInProgress,
+            action_queue: [None, None],
+        }
     }
 
     #[test]
@@ -223,5 +244,57 @@ mod tests {
             assert_eq!(pokemon.curr_stats[0], 3 - damage);
             assert!(matches!(pokemon.status, Some(StatusCondition::Poison(0))));
         }
+    }
+
+    #[test]
+    fn test_frozen_defrost_25_percent_chance() {
+        init_test_data();
+        
+        // Test successful defrost (roll <= 64)
+        let mut battle_state = create_test_battle_state();
+        let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index].as_mut().unwrap();
+        pokemon.status = Some(StatusCondition::Freeze);
+        
+        let mut bus = EventBus::new();
+        let mut rng = TurnRng::new_for_test(vec![25]); // Exactly 25% threshold
+        
+        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
+        
+        // Pokemon should be defrosted
+        let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index].as_ref().unwrap();
+        assert_eq!(pokemon.status, None);
+        
+        // Should have StatusRemoved event
+        let events = bus.events();
+        assert!(events.iter().any(|e| matches!(e, BattleEvent::PokemonStatusRemoved { 
+            target: Species::Pikachu, 
+            status: StatusCondition::Freeze 
+        })));
+    }
+
+    #[test] 
+    fn test_frozen_no_defrost_75_percent_chance() {
+        init_test_data();
+        
+        // Test failed defrost (roll > 64)
+        let mut battle_state = create_test_battle_state();
+        let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index].as_mut().unwrap();
+        pokemon.status = Some(StatusCondition::Freeze);
+        
+        let mut bus = EventBus::new();
+        let mut rng = TurnRng::new_for_test(vec![26]); // Just above 25% threshold
+        
+        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
+        
+        // Pokemon should still be frozen
+        let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index].as_ref().unwrap();
+        assert_eq!(pokemon.status, Some(StatusCondition::Freeze));
+        
+        // Should not have StatusRemoved event for freeze
+        let events = bus.events();
+        assert!(!events.iter().any(|e| matches!(e, BattleEvent::PokemonStatusRemoved { 
+            status: StatusCondition::Freeze, 
+            .. 
+        })));
     }
 }

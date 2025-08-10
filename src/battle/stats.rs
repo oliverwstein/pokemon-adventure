@@ -63,7 +63,19 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
     
     let stage = player.get_stat_stage(defense_stat);
     let mut multiplied_defense = apply_stat_stage_multiplier(base_defense, stage);
-    
+    for effect in &move_data.effects {
+        if let crate::move_data::MoveEffect::IgnoreDef(percentage) = effect {
+            // The percentage is how much of the defense to ignore.
+            // For example, IgnoreDef(50) means 50% is ignored, so the final defense is multiplied by 0.5.
+            let remaining_defense_factor = 1.0 - (*percentage as f64 / 100.0);
+            
+            // Apply the reduction to the calculated defense.
+            multiplied_defense = ((multiplied_defense as f64) * remaining_defense_factor).round() as u16;
+            
+            // A move should only have one IgnoreDef effect, so we can stop looking.
+            break;
+        }
+    }
     // TODO: Apply move-specific modifiers based on move_data
     // Examples: Psyshock/Psystrike use special attack vs physical defense
     

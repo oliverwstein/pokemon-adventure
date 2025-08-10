@@ -83,6 +83,62 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
     multiplied_speed
 }
 
+/// Calculate if a move hits based on accuracy, evasion, and move accuracy
+/// Returns true if the move hits, false if it misses
+pub fn move_hits(
+    attacker: &PokemonInst,
+    defender: &PokemonInst,
+    attacker_player: &BattlePlayer,
+    defender_player: &BattlePlayer,
+    move_: Move,
+    rng: &mut crate::battle::state::TurnRng,
+) -> bool {
+    let move_data = get_move_data(move_).expect("Move data should exist");
+    
+    // If move has no accuracy value, it never misses (like Swift)
+    let Some(base_accuracy) = move_data.accuracy else {
+        return true;
+    };
+    
+    // Calculate adjusted stages: attacker's accuracy - defender's evasion
+    let accuracy_stage = attacker_player.get_stat_stage(StatType::Accuracy);
+    let evasion_stage = defender_player.get_stat_stage(StatType::Evasion);
+    let adjusted_stage = (accuracy_stage - evasion_stage).clamp(-6, 6);
+    
+    // Calculate stage multiplier
+    let stage_multiplier = apply_accuracy_stage_multiplier(adjusted_stage);
+    
+    // Calculate final accuracy threshold
+    let modified_accuracy = (base_accuracy as f64 * stage_multiplier).round() as u8;
+    let clamped_accuracy = modified_accuracy.clamp(1, 100);
+    
+    // Roll for hit/miss
+    let roll = rng.next_outcome();
+    roll <= clamped_accuracy
+}
+
+/// Apply accuracy/evasion stage multipliers according to Pokemon formula
+/// Uses different multipliers than regular stats
+/// Stages range from -6 to +6
+fn apply_accuracy_stage_multiplier(stage: i8) -> f64 {
+    match stage {
+        -6 => 3.0 / 9.0,  // 33%
+        -5 => 3.0 / 8.0,  // 37.5%
+        -4 => 3.0 / 7.0,  // 43%
+        -3 => 3.0 / 6.0,  // 50%
+        -2 => 3.0 / 5.0,  // 60%
+        -1 => 3.0 / 4.0,  // 75%
+         0 => 3.0 / 3.0,  // 100%
+         1 => 4.0 / 3.0,  // 133%
+         2 => 5.0 / 3.0,  // 167%
+         3 => 6.0 / 3.0,  // 200%
+         4 => 7.0 / 3.0,  // 233%
+         5 => 8.0 / 3.0,  // 267%
+         6 => 9.0 / 3.0,  // 300%
+        _ => 1.0, // Should never happen due to clamp, but safety fallback
+    }
+}
+
 /// Apply stat stage multipliers according to Pokemon formula
 /// Stages range from -6 to +6
 /// Negative stages: (2 / (2 + |stage|))
@@ -119,6 +175,16 @@ mod tests {
         assert_eq!(apply_stat_stage_multiplier(100, -2), 50);   // -2 stage: 1/2x
         assert_eq!(apply_stat_stage_multiplier(100, 6), 400);   // +6 stage: 4.0x
         assert_eq!(apply_stat_stage_multiplier(100, -6), 25);   // -6 stage: 1/4x
+    }
+    
+    #[test]
+    fn test_accuracy_stage_multipliers() {
+        // Test accuracy/evasion stage multipliers
+        assert!((apply_accuracy_stage_multiplier(0) - 1.0).abs() < 0.001);  // No change: 100%
+        assert!((apply_accuracy_stage_multiplier(1) - 4.0/3.0).abs() < 0.001);  // +1: 133%
+        assert!((apply_accuracy_stage_multiplier(-1) - 3.0/4.0).abs() < 0.001); // -1: 75%
+        assert!((apply_accuracy_stage_multiplier(6) - 3.0).abs() < 0.001);  // +6: 300%
+        assert!((apply_accuracy_stage_multiplier(-6) - 1.0/3.0).abs() < 0.001); // -6: 33%
     }
     
     #[test] 

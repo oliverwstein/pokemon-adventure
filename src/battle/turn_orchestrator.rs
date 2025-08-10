@@ -1,5 +1,5 @@
 use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent};
-use crate::battle::stats::effective_speed;
+use crate::battle::stats::{effective_speed, move_hits};
 use crate::player::PlayerAction;
 use crate::move_data::get_move_data;
 
@@ -224,24 +224,56 @@ fn execute_move_phase(
     battle_state: &mut BattleState,
     action_order: &[usize],
     bus: &mut EventBus, 
-    _rng: &mut TurnRng,
+    rng: &mut TurnRng,
 ) {
     // Execute moves in the determined order
     for &player_index in action_order {
         if let Some(PlayerAction::UseMove { move_index }) = &battle_state.action_queue[player_index] {
-            let player = &battle_state.players[player_index];
-            let active_pokemon = player.team[player.active_pokemon_index].as_ref()
+            let attacker_player = &battle_state.players[player_index];
+            let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index].as_ref()
                 .expect("Active pokemon should exist");
             
-            let move_instance = &active_pokemon.moves[*move_index].as_ref()
+            let move_instance = &attacker_pokemon.moves[*move_index].as_ref()
                 .expect("Move should exist");
             
-            // For now, just generate a MoveUsed event - no damage, accuracy, effects, etc.
+            // Determine defender (opponent player)
+            let defender_index = if player_index == 0 { 1 } else { 0 };
+            let defender_player = &battle_state.players[defender_index];
+            let defender_pokemon = defender_player.team[defender_player.active_pokemon_index].as_ref()
+                .expect("Defender pokemon should exist");
+            
+            // Generate MoveUsed event first
             bus.push(BattleEvent::MoveUsed {
                 player_index,
-                pokemon: active_pokemon.species,
+                pokemon: attacker_pokemon.species,
                 move_used: move_instance.move_,
             });
+            
+            // Check if move hits
+            let hits = move_hits(
+                attacker_pokemon,
+                defender_pokemon, 
+                attacker_player,
+                defender_player,
+                move_instance.move_,
+                rng,
+            );
+            
+            if hits {
+                bus.push(BattleEvent::MoveHit {
+                    attacker: attacker_pokemon.species,
+                    defender: defender_pokemon.species,
+                    move_used: move_instance.move_,
+                });
+                
+                // TODO: Apply damage, effects, etc.
+            } else {
+                bus.push(BattleEvent::MoveMissed {
+                    attacker: attacker_pokemon.species,
+                    defender: defender_pokemon.species,
+                    move_used: move_instance.move_,
+                });
+            }
         }
     }
 }

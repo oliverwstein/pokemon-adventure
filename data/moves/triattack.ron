@@ -1,11 +1,12 @@
 MoveData(
     name: "Tri Attack",
     move_type: Normal,
-    power: Some(80),
+    power: Some(40),
     category: Special,
-    accuracy: Some(95),
-    max_pp: 15,
+    accuracy: Some(80),
+    max_pp: 10,
     effects: [
+        MultiHit(3, 3),
         Burn(10),
         Paralyze(10),
         Freeze(10),

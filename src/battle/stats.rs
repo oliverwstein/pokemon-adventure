@@ -368,4 +368,70 @@ mod tests {
         let is_crit_status = move_is_critical_hit(&pokemon, &player, crate::moves::Move::Growl, &mut rng_status);
         assert!(!is_crit_status, "Status moves should never be critical hits");
     }
+    
+    #[test]
+    fn test_combined_status_effects() {
+        // Initialize move data (required for get_move_data to work)
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
+        // Test Pokemon with burn status
+        let mut burned_pokemon = crate::pokemon::PokemonInst {
+            name: "Burned".to_string(),
+            species: Species::Charmander,
+            curr_exp: 0,
+            ivs: [15; 6],
+            evs: [0; 6],
+            curr_stats: [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
+            moves: [const { None }; 4],
+            status: Some(crate::pokemon::StatusCondition::Burn),
+        };
+        
+        // Test Pokemon with paralysis
+        let mut paralyzed_pokemon = crate::pokemon::PokemonInst {
+            name: "Paralyzed".to_string(),
+            species: Species::Pikachu,
+            curr_exp: 0,
+            ivs: [15; 6],
+            evs: [0; 6],
+            curr_stats: [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
+            moves: [const { None }; 4],
+            status: Some(crate::pokemon::StatusCondition::Paralysis),
+        };
+        
+        let player = crate::player::BattlePlayer {
+            player_id: "test".to_string(),
+            player_name: "Test".to_string(),
+            team: [const { None }; 6],
+            active_pokemon_index: 0,
+            stat_stages: HashMap::new(),
+            team_conditions: HashMap::new(),
+            active_pokemon_conditions: HashMap::new(),
+            last_move: None,
+        };
+        
+        // Test burn effects
+        assert_eq!(effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle), 40, 
+                   "Burn should halve physical attack: 80/2=40");
+        assert_eq!(effective_attack(&burned_pokemon, &player, crate::moves::Move::Ember), 80,
+                   "Burn should NOT affect special attack");
+        assert_eq!(effective_speed(&burned_pokemon, &player), 100,
+                   "Burn should NOT affect speed");
+        
+        // Test paralysis effects  
+        assert_eq!(effective_speed(&paralyzed_pokemon, &player), 25,
+                   "Paralysis should quarter speed: 100/4=25");
+        assert_eq!(effective_attack(&paralyzed_pokemon, &player, crate::moves::Move::Tackle), 80,
+                   "Paralysis should NOT affect attack");
+        assert_eq!(effective_attack(&paralyzed_pokemon, &player, crate::moves::Move::ThunderPunch), 80,
+                   "Paralysis should NOT affect special attack");
+        
+        // Test healthy Pokemon (no status)
+        burned_pokemon.status = None;
+        paralyzed_pokemon.status = None;
+        
+        assert_eq!(effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle), 80);
+        assert_eq!(effective_speed(&paralyzed_pokemon, &player), 100);
+    }
 }

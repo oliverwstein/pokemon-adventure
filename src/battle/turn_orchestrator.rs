@@ -565,7 +565,7 @@ pub fn execute_attack_hit(
             action_stack.push_front(BattleAction::AttackHit {
                 attacker_index,
                 defender_index: attacker_index, // Attack self
-                move_used,
+                move_used: Move::HittingItself,
                 hit_number: 0,
             });
         }

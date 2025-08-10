@@ -161,8 +161,33 @@ impl MoveData {
     /// Load move data from RON files in the data directory
     pub fn load_all(data_path: &Path) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
         let moves_dir = data_path.join("moves");
+
         let mut move_map = HashMap::new();
-        
+        let hitting_itself_data = MoveData {
+            name: "Hit Itself".to_string(),
+            move_type: PokemonType::Typeless,
+            power: Some(40),
+            category: MoveCategory::Physical,
+            accuracy: None, // Always hits
+            max_pp: 0,      // Not a real move, no PP
+            effects: vec![],
+        };
+        move_map.insert(Move::HittingItself, hitting_itself_data);
+
+        // Add Struggle.
+        // It has fixed data and recoil. Recoil is 25% of damage dealt here.
+        // Note: In some game generations, recoil is 1/4 of the user's max HP.
+        let struggle_data = MoveData {
+            name: "Struggle".to_string(),
+            move_type: PokemonType::Typeless,
+            power: Some(50),
+            category: MoveCategory::Physical,
+            accuracy: None, // Always hits
+            max_pp: 0,      // Not a real move, no PP
+            effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
+        };
+        move_map.insert(Move::Struggle, struggle_data);
+
         if !moves_dir.exists() {
             return Err(format!("Moves data directory not found: {}", moves_dir.display()).into());
         }
@@ -381,6 +406,7 @@ impl std::str::FromStr for Move {
             "OUTRAGE" => Ok(Move::Outrage),
             "DRAGONRAGE" => Ok(Move::DragonRage),
             "STRUGGLE" => Ok(Move::Struggle),
+            "HITITSELF" => Ok(Move::HittingItself),
             _ => Err(format!("Unknown move: {}", s)),
         }
     }

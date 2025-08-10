@@ -77,6 +77,7 @@ pub enum PokemonType {
     Psychic,
     Ice,
     Dragon,
+    Typeless,
 }
 
 impl PokemonType {
@@ -162,6 +163,7 @@ impl PokemonType {
             // Dragon
             (Dragon, Dragon) => 2.0,
             (Dragon, _) => 1.0,
+            (Typeless, _) => 1.0,
         }
     }
 }

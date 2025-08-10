@@ -505,8 +505,8 @@ fn check_action_preventing_conditions(
     
     // Check paralysis - 25% chance to be fully paralyzed
     if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon.status {
-        let roll = rng.next_outcome(); // 0-255
-        if roll < 64 { // 64/256 = 25%
+        let roll = rng.next_outcome(); // 0-100
+        if roll < 25 {
             return Some(ActionFailureReason::IsParalyzed);
         }
     }
@@ -515,8 +515,8 @@ fn check_action_preventing_conditions(
     for condition in player.active_pokemon_conditions.values() {
         if let crate::player::PokemonCondition::Confused { turns_remaining } = condition {
             if *turns_remaining > 0 {
-                let roll = rng.next_outcome(); // 0-255
-                if roll < 128 { // 128/256 = 50%
+                let roll = rng.next_outcome(); // 0-100
+                if roll < 50 {
                     return Some(ActionFailureReason::IsConfused);
                 }
                 // If not confused this turn, action proceeds normally

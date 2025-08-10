@@ -3,15 +3,18 @@
 ## High Priority - Core Battle System Features
 
 ### End-of-Turn Effects System
-- [ ] Implement status damage (poison, burn) during end-of-turn phase
-- [ ] Add status time timers (sleep has a duration set when it begins, poison worsens each turn)
+- [x] Implement status damage (poison, burn) during end-of-turn phase
+- [x] Add status time timers (sleep has a duration set when it begins, poison worsens each turn)
 - [ ] Handle trapped Pokemon effects (bind, wrap, fire spin)
+    - The data structures are in place: PokemonCondition::Trapped exists in player.rs, and its timer is correctly decremented in tick_active_conditions. However, the core logic to apply damage during the end-of-turn phase is missing from execute_end_turn_phase and it does not prevent switching as it ought (TODO).
 - [ ] Implement leech seed draining
+    - The PokemonCondition::Seeded enum exists, but there is no logic in execute_end_turn_phase to handle the HP draining from the target and healing the user.
 
 ### Move Effects Implementation
+#### (This relates to moves causing effects, not implementing the effects themselves)
 
-#### Basic Status Effects
-- [ ] **Flinch**: Chance to prevent opponent from acting next turn
+#### Basic Status Effects:
+- [ ] **Flinch**: Chance to prevent opponent from acting later in the turn
 - [ ] **Burn**: Chance to inflict burn status (halves physical attack, deals damage)
 - [ ] **Freeze**: Chance to inflict freeze status (prevents action until thaw)
 - [ ] **Paralyze**: Chance to inflict paralysis (quarters speed, chance to skip turn)
@@ -38,12 +41,13 @@
 #### Status and Conditions
 - [ ] **Trap**: Chance to trap opponent (prevents switching, deals damage)
 - [ ] **Exhaust**: Chance to force opponent to skip next turn
+- [ ] **Flinch**: Prevents the opponent from making a move later in the turn
 - [x] **Priority**: Modify move's priority in turn order (already implemented)
 - [ ] **SureHit**: Move cannot miss regardless of accuracy/evasion
 - [ ] **ChargeUp**: Move requires charging turn before execution
 - [ ] **InAir**: User becomes semi-invulnerable in air (fly, bounce)
 - [ ] **Underground**: User becomes semi-invulnerable underground (dig)
-- [ ] **Teleport**: Chance to flee from battle or switch out
+- [ ] **Teleport**: User can't be hit by enemy attacks later in the turn.
 
 #### Special Mechanics
 - [x] **OHKO**: One-hit KO if level difference allows (already implemented)
@@ -60,13 +64,13 @@
 - [ ] **Bide**: Store damage for set turns, then release double
 - [ ] **Rage**: Enter rage mode with attack boosts when hit
 - [ ] **Rampage**: Multi-turn uncontrollable attack with confusion/exhaustion
+- [ ] **Seed**: Leech seed effect - drain HP each turn to user
+- [ ] **Nightmare**: A move with this effect can only affect sleeping pokemon (see: Dream Eater)
 
 #### Field Effects
 - [ ] **Haze**: Remove all stat stage changes from all Pokemon
 - [ ] **Reflect**: Reduce physical or special damage for team
 - [ ] **Mist**: Prevent stat reductions for team
-- [ ] **Seed**: Leech seed effect - drain HP each turn to user
-- [ ] **Nightmare**: Extra damage each turn to sleeping opponents
 
 #### Utility Effects
 - [ ] **Heal**: Restore percentage of user's max HP
@@ -74,14 +78,14 @@
 - [ ] **Ante**: Gain money after battle (Pay Day effect)
 
 ### Active Pokemon Conditions System
-- [ ] **Flinched**: Prevents Pokemon from taking action for one turn
-- [ ] **Confused**: Chance to hurt self instead of using move, with turn counter
+- [x] **Flinched**: Prevents Pokemon from taking action for one turn
+- [x] **Confused**: Chance to hurt self instead of using move, with turn counter
 - [ ] **Seeded**: Takes damage each turn that heals the opponent (leech seed)
 - [ ] **Underground**: Invulnerable to most moves while underground (dig mechanics)
 - [ ] **InAir**: Invulnerable to most moves while in air (fly mechanics)
 - [ ] **Teleported**: Prevents user from being hit, but does not prevent status moves (custom feature)
 - [ ] **Enraged**: Attack boost accumulation for rage mechanics
-- [ ] **Exhausted**: Skip next turn (after hyper beam, etc.)
+- [x] **Exhausted**: Skip next turn (after hyper beam, etc.)
 - [ ] **Trapped**: Binding moves prevent switching and deal damage each turn
 - [ ] **Charging**: Two-turn moves (solar beam, skull bash) preparation phase
 - [ ] **Rampaging**: Multi-turn uncontrollable attack (thrash, petal dance)
@@ -101,7 +105,7 @@
 ## Medium Priority - Advanced Battle Features
 
 ### Special Move Mechanics
-- [ ] OHKO moves (guillotine, horn drill, fissure)
+- [x] OHKO moves (guillotine, horn drill, fissure)
 - [ ] Counter move (return double physical damage)
 - [ ] Transform move (copy target's stats and moveset)
 - [ ] Metronome (random move selection)
@@ -109,20 +113,15 @@
 - [ ] Disable (prevent use of last move used)
 
 ### Field Conditions
-- [ ] Team-wide effects (reflect reduces physical damage)
-- [ ] Weather effects (if desired for future expansion)
-- [ ] Entry hazards (if desired for future expansion)
+- [ ] Team-wide effects (reflect, light screen, mist)
 
 ### Enhanced Status System
-- [ ] Sleep with turn counters and early wake-up chances
-- [ ] Freeze with thaw chances
-- [ ] Poison damage scaling over time
-- [ ] Status interaction rules (can't sleep frozen Pokemon, etc.)
+- [x] Freeze with thaw chances
+- [x] Poison damage scaling over time
 
 ## Low Priority - Polish and Completeness
 
 ### Move Data Expansion
-- [ ] Create RON files for all 214 moves in moves.rs
 - [ ] Implement all MoveEffect variants from move_data.rs
 - [ ] Add proper move descriptions and flavor text
 
@@ -166,14 +165,12 @@ The TODO list prioritizes core battle functionality that affects multiple system
 - Basic damage calculation with STAB, critical hits, and random variance
 
 ### 🚧 Partial Implementation
-- End-of-turn phase exists but only handles replacement checking
+- End-of-turn phase exists but only handles some elements
 - Move effects system exists but only implements MultiHit
-- Status system has basic conditions but no timing or damage mechanics
-- Active pokemon conditions system exists but isn't used
+- Status system has basic conditions but not all
+- Active pokemon condition processing
 
 ### ❌ Missing Core Features
-- Status damage and healing during end-of-turn
 - Most move effects (99% of MoveEffect variants unimplemented)
-- Active pokemon condition processing
 - Status move category handling
-- Advanced battle mechanics (OHKO, counter, etc.)
+- Advanced battle mechanics (transform, counter, etc.)

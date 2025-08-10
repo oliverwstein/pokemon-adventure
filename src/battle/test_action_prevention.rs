@@ -80,7 +80,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![32]); // 32 < 64, so paralyzed (25% chance)
+        let mut rng = TurnRng::new_for_test(vec![24]); // 24 < 25, so paralyzed (25% chance)
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -100,7 +100,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![128, 200, 100]); // 128 >= 64, so not paralyzed
+        let mut rng = TurnRng::new_for_test(vec![25, 75, 60, 80, 90, 85]); // 25 >= 25, so not paralyzed + extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -121,7 +121,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![64, 100, 200, 150]); // 64 < 128, so confused (50% chance) + extra values
+        let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80]); // 49 < 50, so confused (50% chance) + extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -141,7 +141,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![200, 200, 100]); // 200 >= 128, so not confused this turn
+        let mut rng = TurnRng::new_for_test(vec![50, 75, 60, 80, 90, 85]); // 50 >= 50, so not confused this turn + extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -162,7 +162,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![128, 200, 100]);
+        let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -183,7 +183,7 @@ mod tests {
         );
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![128]);
+        let mut rng = TurnRng::new_for_test(vec![75]);
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);
@@ -201,7 +201,7 @@ mod tests {
         let mut battle_state = create_test_battle_state(None, vec![]);
         
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![200, 100, 128]); // Good rolls for accuracy, etc.
+        let mut rng = TurnRng::new_for_test(vec![75, 60, 80]); // Good rolls for accuracy, etc.
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
         
         execute_attack_hit(0, 1, Move::Tackle, 0, &mut action_stack, &mut bus, &mut rng, &mut battle_state);

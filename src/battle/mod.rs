@@ -16,3 +16,6 @@ mod test_multi_attacks;
 
 #[cfg(test)]
 mod test_end_of_turn;
+
+#[cfg(test)]
+mod test_action_prevention;

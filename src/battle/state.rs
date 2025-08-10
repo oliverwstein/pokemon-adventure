@@ -54,9 +54,11 @@ pub enum BattleEvent {
     BattleEnded { winner: Option<usize> },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ActionFailureReason {
     IsAsleep,
+    IsFrozen,
+    IsExhausted,
     IsParalyzed,
     IsFlinching,
     IsConfused,

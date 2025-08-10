@@ -1,4 +1,4 @@
-use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent};
+use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent, ActionFailureReason};
 use crate::battle::stats::{effective_speed, move_hits, move_is_critical_hit};
 use crate::player::PlayerAction;
 use crate::move_data::get_move_data;
@@ -29,12 +29,12 @@ enum BattleAction {
 }
 
 /// Action stack for managing battle action execution
-struct ActionStack {
+pub struct ActionStack {
     actions: VecDeque<BattleAction>,
 }
 
 impl ActionStack {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             actions: VecDeque::new(),
         }
@@ -466,8 +466,70 @@ fn execute_switch(
     });
 }
 
+/// Check all conditions that can prevent a Pokemon from taking action
+/// Returns Some(ActionFailureReason) if action should be prevented, None if action can proceed
+fn check_action_preventing_conditions(
+    player_index: usize,
+    battle_state: &BattleState,
+    rng: &mut TurnRng,
+) -> Option<ActionFailureReason> {
+    let player = &battle_state.players[player_index];
+    let pokemon = player.team[player.active_pokemon_index].as_ref()?;
+    
+    // Check Pokemon status conditions first (sleep, freeze, etc.)
+    if let Some(status) = pokemon.status {
+        match status {
+            crate::pokemon::StatusCondition::Sleep(_) => {
+                return Some(ActionFailureReason::IsAsleep);
+            },
+            crate::pokemon::StatusCondition::Freeze => {
+                return Some(ActionFailureReason::IsFrozen);
+            },
+            _ => {} // Other status conditions don't prevent actions
+        }
+    }
+    
+    // Check active Pokemon conditions
+    if player.has_condition(&crate::player::PokemonCondition::Flinched) {
+        return Some(ActionFailureReason::IsFlinching);
+    }
+    
+    // Check for exhausted condition (any turns_remaining > 0 means still exhausted)
+    for condition in player.active_pokemon_conditions.values() {
+        if let crate::player::PokemonCondition::Exhausted { turns_remaining } = condition {
+            if *turns_remaining > 0 {
+                return Some(ActionFailureReason::IsExhausted);
+            }
+        }
+    }
+    
+    // Check paralysis - 25% chance to be fully paralyzed
+    if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon.status {
+        let roll = rng.next_outcome(); // 0-255
+        if roll < 64 { // 64/256 = 25%
+            return Some(ActionFailureReason::IsParalyzed);
+        }
+    }
+    
+    // Check confusion - 50% chance to hit self instead (this is more complex, handle separately)
+    for condition in player.active_pokemon_conditions.values() {
+        if let crate::player::PokemonCondition::Confused { turns_remaining } = condition {
+            if *turns_remaining > 0 {
+                let roll = rng.next_outcome(); // 0-255
+                if roll < 128 { // 128/256 = 50%
+                    return Some(ActionFailureReason::IsConfused);
+                }
+                // If not confused this turn, action proceeds normally
+                break; // Only check once
+            }
+        }
+    }
+    
+    None // No conditions prevent action
+}
+
 /// Execute a single hit of an attack
-fn execute_attack_hit(
+pub fn execute_attack_hit(
     attacker_index: usize,
     defender_index: usize,
     move_used: Move,
@@ -490,6 +552,12 @@ fn execute_attack_hit(
     if battle_state.players[defender_index].team[battle_state.players[defender_index].active_pokemon_index].as_ref().unwrap().is_fainted() {
         // We don't even log an ActionFailed event here, because the move sequence just silently stops.
         return;
+    }
+    
+    // Check all action-preventing conditions
+    if let Some(failure_reason) = check_action_preventing_conditions(attacker_index, battle_state, rng) {
+        bus.push(BattleEvent::ActionFailed { reason: failure_reason });
+        return; // Attack is prevented
     }
     // Generate MoveUsed event (only for first hit)
     if hit_number == 0 {

@@ -8,7 +8,9 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
     let move_data = get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
-    let base_attack = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+    let base_attack = if let Some(transform_condition) = player
+        .active_pokemon_conditions
+        .values()
         .find_map(|condition| match condition {
             crate::player::PokemonCondition::Transformed { target } => Some(target),
             _ => None,
@@ -61,7 +63,9 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
     let move_data = get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
-    let base_defense = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+    let base_defense = if let Some(transform_condition) = player
+        .active_pokemon_conditions
+        .values()
         .find_map(|condition| match condition {
             crate::player::PokemonCondition::Transformed { target } => Some(target),
             _ => None,
@@ -116,7 +120,9 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
 /// Calculate effective speed including stat stages, paralysis, and other modifiers
 pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
     // Check if transformed - use target Pokemon's base speed
-    let base_speed = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+    let base_speed = if let Some(transform_condition) = player
+        .active_pokemon_conditions
+        .values()
         .find_map(|condition| match condition {
             crate::player::PokemonCondition::Transformed { target } => Some(target),
             _ => None,

@@ -38,11 +38,14 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Venusaur, vec![Move::Solarbeam])],
+            vec![create_test_pokemon(
+                Species::Venusaur,
+                vec![Move::Solarbeam],
+            )],
         );
 
         let player2 = BattlePlayer::new(
-            "player2".to_string(), 
+            "player2".to_string(),
             "Player 2".to_string(),
             vec![create_test_pokemon(Species::Charizard, vec![Move::Tackle])],
         );
@@ -56,13 +59,13 @@ mod tests {
 
         // Player 1 should now have Charging condition
         assert!(battle_state.players[0].has_condition(&PokemonCondition::Charging));
-        
+
         // Player 1's last move should be Solar Beam
         assert_eq!(battle_state.players[0].last_move, Some(Move::Solarbeam));
 
         // Turn 2: Solar Beam should execute with damage
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        
+
         // Player 1 should have a ForcedMove action
         match &battle_state.action_queue[0] {
             Some(PlayerAction::ForcedMove { pokemon_move }) => {
@@ -70,10 +73,10 @@ mod tests {
             }
             _ => panic!("Player 1 should have ForcedMove action"),
         }
-        
+
         let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus2 = resolve_turn(&mut battle_state, test_rng2);
-        
+
         // Charging condition should be cleared after execution
         assert!(!battle_state.players[0].has_condition(&PokemonCondition::Charging));
     }
@@ -83,7 +86,7 @@ mod tests {
         // Test InAir moves like Fly
         let player1 = BattlePlayer::new(
             "player1".to_string(),
-            "Player 1".to_string(), 
+            "Player 1".to_string(),
             vec![create_test_pokemon(Species::Pidgeot, vec![Move::Fly])],
         );
 
@@ -106,7 +109,7 @@ mod tests {
 
         // Turn 2: Fly should execute attack
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        
+
         // Player 1 should have a ForcedMove action
         match &battle_state.action_queue[0] {
             Some(PlayerAction::ForcedMove { pokemon_move }) => {
@@ -166,9 +169,10 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Rampaging condition
-        let has_rampage = battle_state.players[0].active_pokemon_conditions.values().any(|condition| {
-            matches!(condition, PokemonCondition::Rampaging { .. })
-        });
+        let has_rampage = battle_state.players[0]
+            .active_pokemon_conditions
+            .values()
+            .any(|condition| matches!(condition, PokemonCondition::Rampaging { .. }));
         assert!(has_rampage);
         assert_eq!(battle_state.players[0].last_move, Some(Move::Thrash));
 
@@ -190,12 +194,15 @@ mod tests {
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         crate::pokemon::initialize_species_data(data_path)
             .expect("Failed to initialize species data");
-            
+
         // Test Mirror Move copying opponent's last move in a single turn
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Pidgeot, vec![Move::MirrorMove])],
+            vec![create_test_pokemon(
+                Species::Pidgeot,
+                vec![Move::MirrorMove],
+            )],
         );
 
         let mut player2 = BattlePlayer::new(
@@ -223,10 +230,12 @@ mod tests {
         }
 
         // Mirror Move should have been executed (no ActionFailed events)
-        let failed_events: Vec<_> = event_bus.events().iter()
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::ActionFailed { .. }))
             .collect();
-        
+
         // For debugging: if there are failed events, print them
         if !failed_events.is_empty() {
             println!("ActionFailed events found:");
@@ -234,8 +243,12 @@ mod tests {
                 println!("  {:?}", event);
             }
         }
-        
-        assert_eq!(failed_events.len(), 0, "Mirror Move should not fail when copying a valid move");
+
+        assert_eq!(
+            failed_events.len(),
+            0,
+            "Mirror Move should not fail when copying a valid move"
+        );
     }
 
     #[test]
@@ -244,7 +257,10 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Pidgeot, vec![Move::MirrorMove])],
+            vec![create_test_pokemon(
+                Species::Pidgeot,
+                vec![Move::MirrorMove],
+            )],
         );
 
         let player2 = BattlePlayer::new(
@@ -266,10 +282,15 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Should have ActionFailed event
-        let failed_events: Vec<_> = event_bus.events().iter()
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::ActionFailed { .. }))
             .collect();
-        assert!(!failed_events.is_empty(), "Mirror Move should fail when copying Mirror Move");
+        assert!(
+            !failed_events.is_empty(),
+            "Mirror Move should fail when copying Mirror Move"
+        );
     }
 
     #[test]
@@ -278,7 +299,10 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Pidgeot, vec![Move::MirrorMove])],
+            vec![create_test_pokemon(
+                Species::Pidgeot,
+                vec![Move::MirrorMove],
+            )],
         );
 
         let player2 = BattlePlayer::new(
@@ -300,10 +324,15 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Should have ActionFailed event
-        let failed_events: Vec<_> = event_bus.events().iter()
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::ActionFailed { .. }))
             .collect();
-        assert!(!failed_events.is_empty(), "Mirror Move should fail when no move to copy");
+        assert!(
+            !failed_events.is_empty(),
+            "Mirror Move should fail when no move to copy"
+        );
     }
 
     #[test]
@@ -312,7 +341,10 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Electrode, vec![Move::Explosion])],
+            vec![create_test_pokemon(
+                Species::Electrode,
+                vec![Move::Explosion],
+            )],
         );
 
         let player2 = BattlePlayer::new(
@@ -323,8 +355,14 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        let initial_hp_p1 = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let initial_hp_p2 = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let initial_hp_p1 = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        let initial_hp_p2 = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Player 1 uses Explosion
         collect_player_actions(&mut battle_state).expect("Should collect actions");
@@ -332,17 +370,38 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should have fainted
-        assert!(battle_state.players[0].active_pokemon().unwrap().is_fainted());
-        
+        assert!(
+            battle_state.players[0]
+                .active_pokemon()
+                .unwrap()
+                .is_fainted()
+        );
+
         // Player 2 should have taken damage (if explosion hit)
-        let final_hp_p2 = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let final_hp_p2 = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
         // Note: Explosion might miss, so we just check that the battle proceeded without error
-        
+
         // Should have PokemonFainted event for Player 1
-        let fainted_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonFainted { player_index: 0, .. }))
+        let fainted_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonFainted {
+                        player_index: 0,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(!fainted_events.is_empty(), "Player 1 should have fainted from Explosion");
+        assert!(
+            !fainted_events.is_empty(),
+            "Player 1 should have fainted from Explosion"
+        );
     }
 
     // === SPECIAL CONDITION TESTS ===
@@ -354,8 +413,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -367,13 +427,13 @@ mod tests {
             "Player 2".to_string(),
             vec![create_test_pokemon(Species::Abra, vec![Move::Tackle])], // Use a different move
         );
-        
+
         // Apply Teleported condition to player 2 BEFORE the battle starts
         player2.add_condition(PokemonCondition::Teleported);
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Player 1 uses WaterGun (has accuracy), Player 2 uses Tackle  
+        // Player 1 uses WaterGun (has accuracy), Player 2 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // WaterGun
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
@@ -388,32 +448,63 @@ mod tests {
         }
 
         // WaterGun should miss because defender is Teleported
-        let missed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveMissed { attacker: Species::Slowpoke, defender: Species::Abra, move_used: Move::WaterGun }))
+        let missed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveMissed {
+                        attacker: Species::Slowpoke,
+                        defender: Species::Abra,
+                        move_used: Move::WaterGun
+                    }
+                )
+            })
             .collect();
-        assert!(!missed_events.is_empty(), "WaterGun should miss against Teleported Pokemon");
+        assert!(
+            !missed_events.is_empty(),
+            "WaterGun should miss against Teleported Pokemon"
+        );
 
         // Player 2 should not take any damage from WaterGun
-        let initial_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
-        
+        let initial_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+
         // Check that no damage was dealt to Abra from WaterGun
-        let watergun_damage_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::DamageDealt { target: Species::Abra, .. }))
+        let watergun_damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::DamageDealt {
+                        target: Species::Abra,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(watergun_damage_events.is_empty(), "Teleported Pokemon should not take damage from missed moves");
-        
+        assert!(
+            watergun_damage_events.is_empty(),
+            "Teleported Pokemon should not take damage from missed moves"
+        );
+
         // Teleported condition should expire at end of turn
         assert!(!battle_state.players[1].has_condition(&PokemonCondition::Teleported));
     }
 
-    #[test] 
+    #[test]
     fn test_transformed_condition_uses_target_stats_and_types() {
         // Initialize move data
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         // Ditto vs Charizard - Ditto transforms into Charizard
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -429,7 +520,9 @@ mod tests {
 
         // Apply Transformed condition to Ditto (copying Charizard's stats/types)
         let charizard_inst = player2.active_pokemon().unwrap().clone();
-        player1.add_condition(PokemonCondition::Transformed { target: charizard_inst });
+        player1.add_condition(PokemonCondition::Transformed {
+            target: charizard_inst,
+        });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -447,12 +540,18 @@ mod tests {
         }
 
         // Test that transformed Ditto has Fire type
-        let ditto_types = battle_state.players[0].active_pokemon().unwrap()
+        let ditto_types = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
             .get_current_types(&battle_state.players[0]);
-        assert!(ditto_types.contains(&crate::pokemon::PokemonType::Fire), 
-               "Transformed Ditto should have Fire type from Charizard");
-        assert!(ditto_types.contains(&crate::pokemon::PokemonType::Flying), 
-               "Transformed Ditto should have Flying type from Charizard");
+        assert!(
+            ditto_types.contains(&crate::pokemon::PokemonType::Fire),
+            "Transformed Ditto should have Fire type from Charizard"
+        );
+        assert!(
+            ditto_types.contains(&crate::pokemon::PokemonType::Flying),
+            "Transformed Ditto should have Flying type from Charizard"
+        );
     }
 
     #[test]
@@ -461,8 +560,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -477,17 +577,30 @@ mod tests {
 
         // Apply both Transformed and Converted conditions - Converted should take priority
         let charizard_inst = player2.active_pokemon().unwrap().clone();
-        player1.add_condition(PokemonCondition::Transformed { target: charizard_inst });
-        player1.add_condition(PokemonCondition::Converted { pokemon_type: crate::pokemon::PokemonType::Electric });
+        player1.add_condition(PokemonCondition::Transformed {
+            target: charizard_inst,
+        });
+        player1.add_condition(PokemonCondition::Converted {
+            pokemon_type: crate::pokemon::PokemonType::Electric,
+        });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Test that Converted condition overrides Transformed
-        let ditto_types = battle_state.players[0].active_pokemon().unwrap()
+        let ditto_types = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
             .get_current_types(&battle_state.players[0]);
-        assert_eq!(ditto_types.len(), 1, "Converted Pokemon should have exactly one type");
-        assert_eq!(ditto_types[0], crate::pokemon::PokemonType::Electric, 
-                  "Converted condition should override Transform - should be Electric type only");
+        assert_eq!(
+            ditto_types.len(),
+            1,
+            "Converted Pokemon should have exactly one type"
+        );
+        assert_eq!(
+            ditto_types[0],
+            crate::pokemon::PokemonType::Electric,
+            "Converted condition should override Transform - should be Electric type only"
+        );
     }
 
     #[test]
@@ -496,8 +609,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -507,14 +621,20 @@ mod tests {
         let mut player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Substitute])],
+            vec![create_test_pokemon(
+                Species::Alakazam,
+                vec![Move::Substitute],
+            )],
         );
-        
+
         // Apply Substitute condition with 25 HP
         player2.add_condition(PokemonCondition::Substitute { hp: 25 });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let original_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let original_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Player 1 attacks with Lightning
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Lightning
@@ -530,8 +650,14 @@ mod tests {
         }
 
         // Player 2's actual Pokemon should take no damage - Substitute should absorb it
-        assert_eq!(battle_state.players[1].active_pokemon().unwrap().current_hp(), original_hp,
-                  "Pokemon behind Substitute should take no damage");
+        assert_eq!(
+            battle_state.players[1]
+                .active_pokemon()
+                .unwrap()
+                .current_hp(),
+            original_hp,
+            "Pokemon behind Substitute should take no damage"
+        );
     }
 
     #[test]
@@ -540,20 +666,27 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::ThunderWave])],
+            vec![create_test_pokemon(
+                Species::Pikachu,
+                vec![Move::ThunderWave],
+            )],
         );
 
         let mut player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Substitute])],
+            vec![create_test_pokemon(
+                Species::Alakazam,
+                vec![Move::Substitute],
+            )],
         );
-        
+
         // Apply Substitute condition
         player2.add_condition(PokemonCondition::Substitute { hp: 25 });
 
@@ -574,18 +707,25 @@ mod tests {
 
         // Player 2's Pokemon should not be paralyzed
         let pokemon_status = battle_state.players[1].active_pokemon().unwrap().status;
-        assert!(pokemon_status.is_none() || !matches!(pokemon_status, Some(crate::pokemon::StatusCondition::Paralysis)),
-               "Pokemon behind Substitute should not receive status effects");
+        assert!(
+            pokemon_status.is_none()
+                || !matches!(
+                    pokemon_status,
+                    Some(crate::pokemon::StatusCondition::Paralysis)
+                ),
+            "Pokemon behind Substitute should not receive status effects"
+        );
     }
 
     #[test]
     fn test_substitute_blocks_stat_decreases() {
-        // Initialize move data  
+        // Initialize move data
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -595,14 +735,18 @@ mod tests {
         let mut player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Substitute])],
+            vec![create_test_pokemon(
+                Species::Alakazam,
+                vec![Move::Substitute],
+            )],
         );
-        
+
         // Apply Substitute condition
         player2.add_condition(PokemonCondition::Substitute { hp: 25 });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let original_accuracy = battle_state.players[1].get_stat_stage(crate::player::StatType::Accuracy);
+        let original_accuracy =
+            battle_state.players[1].get_stat_stage(crate::player::StatType::Accuracy);
 
         // Player 1 uses Sand Attack (lowers accuracy)
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Sand Attack
@@ -618,8 +762,12 @@ mod tests {
         }
 
         // Player 2's accuracy should not be lowered
-        let new_accuracy = battle_state.players[1].get_stat_stage(crate::player::StatType::Accuracy);
-        assert_eq!(new_accuracy, original_accuracy, "Pokemon behind Substitute should not have stats lowered");
+        let new_accuracy =
+            battle_state.players[1].get_stat_stage(crate::player::StatType::Accuracy);
+        assert_eq!(
+            new_accuracy, original_accuracy,
+            "Pokemon behind Substitute should not have stats lowered"
+        );
     }
 
     #[test]
@@ -628,8 +776,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -639,9 +788,12 @@ mod tests {
         let mut player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Substitute])],
+            vec![create_test_pokemon(
+                Species::Alakazam,
+                vec![Move::Substitute],
+            )],
         );
-        
+
         // Apply Substitute condition
         player2.add_condition(PokemonCondition::Substitute { hp: 25 });
 
@@ -661,8 +813,11 @@ mod tests {
         }
 
         // Player 2 should not be confused
-        assert!(!battle_state.players[1].has_condition(&PokemonCondition::Confused { turns_remaining: 1 }),
-               "Pokemon behind Substitute should not receive active conditions");
+        assert!(
+            !battle_state.players[1]
+                .has_condition(&PokemonCondition::Confused { turns_remaining: 1 }),
+            "Pokemon behind Substitute should not receive active conditions"
+        );
     }
 
     #[test]
@@ -671,8 +826,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -686,7 +842,10 @@ mod tests {
         );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let initial_hp_p1 = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let initial_hp_p1 = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Turn 1: Player 2 uses Counter, Player 1 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
@@ -702,25 +861,59 @@ mod tests {
         }
 
         // Check that Countering condition was applied during the turn (visible in events)
-        let status_applied_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::StatusApplied { target: Species::Hitmonlee, status: PokemonCondition::Countering { .. } }))
+        let status_applied_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::StatusApplied {
+                        target: Species::Hitmonlee,
+                        status: PokemonCondition::Countering { .. }
+                    }
+                )
+            })
             .collect();
-        assert!(!status_applied_events.is_empty(), "Countering condition should be applied when using Counter");
+        assert!(
+            !status_applied_events.is_empty(),
+            "Countering condition should be applied when using Counter"
+        );
 
         // Player 1 should have taken Counter damage (2x the physical damage dealt)
-        let damage_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::DamageDealt { target: Species::Machamp, .. }))
+        let damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::DamageDealt {
+                        target: Species::Machamp,
+                        ..
+                    }
+                )
+            })
             .collect();
-        
-        assert!(!damage_events.is_empty(), "Should have Counter retaliation damage against Machamp");
-        
+
+        assert!(
+            !damage_events.is_empty(),
+            "Should have Counter retaliation damage against Machamp"
+        );
+
         // Check that Player 1's HP decreased (took Counter damage)
-        let final_hp_p1 = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        assert!(final_hp_p1 < initial_hp_p1, "Player 1 should have taken Counter retaliation damage");
+        let final_hp_p1 = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        assert!(
+            final_hp_p1 < initial_hp_p1,
+            "Player 1 should have taken Counter retaliation damage"
+        );
 
         // Countering condition should expire at end of turn (this is correct behavior)
-        assert!(!battle_state.players[1].has_condition(&PokemonCondition::Countering { damage: 0 }),
-               "Countering condition should expire at end of turn");
+        assert!(
+            !battle_state.players[1].has_condition(&PokemonCondition::Countering { damage: 0 }),
+            "Countering condition should expire at end of turn"
+        );
     }
 
     #[test]
@@ -729,8 +922,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -762,15 +956,34 @@ mod tests {
         }
 
         // Player 2 should be fainted
-        assert!(battle_state.players[1].active_pokemon().unwrap().is_fainted());
+        assert!(
+            battle_state.players[1]
+                .active_pokemon()
+                .unwrap()
+                .is_fainted()
+        );
 
         // Player 1 should not have taken Counter damage (since Player 2 fainted)
-        let counter_damage_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::DamageDealt { target: Species::Machamp, .. }))
+        let counter_damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::DamageDealt {
+                        target: Species::Machamp,
+                        ..
+                    }
+                )
+            })
             .collect();
-        
+
         // Should only have 1 damage event (from Tackle), no Counter retaliation
-        assert_eq!(counter_damage_events.len(), 0, "No Counter damage should occur if Countering Pokemon faints");
+        assert_eq!(
+            counter_damage_events.len(),
+            0,
+            "No Counter damage should occur if Countering Pokemon faints"
+        );
     }
 
     #[test]
@@ -779,8 +992,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -797,7 +1011,8 @@ mod tests {
         player2.add_condition(PokemonCondition::Enraged);
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let original_attack_stage = battle_state.players[1].get_stat_stage(crate::player::StatType::Attack);
+        let original_attack_stage =
+            battle_state.players[1].get_stat_stage(crate::player::StatType::Attack);
 
         // Player 1 attacks Player 2, Player 2 uses Rage
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Lightning
@@ -813,18 +1028,34 @@ mod tests {
         }
 
         // Player 2's attack should have increased after being hit while Enraged
-        let new_attack_stage = battle_state.players[1].get_stat_stage(crate::player::StatType::Attack);
-        assert!(new_attack_stage > original_attack_stage, 
-               "Enraged Pokemon should gain attack when hit (was {}, now {})", original_attack_stage, new_attack_stage);
+        let new_attack_stage =
+            battle_state.players[1].get_stat_stage(crate::player::StatType::Attack);
+        assert!(
+            new_attack_stage > original_attack_stage,
+            "Enraged Pokemon should gain attack when hit (was {}, now {})",
+            original_attack_stage,
+            new_attack_stage
+        );
 
         // Should have StatStageChanged event
-        let stat_change_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::StatStageChanged { 
-                target: Species::Primeape, 
-                stat: crate::player::StatType::Attack, .. 
-            }))
+        let stat_change_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::StatStageChanged {
+                        target: Species::Primeape,
+                        stat: crate::player::StatType::Attack,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(!stat_change_events.is_empty(), "Should have StatStageChanged event for attack increase");
+        assert!(
+            !stat_change_events.is_empty(),
+            "Should have StatStageChanged event for attack increase"
+        );
     }
 
     #[test]
@@ -833,8 +1064,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -866,17 +1098,29 @@ mod tests {
         }
 
         // Player 2 should no longer be Enraged
-        assert!(!battle_state.players[1].has_condition(&PokemonCondition::Enraged),
-               "Enraged condition should be removed when using non-Rage moves");
+        assert!(
+            !battle_state.players[1].has_condition(&PokemonCondition::Enraged),
+            "Enraged condition should be removed when using non-Rage moves"
+        );
 
         // Should have StatusRemoved event
-        let status_removed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::StatusRemoved { 
-                target: Species::Primeape,
-                status: PokemonCondition::Enraged 
-            }))
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::StatusRemoved {
+                        target: Species::Primeape,
+                        status: PokemonCondition::Enraged
+                    }
+                )
+            })
             .collect();
-        assert!(!status_removed_events.is_empty(), "Should have StatusRemoved event for Enraged condition");
+        assert!(
+            !status_removed_events.is_empty(),
+            "Should have StatusRemoved event for Enraged condition"
+        );
     }
 
     #[test]
@@ -885,8 +1129,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -913,17 +1158,25 @@ mod tests {
         }
 
         // Player 1 should now have Biding condition
-        let has_biding = battle_state.players[0].active_pokemon_conditions.values().any(|condition| {
-            matches!(condition, PokemonCondition::Biding { .. })
-        });
-        assert!(has_biding, "Player 1 should have Biding condition after using Bide");
+        let has_biding = battle_state.players[0]
+            .active_pokemon_conditions
+            .values()
+            .any(|condition| matches!(condition, PokemonCondition::Biding { .. }));
+        assert!(
+            has_biding,
+            "Player 1 should have Biding condition after using Bide"
+        );
 
         // Turn 2: Player 1 should be forced to use Bide again
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        
+
         match &battle_state.action_queue[0] {
             Some(PlayerAction::ForcedMove { pokemon_move }) => {
-                assert_eq!(*pokemon_move, Move::Bide, "Player 1 should be forced to use Bide while Biding");
+                assert_eq!(
+                    *pokemon_move,
+                    Move::Bide,
+                    "Player 1 should be forced to use Bide while Biding"
+                );
             }
             _ => panic!("Player 1 should have ForcedMove action while Biding"),
         }
@@ -935,8 +1188,9 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-        
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -950,10 +1204,16 @@ mod tests {
         );
 
         // Apply Biding condition with 1 turn left and some stored damage
-        player1.add_condition(PokemonCondition::Biding { turns_remaining: 1, damage: 50 });
+        player1.add_condition(PokemonCondition::Biding {
+            turns_remaining: 1,
+            damage: 50,
+        });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let initial_hp_p2 = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let initial_hp_p2 = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Player 1 uses Bide (final turn), Player 2 attacks
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Bide
@@ -969,23 +1229,39 @@ mod tests {
         }
 
         // Biding condition should be gone after execution
-        assert!(!battle_state.players[0].active_pokemon_conditions.values().any(|condition| {
-            matches!(condition, PokemonCondition::Biding { .. })
-        }), "Biding condition should be removed after execution");
+        assert!(
+            !battle_state.players[0]
+                .active_pokemon_conditions
+                .values()
+                .any(|condition| { matches!(condition, PokemonCondition::Biding { .. }) }),
+            "Biding condition should be removed after execution"
+        );
 
         // Player 2 should have taken damage equal to 2x stored damage (100)
-        let bide_damage_events: Vec<_> = event_bus.events().iter()
+        let bide_damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter_map(|event| match event {
-                BattleEvent::DamageDealt { target: Species::Pikachu, damage, .. } => Some(*damage),
+                BattleEvent::DamageDealt {
+                    target: Species::Pikachu,
+                    damage,
+                    ..
+                } => Some(*damage),
                 _ => None,
             })
             .collect::<Vec<_>>();
-        
+
         // Should have damage events, and at least one should be the Bide retaliation (100 damage)
-        assert!(!bide_damage_events.is_empty(), "Should have damage events from Bide execution");
-        
+        assert!(
+            !bide_damage_events.is_empty(),
+            "Should have damage events from Bide execution"
+        );
+
         // Look for the high damage value that indicates Bide retaliation (2x stored = 100)
         let has_bide_retaliation = bide_damage_events.iter().any(|&damage| damage >= 90); // Allow some variance for critical hits
-        assert!(has_bide_retaliation, "Should have high damage from Bide retaliation (2x stored damage)");
+        assert!(
+            has_bide_retaliation,
+            "Should have high damage from Bide retaliation (2x stored damage)"
+        );
     }
 }

@@ -758,25 +758,35 @@ impl PokemonInst {
     /// This should be used instead of directly accessing species.types for battle calculations
     pub fn get_current_types(&self, player: &crate::player::BattlePlayer) -> Vec<PokemonType> {
         // Check for Converted condition first (overrides everything)
-        if let Some(converted_type) = player.active_pokemon_conditions.values()
-            .find_map(|condition| match condition {
-                crate::player::PokemonCondition::Converted { pokemon_type } => Some(*pokemon_type),
-                _ => None,
-            }) {
+        if let Some(converted_type) =
+            player
+                .active_pokemon_conditions
+                .values()
+                .find_map(|condition| match condition {
+                    crate::player::PokemonCondition::Converted { pokemon_type } => {
+                        Some(*pokemon_type)
+                    }
+                    _ => None,
+                })
+        {
             return vec![converted_type]; // Use only the converted type
         }
-        
+
         // Check for Transformed condition (use target's types)
-        if let Some(transform_target) = player.active_pokemon_conditions.values()
-            .find_map(|condition| match condition {
-                crate::player::PokemonCondition::Transformed { target } => Some(target),
-                _ => None,
-            }) {
+        if let Some(transform_target) =
+            player
+                .active_pokemon_conditions
+                .values()
+                .find_map(|condition| match condition {
+                    crate::player::PokemonCondition::Transformed { target } => Some(target),
+                    _ => None,
+                })
+        {
             if let Some(target_species_data) = get_species_data(transform_target.species) {
                 return target_species_data.types.to_vec();
             }
         }
-        
+
         // No conditions - use normal species types
         if let Some(species_data) = self.get_species_data() {
             species_data.types.to_vec()

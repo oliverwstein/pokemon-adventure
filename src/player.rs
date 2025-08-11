@@ -185,7 +185,7 @@ impl BattlePlayer {
 
         // Clear active Pokemon conditions, stat stages, and last move when switching
         self.clear_active_pokemon_state();
-        
+
         self.active_pokemon_index = new_index;
 
         Ok(())
@@ -271,7 +271,9 @@ impl BattlePlayer {
         for (key, condition) in self.active_pokemon_conditions.iter() {
             match condition {
                 // Conditions that expire after one turn (cleared at end-of-turn)
-                PokemonCondition::Flinched | PokemonCondition::Teleported | PokemonCondition::Countering { .. } => {
+                PokemonCondition::Flinched
+                | PokemonCondition::Teleported
+                | PokemonCondition::Countering { .. } => {
                     expired_conditions.push(key.clone());
                 }
 

@@ -68,32 +68,41 @@ impl ActionStack {
 
 /// Generate a forced action if the player has conditions that require it
 /// Returns Some(PlayerAction::ForcedMove) if action is forced, None if player can choose
-fn check_for_forced_action(player: &crate::player::BattlePlayer) -> Option<crate::player::PlayerAction> {
+fn check_for_forced_action(
+    player: &crate::player::BattlePlayer,
+) -> Option<crate::player::PlayerAction> {
     // Check if player has a last move to potentially repeat
     let last_move = player.last_move?;
-    
+
     // Check for forcing conditions that repeat last move
     let has_forcing_condition = player.active_pokemon_conditions.values().any(|condition| {
-        matches!(condition,
+        matches!(
+            condition,
             crate::player::PokemonCondition::Charging
-            | crate::player::PokemonCondition::InAir  
-            | crate::player::PokemonCondition::Underground
-            | crate::player::PokemonCondition::Rampaging { .. }
-            | crate::player::PokemonCondition::Biding { .. }
+                | crate::player::PokemonCondition::InAir
+                | crate::player::PokemonCondition::Underground
+                | crate::player::PokemonCondition::Rampaging { .. }
+                | crate::player::PokemonCondition::Biding { .. }
         )
     });
-    
+
     if has_forcing_condition {
-        return Some(crate::player::PlayerAction::ForcedMove { pokemon_move: last_move });
+        return Some(crate::player::PlayerAction::ForcedMove {
+            pokemon_move: last_move,
+        });
     }
-    
+
     // Check for Biding condition - forces Bide action regardless of last move
-    if player.active_pokemon_conditions.values().any(|condition| {
-        matches!(condition, crate::player::PokemonCondition::Biding { .. })
-    }) {
-        return Some(crate::player::PlayerAction::ForcedMove { pokemon_move: crate::moves::Move::Bide });
+    if player
+        .active_pokemon_conditions
+        .values()
+        .any(|condition| matches!(condition, crate::player::PokemonCondition::Biding { .. }))
+    {
+        return Some(crate::player::PlayerAction::ForcedMove {
+            pokemon_move: crate::moves::Move::Bide,
+        });
     }
-        
+
     None
 }
 
@@ -107,7 +116,9 @@ pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), Stri
             for player_index in 0..2 {
                 if battle_state.action_queue[player_index].is_none() {
                     // First check if the action is forced by conditions
-                    let action = if let Some(forced_action) = check_for_forced_action(&battle_state.players[player_index]) {
+                    let action = if let Some(forced_action) =
+                        check_for_forced_action(&battle_state.players[player_index])
+                    {
                         forced_action
                     } else {
                         // No forced action, generate deterministic action
@@ -369,7 +380,9 @@ fn convert_player_action_to_battle_action(
             }
         }
 
-        PlayerAction::ForcedMove { pokemon_move: forced_move } => {
+        PlayerAction::ForcedMove {
+            pokemon_move: forced_move,
+        } => {
             // Forced moves bypass PP restrictions and move selection - use the move directly
             let defender_index = if player_index == 0 { 1 } else { 0 };
 
@@ -467,13 +480,16 @@ fn execute_battle_action(
                     bus.push(BattleEvent::ActionFailed { reason });
                     return;
                 }
-                
+
                 // Update last move used for conditions that depend on it
                 battle_state.players[attacker_index].last_move = Some(move_used);
-                
+
                 // Check if Enraged Pokemon used a move other than Rage - if so, remove Enraged condition
-                if battle_state.players[attacker_index].has_condition(&PokemonCondition::Enraged) && move_used != crate::moves::Move::Rage {
-                    battle_state.players[attacker_index].remove_condition(&PokemonCondition::Enraged);
+                if battle_state.players[attacker_index].has_condition(&PokemonCondition::Enraged)
+                    && move_used != crate::moves::Move::Rage
+                {
+                    battle_state.players[attacker_index]
+                        .remove_condition(&PokemonCondition::Enraged);
                     if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
                         bus.push(BattleEvent::StatusRemoved {
                             target: pokemon.species,
@@ -544,7 +560,7 @@ fn execute_battle_action(
                 action_stack,
                 rng,
             );
-            
+
             // Only execute standard attack if not handled by user condition effects
             if !skip_standard_execution {
                 execute_attack_hit(
@@ -679,24 +695,35 @@ fn apply_move_effects(
 ) {
     // Check if defender has a Substitute - if so, block most effects
     let defender_player = &battle_state.players[defender_index];
-    if defender_player.active_pokemon_conditions.values().any(|condition| {
-        matches!(condition, PokemonCondition::Substitute { .. })
-    }) {
+    if defender_player
+        .active_pokemon_conditions
+        .values()
+        .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }))
+    {
         // Substitute blocks most move effects targeting the enemy
         // Only effects that target the user should still apply
         for effect in &move_data.effects {
             match effect {
                 // Self-targeting effects that bypass Substitute
-                crate::move_data::MoveEffect::StatChange(crate::move_data::Target::User, stat, stages, chance) => {
+                crate::move_data::MoveEffect::StatChange(
+                    crate::move_data::Target::User,
+                    stat,
+                    stages,
+                    chance,
+                ) => {
                     // Apply self-targeting stat changes normally
                     if rng.next_outcome() <= *chance {
                         let target_index = attacker_index; // User targets self
-                        
+
                         let player_stat = match stat {
                             crate::move_data::StatType::Atk => crate::player::StatType::Attack,
                             crate::move_data::StatType::Def => crate::player::StatType::Defense,
-                            crate::move_data::StatType::SpAtk => crate::player::StatType::SpecialAttack,
-                            crate::move_data::StatType::SpDef => crate::player::StatType::SpecialDefense,
+                            crate::move_data::StatType::SpAtk => {
+                                crate::player::StatType::SpecialAttack
+                            }
+                            crate::move_data::StatType::SpDef => {
+                                crate::player::StatType::SpecialDefense
+                            }
                             crate::move_data::StatType::Spe => crate::player::StatType::Speed,
                             crate::move_data::StatType::Acc => crate::player::StatType::Accuracy,
                             crate::move_data::StatType::Eva => crate::player::StatType::Evasion,
@@ -705,7 +732,9 @@ fn apply_move_effects(
                         };
 
                         let target_player = &mut battle_state.players[target_index];
-                        if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species) {
+                        if let Some(pokemon_species) =
+                            target_player.active_pokemon().map(|p| p.species)
+                        {
                             let old_stage = target_player.get_stat_stage(player_stat);
                             target_player.modify_stat_stage(player_stat, *stages);
                             let new_stage = target_player.get_stat_stage(player_stat);
@@ -725,7 +754,9 @@ fn apply_move_effects(
                     // Self-targeting stat boost bypasses Substitute
                     if rng.next_outcome() <= *chance {
                         let attacker_player = &mut battle_state.players[attacker_index];
-                        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                        if let Some(pokemon_species) =
+                            attacker_player.active_pokemon().map(|p| p.species)
+                        {
                             let stats_to_raise = [
                                 crate::player::StatType::Attack,
                                 crate::player::StatType::Defense,
@@ -1082,18 +1113,18 @@ fn perform_special_move(
     rng: &mut TurnRng,
 ) -> bool {
     let move_data = get_move_data(move_used).expect("Move data must exist");
-    
+
     for effect in &move_data.effects {
         match effect {
             crate::move_data::MoveEffect::InAir => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // If already in air, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::InAir) {
                     attacker_player.remove_condition(&crate::player::PokemonCondition::InAir);
                     return false;
                 }
-                
+
                 // First turn - apply condition and skip normal attack
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
                     attacker_player.add_condition(crate::player::PokemonCondition::InAir);
@@ -1102,7 +1133,7 @@ fn perform_special_move(
                         status: crate::player::PokemonCondition::InAir,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Teleport(_) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
@@ -1113,17 +1144,17 @@ fn perform_special_move(
                         status: crate::player::PokemonCondition::Teleported,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::ChargeUp => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // If already charging, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::Charging) {
                     attacker_player.remove_condition(&crate::player::PokemonCondition::Charging);
                     return false;
                 }
-                
+
                 // First turn - apply condition and skip normal attack
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
                     let condition = crate::player::PokemonCondition::Charging;
@@ -1133,17 +1164,17 @@ fn perform_special_move(
                         status: condition,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Underground => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // If already underground, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::Underground) {
                     attacker_player.remove_condition(&crate::player::PokemonCondition::Underground);
                     return false;
                 }
-                
+
                 // First turn - apply condition and skip normal attack
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
                     attacker_player.add_condition(crate::player::PokemonCondition::Underground);
@@ -1152,7 +1183,7 @@ fn perform_special_move(
                         status: crate::player::PokemonCondition::Underground,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Transform => {
                 // First, get the data we need without holding references
@@ -1161,11 +1192,13 @@ fn perform_special_move(
                     let defender_player = &battle_state.players[defender_index];
                     (
                         attacker_player.active_pokemon().map(|p| p.species),
-                        defender_player.active_pokemon().cloned()
+                        defender_player.active_pokemon().cloned(),
                     )
                 };
-                
-                if let (Some(attacker_species), Some(target_pokemon)) = (attacker_species, target_pokemon) {
+
+                if let (Some(attacker_species), Some(target_pokemon)) =
+                    (attacker_species, target_pokemon)
+                {
                     let condition = crate::player::PokemonCondition::Transformed {
                         target: target_pokemon,
                     };
@@ -1176,7 +1209,7 @@ fn perform_special_move(
                         status: condition,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Conversion => {
                 // First, get the data we need without holding references
@@ -1184,13 +1217,15 @@ fn perform_special_move(
                     let attacker_player = &battle_state.players[attacker_index];
                     let defender_player = &battle_state.players[defender_index];
                     let attacker_species = attacker_player.active_pokemon().map(|p| p.species);
-                    let target_type = defender_player.active_pokemon()
+                    let target_type = defender_player
+                        .active_pokemon()
                         .map(|target_pokemon| target_pokemon.get_current_types(defender_player))
                         .and_then(|types| types.into_iter().next()); // Take first type
                     (attacker_species, target_type)
                 };
-                
-                if let (Some(attacker_species), Some(target_type)) = (attacker_species, target_type) {
+
+                if let (Some(attacker_species), Some(target_type)) = (attacker_species, target_type)
+                {
                     let condition = crate::player::PokemonCondition::Converted {
                         pokemon_type: target_type,
                     };
@@ -1201,7 +1236,7 @@ fn perform_special_move(
                         status: condition,
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Substitute => {
                 let attacker_player = &mut battle_state.players[attacker_index];
@@ -1214,27 +1249,22 @@ fn perform_special_move(
                     });
                     bus.push(BattleEvent::StatusApplied {
                         target: pokemon_species,
-                        status: crate::player::PokemonCondition::Substitute {
-                            hp: substitute_hp,
-                        },
+                        status: crate::player::PokemonCondition::Substitute { hp: substitute_hp },
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Counter => {
                 let attacker_player = &mut battle_state.players[attacker_index];
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
-                    attacker_player.add_condition(crate::player::PokemonCondition::Countering {
-                        damage: 0,
-                    });
+                    attacker_player
+                        .add_condition(crate::player::PokemonCondition::Countering { damage: 0 });
                     bus.push(BattleEvent::StatusApplied {
                         target: pokemon_species,
-                        status: crate::player::PokemonCondition::Countering {
-                            damage: 0,
-                        },
+                        status: crate::player::PokemonCondition::Countering { damage: 0 },
                     });
                 }
-                return true
+                return true;
             }
             crate::move_data::MoveEffect::Rampage(end_condition) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
@@ -1250,7 +1280,7 @@ fn perform_special_move(
                         status: condition,
                     });
                 }
-                return false
+                return false;
             }
             crate::move_data::MoveEffect::Rage(_) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
@@ -1261,38 +1291,46 @@ fn perform_special_move(
                         status: crate::player::PokemonCondition::Enraged,
                     });
                 }
-                return false
+                return false;
             }
             crate::move_data::MoveEffect::Bide(turns) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // Check if already Biding
-                if let Some(bide_condition) = attacker_player.active_pokemon_conditions.values()
+                if let Some(bide_condition) = attacker_player
+                    .active_pokemon_conditions
+                    .values()
                     .find_map(|condition| match condition {
-                        crate::player::PokemonCondition::Biding { turns_remaining, damage } => Some((*turns_remaining, *damage)),
+                        crate::player::PokemonCondition::Biding {
+                            turns_remaining,
+                            damage,
+                        } => Some((*turns_remaining, *damage)),
                         _ => None,
-                    }) {
-                    
+                    })
+                {
                     let (turns_remaining, stored_damage) = bide_condition;
-                    
+
                     if turns_remaining <= 1 {
                         // Last turn of Bide - execute stored damage
                         let damage_to_deal = (stored_damage * 2).max(1); // Double damage, minimum 1
-                        
+
                         // Deal the Bide damage to opponent
                         if damage_to_deal > 0 {
                             let defender_player_mut = &mut battle_state.players[defender_index];
-                            if let Some(defender_pokemon) = defender_player_mut.team[defender_player_mut.active_pokemon_index].as_mut() {
+                            if let Some(defender_pokemon) = defender_player_mut.team
+                                [defender_player_mut.active_pokemon_index]
+                                .as_mut()
+                            {
                                 if !defender_pokemon.is_fainted() {
                                     let did_faint = defender_pokemon.take_damage(damage_to_deal);
                                     let remaining_hp = defender_pokemon.current_hp();
-                                    
+
                                     bus.push(BattleEvent::DamageDealt {
                                         target: defender_pokemon.species,
                                         damage: damage_to_deal,
                                         remaining_hp,
                                     });
-                                    
+
                                     if did_faint {
                                         bus.push(BattleEvent::PokemonFainted {
                                             player_index: defender_index,
@@ -1302,7 +1340,7 @@ fn perform_special_move(
                                 }
                             }
                         }
-                        
+
                         // Bide condition will be removed by tick_active_conditions at end of turn
                         return true; // Skip normal execution
                     } else {
@@ -1311,7 +1349,9 @@ fn perform_special_move(
                     }
                 } else {
                     // Not currently Biding - start new Bide
-                    if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                    if let Some(pokemon_species) =
+                        attacker_player.active_pokemon().map(|p| p.species)
+                    {
                         let condition = crate::player::PokemonCondition::Biding {
                             turns_remaining: *turns,
                             damage: 0,
@@ -1332,13 +1372,13 @@ fn perform_special_move(
                     // Make the user faint by dealing lethal damage
                     let current_hp = attacker_pokemon.current_hp();
                     let fainted = attacker_pokemon.take_damage(current_hp);
-                    
+
                     bus.push(BattleEvent::DamageDealt {
                         target: pokemon_species,
                         damage: current_hp,
                         remaining_hp: 0,
                     });
-                    
+
                     if fainted {
                         bus.push(BattleEvent::PokemonFainted {
                             player_index: attacker_index,
@@ -1346,7 +1386,7 @@ fn perform_special_move(
                         });
                     }
                 }
-                return false
+                return false;
             }
             crate::move_data::MoveEffect::MirrorMove => {
                 // Mirror Move uses the defender's last move
@@ -1359,7 +1399,7 @@ fn perform_special_move(
                         });
                         return true; // Skip standard execution since we handled the failure
                     }
-                    
+
                     // Create a BattleAction for the mirrored move and execute it
                     let mirrored_action = BattleAction::AttackHit {
                         attacker_index,
@@ -1367,15 +1407,9 @@ fn perform_special_move(
                         move_used: mirrored_move,
                         hit_number: 1, // Must be greater than zero to avoid trying to use PP
                     };
-                    
+
                     // Execute the mirrored move with full battle action processing
-                    execute_battle_action(
-                        mirrored_action,
-                        battle_state,
-                        action_stack,
-                        bus,
-                        rng,
-                    );
+                    execute_battle_action(mirrored_action, battle_state, action_stack, bus, rng);
                     return true; // Skip standard execution
                 }
                 // If no move to mirror, fail appropriately
@@ -1389,7 +1423,7 @@ fn perform_special_move(
             _ => {}
         }
     }
-    
+
     false // Continue with standard attack execution
 }
 
@@ -1474,10 +1508,8 @@ pub fn execute_attack_hit(
         });
         let move_data = get_move_data(move_used).expect("Move data must exist");
         let defender_types = defender_pokemon.get_current_types(defender_player);
-        let type_adv_multiplier = crate::battle::stats::get_type_effectiveness(
-            move_data.move_type,
-            &defender_types,
-        );
+        let type_adv_multiplier =
+            crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
         if (type_adv_multiplier - 1.0).abs() > 0.1 {
             bus.push(BattleEvent::AttackTypeEffectiveness {
                 multiplier: type_adv_multiplier,
@@ -1521,39 +1553,45 @@ pub fn execute_attack_hit(
 
         let defender_fainted = if damage > 0 {
             let defender_player_mut = &mut battle_state.players[defender_index];
-            
+
             // Check for Substitute protection
-            if let Some(substitute_condition) = defender_player_mut.active_pokemon_conditions.values()
+            if let Some(substitute_condition) = defender_player_mut
+                .active_pokemon_conditions
+                .values()
                 .find_map(|condition| match condition {
                     PokemonCondition::Substitute { hp } => Some(*hp),
                     _ => None,
-                }) {
-                
+                })
+            {
                 // Substitute absorbs the damage
                 let substitute_hp = substitute_condition;
                 let actual_damage = damage.min(substitute_hp as u16);
                 let remaining_substitute_hp = substitute_hp.saturating_sub(actual_damage as u8);
-                
+
                 if remaining_substitute_hp == 0 {
                     // Substitute is destroyed
-                    defender_player_mut.remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
+                    defender_player_mut
+                        .remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
                     bus.push(BattleEvent::StatusRemoved {
                         target: defender_player_mut.active_pokemon().unwrap().species,
                         status: PokemonCondition::Substitute { hp: substitute_hp },
                     });
                 } else {
                     // Update substitute HP
-                    defender_player_mut.remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
-                    defender_player_mut.add_condition(PokemonCondition::Substitute { hp: remaining_substitute_hp });
+                    defender_player_mut
+                        .remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
+                    defender_player_mut.add_condition(PokemonCondition::Substitute {
+                        hp: remaining_substitute_hp,
+                    });
                 }
-                
+
                 // No damage to Pokemon, substitute took it all
                 bus.push(BattleEvent::DamageDealt {
                     target: defender_player_mut.active_pokemon().unwrap().species,
                     damage: 0,
                     remaining_hp: defender_player_mut.active_pokemon().unwrap().current_hp(),
                 });
-                
+
                 false // Pokemon doesn't faint when substitute absorbs damage
             } else {
                 // No substitute, normal damage
@@ -1577,38 +1615,42 @@ pub fn execute_attack_hit(
                         pokemon: defender_pokemon_mut.species,
                     });
                 }
-                
+
                 // Get pokemon species before releasing borrow
                 let pokemon_species = defender_pokemon_mut.species;
-                
+
                 // Release the pokemon borrow and update conditions
                 let _ = defender_pokemon_mut;
-                
+
                 // Handle Counter and Bide conditions if defender has them
                 let move_data = get_move_data(move_used).expect("Move data must exist");
-                let should_counter = matches!(move_data.category, crate::move_data::MoveCategory::Physical) 
-                    && defender_player_mut.has_condition(&PokemonCondition::Countering { damage: 0 })
-                    && !did_faint; // Can only counter if still alive after taking damage
-                
+                let should_counter =
+                    matches!(move_data.category, crate::move_data::MoveCategory::Physical)
+                        && defender_player_mut
+                            .has_condition(&PokemonCondition::Countering { damage: 0 })
+                        && !did_faint; // Can only counter if still alive after taking damage
+
                 // Release the defender_player_mut borrow before accessing attacker
                 let _ = defender_player_mut;
-                
+
                 if should_counter {
                     // Deal 2x the physical damage back to attacker immediately
                     let counter_damage = damage * 2;
-                    
+
                     let attacker_player_mut = &mut battle_state.players[attacker_index];
-                    if let Some(attacker_pokemon) = attacker_player_mut.team[attacker_player_mut.active_pokemon_index].as_mut() {
+                    if let Some(attacker_pokemon) =
+                        attacker_player_mut.team[attacker_player_mut.active_pokemon_index].as_mut()
+                    {
                         if !attacker_pokemon.is_fainted() {
                             let did_faint = attacker_pokemon.take_damage(counter_damage);
                             let remaining_hp = attacker_pokemon.current_hp();
-                            
+
                             bus.push(BattleEvent::DamageDealt {
                                 target: attacker_pokemon.species,
                                 damage: counter_damage,
                                 remaining_hp,
                             });
-                            
+
                             if did_faint {
                                 bus.push(BattleEvent::PokemonFainted {
                                     player_index: attacker_index,
@@ -1618,30 +1660,41 @@ pub fn execute_attack_hit(
                         }
                     }
                 }
-                
+
                 // Re-borrow defender for Bide condition handling
                 let defender_player_mut = &mut battle_state.players[defender_index];
-                
+
                 // Update Biding condition with any damage type
-                if let Some(bide_condition) = defender_player_mut.active_pokemon_conditions.values()
+                if let Some(bide_condition) = defender_player_mut
+                    .active_pokemon_conditions
+                    .values()
                     .find_map(|condition| match condition {
-                        PokemonCondition::Biding { turns_remaining, damage: stored_damage } => Some((*turns_remaining, *stored_damage)),
+                        PokemonCondition::Biding {
+                            turns_remaining,
+                            damage: stored_damage,
+                        } => Some((*turns_remaining, *stored_damage)),
                         _ => None,
-                    }) {
+                    })
+                {
                     let (turns_remaining, stored_damage) = bide_condition;
-                    defender_player_mut.remove_condition(&PokemonCondition::Biding { turns_remaining, damage: stored_damage });
-                    defender_player_mut.add_condition(PokemonCondition::Biding { 
-                        turns_remaining, 
-                        damage: stored_damage + damage 
+                    defender_player_mut.remove_condition(&PokemonCondition::Biding {
+                        turns_remaining,
+                        damage: stored_damage,
+                    });
+                    defender_player_mut.add_condition(PokemonCondition::Biding {
+                        turns_remaining,
+                        damage: stored_damage + damage,
                     });
                 }
-                
+
                 // Update Enraged condition (increase attack when hit)
                 if defender_player_mut.has_condition(&PokemonCondition::Enraged) {
-                    let old_stage = defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
+                    let old_stage =
+                        defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
                     defender_player_mut.modify_stat_stage(crate::player::StatType::Attack, 1);
-                    let new_stage = defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
-                    
+                    let new_stage =
+                        defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
+
                     if old_stage != new_stage {
                         bus.push(BattleEvent::StatStageChanged {
                             target: pokemon_species,
@@ -1651,7 +1704,7 @@ pub fn execute_attack_hit(
                         });
                     }
                 }
-                
+
                 did_faint
             }
         } else {
@@ -1820,7 +1873,9 @@ fn calculate_action_priority(
             }
         }
 
-        PlayerAction::ForcedMove { pokemon_move: forced_move } => {
+        PlayerAction::ForcedMove {
+            pokemon_move: forced_move,
+        } => {
             let player = &battle_state.players[player_index];
             let active_pokemon = &player.team[player.active_pokemon_index]
                 .as_ref()

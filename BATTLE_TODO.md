@@ -5,10 +5,9 @@
 ### End-of-Turn Effects System
 - [x] Implement status damage (poison, burn) during end-of-turn phase
 - [x] Add status time timers (sleep has a duration set when it begins, poison worsens each turn)
-- [ ] Handle trapped Pokemon effects (bind, wrap, fire spin)
-    - The data structures are in place: PokemonCondition::Trapped exists in player.rs, and its timer is correctly decremented in tick_active_conditions. However, the core logic to apply damage during the end-of-turn phase is missing from execute_end_turn_phase and it does not prevent switching as it ought (TODO).
-- [ ] Implement leech seed draining
-    - The PokemonCondition::Seeded enum exists, but there is no logic in execute_end_turn_phase to handle the HP draining from the target and healing the user.
+- [x] Handle trapped Pokemon effects (bind, wrap, fire spin)
+- [x] Implement leech seed draining
+
 
 ### Move Effects Implementation ✅ **COMPREHENSIVE SYSTEM COMPLETE**
 #### (This relates to moves causing effects, not implementing the effects themselves)
@@ -35,21 +34,21 @@
 #### Damage Modifiers ✅ **ALL IMPLEMENTED**
 - [x] **Recoil**: User takes percentage of damage dealt as recoil
 - [x] **Drain**: User heals percentage of damage dealt
-- [x] **Crit**: Increased critical hit ratio for this move (already implemented)
-- [ ] **IgnoreDef**: Chance to bypass defender's defense stat
-- [x] **SuperFang**: Chance to deal damage equal to half target's current HP (already implemented)
-- [x] **SetDamage**: Deal fixed amount of damage regardless of stats (already implemented)
-- [x] **LevelDamage**: Deal damage equal to user's level (already implemented)
+- [x] **Crit**: Increased critical hit ratio for this move
+- [x] **IgnoreDef**: Fraction of Defense to ignore. NOT A CHANCE PARAM, A *FRACTION*
+- [x] **SuperFang**: Chance to deal damage equal to half target's current HP
+- [x] **SetDamage**: Deal fixed amount of damage regardless of stats
+- [x] **LevelDamage**: Deal damage equal to user's level
 
-#### Multi-Hit Mechanics
-- [x] **MultiHit**: Multiple hits with continuation chance (already implemented)
+#### Multi-Hit Mechanics ✅ **ALL IMPLEMENTED**
+- [x] **MultiHit**: Multiple hits with continuation chance
 
 #### Status and Conditions
-- [ ] **Trap**: Chance to trap opponent (prevents switching, deals damage)
-- [ ] **Exhaust**: Chance to force opponent to skip next turn
-- [ ] **Flinch**: Prevents the opponent from making a move later in the turn
-- [x] **Priority**: Modify move's priority in turn order (already implemented)
-- [ ] **SureHit**: Move cannot miss regardless of accuracy/evasion
+- [x] **Trapped**: Prevents switching, deals damage
+- [x] **Exhaust**: Cannot act (usually applied to self, as in Hyper Beam)
+- [x] **Flinch**: Prevents moves until end of turn
+- [x] **Priority**: Modify move's priority in turn order
+- [x] **SureHit**: Move cannot miss regardless of accuracy/evasion
 - [ ] **ChargeUp**: Move requires charging turn before execution
 - [ ] **InAir**: User becomes semi-invulnerable in air (fly, bounce)
 - [ ] **Underground**: User becomes semi-invulnerable underground (dig)
@@ -70,7 +69,7 @@
 - [ ] **Bide**: Store damage for set turns, then release double
 - [ ] **Rage**: Enter rage mode with attack boosts when hit
 - [ ] **Rampage**: Multi-turn uncontrollable attack with confusion/exhaustion
-- [ ] **Seed**: Leech seed effect - drain HP each turn to user
+- [x] **Seed**: Leech seed effect - drain HP each turn to user
 - [ ] **Nightmare**: A move with this effect can only affect sleeping pokemon (see: Dream Eater)
 
 #### Field Effects

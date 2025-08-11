@@ -630,6 +630,7 @@ impl PokemonInst {
         if damage >= self.curr_hp {
             // Pokemon faints - set HP to 0 and replace any existing status with Faint
             self.curr_hp = 0;
+            
             self.status = Some(StatusCondition::Faint);
             true
         } else {

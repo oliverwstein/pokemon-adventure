@@ -221,7 +221,10 @@ impl BattlePlayer {
     pub fn clear_stat_stages(&mut self) {
         self.stat_stages.clear();
     }
-    
+    pub fn clear_active_pokemon_state(&mut self) {
+        self.active_pokemon_conditions.clear();
+        self.stat_stages.clear();
+    }
     /// Get all current stat stages (for debugging/display)
     pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
         &self.stat_stages

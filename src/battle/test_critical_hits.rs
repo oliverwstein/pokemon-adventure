@@ -1,21 +1,18 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleState, TurnRng, GameState, BattleEvent};
+    use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
     use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
-    use crate::player::{BattlePlayer, PlayerAction};
-    use crate::pokemon::{PokemonInst, MoveInstance};
-    use crate::species::Species;
     use crate::moves::Move;
+    use crate::player::{BattlePlayer, PlayerAction};
+    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::species::Species;
     use std::collections::HashMap;
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
         let mut pokemon_moves = [const { None }; 4];
         for (i, mv) in moves.into_iter().enumerate() {
             if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance {
-                    move_: mv,
-                    pp: 10,
-                });
+                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 10 });
             }
         }
 
@@ -54,20 +51,17 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
         // Create two test Pokemon
         let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);
-        
+
         let player1 = create_test_player(pokemon1);
         let player2 = create_test_player(pokemon2);
 
         // Create battle state
-        let mut battle_state = BattleState::new(
-            "test_battle".to_string(),
-            player1,
-            player2,
-        );
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
         collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
@@ -79,12 +73,13 @@ mod tests {
 
         // Execute turn
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-        
+
         // Check events
         let events = event_bus.events();
-        let critical_hit_events: Vec<_> = events.iter().filter(|event| {
-            matches!(event, BattleEvent::CriticalHit { .. })
-        }).collect();
+        let critical_hit_events: Vec<_> = events
+            .iter()
+            .filter(|event| matches!(event, BattleEvent::CriticalHit { .. }))
+            .collect();
 
         println!("Generated {} events:", events.len());
         for event in events {
@@ -92,7 +87,10 @@ mod tests {
         }
 
         // Should have at least one critical hit with these low RNG values
-        assert!(!critical_hit_events.is_empty(), "Should generate at least one critical hit event");
+        assert!(
+            !critical_hit_events.is_empty(),
+            "Should generate at least one critical hit event"
+        );
     }
 
     #[test]
@@ -101,20 +99,17 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
         // Create two test Pokemon
         let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);
-        
+
         let player1 = create_test_player(pokemon1);
         let player2 = create_test_player(pokemon2);
 
         // Create battle state
-        let mut battle_state = BattleState::new(
-            "test_battle".to_string(),
-            player1,
-            player2,
-        );
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
         collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
@@ -126,15 +121,17 @@ mod tests {
 
         // Execute turn
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-        
+
         // Check events
         let events = event_bus.events();
-        let critical_hit_events: Vec<_> = events.iter().filter(|event| {
-            matches!(event, BattleEvent::CriticalHit { .. })
-        }).collect();
-        let miss_events: Vec<_> = events.iter().filter(|event| {
-            matches!(event, BattleEvent::MoveMissed { .. })
-        }).collect();
+        let critical_hit_events: Vec<_> = events
+            .iter()
+            .filter(|event| matches!(event, BattleEvent::CriticalHit { .. }))
+            .collect();
+        let miss_events: Vec<_> = events
+            .iter()
+            .filter(|event| matches!(event, BattleEvent::MoveMissed { .. }))
+            .collect();
 
         println!("Generated {} events:", events.len());
         for event in events {
@@ -142,7 +139,10 @@ mod tests {
         }
 
         // Should have no critical hits when moves miss
-        assert!(critical_hit_events.is_empty(), "Should not generate critical hit events when moves miss");
+        assert!(
+            critical_hit_events.is_empty(),
+            "Should not generate critical hit events when moves miss"
+        );
         assert!(!miss_events.is_empty(), "Should generate miss events");
     }
 }

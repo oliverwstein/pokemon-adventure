@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleState, TurnRng, GameState};
+    use crate::battle::state::{BattleState, GameState, TurnRng};
     use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
-    use crate::player::{BattlePlayer, PlayerAction};
-    use crate::pokemon::{PokemonInst, MoveInstance};
-    use crate::species::Species;
     use crate::moves::Move;
+    use crate::player::{BattlePlayer, PlayerAction};
+    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::species::Species;
     use std::collections::HashMap;
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
@@ -22,9 +22,9 @@ mod tests {
         PokemonInst::new_for_test(
             species,
             0,
-            100, // Set current HP directly
-            [15; 6], // Decent IVs
-            [0; 6],  // No EVs for simplicity
+            100,                       // Set current HP directly
+            [15; 6],                   // Decent IVs
+            [0; 6],                    // No EVs for simplicity
             [100, 80, 80, 80, 80, 80], // HP, Att, Def, SpAtt, SpDef, Speed
             pokemon_moves,
             None,
@@ -50,20 +50,18 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
         // Create two test Pokemon with basic moves
-        let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle, Move::ThunderPunch]);
+        let pokemon1 =
+            create_test_pokemon(Species::Pikachu, vec![Move::Tackle, Move::ThunderPunch]);
         let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch, Move::Ember]);
-        
+
         let player1 = create_test_player(pokemon1);
         let player2 = create_test_player(pokemon2);
 
         // Create battle state
-        let mut battle_state = BattleState::new(
-            "test_battle".to_string(),
-            player1,
-            player2,
-        );
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
         collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
@@ -71,7 +69,7 @@ mod tests {
         // Verify actions were collected
         assert!(battle_state.action_queue[0].is_some());
         assert!(battle_state.action_queue[1].is_some());
-        
+
         // Check what moves were chosen (should be first available move for each)
         match &battle_state.action_queue[0] {
             Some(PlayerAction::UseMove { move_index }) => {
@@ -79,10 +77,13 @@ mod tests {
             }
             _ => panic!("Player 0 should have chosen a move"),
         }
-        
+
         match &battle_state.action_queue[1] {
             Some(PlayerAction::UseMove { move_index }) => {
-                assert_eq!(*move_index, 0, "Charmander should choose first move (Scratch)");
+                assert_eq!(
+                    *move_index, 0,
+                    "Charmander should choose first move (Scratch)"
+                );
             }
             _ => panic!("Player 1 should have chosen a move"),
         }
@@ -90,10 +91,14 @@ mod tests {
         // Test action ordering - both are using moves, so order should be determined by speed
         let action_order = crate::battle::turn_orchestrator::determine_action_order(&battle_state);
         println!("Action order: {:?}", action_order);
-        
+
         // Both Pokemon have same stats in our test, so order could be either way
         // But the order should be consistent and have both players
-        assert_eq!(action_order.len(), 2, "Should have both players in action order");
+        assert_eq!(
+            action_order.len(),
+            2,
+            "Should have both players in action order"
+        );
         assert!(action_order.contains(&0), "Should contain player 0");
         assert!(action_order.contains(&1), "Should contain player 1");
 
@@ -104,17 +109,17 @@ mod tests {
 
         // Execute turn
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-        
+
         // Check that events were generated
         let events = event_bus.events();
         assert!(!events.is_empty(), "Turn should generate events");
-        
+
         // Check that turn number incremented
         assert_eq!(battle_state.turn_number, 2, "Turn number should increment");
-        
+
         // Check that game state returned to waiting
         assert_eq!(battle_state.game_state, GameState::WaitingForBothActions);
-        
+
         // Check that action queue was cleared
         assert!(battle_state.action_queue[0].is_none());
         assert!(battle_state.action_queue[1].is_none());

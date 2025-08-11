@@ -1,7 +1,7 @@
-use crate::player::{BattlePlayer, PlayerAction, StatType, PokemonCondition};
 use crate::moves::Move;
+use crate::player::{BattlePlayer, PlayerAction, PokemonCondition, StatType};
 use crate::species::Species;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum GameState {
@@ -18,41 +18,111 @@ pub enum GameState {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BattleEvent {
     // Turn Management
-    TurnStarted { turn_number: u32 },
+    TurnStarted {
+        turn_number: u32,
+    },
     TurnEnded,
-    
+
     // Pokemon Actions
-    PokemonSwitched { player_index: usize, old_pokemon: Species, new_pokemon: Species },
-    MoveUsed { player_index: usize, pokemon: Species, move_used: Move },
-    MoveMissed { attacker: Species, defender: Species, move_used: Move },
-    MoveHit { attacker: Species, defender: Species, move_used: Move },
-    CriticalHit { attacker: Species, defender: Species, move_used: Move },
-    DamageDealt { target: Species, damage: u16, remaining_hp: u16 },
-    PokemonHealed { target: Species, amount: u16, new_hp: u16 },
-    PokemonFainted { player_index: usize, pokemon: Species },
-    AttackTypeEffectiveness { multiplier: f64 },
+    PokemonSwitched {
+        player_index: usize,
+        old_pokemon: Species,
+        new_pokemon: Species,
+    },
+    MoveUsed {
+        player_index: usize,
+        pokemon: Species,
+        move_used: Move,
+    },
+    MoveMissed {
+        attacker: Species,
+        defender: Species,
+        move_used: Move,
+    },
+    MoveHit {
+        attacker: Species,
+        defender: Species,
+        move_used: Move,
+    },
+    CriticalHit {
+        attacker: Species,
+        defender: Species,
+        move_used: Move,
+    },
+    DamageDealt {
+        target: Species,
+        damage: u16,
+        remaining_hp: u16,
+    },
+    PokemonHealed {
+        target: Species,
+        amount: u16,
+        new_hp: u16,
+    },
+    PokemonFainted {
+        player_index: usize,
+        pokemon: Species,
+    },
+    AttackTypeEffectiveness {
+        multiplier: f64,
+    },
     // Status Effects
-    StatusApplied { target: Species, status: PokemonCondition },
-    StatusRemoved { target: Species, status: PokemonCondition },
-    StatusDamage { target: Species, status: PokemonCondition, damage: u16 },
-    
+    StatusApplied {
+        target: Species,
+        status: PokemonCondition,
+    },
+    StatusRemoved {
+        target: Species,
+        status: PokemonCondition,
+    },
+    StatusDamage {
+        target: Species,
+        status: PokemonCondition,
+        damage: u16,
+    },
+
     // Pokemon Status Conditions (Sleep, Poison, Burn, etc.)
-    PokemonStatusApplied { target: Species, status: crate::pokemon::StatusCondition },
-    PokemonStatusRemoved { target: Species, status: crate::pokemon::StatusCondition },  
-    PokemonStatusDamage { target: Species, status: crate::pokemon::StatusCondition, damage: u16, remaining_hp: u16 },
-    
+    PokemonStatusApplied {
+        target: Species,
+        status: crate::pokemon::StatusCondition,
+    },
+    PokemonStatusRemoved {
+        target: Species,
+        status: crate::pokemon::StatusCondition,
+    },
+    PokemonStatusDamage {
+        target: Species,
+        status: crate::pokemon::StatusCondition,
+        damage: u16,
+        remaining_hp: u16,
+    },
+
     // Active Condition Updates
-    ConditionExpired { target: Species, condition: PokemonCondition },
-    
+    ConditionExpired {
+        target: Species,
+        condition: PokemonCondition,
+    },
+
     // Stat Changes
-    StatStageChanged { target: Species, stat: StatType, old_stage: i8, new_stage: i8 },
-    
+    StatStageChanged {
+        target: Species,
+        stat: StatType,
+        old_stage: i8,
+        new_stage: i8,
+    },
+
     // Action Failures
-    ActionFailed { reason: ActionFailureReason },
-    
+    ActionFailed {
+        reason: ActionFailureReason,
+    },
+
     // Battle End
-    PlayerDefeated { player_index: usize },
-    BattleEnded { winner: Option<usize> },
+    PlayerDefeated {
+        player_index: usize,
+    },
+    BattleEnded {
+        winner: Option<usize>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -76,19 +146,17 @@ pub struct EventBus {
 
 impl EventBus {
     pub fn new() -> Self {
-        Self {
-            events: Vec::new(),
-        }
+        Self { events: Vec::new() }
     }
-    
+
     pub fn push(&mut self, event: BattleEvent) {
         self.events.push(event);
     }
-    
+
     pub fn events(&self) -> &[BattleEvent] {
         &self.events
     }
-    
+
     pub fn clear(&mut self) {
         self.events.clear();
     }
@@ -102,23 +170,17 @@ pub struct TurnRng {
 
 impl TurnRng {
     pub fn new_for_test(outcomes: Vec<u8>) -> Self {
-        Self {
-            outcomes,
-            index: 0,
-        }
+        Self { outcomes, index: 0 }
     }
-    
+
     pub fn new_random() -> Self {
         use rand::Rng;
         let mut rng = rand::rng();
         // Pre-generate a reasonable number of random values for a turn
         let outcomes: Vec<u8> = (0..100).map(|_| rng.random_range(1..=100)).collect();
-        Self {
-            outcomes,
-            index: 0,
-        }
+        Self { outcomes, index: 0 }
     }
-    
+
     pub fn next_outcome(&mut self) -> u8 {
         if self.index >= self.outcomes.len() {
             panic!("TurnRng exhausted! Need more random values for this turn.");
@@ -127,7 +189,7 @@ impl TurnRng {
         self.index += 1;
         outcome
     }
-    
+
     pub fn peek_outcome(&self) -> u8 {
         if self.index >= self.outcomes.len() {
             panic!("TurnRng exhausted! Need more random values for this turn.");

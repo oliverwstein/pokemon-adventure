@@ -1,15 +1,14 @@
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 use std::sync::{LazyLock, RwLock};
-use serde::{Serialize, Deserialize};
 
 // Global move data storage - loaded once at startup
-static MOVE_DATA: LazyLock<RwLock<HashMap<Move, MoveData>>> = LazyLock::new(|| {
-    RwLock::new(HashMap::new())
-});
+static MOVE_DATA: LazyLock<RwLock<HashMap<Move, MoveData>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 /// Initialize the global move data by loading from disk
 pub fn initialize_move_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
@@ -27,9 +26,7 @@ pub fn get_move_data(move_: Move) -> Option<MoveData> {
 
 /// Get max PP for a specific move
 pub fn get_move_max_pp(move_: Move) -> u8 {
-    get_move_data(move_)
-        .map(|data| data.max_pp)
-        .unwrap_or(30) // Default fallback
+    get_move_data(move_).map(|data| data.max_pp).unwrap_or(30) // Default fallback
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -83,83 +80,85 @@ pub enum StatusType {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MoveEffect {
     // Basic effects
-    Flinch(u8),                                    // chance %
-    Burn(u8),                                      // chance %
-    Freeze(u8),                                    // chance %
-    Paralyze(u8),                                  // chance %
-    Poison(u8),                                    // chance %
-    Sedate(u8),                                    // chance % (sleep)
-    Confuse(u8),                                   // chance %
-    
+    Flinch(u8),   // chance %
+    Burn(u8),     // chance %
+    Freeze(u8),   // chance %
+    Paralyze(u8), // chance %
+    Poison(u8),   // chance %
+    Sedate(u8),   // chance % (sleep)
+    Confuse(u8),  // chance %
+
     // Stat changes
-    StatChange(Target, StatType, i8, u8),          // target, stat, stages, chance %
-    RaiseAllStats(u8),                             // chance %
-    
+    StatChange(Target, StatType, i8, u8), // target, stat, stages, chance %
+    RaiseAllStats(u8),                    // chance %
+
     // Damage modifiers
-    Recoil(u8),                                    // % of damage dealt
-    Drain(u8),                                     // % of damage healed
-    Crit(u8),                                      // increased crit ratio
-    IgnoreDef(u8),                                 // chance % to ignore defense
-    SuperFang(u8),                                 // chance % to halve HP
-    SetDamage(u16),                                // fixed damage
-    LevelDamage,                                   // damage = user level
-    
+    Recoil(u8),     // % of damage dealt
+    Drain(u8),      // % of damage healed
+    Crit(u8),       // increased crit ratio
+    IgnoreDef(u8),  // chance % to ignore defense
+    SuperFang(u8),  // chance % to halve HP
+    SetDamage(u16), // fixed damage
+    LevelDamage,    // damage = user level
+
     // Multi-hit
-    MultiHit(u8, u8),                              // min hits, % chance of continuation
-    
+    MultiHit(u8, u8), // min hits, % chance of continuation
+
     // Status and conditions
-    Trap(u8),                                      // chance % to trap
-    Exhaust(u8),                                   // chance % to exhaust (skip next turn)
-    Priority(i8),                                  // move priority modifier
-    SureHit,                                       // cannot miss
-    ChargeUp,                                      // charge for 1 turn
-    InAir,                                         // go in air (avoid ground moves)
-    Underground,                                   // go underground
-    Teleport(u8),                                  // chance % to teleport away
-    
+    Trap(u8),     // chance % to trap
+    Exhaust(u8),  // chance % to exhaust (skip next turn)
+    Priority(i8), // move priority modifier
+    SureHit,      // cannot miss
+    ChargeUp,     // charge for 1 turn
+    InAir,        // go in air (avoid ground moves)
+    Underground,  // go underground
+    Teleport(u8), // chance % to teleport away
+
     // Special mechanics
-    OHKO,                                          // one-hit KO
-    Explode,                                       // user faints
-    Reckless(u8),                                  // recoil if miss, chance %
-    Transform,                                     // copy target's appearance/stats
-    Conversion,                                    // change user's type
-    Disable(u8),                                   // disable target's last move, chance %
-    Counter,                                       // return double physical damage
-    MirrorMove,                                    // copy target's last move
-    Metronome,                                     // random move
-    Substitute,                                    // create substitute with 25% HP
-    Rest(u8),                                      // sleep for X turns, full heal
-    Bide(u8),                                      // store damage for X turns
-    Rage(u8),                                      // chance % to enter rage mode
-    Rampage(RampageEndCondition),                  // rampage with end condition
-    
+    OHKO,                         // one-hit KO
+    Explode,                      // user faints
+    Reckless(u8),                 // recoil if miss, chance %
+    Transform,                    // copy target's appearance/stats
+    Conversion,                   // change user's type
+    Disable(u8),                  // disable target's last move, chance %
+    Counter,                      // return double physical damage
+    MirrorMove,                   // copy target's last move
+    Metronome,                    // random move
+    Substitute,                   // create substitute with 25% HP
+    Rest(u8),                     // sleep for X turns, full heal
+    Bide(u8),                     // store damage for X turns
+    Rage(u8),                     // chance % to enter rage mode
+    Rampage(RampageEndCondition), // rampage with end condition
+
     // Field effects
-    Haze(u8),                                      // remove all stat changes, chance %
-    Reflect(ReflectType),                          // reduce physical/special damage
-    Mist,                                          // prevent stat reduction
-    Seed(u8),                                      // leech seed effect, chance %
-    Nightmare,                                     // only works on sleeping targets
-    
+    Haze(u8),             // remove all stat changes, chance %
+    Reflect(ReflectType), // reduce physical/special damage
+    Mist,                 // prevent stat reduction
+    Seed(u8),             // leech seed effect, chance %
+    Nightmare,            // only works on sleeping targets
+
     // Utility
-    Heal(u8),                                      // heal % of max HP
-    CureStatus(Target, StatusType),                // cure specific status
-    Ante(u8),                                      // gain money (Pay Day effect)
+    Heal(u8),                       // heal % of max HP
+    CureStatus(Target, StatusType), // cure specific status
+    Ante(u8),                       // gain money (Pay Day effect)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MoveData {
     pub name: String,
     pub move_type: PokemonType,
-    pub power: Option<u8>,                         // None for no damage moves
+    pub power: Option<u8>, // None for no damage moves
     pub category: MoveCategory,
-    pub accuracy: Option<u8>,                      // None for sure-hit moves
+    pub accuracy: Option<u8>, // None for sure-hit moves
     pub max_pp: u8,
     pub effects: Vec<MoveEffect>,
 }
 
 impl MoveData {
     /// Load move data from RON files in the data directory
-    pub fn load_all(data_path: &Path) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
+    pub fn load_all(
+        data_path: &Path,
+    ) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
         let moves_dir = data_path.join("moves");
 
         let mut move_map = HashMap::new();
@@ -183,7 +182,7 @@ impl MoveData {
             power: Some(50),
             category: MoveCategory::Physical,
             accuracy: Some(90),
-            max_pp: 0,      // Not a real move, no PP
+            max_pp: 0,                             // Not a real move, no PP
             effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
         };
         move_map.insert(Move::Struggle, struggle_data);
@@ -193,16 +192,16 @@ impl MoveData {
         }
 
         let entries = fs::read_dir(&moves_dir)?;
-        
+
         for entry in entries {
             let entry = entry?;
             let path = entry.path();
-            
+
             if path.extension().and_then(|s| s.to_str()) == Some("ron") {
                 if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
                     let content = fs::read_to_string(&path)?;
                     let move_data: MoveData = ron::from_str(&content)?;
-                    
+
                     // Parse move name from filename to get the Move enum variant
                     if let Ok(move_enum) = filename.parse::<Move>() {
                         move_map.insert(move_enum, move_data);
@@ -210,10 +209,10 @@ impl MoveData {
                 }
             }
         }
-        
+
         Ok(move_map)
     }
-    
+
     /// Get move data for a specific move
     pub fn get_move_data(move_: Move, move_map: &HashMap<Move, MoveData>) -> Option<&MoveData> {
         move_map.get(&move_)
@@ -223,10 +222,10 @@ impl MoveData {
 // Helper function to parse Move enum from string
 impl std::str::FromStr for Move {
     type Err = String;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let normalized = s.to_uppercase().replace([' ', '-', '_'], "");
-        
+
         match normalized.as_str() {
             "POUND" => Ok(Move::Pound),
             "DOUBLESLAP" => Ok(Move::Doubleslap),

@@ -7,6 +7,5 @@ MoveData(
     max_pp: 15,
     effects: [
         InAir,
-        ChargeUp,
     ],
 )

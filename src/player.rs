@@ -9,6 +9,9 @@ pub enum PlayerAction {
     // The index refers to the move's position (0-3) in the active Pokémon's move list.
     UseMove { move_index: usize },
 
+    // A move that is forced by conditions (charging, rampage, etc.) - bypasses normal move selection
+    ForcedMove { pokemon_move: Move },
+
     // The index refers to the Pokémon's position (0-5) in the player's team.
     SwitchPokemon { team_index: usize },
 
@@ -51,9 +54,7 @@ pub enum PokemonCondition {
     Trapped {
         turns_remaining: u8,
     },
-    Charging {
-        pokemon_move: Move,
-    },
+    Charging,
     Rampaging {
         turns_remaining: u8,
     },
@@ -182,9 +183,9 @@ impl BattlePlayer {
             return Err("Invalid Pokemon index or empty slot".to_string());
         }
 
-        // Clear active Pokemon conditions and stat stages when switching
-        self.active_pokemon_conditions.clear();
-        self.stat_stages.clear();
+        // Clear active Pokemon conditions, stat stages, and last move when switching
+        self.clear_active_pokemon_state();
+        
         self.active_pokemon_index = new_index;
 
         Ok(())
@@ -253,6 +254,7 @@ impl BattlePlayer {
     pub fn clear_active_pokemon_state(&mut self) {
         self.active_pokemon_conditions.clear();
         self.stat_stages.clear();
+        self.last_move = None;
     }
     /// Get all current stat stages (for debugging/display)
     pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
@@ -365,7 +367,7 @@ impl BattlePlayer {
                 | PokemonCondition::Underground
                 | PokemonCondition::InAir
                 | PokemonCondition::Enraged
-                | PokemonCondition::Charging { .. }
+                | PokemonCondition::Charging
                 | PokemonCondition::Transformed { .. }
                 | PokemonCondition::Converted { .. }
                 | PokemonCondition::Substitute { .. }

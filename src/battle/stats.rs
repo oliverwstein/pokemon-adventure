@@ -7,11 +7,25 @@ use crate::pokemon::{PokemonInst, PokemonType};
 pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
     let move_data = get_move_data(move_).expect("Move data should exist");
 
-    let base_attack = match move_data.category {
-        MoveCategory::Physical => pokemon.curr_stats[1], // Attack
-        MoveCategory::Special => pokemon.curr_stats[3],  // Special Attack
-        MoveCategory::Status => return 0,                // Status moves don't use attack stats
-        MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use attack stats
+    // Check if transformed - use target Pokemon's base stats
+    let base_attack = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+        .find_map(|condition| match condition {
+            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            _ => None,
+        }) {
+        match move_data.category {
+            MoveCategory::Physical => transform_condition.curr_stats[1], // Attack
+            MoveCategory::Special => transform_condition.curr_stats[3],  // Special Attack
+            MoveCategory::Status => return 0,
+            MoveCategory::Other => return 0,
+        }
+    } else {
+        match move_data.category {
+            MoveCategory::Physical => pokemon.curr_stats[1], // Attack
+            MoveCategory::Special => pokemon.curr_stats[3],  // Special Attack
+            MoveCategory::Status => return 0,                // Status moves don't use attack stats
+            MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use attack stats
+        }
     };
 
     // Apply stat stage modifiers
@@ -46,11 +60,25 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
     let move_data = get_move_data(move_).expect("Move data should exist");
 
-    let base_defense = match move_data.category {
-        MoveCategory::Physical => pokemon.curr_stats[2], // Defense
-        MoveCategory::Special => pokemon.curr_stats[4],  // Special Defense
-        MoveCategory::Status => return 0,                // Status moves don't target defense
-        MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use defense stats
+    // Check if transformed - use target Pokemon's base stats
+    let base_defense = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+        .find_map(|condition| match condition {
+            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            _ => None,
+        }) {
+        match move_data.category {
+            MoveCategory::Physical => transform_condition.curr_stats[2], // Defense
+            MoveCategory::Special => transform_condition.curr_stats[4],  // Special Defense
+            MoveCategory::Status => return 0,
+            MoveCategory::Other => return 0,
+        }
+    } else {
+        match move_data.category {
+            MoveCategory::Physical => pokemon.curr_stats[2], // Defense
+            MoveCategory::Special => pokemon.curr_stats[4],  // Special Defense
+            MoveCategory::Status => return 0,                // Status moves don't target defense
+            MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use defense stats
+        }
     };
 
     // Apply stat stage modifiers
@@ -87,7 +115,16 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
 
 /// Calculate effective speed including stat stages, paralysis, and other modifiers
 pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
-    let base_speed = pokemon.curr_stats[5]; // Speed
+    // Check if transformed - use target Pokemon's base speed
+    let base_speed = if let Some(transform_condition) = player.active_pokemon_conditions.values()
+        .find_map(|condition| match condition {
+            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            _ => None,
+        }) {
+        transform_condition.curr_stats[5] // Use transformed Pokemon's speed
+    } else {
+        pokemon.curr_stats[5] // Use own speed
+    };
 
     // Apply stat stage modifiers
     let stage = player.get_stat_stage(StatType::Speed);
@@ -170,6 +207,11 @@ pub fn move_hits(
     let Some(base_accuracy) = move_data.accuracy else {
         return true;
     };
+
+    // If defender is Teleported, moves with accuracy always miss
+    if defender_player.has_condition(&crate::player::PokemonCondition::Teleported) {
+        return false;
+    }
 
     // Calculate adjusted stages: attacker's accuracy - defender's evasion
     let accuracy_stage = attacker_player.get_stat_stage(StatType::Accuracy);
@@ -268,10 +310,8 @@ pub fn calculate_attack_damage(
 
     // 3. Calculate STAB (Same-Type Attack Bonus)
     let stab_multiplier = {
-        let attacker_species = attacker
-            .get_species_data()
-            .expect("Attacker species data must exist");
-        if attacker_species.types.contains(&move_data.move_type) {
+        let attacker_types = attacker.get_current_types(attacker_player);
+        if attacker_types.contains(&move_data.move_type) {
             1.5
         } else {
             1.0
@@ -290,10 +330,9 @@ pub fn calculate_attack_damage(
     let crit_multiplier = if is_critical { 2.0 } else { 1.0 };
 
     // Type Advantage: Placeholder for now
-    let defender_species = defender
-        .get_species_data()
-        .expect("Defender species data must exist");
-    let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_species.types);
+    // Use the centralized type getter that handles Transform and Conversion
+    let defender_types = defender.get_current_types(defender_player);
+    let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_types);
     // Random Variance: A random multiplier between 0.85 and 1.00
     let random_multiplier = (85.0 + (rng.next_outcome() % 16) as f64) / 100.0;
 

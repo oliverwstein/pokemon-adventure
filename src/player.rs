@@ -271,7 +271,7 @@ impl BattlePlayer {
         for (key, condition) in self.active_pokemon_conditions.iter() {
             match condition {
                 // Conditions that expire after one turn (cleared at end-of-turn)
-                PokemonCondition::Flinched | PokemonCondition::Teleported => {
+                PokemonCondition::Flinched | PokemonCondition::Teleported | PokemonCondition::Countering { .. } => {
                     expired_conditions.push(key.clone());
                 }
 
@@ -370,8 +370,7 @@ impl BattlePlayer {
                 | PokemonCondition::Charging
                 | PokemonCondition::Transformed { .. }
                 | PokemonCondition::Converted { .. }
-                | PokemonCondition::Substitute { .. }
-                | PokemonCondition::Countering { .. } => {
+                | PokemonCondition::Substitute { .. } => {
                     // These don't have automatic expiration timers
                     // They're removed by specific game events
                 }

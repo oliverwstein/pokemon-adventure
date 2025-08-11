@@ -128,9 +128,9 @@ fn generate_deterministic_action(
         }
     }
     
-    // No moves have PP - should use Struggle
-    // TODO: Implement Struggle move - for now return error
-    Err("No moves with PP available - need to implement Struggle".to_string())
+   // No moves have PP - force Struggle by returning a UseMove action on the first slot.
+    // The orchestrator will convert this to Struggle because its PP is 0.
+    Ok(PlayerAction::UseMove { move_index: 0 })
 }
 
 /// Generates a replacement Pokemon action for a player with a fainted active Pokemon
@@ -297,15 +297,20 @@ fn convert_player_action_to_battle_action(
                 .expect("Active pokemon should exist");
             let move_instance = &active_pokemon.moves[*move_index].as_ref()
                 .expect("Move should exist");
-            
+            let final_move = if move_instance.pp > 0 {
+                // The move has PP, use it normally.
+                move_instance.move_
+            } else {
+                // The move has no PP, substitute Struggle.
+                Move::Struggle
+            };
             // Determine defender
             let defender_index = if player_index == 0 { 1 } else { 0 };
             
-            // For now, all moves are single-hit. Multi-hit logic will be added later
             BattleAction::AttackHit {
                 attacker_index: player_index,
                 defender_index,
-                move_used: move_instance.move_,
+                move_used: final_move,
                 hit_number: 0,
             }
         }
@@ -464,7 +469,7 @@ fn execute_switch(
     let new_pokemon = player.team[target_pokemon_index].as_ref()
         .expect("Target Pokemon should exist").species;
     
-    // TODO: Clear volatile conditions and stat stages of switched-out Pokemon
+    player.clear_active_pokemon_state();
     
     // Change active Pokemon
     player.active_pokemon_index = target_pokemon_index;
@@ -973,6 +978,7 @@ pub fn execute_attack_hit(
         }
 
         // --- PROBABILISTIC MULTI-HIT LOGIC ---
+        // Arguably this should be incorporated into apply_move_effects?
         let move_data = get_move_data(move_used).expect("Move data must exist");
         for effect in &move_data.effects {
             if let crate::move_data::MoveEffect::MultiHit(guaranteed_hits, continuation_chance)= effect {
@@ -995,13 +1001,11 @@ pub fn execute_attack_hit(
                         hit_number: next_hit_number,
                     });
                 }
-                
                 // We found the MultiHit effect, so we don't need to check other effects for this.
                 break;
             }
         }
 
-        // TODO: Apply non-multi-hit move effects
         
     } else {
         bus.push(BattleEvent::MoveMissed {
@@ -1277,6 +1281,13 @@ pub fn execute_end_turn_phase(
 }
 
 fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
+    for player_index in 0..2 {
+        if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
+            if pokemon.is_fainted() {
+                battle_state.players[player_index].clear_active_pokemon_state();
+            }
+        }
+    }
     // Check for win conditions first, as they override the need for replacements.
     check_win_conditions(battle_state, bus);
     

@@ -63,6 +63,7 @@ pub enum ActionFailureReason {
     IsParalyzed,
     IsFlinching,
     IsConfused,
+    IsTrapped,
     NoEnemyPresent, // When opponent-targeting move can't execute (e.g., opponent fainted, only self-targeting moves allowed)
     NoPPRemaining,
     PokemonFainted, // When the acting Pokemon or target is fainted

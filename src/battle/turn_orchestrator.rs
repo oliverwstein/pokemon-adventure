@@ -284,10 +284,12 @@ fn convert_player_action_to_battle_action(
     match player_action {
         PlayerAction::Forfeit => BattleAction::Forfeit { player_index },
         
-        PlayerAction::SwitchPokemon { team_index } => BattleAction::Switch { 
-            player_index, 
-            target_pokemon_index: *team_index 
-        },
+        PlayerAction::SwitchPokemon { team_index } => {
+                BattleAction::Switch { 
+                    player_index, 
+                    target_pokemon_index: *team_index 
+                }
+        }
         
         PlayerAction::UseMove { move_index } => {
             let player = &battle_state.players[player_index];
@@ -327,7 +329,14 @@ fn execute_battle_action(
             // Check if current Pokemon is fainted (switching away from fainted Pokemon is allowed)
             // But switching TO a fainted Pokemon should not be allowed
             let target_pokemon = &battle_state.players[player_index].team[target_pokemon_index];
-            
+            let player = &battle_state.players[player_index];
+            if player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) { 
+                // IMPORTANT: has_condition just checks if we have the condition, so the value of turns_remaining DOES NOT MATTER
+                bus.push(BattleEvent::ActionFailed { 
+                        reason: crate::battle::state::ActionFailureReason::IsTrapped
+                    });
+                return;
+            }
             if let Some(target_pokemon) = target_pokemon {
                 if target_pokemon.is_fainted() {
                     // Cannot switch to a fainted Pokemon

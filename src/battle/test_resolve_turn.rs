@@ -19,20 +19,16 @@ mod tests {
             }
         }
 
-        {
-            let mut pokemon = PokemonInst::new_for_test(
-                species,
-                0,
-                0, // Will be set below
-                [15; 6], // Decent IVs
-                [0; 6],  // No EVs for simplicity
-                [100, 80, 80, 80, 80, 80], // HP, Att, Def, SpAtt, SpDef, Speed
-                pokemon_moves,
-                None,
-            );
-            pokemon.set_hp(100);
-            pokemon
-        }
+        PokemonInst::new_for_test(
+            species,
+            0,
+            100, // Set current HP directly
+            [15; 6], // Decent IVs
+            [0; 6],  // No EVs for simplicity
+            [100, 80, 80, 80, 80, 80], // HP, Att, Def, SpAtt, SpDef, Speed
+            pokemon_moves,
+            None,
+        )
     }
 
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {

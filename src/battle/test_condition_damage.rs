@@ -53,7 +53,7 @@ mod tests {
         battle_state.players[0].add_condition(PokemonCondition::Trapped { turns_remaining: 3 });
         
         let initial_hp = battle_state.players[0].team[0].as_ref().unwrap().current_hp();
-        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().get_species_data().unwrap().base_stats.hp as u16;
+        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().max_hp();
         let expected_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
         
         // Execute end-of-turn phase
@@ -112,102 +112,73 @@ mod tests {
         assert!(has_fainted_event, "Should generate PokemonFainted event");
     }
 
-    #[test] 
-    fn test_seeded_condition_drain_and_heal() {
-        init_test_data();
-        
-        let mut battle_state = create_test_battle_state(100, 80); // Player 2 not at full HP
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
-        
-        // Add Seeded condition to player 1's Pokemon
-        battle_state.players[0].add_condition(PokemonCondition::Seeded);
-        
-        let initial_hp_p1 = battle_state.players[0].team[0].as_ref().unwrap().current_hp();
-        let initial_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
-        let max_hp_p1 = battle_state.players[0].team[0].as_ref().unwrap().get_species_data().unwrap().base_stats.hp as u16;
-        let expected_drain = (max_hp_p1 / 8).max(1); // 1/8 of max HP, minimum 1
-        
-        // Execute end-of-turn phase
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-        
-        // Check player 1 took damage
-        let final_hp_p1 = battle_state.players[0].team[0].as_ref().unwrap().current_hp();
-        assert_eq!(final_hp_p1, initial_hp_p1 - expected_drain, "Seeded Pokemon should take drain damage");
-        
-        // Check player 2 was healed
-        let final_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
-        assert_eq!(final_hp_p2, initial_hp_p2 + expected_drain, "Opponent should be healed by seed drain");
-        
-        // Check for correct events
-        let events = bus.events();
-        
-        // Should have StatusDamage for seeded Pokemon
-        let has_drain_damage = events.iter().any(|e| {
-            matches!(e, BattleEvent::StatusDamage { 
-                target: Species::Pikachu,
-                status: PokemonCondition::Seeded,
-                damage
-            } if *damage == expected_drain)
-        });
-        assert!(has_drain_damage, "Should generate StatusDamage event for seeded Pokemon");
-        
-        // Should have PokemonHealed for opponent
-        let has_heal_event = events.iter().any(|e| {
-            matches!(e, BattleEvent::PokemonHealed { 
-                target: Species::Charmander,
-                amount,
-                ..
-            } if *amount == expected_drain)
-        });
-        assert!(has_heal_event, "Should generate PokemonHealed event for opponent");
-        
-        println!("Seeded condition test events:");
-        for event in events {
-            println!("  {:?}", event);
-        }
-    }
-
     #[test]
-    fn test_seeded_condition_causes_fainting() {
+    fn test_seeded_condition_causes_fainting_and_heals_opponent() {
         init_test_data();
         
-        let mut battle_state = create_test_battle_state(6, 50); // Low HP for player 1
+        // --- Setup ---
+        // Create a battle where Player 1's Pokémon has very low HP (3).
+        // This is less than the expected Leech Seed damage, ensuring it will faint.
+        let mut battle_state = create_test_battle_state(3, 100);
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![50]);
         
-        // Add Seeded condition
+        // Add the Seeded condition to Player 1's Pokémon
         battle_state.players[0].add_condition(PokemonCondition::Seeded);
         
-        let initial_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
+        // --- Calculation ---
+        // We need to calculate the *actual* damage dealt to determine the healing amount.
+        let pokemon_p1_ref = battle_state.players[0].team[0].as_ref().unwrap();
+        let max_hp_p1 = pokemon_p1_ref.max_hp();
+        let current_hp_p1 = pokemon_p1_ref.current_hp(); // This is 3 HP
+
+        // Leech Seed would normally drain 1/8 of max HP.
+        let potential_drain = (max_hp_p1 / 8).max(1);
         
-        // Execute end-of-turn phase
+        // However, the damage is capped by the target's remaining HP.
+        let actual_damage_dealt = potential_drain.min(current_hp_p1); // min(potential_drain, 3)
+        
+        // The user is healed by the amount of HP that was actually drained.
+        let expected_healing = actual_damage_dealt; 
+
+        // Record the opponent's initial state for the final assertion.
+        let initial_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
+
+        // --- Action ---
+        // Execute the end-of-turn phase, which will trigger the Leech Seed effect.
         execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
         
-        // Player 1 should be fainted
-        let pokemon_p1 = battle_state.players[0].team[0].as_ref().unwrap();
-        assert!(pokemon_p1.is_fainted(), "Seeded Pokemon should faint from drain");
+        // --- Verification ---
+        // 1. Check that Player 1's Pokémon has fainted.
+        let pokemon_p1_final = battle_state.players[0].team[0].as_ref().unwrap();
+        assert!(
+            pokemon_p1_final.is_fainted(),
+            "Pokémon should faint when its HP (3) is less than or equal to the Leech Seed damage."
+        );
         
-        // Player 2 should NOT be healed when player 1 faints
+        // 2. Check that Player 2 was healed by the correct amount, even though Player 1 fainted.
         let final_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
-        assert_eq!(final_hp_p2, initial_hp_p2, "Opponent should not be healed when seeded Pokemon faints");
+        assert_eq!(
+            final_hp_p2,
+            initial_hp_p2 + expected_healing,
+            "Opponent should have been healed by the actual damage dealt. Expected HP: {}, Final HP: {}",
+            initial_hp_p2 + expected_healing,
+            final_hp_p2
+        );
         
-        // Should have faint event but no heal event
+        // 3. Check that both a Faint event and a Heal event were generated.
         let events = bus.events();
         let has_fainted_event = events.iter().any(|e| {
-            matches!(e, BattleEvent::PokemonFainted { 
-                player_index: 0,
-                pokemon: Species::Pikachu 
-            })
+            matches!(e, BattleEvent::PokemonFainted { player_index: 0, .. })
         });
         let has_heal_event = events.iter().any(|e| {
-            matches!(e, BattleEvent::PokemonHealed { .. })
+            matches!(e, BattleEvent::PokemonHealed { target: Species::Charmander, amount, .. } if *amount == expected_healing)
         });
         
-        assert!(has_fainted_event, "Should generate PokemonFainted event");
-        assert!(!has_heal_event, "Should not heal opponent when seeded Pokemon faints");
+        assert!(has_fainted_event, "A PokemonFainted event should have been generated for player 0.");
+        assert!(has_heal_event, "A PokemonHealed event for the correct amount should be generated, even when the target faints.");
     }
-
+    
     #[test]
     fn test_seeded_no_heal_when_opponent_at_full_hp() {
         init_test_data();
@@ -217,8 +188,7 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![50]);
         
         // Set player 2 to max HP (simulate species max)
-        let max_hp = battle_state.players[1].team[0].as_ref().unwrap().get_species_data().unwrap().base_stats.hp as u16;
-        battle_state.players[1].team[0].as_mut().unwrap().curr_stats[0] = max_hp;
+        battle_state.players[1].team[0].as_mut().unwrap().set_hp_to_max();
         
         // Add Seeded condition to player 1
         battle_state.players[0].add_condition(PokemonCondition::Seeded);
@@ -267,7 +237,7 @@ mod tests {
         
         let initial_hp_p1 = battle_state.players[0].team[0].as_ref().unwrap().current_hp();
         let initial_hp_p2 = battle_state.players[1].team[0].as_ref().unwrap().current_hp();
-        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().get_species_data().unwrap().base_stats.hp as u16;
+        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().max_hp();
         
         let expected_trapped_damage = (max_hp / 16).max(1);
         let expected_seed_damage = (max_hp / 8).max(1);

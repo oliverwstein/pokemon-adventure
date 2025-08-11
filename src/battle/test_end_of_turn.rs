@@ -43,10 +43,10 @@ mod tests {
         init_test_data();
         
         // Create a test Pokemon with poison status
-        let species_data = get_species_data(Species::Bulbasaur).expect("Failed to load Bulbasaur data");
-        let mut pokemon = PokemonInst::new(Species::Bulbasaur, &species_data, 50, None, None);
+        let species_data = get_species_data(Species::Charmander).expect("Failed to load Charmander data");
+        let mut pokemon = PokemonInst::new(Species::Charmander, &species_data, 50, None, None);
         
-        let initial_hp = pokemon.curr_stats[0];
+        let initial_hp = pokemon.max_hp();
         let max_hp = pokemon.max_hp();
         
         // Apply regular poison (severity 0)
@@ -55,37 +55,61 @@ mod tests {
         // Tick status - should deal 1/16 of max HP damage
         let (damage, should_cure, status_changed) = pokemon.tick_status();
         
-        assert_eq!(damage, (max_hp / 16).max(1));
-        assert!(!should_cure);
-        assert!(!status_changed); // Regular poison doesn't change severity
-        assert_eq!(pokemon.curr_stats[0], initial_hp - damage);
-        assert!(matches!(pokemon.status, Some(StatusCondition::Poison(0))));
+        assert_eq!(damage, (max_hp / 16).max(1), "Regular poison should deal 1/16 of max hp");
+        assert!(!should_cure, "Poison should not go away at end of turn.");
+        assert!(!status_changed, "Regular poisoning should not worsen."); // Regular poison doesn't change severity
+        assert_eq!(pokemon.current_hp(), initial_hp - damage, "Hp should be decreased by {} damage", damage);
+        assert!(matches!(pokemon.status, Some(StatusCondition::Poison(0))), "The pokemon should still be poisoned.");
     }
 
     #[test]
     fn test_badly_poisoned_status_damage() {
         init_test_data();
         
-        // Create a test Pokemon with badly poisoned status
+        // --- Setup ---
         let species_data = get_species_data(Species::Bulbasaur).expect("Failed to load Bulbasaur data");
         let mut pokemon = PokemonInst::new(Species::Bulbasaur, &species_data, 50, None, None);
-        
-        let initial_hp = pokemon.curr_stats[0];
+        let initial_hp = pokemon.current_hp();
         let max_hp = pokemon.max_hp();
+        pokemon.status = Some(StatusCondition::Poison(1)); // Start with "badly poisoned" severity 1
         
-        // Apply badly poisoned (severity 1)
-        pokemon.status = Some(StatusCondition::Poison(1));
-        
-        // Tick status - should increase severity and deal more damage
+        // --- Action ---
         let (damage, should_cure, status_changed) = pokemon.tick_status();
         
-        // Severity should increase to 2, damage should be 2/16 of max HP
+        // --- Verification ---
         let expected_damage = (max_hp * 2 / 16).max(1);
-        assert_eq!(damage, expected_damage);
-        assert!(!should_cure);
-        assert!(status_changed); // Badly poisoned severity increases
-        assert_eq!(pokemon.curr_stats[0], initial_hp - damage);
-        assert!(matches!(pokemon.status, Some(StatusCondition::Poison(2))));
+
+        // If this fails, the test will print our custom message.
+        assert_eq!(
+            damage,
+            expected_damage,
+            "Damage dealt ({}) did not match the expected value ({}) for severity 2",
+            damage,
+            expected_damage
+        );
+        
+        assert!(
+            !should_cure,
+            "Poison status should not be cured after a single tick"
+        );
+        
+        assert!(
+            status_changed,
+            "The status_changed flag should be true because badly poisoned severity increases"
+        );
+
+        assert_eq!(
+            pokemon.current_hp(),
+            initial_hp - damage,
+            "Pokémon's current HP is incorrect after taking damage"
+        );
+
+        // For `matches!`, you have to wrap it in `assert!` to add a message.
+        assert!(
+            matches!(pokemon.status, Some(StatusCondition::Poison(2))),
+            "Pokémon status should be Poison(2), but was {:?}",
+            pokemon.status
+        );
     }
 
     #[test]
@@ -96,7 +120,7 @@ mod tests {
         let species_data = get_species_data(Species::Charmander).expect("Failed to load Charmander data");
         let mut pokemon = PokemonInst::new(Species::Charmander, &species_data, 50, None, None);
         
-        let initial_hp = pokemon.curr_stats[0];
+        let initial_hp = pokemon.max_hp();
         let max_hp = pokemon.max_hp();
         
         // Apply burn
@@ -105,11 +129,10 @@ mod tests {
         // Tick status - should deal 1/8 of max HP damage
         let (damage, should_cure, status_changed) = pokemon.tick_status();
         
-        assert_eq!(damage, (max_hp / 8).max(1));
-        assert!(!should_cure);
-        assert!(!status_changed); // Burn doesn't change
-        assert_eq!(pokemon.curr_stats[0], initial_hp - damage);
-        assert!(matches!(pokemon.status, Some(StatusCondition::Burn)));
+        assert_eq!(damage, (max_hp / 8).max(1), "Damage should be at most 1/8 of max hp.");
+        assert!(!should_cure, "The burn should not go away");
+        assert_eq!(pokemon.current_hp(), initial_hp - damage, "Hp was not updated correctly.");
+        assert!(matches!(pokemon.status, Some(StatusCondition::Burn)), "The pokemon's status should remain burned.");
     }
 
     #[test]
@@ -120,7 +143,7 @@ mod tests {
         let species_data = get_species_data(Species::Snorlax).expect("Failed to load Snorlax data");
         let mut pokemon = PokemonInst::new(Species::Snorlax, &species_data, 50, None, None);
         
-        let initial_hp = pokemon.curr_stats[0];
+        let initial_hp = pokemon.max_hp();
         
         // Apply sleep for 3 turns
         pokemon.status = Some(StatusCondition::Sleep(3));
@@ -130,7 +153,7 @@ mod tests {
         assert_eq!(damage, 0);
         assert!(!should_cure);
         assert!(status_changed);
-        assert_eq!(pokemon.curr_stats[0], initial_hp); // No damage from sleep
+        assert_eq!(pokemon.current_hp(), initial_hp); // No damage from sleep
         assert!(matches!(pokemon.status, Some(StatusCondition::Sleep(2))));
         
         // Second tick - should reduce to 1 turn
@@ -222,12 +245,11 @@ mod tests {
         let mut pokemon = PokemonInst::new(Species::Magikarp, &species_data, 5, None, None);
         
         // Set HP very low
-        pokemon.curr_stats[0] = 3;
-        let max_hp = pokemon.max_hp();
+        pokemon.set_hp(3);
         
         // Apply poison - damage should be enough to faint
         pokemon.status = Some(StatusCondition::Poison(0));
-        let expected_damage = (max_hp / 16).max(1);
+        let expected_damage = (pokemon.max_hp() / 16).max(1);
         
         // If damage >= current HP, should faint
         let (damage, should_cure, status_changed) = pokemon.tick_status();
@@ -237,11 +259,11 @@ mod tests {
             assert_eq!(damage, expected_damage);
             assert!(!should_cure); // Fainting handles status removal
             assert!(status_changed); // Status changed to Faint
-            assert_eq!(pokemon.curr_stats[0], 0);
+            assert_eq!(pokemon.current_hp(), 0);
             assert!(matches!(pokemon.status, Some(StatusCondition::Faint)));
         } else {
             // Should survive
-            assert_eq!(pokemon.curr_stats[0], 3 - damage);
+            assert_eq!(pokemon.current_hp(), 3 - damage);
             assert!(matches!(pokemon.status, Some(StatusCondition::Poison(0))));
         }
     }

@@ -784,6 +784,7 @@ fn apply_on_hit_effects(
             // Drain healing to attacker
             crate::move_data::MoveEffect::Drain(percentage) => {
                 let heal_amount = (damage_dealt * (*percentage as u16)) / 100;
+                println!("Heal amount: {}", heal_amount);
                 if heal_amount > 0 {
                     let attacker_player = &mut battle_state.players[attacker_index];
                     if let Some(attacker_pokemon) = attacker_player.team[attacker_player.active_pokemon_index].as_mut() {
@@ -792,7 +793,8 @@ fn apply_on_hit_effects(
                         attacker_pokemon.heal(heal_amount);
                         let new_hp = attacker_pokemon.current_hp();
                         let actual_heal = new_hp - old_hp;
-                        
+                        println!("Actual Heal: {}", actual_heal);
+                        println!("Max HP: {}, Current HP: {}, Initial HP: {}", attacker_pokemon.max_hp(), attacker_pokemon.current_hp(), old_hp);
                         if actual_heal > 0 {
                             bus.push(BattleEvent::PokemonHealed {
                                 target: attacker_species,
@@ -1115,7 +1117,7 @@ fn apply_condition_damage(
                 }
                 
                 let species = pokemon.species;
-                let max_hp = pokemon.get_species_data().unwrap().base_stats.hp as u16;
+                let max_hp = pokemon.max_hp();
                 let has_trapped = player.active_pokemon_conditions.values()
                     .any(|condition| matches!(condition, PokemonCondition::Trapped { .. }));
                 let has_seeded = player.has_condition(&PokemonCondition::Seeded);
@@ -1151,12 +1153,10 @@ fn apply_condition_damage(
         
         // Handle Seeded condition (1/8 max HP drained per turn, heals opponent)
         if has_seeded {
-            let seed_healing = (max_hp / 8).max(1); // 1/8 of max HP, minimum 1
-            
             let pokemon_mut = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut().unwrap();
             let current_hp = pokemon_mut.current_hp();
-            let actual_damage = seed_healing.min(current_hp);
-            let fainted = pokemon_mut.take_damage(seed_healing);
+            let actual_damage = (max_hp / 8).max(1).min(current_hp);
+            let fainted = pokemon_mut.take_damage(actual_damage);
             
             bus.push(BattleEvent::StatusDamage {
                 target: pokemon_species,
@@ -1169,23 +1169,22 @@ fn apply_condition_damage(
                     player_index,
                     pokemon: pokemon_species,
                 });
-            } else {
-                // Heal the opponent if they have an active Pokemon
-                let opponent_player = &mut battle_state.players[opponent_index];
-                if let Some(opponent_pokemon) = opponent_player.team[opponent_player.active_pokemon_index].as_mut() {
-                    if !opponent_pokemon.is_fainted() {
-                        let current_hp = opponent_pokemon.current_hp();
-                        let max_hp = opponent_pokemon.max_hp();
-                        let actual_heal = seed_healing.min(max_hp.saturating_sub(current_hp));
-                        
-                        if actual_heal > 0 {
-                            opponent_pokemon.heal(seed_healing);
-                            bus.push(BattleEvent::PokemonHealed {
-                                target: opponent_pokemon.species,
-                                amount: actual_heal,
-                                new_hp: opponent_pokemon.current_hp(),
-                            });
-                        }
+            }
+            // Heal the opponent if they have an active Pokemon
+            let opponent_player = &mut battle_state.players[opponent_index];
+            if let Some(opponent_pokemon) = opponent_player.team[opponent_player.active_pokemon_index].as_mut() {
+                if !opponent_pokemon.is_fainted() {
+                    let current_hp = opponent_pokemon.current_hp();
+                    let max_hp = opponent_pokemon.max_hp();
+                    let actual_heal = actual_damage.min(max_hp.saturating_sub(current_hp));
+                    
+                    if actual_heal > 0 {
+                        opponent_pokemon.heal(actual_heal);
+                        bus.push(BattleEvent::PokemonHealed {
+                            target: opponent_pokemon.species,
+                            amount: actual_heal,
+                            new_hp: opponent_pokemon.current_hp(),
+                        });
                     }
                 }
             }
@@ -1217,7 +1216,7 @@ pub fn execute_end_turn_phase(
                         target: pokemon.species, 
                         status,
                         damage: status_damage,
-                        remaining_hp: pokemon.curr_stats[0]
+                        remaining_hp: pokemon.current_hp()
                     });
                 }
             }

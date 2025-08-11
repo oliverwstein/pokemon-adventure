@@ -16,10 +16,10 @@ mod tests {
     }
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon = PokemonInst::new_for_test(
+        PokemonInst::new_for_test(
             species,
             0,
-            0, // Will be set below
+            100, // Set current HP directly to max
             [15, 15, 15, 15, 15, 15],
             [0, 0, 0, 0, 0, 0],
             [100, 80, 70, 60, 60, 90], // Max HP same as current for simplicity
@@ -30,9 +30,7 @@ mod tests {
                 moves.get(3).map(|&m| crate::pokemon::MoveInstance::new(m)),
             ],
             None,
-        );
-        pokemon.set_hp_to_max();
-        pokemon
+        )
     }
     
 

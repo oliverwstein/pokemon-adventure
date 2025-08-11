@@ -6,7 +6,6 @@ MoveData(
     accuracy: Some(100),
     max_pp: 10,
     effects: [
-        MirrorMove,
-        Confuse(20),
+        Confuse(50),
     ],
 )

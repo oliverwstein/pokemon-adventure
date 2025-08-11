@@ -27,3 +27,6 @@ mod test_condition_damage;
 
 #[cfg(test)]
 mod test_special_moves;
+
+#[cfg(test)]
+mod test_nightmare;

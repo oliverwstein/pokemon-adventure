@@ -628,6 +628,7 @@ fn check_action_preventing_conditions(
     player_index: usize,
     battle_state: &BattleState,
     rng: &mut TurnRng,
+    move_used: Move,
 ) -> Option<ActionFailureReason> {
     let player = &battle_state.players[player_index];
     let pokemon = player.team[player.active_pokemon_index].as_ref()?;
@@ -677,6 +678,26 @@ fn check_action_preventing_conditions(
                 }
                 // If not confused this turn, action proceeds normally
                 break; // Only check once
+            }
+        }
+    }
+
+    // Check for Nightmare effect - move fails unless target is asleep
+    if let Some(move_data) = crate::move_data::get_move_data(move_used) {
+        for effect in &move_data.effects {
+            if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
+                // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
+                let target_index = if player_index == 0 { 1 } else { 0 };
+                let target_player = &battle_state.players[target_index];
+                
+                if let Some(target_pokemon) = target_player.active_pokemon() {
+                    // Check if target is asleep
+                    let is_asleep = matches!(target_pokemon.status, Some(crate::pokemon::StatusCondition::Sleep(_)));
+                    
+                    if !is_asleep {
+                        return Some(ActionFailureReason::MoveFailedToExecute);
+                    }
+                }
             }
         }
     }
@@ -1462,7 +1483,7 @@ pub fn execute_attack_hit(
 
     // Check all action-preventing conditions
     if let Some(failure_reason) =
-        check_action_preventing_conditions(attacker_index, battle_state, rng)
+        check_action_preventing_conditions(attacker_index, battle_state, rng, move_used)
     {
         // Always generate ActionFailed event first
         bus.push(BattleEvent::ActionFailed {

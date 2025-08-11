@@ -15,21 +15,23 @@ mod tests {
     }
 
     fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
-        PokemonInst {
-            name: species.name().to_string(),
+        let mut pokemon = PokemonInst::new_for_test(
             species,
-            curr_exp: 0,
-            ivs: [15, 15, 15, 15, 15, 15],
-            evs: [0, 0, 0, 0, 0, 0],
-            curr_stats: [hp, 80, 70, 60, 60, 90],
-            moves: [
+            0,
+            0, // Will be set below
+            [15, 15, 15, 15, 15, 15],
+            [0, 0, 0, 0, 0, 0],
+            [hp, 80, 70, 60, 60, 90], // Max HP same as current for simplicity
+            [
                 moves.get(0).map(|&m| crate::pokemon::MoveInstance::new(m)),
                 moves.get(1).map(|&m| crate::pokemon::MoveInstance::new(m)),
                 moves.get(2).map(|&m| crate::pokemon::MoveInstance::new(m)),
                 moves.get(3).map(|&m| crate::pokemon::MoveInstance::new(m)),
             ],
-            status: None,
-        }
+            None,
+        );
+        pokemon.set_hp(hp); // Set current HP with validation
+        pokemon
     }
 
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {

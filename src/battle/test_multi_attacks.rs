@@ -17,15 +17,19 @@ mod tests {
             }
         }
 
-        PokemonInst {
-            name: species.name().to_string(),
-            species,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [hp, attack, 80, 80, 80, 80],
-            moves: pokemon_moves,
-            status: None,
+        {
+            let mut pokemon = PokemonInst::new_for_test(
+                species,
+                0,
+                0, // Will be set below
+                [15; 6],
+                [0; 6],
+                [hp, attack, 80, 80, 80, 80],
+                pokemon_moves,
+                None,
+            );
+            pokemon.set_hp(hp);
+            pokemon
         }
     }
 

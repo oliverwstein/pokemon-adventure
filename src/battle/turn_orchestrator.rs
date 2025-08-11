@@ -1,5 +1,6 @@
 use crate::battle::state::{BattleState, EventBus, TurnRng, GameState, BattleEvent, ActionFailureReason};
 use crate::battle::stats::{effective_speed, move_hits, move_is_critical_hit};
+use crate::player::PokemonCondition;
 use crate::player::PlayerAction;
 use crate::move_data::get_move_data;
 use crate::moves::Move;
@@ -1096,6 +1097,102 @@ fn get_player_speed(player_index: usize, battle_state: &BattleState) -> u16 {
     }
 }
 
+/// Apply damage/healing effects from active Pokemon conditions (Trapped, Seeded)
+fn apply_condition_damage(
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+) {
+    // Process each player's active Pokemon for condition effects
+    for player_index in 0..2 {
+        let opponent_index = 1 - player_index;
+        
+        // First, collect the condition info without borrowing
+        let (pokemon_species, max_hp, has_trapped, has_seeded) = {
+            let player = &battle_state.players[player_index];
+            if let Some(pokemon) = player.active_pokemon() {
+                if pokemon.is_fainted() {
+                    continue;
+                }
+                
+                let species = pokemon.species;
+                let max_hp = pokemon.get_species_data().unwrap().base_stats.hp as u16;
+                let has_trapped = player.active_pokemon_conditions.values()
+                    .any(|condition| matches!(condition, PokemonCondition::Trapped { .. }));
+                let has_seeded = player.has_condition(&PokemonCondition::Seeded);
+                
+                (species, max_hp, has_trapped, has_seeded)
+            } else {
+                continue;
+            }
+        };
+        
+        // Handle Trapped condition (1/16 max HP damage per turn)
+        if has_trapped {
+            let condition_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
+            
+            let pokemon_mut = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut().unwrap();
+            let current_hp = pokemon_mut.current_hp();
+            let actual_damage = condition_damage.min(current_hp);
+            let fainted = pokemon_mut.take_damage(condition_damage);
+            
+            bus.push(BattleEvent::StatusDamage {
+                target: pokemon_species,
+                status: PokemonCondition::Trapped { turns_remaining: 1 },
+                damage: actual_damage,
+            });
+            
+            if fainted {
+                bus.push(BattleEvent::PokemonFainted {
+                    player_index,
+                    pokemon: pokemon_species,
+                });
+            }
+        }
+        
+        // Handle Seeded condition (1/8 max HP drained per turn, heals opponent)
+        if has_seeded {
+            let seed_healing = (max_hp / 8).max(1); // 1/8 of max HP, minimum 1
+            
+            let pokemon_mut = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut().unwrap();
+            let current_hp = pokemon_mut.current_hp();
+            let actual_damage = seed_healing.min(current_hp);
+            let fainted = pokemon_mut.take_damage(seed_healing);
+            
+            bus.push(BattleEvent::StatusDamage {
+                target: pokemon_species,
+                status: PokemonCondition::Seeded,
+                damage: actual_damage,
+            });
+            
+            if fainted {
+                bus.push(BattleEvent::PokemonFainted {
+                    player_index,
+                    pokemon: pokemon_species,
+                });
+            } else {
+                // Heal the opponent if they have an active Pokemon
+                let opponent_player = &mut battle_state.players[opponent_index];
+                if let Some(opponent_pokemon) = opponent_player.team[opponent_player.active_pokemon_index].as_mut() {
+                    if !opponent_pokemon.is_fainted() {
+                        let current_hp = opponent_pokemon.current_hp();
+                        let max_hp = opponent_pokemon.max_hp();
+                        let actual_heal = seed_healing.min(max_hp.saturating_sub(current_hp));
+                        
+                        if actual_heal > 0 {
+                            opponent_pokemon.heal(seed_healing);
+                            bus.push(BattleEvent::PokemonHealed {
+                                target: opponent_pokemon.species,
+                                amount: actual_heal,
+                                new_hp: opponent_pokemon.current_hp(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 pub fn execute_end_turn_phase(
     battle_state: &mut BattleState,
@@ -1159,8 +1256,13 @@ pub fn execute_end_turn_phase(
                 });
             }
         }
-        
-        // 3. Tick team conditions (Reflect, Light Screen, Mist)
+    }
+    
+    // 3. Process condition-based damage effects (Trapped, Seeded)
+    apply_condition_damage(battle_state, bus);
+    
+    // 4. Tick team conditions (Reflect, Light Screen, Mist)
+    for player_index in 0..2 {
         let player = &mut battle_state.players[player_index];
         player.tick_team_conditions();
     }

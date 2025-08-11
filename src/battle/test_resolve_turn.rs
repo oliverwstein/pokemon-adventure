@@ -19,15 +19,19 @@ mod tests {
             }
         }
 
-        PokemonInst {
-            name: species.name().to_string(), // Use species name as Pokemon name
-            species,
-            curr_exp: 0,
-            ivs: [15; 6], // Decent IVs
-            evs: [0; 6],  // No EVs for simplicity
-            curr_stats: [100, 80, 80, 80, 80, 80], // HP, Att, Def, SpAtt, SpDef, Speed
-            moves: pokemon_moves,
-            status: None,
+        {
+            let mut pokemon = PokemonInst::new_for_test(
+                species,
+                0,
+                0, // Will be set below
+                [15; 6], // Decent IVs
+                [0; 6],  // No EVs for simplicity
+                [100, 80, 80, 80, 80, 80], // HP, Att, Def, SpAtt, SpDef, Speed
+                pokemon_moves,
+                None,
+            );
+            pokemon.set_hp(100);
+            pokemon
         }
     }
 

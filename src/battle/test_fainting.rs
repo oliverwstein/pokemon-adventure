@@ -19,16 +19,17 @@ mod tests {
             }
         }
 
-        let mut pokemon = PokemonInst {
-            name: species.name().to_string(),
+        let mut pokemon = PokemonInst::new_for_test(
             species,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [hp, 80, 80, 80, 80, 80], // Set specific HP
-            moves: pokemon_moves,
-            status: None,
-        };
+            0,
+            0, // Will be set below
+            [15; 6],
+            [0; 6],
+            [hp, 80, 80, 80, 80, 80], // Set specific HP as max HP too
+            pokemon_moves,
+            None,
+        );
+        pokemon.set_hp(hp); // Set current HP with validation
         
         pokemon
     }

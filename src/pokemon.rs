@@ -207,9 +207,10 @@ pub struct PokemonInst {
     pub name: String,                    // Species name if no nickname
     pub species: Species,                // Species enum for type-safe lookup
     pub curr_exp: u8,                    // Only really relevant for single-player
+    curr_hp: u16,                        // Current HP (private, use methods to access)
     pub ivs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
     pub evs: [u8; 6],                    // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub curr_stats: [u16; 6],            // HP, ATK, DEF, SP.ATK, SP.DEF, SPD (can exceed 255)
+    pub curr_stats: [u16; 6],            // MAX_HP, ATK, DEF, SP.ATK, SP.DEF, SPD (can exceed 255)
     pub moves: [Option<MoveInstance>; 4], // Up to 4 moves
     pub status: Option<StatusCondition>, // Status condition with optional parameter
 }
@@ -438,6 +439,17 @@ impl PokemonInst {
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
     ) -> Self {
+        Self::new_with_hp(species, species_data, level, ivs, moves, None)
+    }
+
+    pub fn new_with_hp(
+        species: Species,
+        species_data: &PokemonSpecies,
+        level: u8,
+        ivs: Option<[u8; 6]>,
+        moves: Option<Vec<Move>>,
+        curr_hp: Option<u16>,
+    ) -> Self {
         // Generate default IVs if not provided (0-31 range)
         let ivs = ivs.unwrap_or([0; 6]); // TODO: Add random generation
         
@@ -456,16 +468,50 @@ impl PokemonInst {
             move_array[i] = Some(MoveInstance::new(move_));
         }
         
-        PokemonInst {
+        let mut pokemon = PokemonInst {
             name: species_data.name.clone(),
             species,
             curr_exp: 0, // TODO: Calculate from level
+            curr_hp: 0, // Will be set below with validation
             ivs,
             evs,
             curr_stats,
             moves: move_array,
             status: None,
-        }
+        };
+        
+        // Set HP using the validated setter
+        pokemon.set_hp(curr_hp.unwrap_or(curr_stats[0]));
+        pokemon
+    }
+
+    /// Create a Pokemon instance for testing with all fields specified
+    /// This bypasses stat calculation and allows direct control over all values
+    pub fn new_for_test(
+        species: Species,
+        curr_exp: u8,
+        curr_hp: u16,
+        ivs: [u8; 6],
+        evs: [u8; 6],
+        curr_stats: [u16; 6],
+        moves: [Option<MoveInstance>; 4],
+        status: Option<StatusCondition>,
+    ) -> Self {
+        let mut pokemon = PokemonInst {
+            name: species.name().to_string(),
+            species,
+            curr_exp,
+            curr_hp: 0, // Will be set below with validation
+            ivs,
+            evs,
+            curr_stats,
+            moves,
+            status,
+        };
+        
+        // Set HP using the validated setter
+        pokemon.set_hp(curr_hp);
+        pokemon
     }
     
     /// Calculate current stats based on base stats, level, IVs, and EVs
@@ -544,49 +590,51 @@ impl PokemonInst {
         Err(UseMoveError::MoveNotKnown)
     }
     /// Get the species data for this Pokemon instance
+    
     pub fn get_species_data(&self) -> Option<PokemonSpecies> {
         get_species_data(self.species)
     }
     
     /// Check if this Pokemon is fainted (0 HP or has Faint status)
     pub fn is_fainted(&self) -> bool {
-        self.curr_stats[0] == 0 || matches!(self.status, Some(StatusCondition::Faint))
+        self.curr_hp == 0 || matches!(self.status, Some(StatusCondition::Faint))
     }
     
     /// Get current HP
     pub fn current_hp(&self) -> u16 {
+        self.curr_hp
+    }
+    
+    /// Get max HP from the calculated stats
+    pub fn max_hp(&self) -> u16 {
         self.curr_stats[0]
     }
     
-    /// Get max HP (for testing, we'll use a simple approach)
-    /// In a real implementation, this would be stored separately or calculated from base stats
-    pub fn max_hp(&self) -> u16 {
-        // Simple approach: assume the Pokemon was created with its max HP
-        // and we need to track the original value
-        // For now, let's use a heuristic based on the stats array structure
-        if self.current_hp() == 0 && self.is_fainted() {
-            // If fainted, we need to estimate max HP
-            // For test Pokemon, we'll assume a reasonable max HP
-            100 // Default max HP for testing
-        } else {
-            // For non-fainted Pokemon, assume current HP is close to max
-            // This is a simplification for testing purposes
-            self.current_hp().max(50) // At least 50 HP
-        }
+    /// Set current HP with validation (clamps to 0..=max_hp)
+    pub fn set_hp(&mut self, hp: u16) {
+        let max_hp = self.max_hp();
+        self.curr_hp = hp.min(max_hp);
     }
-    
+
+    pub fn set_hp_to_max(&mut self) {
+        self.curr_hp = self.max_hp();
+    }
+
+    pub fn restore_fully(&mut self) {
+        self.set_hp_to_max();
+        self.status = None;
+    }
     /// Take damage and handle fainting
     /// Returns true if the Pokemon fainted from this damage
     pub fn take_damage(&mut self, damage: u16) -> bool {
-        let current_hp = self.curr_stats[0];
-        if damage >= current_hp {
+        if damage >= self.curr_hp {
             // Pokemon faints - set HP to 0 and replace any existing status with Faint
-            self.curr_stats[0] = 0;
+            self.curr_hp = 0;
             self.status = Some(StatusCondition::Faint);
             true
         } else {
             // Reduce HP by damage amount
-            self.curr_stats[0] = current_hp - damage;
+            self.curr_hp -= damage;
             false
         }
     }
@@ -597,16 +645,15 @@ impl PokemonInst {
             return; // Cannot heal fainted Pokemon
         }
         
-        let current_hp = self.curr_stats[0];
-        let max_hp = self.max_hp(); // For now, same as current max
-        self.curr_stats[0] = (current_hp + heal_amount).min(max_hp);
+        let max_hp = self.max_hp();
+        self.curr_hp = (self.curr_hp + heal_amount).min(max_hp);
     }
     
     /// Revive a fainted Pokemon with specified HP
     pub fn revive(&mut self, hp_amount: u16) {
         if self.is_fainted() {
             let max_hp = self.max_hp();
-            self.curr_stats[0] = hp_amount.min(max_hp).max(1); // At least 1 HP
+            self.curr_hp = hp_amount.min(max_hp).max(1); // At least 1 HP
             self.status = None; // Remove faint status
         }
     }

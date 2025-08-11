@@ -370,16 +370,16 @@ mod tests {
     
     #[test] 
     fn test_effective_speed_paralysis() {
-        let mut pokemon = crate::pokemon::PokemonInst {
-            name: "Test".to_string(),
-            species: Species::Pikachu,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [100, 80, 80, 80, 80, 100], // Speed = 100
-            moves: [const { None }; 4],
-            status: Some(crate::pokemon::StatusCondition::Paralysis),
-        };
+        let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
+            Species::Pikachu,
+            0,
+            100,
+            [15; 6],
+            [0; 6],
+            [100, 80, 80, 80, 80, 100], // Speed = 100
+            [const { None }; 4],
+            Some(crate::pokemon::StatusCondition::Paralysis),
+        );
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
@@ -406,17 +406,17 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        
-        let mut pokemon = crate::pokemon::PokemonInst {
-            name: "Test".to_string(),
-            species: Species::Charmander,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [100, 80, 80, 80, 80, 100], // Attack = 80
-            moves: [const { None }; 4],
-            status: Some(crate::pokemon::StatusCondition::Burn),
-        };
+        let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
+            Species::Charmander,
+            0,
+            0, // Will be set below
+            [15; 6],
+            [0; 6],
+            [100, 80, 80, 80, 80, 100], // Attack = 80
+            [const { None }; 4],
+            Some(crate::pokemon::StatusCondition::Burn),
+        );
+        pokemon.set_hp(100);
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
@@ -448,16 +448,8 @@ mod tests {
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         
-        let pokemon = crate::pokemon::PokemonInst {
-            name: "Test".to_string(),
-            species: Species::Pikachu,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [100, 80, 80, 80, 80, 100],
-            moves: [const { None }; 4],
-            status: None,
-        };
+        let mut pokemon = crate::pokemon::PokemonInst::new_for_test(Species::Pikachu, 0, 0, [15; 6], [0; 6], [100, 80, 80, 80, 80, 100], [const { None }; 4], None);
+        pokemon.set_hp(100);
         
         let mut player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
@@ -500,28 +492,30 @@ mod tests {
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         
         // Test Pokemon with burn status
-        let mut burned_pokemon = crate::pokemon::PokemonInst {
-            name: "Burned".to_string(),
-            species: Species::Charmander,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
-            moves: [const { None }; 4],
-            status: Some(crate::pokemon::StatusCondition::Burn),
-        };
+        let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(
+            Species::Charmander,
+            0,
+            0, // Will be set below
+            [15; 6],
+            [0; 6],
+            [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
+            [const { None }; 4],
+            Some(crate::pokemon::StatusCondition::Burn),
+        );
+        burned_pokemon.set_hp_to_max();
         
         // Test Pokemon with paralysis
-        let mut paralyzed_pokemon = crate::pokemon::PokemonInst {
-            name: "Paralyzed".to_string(),
-            species: Species::Pikachu,
-            curr_exp: 0,
-            ivs: [15; 6],
-            evs: [0; 6],
-            curr_stats: [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
-            moves: [const { None }; 4],
-            status: Some(crate::pokemon::StatusCondition::Paralysis),
-        };
+        let mut paralyzed_pokemon = crate::pokemon::PokemonInst::new_for_test(
+            Species::Pikachu,
+            0,
+            0, // Will be set below
+            [15; 6],
+            [0; 6],
+            [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
+            [const { None }; 4],
+            Some(crate::pokemon::StatusCondition::Paralysis),
+        );
+        paralyzed_pokemon.set_hp_to_max();
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),

@@ -25,3 +25,6 @@ mod test_status_moves;
 
 #[cfg(test)]
 mod test_damage_effects;
+
+#[cfg(test)]
+mod test_condition_damage;

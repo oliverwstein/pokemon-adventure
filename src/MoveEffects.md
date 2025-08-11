@@ -46,6 +46,5 @@
 * Priority
 * OHKO
 * Crit(int)
-* SureHit
 * CureStatus(target, status)
 

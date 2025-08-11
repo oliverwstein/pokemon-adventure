@@ -595,7 +595,7 @@ fn check_action_preventing_conditions(
     None // No conditions prevent action
 }
 
-/// Apply all chance-based move effects after a successful hit
+/// Apply all chance-based move effects
 fn apply_move_effects(
     attacker_index: usize,
     defender_index: usize,
@@ -725,12 +725,12 @@ fn apply_move_effects(
                     if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species)
                     {
                         target_player.add_condition(crate::player::PokemonCondition::Exhausted {
-                            turns_remaining: 1,
+                            turns_remaining: 2, // Turns remaining is 2 because the same turn it is applied, it will be decremented
                         });
                         bus.push(BattleEvent::StatusApplied {
                             target: pokemon_species,
                             status: crate::player::PokemonCondition::Exhausted {
-                                turns_remaining: 1,
+                                turns_remaining: 2, // Turns remaining is 2 because the same turn it is applied, it will be decremented
                             },
                         });
                     }
@@ -835,7 +835,7 @@ fn apply_move_effects(
 }
 
 /// Apply damage-based effects that always trigger when damage is dealt (recoil, drain)
-fn apply_on_hit_effects(
+fn apply_on_damage_effects(
     attacker_index: usize,
     move_data: &crate::move_data::MoveData,
     battle_state: &mut BattleState,
@@ -1089,7 +1089,7 @@ pub fn execute_attack_hit(
 
         // Apply damage-based effects (recoil, drain) when damage was dealt
         if damage > 0 {
-            apply_on_hit_effects(attacker_index, &move_data, battle_state, bus, damage);
+            apply_on_damage_effects(attacker_index, &move_data, battle_state, bus, damage);
         }
 
         // If the defender faints, the multi-hit sequence stops.

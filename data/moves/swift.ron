@@ -6,6 +6,5 @@ MoveData(
     accuracy: None,
     max_pp: 20,
     effects: [
-        SureHit,
     ],
 )

@@ -103,7 +103,6 @@
  * CLAMP (Normal, 40, SPEC, 100, 30)
     * Trap(50)
  * SWIFT (Normal, 60, SPEC, --, 20)
-    * SureHit
  * SPIKE CANNON (Normal, 25, PHYS, 100, 10)
     * Multihit(2, 5)
  * CONSTRICT (Normal, 30, PHYS, 80, 20)

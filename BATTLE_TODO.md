@@ -48,7 +48,6 @@
 - [x] **Exhaust**: Cannot act (usually applied to self, as in Hyper Beam)
 - [x] **Flinch**: Prevents moves until end of turn
 - [x] **Priority**: Modify move's priority in turn order
-- [x] **SureHit**: Move cannot miss regardless of accuracy/evasion
 - [ ] **ChargeUp**: Move requires charging turn before execution
 - [ ] **InAir**: User becomes semi-invulnerable in air (fly, bounce)
 - [ ] **Underground**: User becomes semi-invulnerable underground (dig)

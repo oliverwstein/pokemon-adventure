@@ -108,7 +108,6 @@ pub enum MoveEffect {
     Trap(u8),     // chance % to trap
     Exhaust(u8),  // chance % to exhaust (skip next turn)
     Priority(i8), // move priority modifier
-    SureHit,      // cannot miss
     ChargeUp,     // charge for 1 turn
     InAir,        // go in air (avoid ground moves)
     Underground,  // go underground

@@ -7,6 +7,6 @@ MoveData(
     max_pp: 10,
     effects: [
         Counter,
-        Priority(-1),
+        Priority(2),
     ],
 )

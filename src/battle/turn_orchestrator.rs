@@ -1036,6 +1036,64 @@ fn apply_move_effects(
                 }
             }
 
+            // Healing effect - restores percentage of max HP to the user
+            crate::move_data::MoveEffect::Heal(percentage) => {
+                let attacker_player = &mut battle_state.players[attacker_index];
+                if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
+                    let max_hp = attacker_pokemon.max_hp();
+                    let old_hp = attacker_pokemon.current_hp();
+                    
+                    // Don't heal if already at full HP or fainted
+                    if old_hp > 0 && old_hp < max_hp {
+                        let heal_amount = (max_hp * (*percentage as u16)) / 100;
+                        if heal_amount > 0 {
+                            attacker_pokemon.heal(heal_amount);
+                            let new_hp = attacker_pokemon.current_hp();
+                            let actual_heal = new_hp - old_hp;
+                            
+                            if actual_heal > 0 {
+                                bus.push(BattleEvent::PokemonHealed {
+                                    target: attacker_pokemon.species,
+                                    amount: actual_heal,
+                                    new_hp: new_hp,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Haze effect - clears all stat stage changes for both players
+            crate::move_data::MoveEffect::Haze(chance) => {
+                if rng.next_outcome() <= *chance {
+                    // Clear stat stages for both players
+                    for player_index in 0..2 {
+                        let player = &mut battle_state.players[player_index];
+                        if let Some(pokemon_species) = player.active_pokemon().map(|p| p.species) {
+                            // Get current stat stages before clearing
+                            let current_stages = player.get_all_stat_stages().clone();
+                            
+                            // Only clear and emit events if there were any stat changes
+                            if !current_stages.is_empty() {
+                                player.clear_stat_stages();
+                                
+                                // Emit events for each stat that was reset to 0
+                                for (stat_type, old_stage) in current_stages {
+                                    if old_stage != 0 {
+                                        bus.push(BattleEvent::StatStageChanged {
+                                            target: pokemon_species,
+                                            stat: stat_type,
+                                            old_stage,
+                                            new_stage: 0,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Skip other effects that don't have chance percentages or are handled elsewhere
             _ => {}
         }

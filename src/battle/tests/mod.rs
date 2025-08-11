@@ -30,3 +30,9 @@ mod test_special_moves;
 
 #[cfg(test)]
 mod test_nightmare;
+
+#[cfg(test)]
+mod test_heal;
+
+#[cfg(test)]
+mod test_haze;

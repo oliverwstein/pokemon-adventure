@@ -988,8 +988,9 @@ fn perform_special_move(
             crate::move_data::MoveEffect::InAir => {
                 let attacker_player = &mut battle_state.players[attacker_index];
                 
-                // If already in air, this is the second turn - proceed with normal attack
+                // If already in air, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::InAir) {
+                    attacker_player.remove_condition(&crate::player::PokemonCondition::InAir);
                     return false;
                 }
                 
@@ -1017,8 +1018,9 @@ fn perform_special_move(
             crate::move_data::MoveEffect::ChargeUp => {
                 let attacker_player = &mut battle_state.players[attacker_index];
                 
-                // If already charging, this is the second turn - proceed with normal attack
+                // If already charging, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::Charging) {
+                    attacker_player.remove_condition(&crate::player::PokemonCondition::Charging);
                     return false;
                 }
                 
@@ -1036,8 +1038,9 @@ fn perform_special_move(
             crate::move_data::MoveEffect::Underground => {
                 let attacker_player = &mut battle_state.players[attacker_index];
                 
-                // If already underground, this is the second turn - proceed with normal attack
+                // If already underground, this is the second turn - clear condition and proceed with normal attack
                 if attacker_player.has_condition(&crate::player::PokemonCondition::Underground) {
+                    attacker_player.remove_condition(&crate::player::PokemonCondition::Underground);
                     return false;
                 }
                 
@@ -1215,16 +1218,16 @@ fn perform_special_move(
                         attacker_index,
                         defender_index,
                         move_used: mirrored_move,
-                        hit_number: 0,
+                        hit_number: 1, // Must be greater than zero to avoid trying to use PP
                     };
                     
                     // Execute the mirrored move with full battle action processing
                     execute_battle_action(
                         mirrored_action,
+                        battle_state,
                         action_stack,
                         bus,
                         rng,
-                        battle_state,
                     );
                     return true; // Skip standard execution
                 }

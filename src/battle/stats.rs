@@ -409,14 +409,13 @@ mod tests {
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
             0,
-            0, // Will be set below
+            100, // Set current HP directly
             [15; 6],
             [0; 6],
             [100, 80, 80, 80, 80, 100], // Attack = 80
             [const { None }; 4],
             Some(crate::pokemon::StatusCondition::Burn),
         );
-        pokemon.set_hp(100);
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
@@ -448,8 +447,7 @@ mod tests {
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         
-        let mut pokemon = crate::pokemon::PokemonInst::new_for_test(Species::Pikachu, 0, 0, [15; 6], [0; 6], [100, 80, 80, 80, 80, 100], [const { None }; 4], None);
-        pokemon.set_hp(100);
+        let pokemon = crate::pokemon::PokemonInst::new_for_test(Species::Pikachu, 0, 100, [15; 6], [0; 6], [100, 80, 80, 80, 80, 100], [const { None }; 4], None);
         
         let mut player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
@@ -495,27 +493,25 @@ mod tests {
         let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
             0,
-            0, // Will be set below
+            100, // Set current HP directly to max
             [15; 6],
             [0; 6],
             [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
             [const { None }; 4],
             Some(crate::pokemon::StatusCondition::Burn),
         );
-        burned_pokemon.set_hp_to_max();
         
         // Test Pokemon with paralysis
         let mut paralyzed_pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
             0,
-            0, // Will be set below
+            100, // Set current HP directly to max
             [15; 6],
             [0; 6],
             [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
             [const { None }; 4],
             Some(crate::pokemon::StatusCondition::Paralysis),
         );
-        paralyzed_pokemon.set_hp_to_max();
         
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),

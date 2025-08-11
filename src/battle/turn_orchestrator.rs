@@ -1198,6 +1198,42 @@ fn perform_special_move(
                 }
                 return false
             }
+            crate::move_data::MoveEffect::MirrorMove => {
+                // Mirror Move uses the defender's last move
+                let defender_player = &battle_state.players[defender_index];
+                if let Some(mirrored_move) = defender_player.last_move {
+                    // Don't allow mirroring Mirror Move (would cause infinite recursion)
+                    if mirrored_move == Move::MirrorMove {
+                        bus.push(BattleEvent::ActionFailed {
+                            reason: crate::battle::state::ActionFailureReason::MoveFailedToExecute,
+                        });
+                        return true; // Skip standard execution since we handled the failure
+                    }
+                    
+                    // Create a BattleAction for the mirrored move and execute it
+                    let mirrored_action = BattleAction::AttackHit {
+                        attacker_index,
+                        defender_index,
+                        move_used: mirrored_move,
+                        hit_number: 0,
+                    };
+                    
+                    // Execute the mirrored move with full battle action processing
+                    execute_battle_action(
+                        mirrored_action,
+                        action_stack,
+                        bus,
+                        rng,
+                        battle_state,
+                    );
+                    return true; // Skip standard execution
+                }
+                // If no move to mirror, fail appropriately
+                bus.push(BattleEvent::ActionFailed {
+                    reason: crate::battle::state::ActionFailureReason::MoveFailedToExecute,
+                });
+                return true; // Skip standard execution since we handled the failure
+            }
 
             // Other effects are handled elsewhere
             _ => {}

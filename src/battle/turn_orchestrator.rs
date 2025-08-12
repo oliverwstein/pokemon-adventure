@@ -928,8 +928,10 @@ fn apply_move_effects(
                 }
             }
             crate::move_data::MoveEffect::Exhaust(chance) => {
+                // Exhaust is a weird effect because it implicitly targets the USER, not the opponent.
+                // It's for Hyper Beam. It has a % chance because I want to allow moves to have a chance to exhaust yourself.
                 if rng.next_outcome() <= *chance {
-                    let target_player = &mut battle_state.players[defender_index];
+                    let target_player = &mut battle_state.players[attacker_index];
                     if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species)
                     {
                         target_player.add_condition(crate::player::PokemonCondition::Exhausted {
@@ -1136,6 +1138,38 @@ fn apply_move_effects(
                             });
                         }
                     }
+                }
+            }
+
+            // Team conditions
+            crate::move_data::MoveEffect::Reflect(reflect_type) => {
+                let attacker_player = &mut battle_state.players[attacker_index];
+                let team_condition = match reflect_type {
+                    crate::move_data::ReflectType::Physical => crate::player::TeamCondition::Reflect,
+                    crate::move_data::ReflectType::Special => crate::player::TeamCondition::LightScreen,
+                };
+                
+                // Team conditions typically last 5 turns in Pokemon
+                attacker_player.add_team_condition(team_condition, 5);
+                
+                if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                    // Generate an appropriate event (we can use a generic message for now)
+                    let condition_name = match reflect_type {
+                        crate::move_data::ReflectType::Physical => "Reflect",
+                        crate::move_data::ReflectType::Special => "Light Screen",
+                    };
+                    println!("{:?} used {}!", pokemon_species, condition_name);
+                }
+            }
+            
+            crate::move_data::MoveEffect::Mist => {
+                let attacker_player = &mut battle_state.players[attacker_index];
+                
+                // Mist typically lasts 5 turns in Pokemon
+                attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
+                
+                if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                    println!("{:?} used Mist!", pokemon_species);
                 }
             }
 

@@ -2049,7 +2049,30 @@ pub fn execute_attack_hit(
         return;
     }
 
-    // Get the player and pokemon references
+    // === THE BRIDGE ===
+    // Use the new pure calculator for hit/miss logic
+    let hit_miss_commands = calculate_attack_outcome(
+        battle_state, 
+        attacker_index, 
+        defender_index, 
+        move_used, 
+        hit_number, 
+        rng
+    );
+    
+    // Execute the commands immediately using local bridge function
+    if let Err(e) = execute_commands_locally(hit_miss_commands, battle_state, bus, action_stack) {
+        eprintln!("Error executing hit/miss commands: {:?}", e);
+        return;
+    }
+
+    // Determine if the move hit by checking the current state
+    // (This is temporary until we expand the calculator to handle all hit logic)
+    let hits = bus.events().iter().rev().take(5).any(|event| {
+        matches!(event, BattleEvent::MoveHit { .. })
+    });
+
+    // Get the player and pokemon references AFTER executing commands
     let attacker_player = &battle_state.players[attacker_index];
     let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index]
         .as_ref()
@@ -2060,31 +2083,8 @@ pub fn execute_attack_hit(
         .as_ref()
         .expect("Defender pokemon should exist");
 
-    // Generate MoveUsed event (only for first hit)
-    if hit_number == 0 {
-        bus.push(BattleEvent::MoveUsed {
-            player_index: attacker_index,
-            pokemon: attacker_pokemon.species,
-            move_used,
-        });
-    }
-
-    // Check if move hits
-    let hits = move_hits(
-        attacker_pokemon,
-        defender_pokemon,
-        attacker_player,
-        defender_player,
-        move_used,
-        rng,
-    );
-
     if hits {
-        bus.push(BattleEvent::MoveHit {
-            attacker: attacker_pokemon.species,
-            defender: defender_pokemon.species,
-            move_used,
-        });
+        // === END BRIDGE ===
         let move_data = get_move_data(move_used).expect("Move data must exist");
         let defender_types = defender_pokemon.get_current_types(defender_player);
         let type_adv_multiplier =

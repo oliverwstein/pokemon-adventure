@@ -12,6 +12,7 @@ pub fn calculate_attack_outcome(
     attacker_index: usize,
     defender_index: usize,
     move_used: Move,
+    hit_number: u8,
     rng: &mut TurnRng,
 ) -> Vec<BattleCommand> {
     let mut commands = Vec::new();
@@ -40,12 +41,14 @@ pub fn calculate_attack_outcome(
         }
     };
     
-    // First, emit the MoveUsed event
-    commands.push(BattleCommand::EmitEvent(BattleEvent::MoveUsed {
-        player_index: attacker_index,
-        pokemon: attacker_pokemon.species,
-        move_used,
-    }));
+    // First, emit the MoveUsed event (only for first hit in multi-hit sequence)
+    if hit_number == 0 {
+        commands.push(BattleCommand::EmitEvent(BattleEvent::MoveUsed {
+            player_index: attacker_index,
+            pokemon: attacker_pokemon.species,
+            move_used,
+        }));
+    }
     
     // Check if the move hits
     let hit_result = move_hits(
@@ -158,7 +161,7 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![1]); // Low value should force hit
         
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, &mut rng);
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
         // Should have MoveUsed and MoveHit events
         assert_eq!(commands.len(), 2);
@@ -180,7 +183,7 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![100]); // High value should force miss
         
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, &mut rng);
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
         // Should have MoveUsed and MoveMissed events
         assert_eq!(commands.len(), 2);
@@ -197,7 +200,7 @@ mod tests {
         
         let mut rng = TurnRng::new_for_test(vec![50]);
         
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, &mut rng);
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
         // Should fail with PokemonFainted
         assert_eq!(commands.len(), 1);
@@ -217,7 +220,7 @@ mod tests {
         
         let mut rng = TurnRng::new_for_test(vec![50]);
         
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, &mut rng);
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
         // Should fail with NoEnemyPresent
         assert_eq!(commands.len(), 1);

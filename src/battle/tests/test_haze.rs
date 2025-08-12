@@ -17,7 +17,8 @@ mod tests {
 
         let mut pokemon = PokemonInst::new_for_test(
             species,
-            10,0,
+            10,
+            0,
             0, // Will be set below
             [15; 6],
             [0; 6],
@@ -35,7 +36,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -86,37 +88,61 @@ mod tests {
         assert_eq!(battle_state.players[0].get_stat_stage(StatType::Defense), 0);
         assert_eq!(battle_state.players[0].get_stat_stage(StatType::Speed), 0);
         assert_eq!(battle_state.players[1].get_stat_stage(StatType::Attack), 0);
-        assert_eq!(battle_state.players[1].get_stat_stage(StatType::SpecialAttack), 0);
-        assert_eq!(battle_state.players[1].get_stat_stage(StatType::Accuracy), 0);
+        assert_eq!(
+            battle_state.players[1].get_stat_stage(StatType::SpecialAttack),
+            0
+        );
+        assert_eq!(
+            battle_state.players[1].get_stat_stage(StatType::Accuracy),
+            0
+        );
 
         // Should have StatStageChanged events for each cleared stat
-        let stat_change_events: Vec<_> = event_bus.events().iter()
+        let stat_change_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::StatStageChanged { new_stage: 0, .. }))
             .collect();
 
         // Should have 6 events (3 for player 1 + 3 for player 2)
-        assert_eq!(stat_change_events.len(), 6, "Should have 6 StatStageChanged events clearing stats to 0");
+        assert_eq!(
+            stat_change_events.len(),
+            6,
+            "Should have 6 StatStageChanged events clearing stats to 0"
+        );
 
         // Verify specific stat stage change events
         let player1_attack_reset = event_bus.events().iter().any(|e| {
-            matches!(e, BattleEvent::StatStageChanged { 
-                target: Species::Koffing, 
-                stat: StatType::Attack, 
-                old_stage: 2, 
-                new_stage: 0 
-            })
+            matches!(
+                e,
+                BattleEvent::StatStageChanged {
+                    target: Species::Koffing,
+                    stat: StatType::Attack,
+                    old_stage: 2,
+                    new_stage: 0
+                }
+            )
         });
-        assert!(player1_attack_reset, "Player 1 attack should be reset from +2 to 0");
+        assert!(
+            player1_attack_reset,
+            "Player 1 attack should be reset from +2 to 0"
+        );
 
         let player2_accuracy_reset = event_bus.events().iter().any(|e| {
-            matches!(e, BattleEvent::StatStageChanged { 
-                target: Species::Snorlax, 
-                stat: StatType::Accuracy, 
-                old_stage: -3, 
-                new_stage: 0 
-            })
+            matches!(
+                e,
+                BattleEvent::StatStageChanged {
+                    target: Species::Snorlax,
+                    stat: StatType::Accuracy,
+                    old_stage: -3,
+                    new_stage: 0
+                }
+            )
         });
-        assert!(player2_accuracy_reset, "Player 2 accuracy should be reset from -3 to 0");
+        assert!(
+            player2_accuracy_reset,
+            "Player 2 accuracy should be reset from -3 to 0"
+        );
     }
 
     #[test]
@@ -125,7 +151,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -159,16 +186,32 @@ mod tests {
         }
 
         // Should have used Haze
-        let haze_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Koffing, move_used: Move::Haze, .. }))
+        let haze_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Koffing,
+                        move_used: Move::Haze,
+                        ..
+                    }
+                )
+            })
             .collect();
         assert!(!haze_used_events.is_empty(), "Haze should be used");
 
         // Should NOT have any StatStageChanged events since no stats were changed
-        let stat_change_events: Vec<_> = event_bus.events().iter()
+        let stat_change_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::StatStageChanged { .. }))
             .collect();
-        assert!(stat_change_events.is_empty(), "Should not have StatStageChanged events when no stats need clearing");
+        assert!(
+            stat_change_events.is_empty(),
+            "Should not have StatStageChanged events when no stats need clearing"
+        );
     }
 
     #[test]
@@ -177,7 +220,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -215,9 +259,14 @@ mod tests {
         assert_eq!(battle_state.players[0].get_stat_stage(StatType::Attack), 0);
 
         // Should have StatStageChanged event
-        let stat_change_events: Vec<_> = event_bus.events().iter()
+        let stat_change_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::StatStageChanged { new_stage: 0, .. }))
             .collect();
-        assert!(!stat_change_events.is_empty(), "Should have cleared the stat change");
+        assert!(
+            !stat_change_events.is_empty(),
+            "Should have cleared the stat change"
+        );
     }
 }

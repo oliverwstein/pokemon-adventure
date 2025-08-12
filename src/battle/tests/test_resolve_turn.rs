@@ -21,7 +21,8 @@ mod tests {
 
         PokemonInst::new_for_test(
             species,
-            10, 0,
+            10,
+            0,
             100,                       // Set current HP directly
             [15; 6],                   // Decent IVs
             [0; 6],                    // No EVs for simplicity

@@ -17,7 +17,8 @@ mod tests {
 
         let mut pokemon = PokemonInst::new_for_test(
             species,
-            10, 0,
+            10,
+            0,
             0, // Will be set below
             [15; 6],
             [0; 6],
@@ -35,7 +36,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -54,8 +56,11 @@ mod tests {
 
         let initial_hp = player1.active_pokemon().unwrap().current_hp();
         let max_hp = player1.active_pokemon().unwrap().max_hp();
-        
-        assert_eq!(initial_hp, 50, "Should start with 50 HP after taking 50 damage");
+
+        assert_eq!(
+            initial_hp, 50,
+            "Should start with 50 HP after taking 50 damage"
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -72,9 +77,12 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
         let expected_heal = (max_hp * 50) / 100; // 50% of max HP
-        
+
         // The test shows that healing happened (50 HP restored) but then Tackle dealt damage (36)
         // So the final HP should reflect both the heal and the subsequent damage
         // Let's just verify that healing occurred by checking the event
@@ -83,11 +91,19 @@ mod tests {
         let heal_events: Vec<_> = event_bus.events().iter()
             .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Chansey, amount, new_hp, .. } if *amount == expected_heal && *new_hp == max_hp))
             .collect();
-        assert!(!heal_events.is_empty(), "Should have PokemonHealed event for {} HP, bringing HP to {}", expected_heal, max_hp);
-        
+        assert!(
+            !heal_events.is_empty(),
+            "Should have PokemonHealed event for {} HP, bringing HP to {}",
+            expected_heal,
+            max_hp
+        );
+
         // Verify that the heal happened before the damage (evidenced by the fact that Chansey took damage from Tackle)
         // The final HP should be less than max_hp due to Tackle damage
-        assert!(final_hp < max_hp, "Pokemon should have taken damage from Tackle after being healed");
+        assert!(
+            final_hp < max_hp,
+            "Pokemon should have taken damage from Tackle after being healed"
+        );
     }
 
     #[test]
@@ -96,7 +112,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -130,23 +147,47 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // HP should remain at max (no overheal) but might be reduced by Tackle
         assert!(final_hp <= max_hp, "HP should not exceed max HP");
 
         // Should NOT have heal event since already at full HP
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Chansey, .. }))
+        let heal_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonHealed {
+                        target: Species::Chansey,
+                        ..
+                    }
+                )
+            })
             .collect();
-        
+
         // If Tackle goes first and deals damage, then Recover might heal
         // If Recover goes first, there should be no heal event since at full HP
         // Let's check if Recover was used first (Status moves typically have higher priority)
-        
+
         // For now, just ensure the move was executed
-        let recover_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Chansey, move_used: Move::Recover, .. }))
+        let recover_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Chansey,
+                        move_used: Move::Recover,
+                        ..
+                    }
+                )
+            })
             .collect();
         assert!(!recover_used_events.is_empty(), "Recover should be used");
     }
@@ -157,7 +198,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -173,7 +215,7 @@ mod tests {
 
         // Set Player 1's Pokemon to 0 HP (fainted)
         player1.active_pokemon_mut().unwrap().take_damage(100); // Deal max damage to faint
-        
+
         let initial_hp = player1.active_pokemon().unwrap().current_hp();
         assert_eq!(initial_hp, 0, "Should be fainted with 0 HP");
 
@@ -192,14 +234,30 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         assert_eq!(final_hp, 0, "Fainted Pokemon should remain fainted (0 HP)");
 
         // Should NOT have heal event for fainted Pokemon
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Chansey, .. }))
+        let heal_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonHealed {
+                        target: Species::Chansey,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(heal_events.is_empty(), "Fainted Pokemon should not be healed");
+        assert!(
+            heal_events.is_empty(),
+            "Fainted Pokemon should not be healed"
+        );
     }
 }

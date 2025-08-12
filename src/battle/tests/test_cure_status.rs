@@ -17,7 +17,8 @@ mod tests {
 
         let mut pokemon = PokemonInst::new_for_test(
             species,
-            10,0,
+            10,
+            0,
             0, // Will be set below
             [15; 6],
             [0; 6],
@@ -35,7 +36,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -51,9 +53,12 @@ mod tests {
 
         // Make Player 1's Pokemon paralyzed
         player1.active_pokemon_mut().unwrap().status = Some(StatusCondition::Paralysis);
-        
+
         // Verify initial status
-        assert_eq!(player1.active_pokemon().unwrap().status, Some(StatusCondition::Paralysis));
+        assert_eq!(
+            player1.active_pokemon().unwrap().status,
+            Some(StatusCondition::Paralysis)
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -71,20 +76,44 @@ mod tests {
         }
 
         // Player 1's Pokemon should no longer be paralyzed
-        assert_eq!(battle_state.players[0].active_pokemon().unwrap().status, None);
+        assert_eq!(
+            battle_state.players[0].active_pokemon().unwrap().status,
+            None
+        );
 
         // Should have PokemonStatusRemoved event
-        let status_removed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { 
-                target: Species::Alakazam, 
-                status: StatusCondition::Paralysis 
-            }))
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonStatusRemoved {
+                        target: Species::Alakazam,
+                        status: StatusCondition::Paralysis
+                    }
+                )
+            })
             .collect();
-        assert!(!status_removed_events.is_empty(), "Should have PokemonStatusRemoved event for Paralysis");
+        assert!(
+            !status_removed_events.is_empty(),
+            "Should have PokemonStatusRemoved event for Paralysis"
+        );
 
         // Should also have used Agility
-        let agility_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Alakazam, move_used: Move::Agility, .. }))
+        let agility_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Alakazam,
+                        move_used: Move::Agility,
+                        ..
+                    }
+                )
+            })
             .collect();
         assert!(!agility_used_events.is_empty(), "Agility should be used");
     }
@@ -95,7 +124,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -111,9 +141,12 @@ mod tests {
 
         // Make Player 2's Pokemon asleep
         player2.active_pokemon_mut().unwrap().status = Some(StatusCondition::Sleep(2));
-        
+
         // Verify initial status
-        assert_eq!(player2.active_pokemon().unwrap().status, Some(StatusCondition::Sleep(2)));
+        assert_eq!(
+            player2.active_pokemon().unwrap().status,
+            Some(StatusCondition::Sleep(2))
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -131,16 +164,29 @@ mod tests {
         }
 
         // Player 2's Pokemon should no longer be asleep
-        assert_eq!(battle_state.players[1].active_pokemon().unwrap().status, None);
+        assert_eq!(
+            battle_state.players[1].active_pokemon().unwrap().status,
+            None
+        );
 
         // Should have PokemonStatusRemoved event
-        let status_removed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { 
-                target: Species::Snorlax, 
-                status: StatusCondition::Sleep(_) 
-            }))
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonStatusRemoved {
+                        target: Species::Snorlax,
+                        status: StatusCondition::Sleep(_)
+                    }
+                )
+            })
             .collect();
-        assert!(!status_removed_events.is_empty(), "Should have PokemonStatusRemoved event for Sleep");
+        assert!(
+            !status_removed_events.is_empty(),
+            "Should have PokemonStatusRemoved event for Sleep"
+        );
     }
 
     #[test]
@@ -149,7 +195,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -165,9 +212,12 @@ mod tests {
 
         // Make Player 1's Pokemon burned (not paralyzed, so Agility shouldn't cure it)
         player1.active_pokemon_mut().unwrap().status = Some(StatusCondition::Burn);
-        
+
         // Verify initial status
-        assert_eq!(player1.active_pokemon().unwrap().status, Some(StatusCondition::Burn));
+        assert_eq!(
+            player1.active_pokemon().unwrap().status,
+            Some(StatusCondition::Burn)
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -185,17 +235,36 @@ mod tests {
         }
 
         // Player 1's Pokemon should still be burned (Agility only cures Paralysis)
-        assert_eq!(battle_state.players[0].active_pokemon().unwrap().status, Some(StatusCondition::Burn));
+        assert_eq!(
+            battle_state.players[0].active_pokemon().unwrap().status,
+            Some(StatusCondition::Burn)
+        );
 
         // Should NOT have PokemonStatusRemoved event since no matching status was cured
-        let status_removed_events: Vec<_> = event_bus.events().iter()
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { .. }))
             .collect();
-        assert!(status_removed_events.is_empty(), "Should not have PokemonStatusRemoved event when no matching status");
+        assert!(
+            status_removed_events.is_empty(),
+            "Should not have PokemonStatusRemoved event when no matching status"
+        );
 
         // Should still have used Agility though (and gotten speed boost)
-        let agility_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Alakazam, move_used: Move::Agility, .. }))
+        let agility_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Alakazam,
+                        move_used: Move::Agility,
+                        ..
+                    }
+                )
+            })
             .collect();
         assert!(!agility_used_events.is_empty(), "Agility should be used");
     }
@@ -206,7 +275,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -239,28 +309,48 @@ mod tests {
         }
 
         // Player 1's Pokemon should still have no status
-        assert_eq!(battle_state.players[0].active_pokemon().unwrap().status, None);
+        assert_eq!(
+            battle_state.players[0].active_pokemon().unwrap().status,
+            None
+        );
 
         // Should NOT have PokemonStatusRemoved event since there was no status to cure
-        let status_removed_events: Vec<_> = event_bus.events().iter()
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { .. }))
             .collect();
-        assert!(status_removed_events.is_empty(), "Should not have PokemonStatusRemoved event when no status exists");
+        assert!(
+            status_removed_events.is_empty(),
+            "Should not have PokemonStatusRemoved event when no status exists"
+        );
 
         // Should still have used Agility and gotten speed boost
-        let agility_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Alakazam, move_used: Move::Agility, .. }))
+        let agility_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Alakazam,
+                        move_used: Move::Agility,
+                        ..
+                    }
+                )
+            })
             .collect();
         assert!(!agility_used_events.is_empty(), "Agility should be used");
     }
 
     #[test]
     fn test_cure_status_poison() {
-        // Initialize move data  
+        // Initialize move data
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         // Create a custom test to verify poison curing
         let mut player1 = BattlePlayer::new(
@@ -277,9 +367,12 @@ mod tests {
 
         // Make Player 1's Pokemon poisoned
         player1.active_pokemon_mut().unwrap().status = Some(StatusCondition::Poison(1));
-        
+
         // Verify initial status
-        assert_eq!(player1.active_pokemon().unwrap().status, Some(StatusCondition::Poison(1)));
+        assert_eq!(
+            player1.active_pokemon().unwrap().status,
+            Some(StatusCondition::Poison(1))
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -302,12 +395,20 @@ mod tests {
 
         // Player 1's Pokemon should still be poisoned (Agility doesn't cure poison)
         // The poison will have ticked during end-of-turn, so it will be Poison(2) now
-        assert!(matches!(battle_state.players[0].active_pokemon().unwrap().status, Some(StatusCondition::Poison(_))));
+        assert!(matches!(
+            battle_state.players[0].active_pokemon().unwrap().status,
+            Some(StatusCondition::Poison(_))
+        ));
 
         // Should NOT have status removed events
-        let status_removed_events: Vec<_> = event_bus.events().iter()
+        let status_removed_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { .. }))
             .collect();
-        assert!(status_removed_events.is_empty(), "Should not cure poison with a move that only cures paralysis");
+        assert!(
+            status_removed_events.is_empty(),
+            "Should not cure poison with a move that only cures paralysis"
+        );
     }
 }

@@ -17,7 +17,8 @@ mod tests {
 
         let mut pokemon = PokemonInst::new_for_test(
             species,
-            10, 0,
+            10,
+            0,
             0, // Will be set below
             [15; 6],
             [0; 6],
@@ -35,7 +36,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -62,8 +64,15 @@ mod tests {
         let _ = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Reflect condition
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::Reflect), "Reflect move should apply Reflect team condition");
-        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect), Some(4), "Reflect should have 4 turns remaining after first turn");
+        assert!(
+            battle_state.players[0].has_team_condition(&TeamCondition::Reflect),
+            "Reflect move should apply Reflect team condition"
+        );
+        assert_eq!(
+            battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
+            Some(4),
+            "Reflect should have 4 turns remaining after first turn"
+        );
 
         // Player 2 should not have Reflect
         assert!(!battle_state.players[1].has_team_condition(&TeamCondition::Reflect));
@@ -75,12 +84,16 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::LightScreen])],
+            vec![create_test_pokemon(
+                Species::Alakazam,
+                vec![Move::LightScreen],
+            )],
         );
 
         let player2 = BattlePlayer::new(
@@ -102,8 +115,15 @@ mod tests {
         let _ = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Light Screen condition
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::LightScreen), "Light Screen move should apply Light Screen team condition");
-        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::LightScreen), Some(4), "Light Screen should have 4 turns remaining after first turn");
+        assert!(
+            battle_state.players[0].has_team_condition(&TeamCondition::LightScreen),
+            "Light Screen move should apply Light Screen team condition"
+        );
+        assert_eq!(
+            battle_state.players[0].get_team_condition_turns(&TeamCondition::LightScreen),
+            Some(4),
+            "Light Screen should have 4 turns remaining after first turn"
+        );
 
         // Player 2 should not have Light Screen
         assert!(!battle_state.players[1].has_team_condition(&TeamCondition::LightScreen));
@@ -115,7 +135,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -142,8 +163,15 @@ mod tests {
         let _ = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Mist condition
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::Mist), "Mist move should apply Mist team condition");
-        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::Mist), Some(4), "Mist should have 4 turns remaining after first turn");
+        assert!(
+            battle_state.players[0].has_team_condition(&TeamCondition::Mist),
+            "Mist move should apply Mist team condition"
+        );
+        assert_eq!(
+            battle_state.players[0].get_team_condition_turns(&TeamCondition::Mist),
+            Some(4),
+            "Mist should have 4 turns remaining after first turn"
+        );
 
         // Player 2 should not have Mist
         assert!(!battle_state.players[1].has_team_condition(&TeamCondition::Mist));
@@ -155,7 +183,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         // Player 1 sets up Mist, Player 2 tries to use Growl (stat reduction)
         let player1 = BattlePlayer::new(
@@ -186,7 +215,10 @@ mod tests {
         let blocked_events: Vec<_> = event_bus.events().iter()
             .filter(|event| matches!(event, crate::battle::state::BattleEvent::StatChangeBlocked { reason, .. } if reason.contains("Mist")))
             .collect();
-        assert!(!blocked_events.is_empty(), "Mist should immediately protect against stat reductions");
+        assert!(
+            !blocked_events.is_empty(),
+            "Mist should immediately protect against stat reductions"
+        );
     }
 
     #[test]
@@ -195,7 +227,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -219,7 +252,10 @@ mod tests {
         let _ = resolve_turn(&mut battle_state, test_rng1);
 
         assert!(battle_state.players[0].has_team_condition(&TeamCondition::Reflect));
-        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect), Some(4));
+        assert_eq!(
+            battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
+            Some(4)
+        );
 
         // Turn 2: Use Reflect again (should reset the turn counter)
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Reflect again
@@ -230,6 +266,10 @@ mod tests {
 
         // Should still have Reflect, and turn counter should be back to 4 (refreshed and decremented)
         assert!(battle_state.players[0].has_team_condition(&TeamCondition::Reflect));
-        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect), Some(4), "Using Reflect again should refresh the turn counter");
+        assert_eq!(
+            battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
+            Some(4),
+            "Using Reflect again should refresh the turn counter"
+        );
     }
 }

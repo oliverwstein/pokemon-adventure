@@ -25,7 +25,8 @@ mod tests {
         {
             let mut pokemon = PokemonInst::new_for_test(
                 species,
-                10, 0,
+                10,
+                0,
                 0, // Will be set below
                 [15; 6],
                 [0; 6],

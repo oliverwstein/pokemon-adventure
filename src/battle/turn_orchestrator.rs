@@ -689,11 +689,14 @@ fn check_action_preventing_conditions(
                 // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
                 let target_index = if player_index == 0 { 1 } else { 0 };
                 let target_player = &battle_state.players[target_index];
-                
+
                 if let Some(target_pokemon) = target_player.active_pokemon() {
                     // Check if target is asleep
-                    let is_asleep = matches!(target_pokemon.status, Some(crate::pokemon::StatusCondition::Sleep(_)));
-                    
+                    let is_asleep = matches!(
+                        target_pokemon.status,
+                        Some(crate::pokemon::StatusCondition::Sleep(_))
+                    );
+
                     if !is_asleep {
                         return Some(ActionFailureReason::MoveFailedToExecute);
                     }
@@ -995,8 +998,9 @@ fn apply_move_effects(
                         // Mist only prevents negative stat changes from enemy moves
                         let is_enemy_move = target_index != attacker_index;
                         let is_negative_change = *stages < 0;
-                        let has_mist = target_player.has_team_condition(&crate::player::TeamCondition::Mist);
-                        
+                        let has_mist =
+                            target_player.has_team_condition(&crate::player::TeamCondition::Mist);
+
                         if is_enemy_move && is_negative_change && has_mist {
                             // Mist prevents the stat change - do nothing
                             bus.push(BattleEvent::StatChangeBlocked {
@@ -1059,7 +1063,7 @@ fn apply_move_effects(
                 if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
                     let max_hp = attacker_pokemon.max_hp();
                     let old_hp = attacker_pokemon.current_hp();
-                    
+
                     // Don't heal if already at full HP or fainted
                     if old_hp > 0 && old_hp < max_hp {
                         let heal_amount = (max_hp * (*percentage as u16)) / 100;
@@ -1067,7 +1071,7 @@ fn apply_move_effects(
                             attacker_pokemon.heal(heal_amount);
                             let new_hp = attacker_pokemon.current_hp();
                             let actual_heal = new_hp - old_hp;
-                            
+
                             if actual_heal > 0 {
                                 bus.push(BattleEvent::PokemonHealed {
                                     target: attacker_pokemon.species,
@@ -1089,11 +1093,11 @@ fn apply_move_effects(
                         if let Some(pokemon_species) = player.active_pokemon().map(|p| p.species) {
                             // Get current stat stages before clearing
                             let current_stages = player.get_all_stat_stages().clone();
-                            
+
                             // Only clear and emit events if there were any stat changes
                             if !current_stages.is_empty() {
                                 player.clear_stat_stages();
-                                
+
                                 // Emit events for each stat that was reset to 0
                                 for (stat_type, old_stage) in current_stages {
                                     if old_stage != 0 {
@@ -1122,11 +1126,26 @@ fn apply_move_effects(
                 if let Some(target_pokemon) = target_player.active_pokemon_mut() {
                     // Check if the Pokemon has the status condition we want to cure
                     let should_cure = match (&target_pokemon.status, status_type) {
-                        (Some(crate::pokemon::StatusCondition::Sleep(_)), crate::move_data::StatusType::Sleep) => true,
-                        (Some(crate::pokemon::StatusCondition::Poison(_)), crate::move_data::StatusType::Poison) => true,
-                        (Some(crate::pokemon::StatusCondition::Burn), crate::move_data::StatusType::Burn) => true,
-                        (Some(crate::pokemon::StatusCondition::Freeze), crate::move_data::StatusType::Freeze) => true,
-                        (Some(crate::pokemon::StatusCondition::Paralysis), crate::move_data::StatusType::Paralysis) => true,
+                        (
+                            Some(crate::pokemon::StatusCondition::Sleep(_)),
+                            crate::move_data::StatusType::Sleep,
+                        ) => true,
+                        (
+                            Some(crate::pokemon::StatusCondition::Poison(_)),
+                            crate::move_data::StatusType::Poison,
+                        ) => true,
+                        (
+                            Some(crate::pokemon::StatusCondition::Burn),
+                            crate::move_data::StatusType::Burn,
+                        ) => true,
+                        (
+                            Some(crate::pokemon::StatusCondition::Freeze),
+                            crate::move_data::StatusType::Freeze,
+                        ) => true,
+                        (
+                            Some(crate::pokemon::StatusCondition::Paralysis),
+                            crate::move_data::StatusType::Paralysis,
+                        ) => true,
                         _ => false, // No matching status to cure
                     };
 
@@ -1145,13 +1164,17 @@ fn apply_move_effects(
             crate::move_data::MoveEffect::Reflect(reflect_type) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
                 let team_condition = match reflect_type {
-                    crate::move_data::ReflectType::Physical => crate::player::TeamCondition::Reflect,
-                    crate::move_data::ReflectType::Special => crate::player::TeamCondition::LightScreen,
+                    crate::move_data::ReflectType::Physical => {
+                        crate::player::TeamCondition::Reflect
+                    }
+                    crate::move_data::ReflectType::Special => {
+                        crate::player::TeamCondition::LightScreen
+                    }
                 };
-                
+
                 // Team conditions typically last 5 turns in Pokemon
                 attacker_player.add_team_condition(team_condition, 5);
-                
+
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
                     // Generate an appropriate event (we can use a generic message for now)
                     let condition_name = match reflect_type {
@@ -1161,18 +1184,18 @@ fn apply_move_effects(
                     println!("{:?} used {}!", pokemon_species, condition_name);
                 }
             }
-            
+
             crate::move_data::MoveEffect::Mist => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // Mist typically lasts 5 turns in Pokemon
                 attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
-                
+
                 if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
                     println!("{:?} used Mist!", pokemon_species);
                 }
             }
-            
+
             // Ante effect (Pay Day)
             crate::move_data::MoveEffect::Ante(chance) => {
                 if rng.next_outcome() <= *chance {
@@ -1181,12 +1204,12 @@ fn apply_move_effects(
                     if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                         let pokemon_level = attacker_pokemon.level as u32;
                         let ante_amount = pokemon_level * 2;
-                        
+
                         // Add ante to the opponent (defender)
                         let defender_player = &mut battle_state.players[defender_index];
                         defender_player.add_ante(ante_amount);
                         let new_ante = defender_player.get_ante();
-                        
+
                         // Generate ante increased event
                         bus.push(BattleEvent::AnteIncreased {
                             player_index: defender_index,
@@ -1602,14 +1625,14 @@ fn perform_special_move(
             }
             crate::move_data::MoveEffect::Rest(sleep_turns) => {
                 let attacker_player = &mut battle_state.players[attacker_index];
-                
+
                 // Get Pokemon species first
                 let pokemon_species = if let Some(pokemon) = attacker_player.active_pokemon() {
                     pokemon.species
                 } else {
                     return true;
                 };
-                
+
                 // Full heal - restore HP to maximum and apply sleep
                 if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
                     let max_hp = attacker_pokemon.max_hp();
@@ -1623,120 +1646,251 @@ fn perform_special_move(
                             new_hp: max_hp,
                         });
                     }
-                    
+
                     // Apply Sleep status for specified turns
-                    attacker_pokemon.status = Some(crate::pokemon::StatusCondition::Sleep(*sleep_turns));
+                    attacker_pokemon.status =
+                        Some(crate::pokemon::StatusCondition::Sleep(*sleep_turns));
                     bus.push(BattleEvent::PokemonStatusApplied {
                         target: pokemon_species,
                         status: crate::pokemon::StatusCondition::Sleep(*sleep_turns),
                     });
                 }
-                
+
                 // Clear all active Pokemon conditions (after releasing the pokemon borrow)
-                let cleared_conditions: Vec<_> = attacker_player.active_pokemon_conditions.keys().cloned().collect();
+                let cleared_conditions: Vec<_> = attacker_player
+                    .active_pokemon_conditions
+                    .keys()
+                    .cloned()
+                    .collect();
                 for condition_key in cleared_conditions {
-                    if let Some(removed_condition) = attacker_player.active_pokemon_conditions.remove(&condition_key) {
+                    if let Some(removed_condition) = attacker_player
+                        .active_pokemon_conditions
+                        .remove(&condition_key)
+                    {
                         bus.push(BattleEvent::ConditionExpired {
                             target: pokemon_species,
                             condition: removed_condition,
                         });
                     }
                 }
-                
+
                 return true;
             }
             crate::move_data::MoveEffect::Metronome => {
                 // Get all possible moves except Metronome itself
                 let all_moves = [
                     // Normal Type
-                    Move::Pound, Move::Doubleslap, Move::PayDay, Move::Scratch, Move::Guillotine,
-                    Move::SwordsDance, Move::Cut, Move::Bind, Move::Slam, Move::Stomp,
-                    Move::Headbutt, Move::HornAttack, Move::FuryAttack, Move::HornDrill, Move::Tackle,
-                    Move::BodySlam, Move::Wrap, Move::Harden, Move::TakeDown, Move::Thrash,
-                    Move::DoubleEdge, Move::TailWhip, Move::Leer, Move::Bite, Move::Growl,
-                    Move::Roar, Move::Sing, Move::Supersonic, Move::SonicBoom, Move::Disable,
-                    Move::Agility, Move::QuickAttack, Move::Rage, Move::Mimic, Move::Screech,
-                    Move::DoubleTeam, Move::Recover, Move::Minimize, Move::Withdraw, Move::DefenseCurl,
-                    Move::Barrier, Move::FocusEnergy, Move::Bide, Move::MirrorMove,
-                    Move::SelfDestruct, Move::Clamp, Move::Swift, Move::SpikeCannon, Move::Constrict,
-                    Move::SoftBoiled, Move::Glare, Move::Transform, Move::Explosion, Move::FurySwipes,
-                    Move::Rest, Move::HyperFang, Move::Sharpen, Move::Conversion, Move::TriAttack,
-                    Move::SuperFang, Move::Slash, Move::Substitute, Move::HyperBeam,
-                    
+                    Move::Pound,
+                    Move::Doubleslap,
+                    Move::PayDay,
+                    Move::Scratch,
+                    Move::Guillotine,
+                    Move::SwordsDance,
+                    Move::Cut,
+                    Move::Bind,
+                    Move::Slam,
+                    Move::Stomp,
+                    Move::Headbutt,
+                    Move::HornAttack,
+                    Move::FuryAttack,
+                    Move::HornDrill,
+                    Move::Tackle,
+                    Move::BodySlam,
+                    Move::Wrap,
+                    Move::Harden,
+                    Move::TakeDown,
+                    Move::Thrash,
+                    Move::DoubleEdge,
+                    Move::TailWhip,
+                    Move::Leer,
+                    Move::Bite,
+                    Move::Growl,
+                    Move::Roar,
+                    Move::Sing,
+                    Move::Supersonic,
+                    Move::SonicBoom,
+                    Move::Disable,
+                    Move::Agility,
+                    Move::QuickAttack,
+                    Move::Rage,
+                    Move::Mimic,
+                    Move::Screech,
+                    Move::DoubleTeam,
+                    Move::Recover,
+                    Move::Minimize,
+                    Move::Withdraw,
+                    Move::DefenseCurl,
+                    Move::Barrier,
+                    Move::FocusEnergy,
+                    Move::Bide,
+                    Move::MirrorMove,
+                    Move::SelfDestruct,
+                    Move::Clamp,
+                    Move::Swift,
+                    Move::SpikeCannon,
+                    Move::Constrict,
+                    Move::SoftBoiled,
+                    Move::Glare,
+                    Move::Transform,
+                    Move::Explosion,
+                    Move::FurySwipes,
+                    Move::Rest,
+                    Move::HyperFang,
+                    Move::Sharpen,
+                    Move::Conversion,
+                    Move::TriAttack,
+                    Move::SuperFang,
+                    Move::Slash,
+                    Move::Substitute,
+                    Move::HyperBeam,
                     // Fighting Type
-                    Move::KarateChop, Move::CometPunch, Move::MegaPunch, Move::KoPunch, Move::DoubleKick,
-                    Move::MegaKick, Move::JumpKick, Move::RollingKick, Move::Submission, Move::LowKick,
-                    Move::Counter, Move::SeismicToss, Move::Strength, Move::Meditate, Move::HighJumpKick,
-                    Move::Barrage, Move::DizzyPunch,
-                    
+                    Move::KarateChop,
+                    Move::CometPunch,
+                    Move::MegaPunch,
+                    Move::KoPunch,
+                    Move::DoubleKick,
+                    Move::MegaKick,
+                    Move::JumpKick,
+                    Move::RollingKick,
+                    Move::Submission,
+                    Move::LowKick,
+                    Move::Counter,
+                    Move::SeismicToss,
+                    Move::Strength,
+                    Move::Meditate,
+                    Move::HighJumpKick,
+                    Move::Barrage,
+                    Move::DizzyPunch,
                     // Flying Type
-                    Move::RazorWind, Move::Gust, Move::WingAttack, Move::Whirlwind, Move::Fly,
-                    Move::Peck, Move::DrillPeck, Move::SkyAttack,
-                    
+                    Move::RazorWind,
+                    Move::Gust,
+                    Move::WingAttack,
+                    Move::Whirlwind,
+                    Move::Fly,
+                    Move::Peck,
+                    Move::DrillPeck,
+                    Move::SkyAttack,
                     // Rock Type
-                    Move::Vicegrip, Move::RockThrow, Move::SkullBash, Move::RockSlide, Move::AncientPower,
-                    
+                    Move::Vicegrip,
+                    Move::RockThrow,
+                    Move::SkullBash,
+                    Move::RockSlide,
+                    Move::AncientPower,
                     // Ground Type
-                    Move::SandAttack, Move::Earthquake, Move::Fissure, Move::Dig, Move::BoneClub,
+                    Move::SandAttack,
+                    Move::Earthquake,
+                    Move::Fissure,
+                    Move::Dig,
+                    Move::BoneClub,
                     Move::Bonemerang,
-                    
                     // Poison Type
-                    Move::PoisonSting, Move::Twineedle, Move::Acid, Move::Toxic, Move::Haze,
-                    Move::Smog, Move::Sludge, Move::PoisonJab, Move::PoisonGas, Move::AcidArmor,
-                    
+                    Move::PoisonSting,
+                    Move::Twineedle,
+                    Move::Acid,
+                    Move::Toxic,
+                    Move::Haze,
+                    Move::Smog,
+                    Move::Sludge,
+                    Move::PoisonJab,
+                    Move::PoisonGas,
+                    Move::AcidArmor,
                     // Bug Type
-                    Move::PinMissile, Move::SilverWind, Move::StringShot, Move::LeechLife,
-                    
+                    Move::PinMissile,
+                    Move::SilverWind,
+                    Move::StringShot,
+                    Move::LeechLife,
                     // Fire Type
-                    Move::FirePunch, Move::BlazeKick, Move::FireFang, Move::Ember, Move::Flamethrower,
-                    Move::WillOWisp, Move::FireSpin, Move::Smokescreen, Move::FireBlast,
-                    
+                    Move::FirePunch,
+                    Move::BlazeKick,
+                    Move::FireFang,
+                    Move::Ember,
+                    Move::Flamethrower,
+                    Move::WillOWisp,
+                    Move::FireSpin,
+                    Move::Smokescreen,
+                    Move::FireBlast,
                     // Water Type
-                    Move::Mist, Move::WaterGun, Move::HydroPump, Move::Surf, Move::Bubblebeam,
-                    Move::Waterfall, Move::Bubble, Move::Splash, Move::Bubblehammer,
-                    
+                    Move::Mist,
+                    Move::WaterGun,
+                    Move::HydroPump,
+                    Move::Surf,
+                    Move::Bubblebeam,
+                    Move::Waterfall,
+                    Move::Bubble,
+                    Move::Splash,
+                    Move::Bubblehammer,
                     // Grass Type
-                    Move::VineWhip, Move::Absorb, Move::MegaDrain, Move::GigaDrain, Move::LeechSeed,
-                    Move::Growth, Move::RazorLeaf, Move::Solarbeam, Move::PoisonPowder, Move::StunSpore,
-                    Move::SleepPowder, Move::PetalDance, Move::Spore, Move::EggBomb,
-                    
+                    Move::VineWhip,
+                    Move::Absorb,
+                    Move::MegaDrain,
+                    Move::GigaDrain,
+                    Move::LeechSeed,
+                    Move::Growth,
+                    Move::RazorLeaf,
+                    Move::Solarbeam,
+                    Move::PoisonPowder,
+                    Move::StunSpore,
+                    Move::SleepPowder,
+                    Move::PetalDance,
+                    Move::Spore,
+                    Move::EggBomb,
                     // Ice Type
-                    Move::IcePunch, Move::IceBeam, Move::Blizzard, Move::AuroraBeam,
-                    
+                    Move::IcePunch,
+                    Move::IceBeam,
+                    Move::Blizzard,
+                    Move::AuroraBeam,
                     // Electric Type
-                    Move::ThunderPunch, Move::Shock, Move::Discharge, Move::ThunderWave, Move::Thunderclap,
-                    Move::ChargeBeam, Move::Lightning, Move::Flash,
-                    
+                    Move::ThunderPunch,
+                    Move::Shock,
+                    Move::Discharge,
+                    Move::ThunderWave,
+                    Move::Thunderclap,
+                    Move::ChargeBeam,
+                    Move::Lightning,
+                    Move::Flash,
                     // Psychic Type
-                    Move::Confusion, Move::Psybeam, Move::Perplex, Move::Hypnosis, Move::Teleport,
-                    Move::ConfuseRay, Move::LightScreen, Move::Reflect, Move::Amnesia, Move::Kinesis,
-                    Move::Psychic, Move::Psywave, Move::DreamEater, Move::LovelyKiss,
-                    
+                    Move::Confusion,
+                    Move::Psybeam,
+                    Move::Perplex,
+                    Move::Hypnosis,
+                    Move::Teleport,
+                    Move::ConfuseRay,
+                    Move::LightScreen,
+                    Move::Reflect,
+                    Move::Amnesia,
+                    Move::Kinesis,
+                    Move::Psychic,
+                    Move::Psywave,
+                    Move::DreamEater,
+                    Move::LovelyKiss,
                     // Ghost Type
-                    Move::NightShade, Move::Lick, Move::ShadowBall,
-                    
+                    Move::NightShade,
+                    Move::Lick,
+                    Move::ShadowBall,
                     // Dragon Type
-                    Move::Outrage, Move::DragonRage,
+                    Move::Outrage,
+                    Move::DragonRage,
                 ];
-                
+
                 // Randomly select a move
                 let random_index = (rng.next_outcome() as usize) % all_moves.len();
                 let selected_move = all_moves[random_index];
-                
+
                 // Get Pokemon species for event logging
-                let pokemon_species = if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
-                    pokemon.species
-                } else {
-                    return true;
-                };
-                
+                let pokemon_species =
+                    if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
+                        pokemon.species
+                    } else {
+                        return true;
+                    };
+
                 // Log the Metronome selection
                 bus.push(BattleEvent::MoveUsed {
                     player_index: attacker_index,
                     pokemon: pokemon_species,
                     move_used: selected_move,
                 });
-                
+
                 // Create a BattleAction for the selected move and execute it
                 let metronome_action = BattleAction::AttackHit {
                     attacker_index,
@@ -1744,7 +1898,7 @@ fn perform_special_move(
                     move_used: selected_move,
                     hit_number: 1, // Must be greater than zero to avoid trying to use PP
                 };
-                
+
                 // Execute the selected move with full battle action processing
                 execute_battle_action(metronome_action, battle_state, action_stack, bus, rng);
                 return true; // Skip standard execution
@@ -2115,20 +2269,20 @@ pub fn execute_attack_hit(
                 if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
                     let max_hp = attacker_pokemon.max_hp();
                     let recoil_damage = (max_hp * (*percentage as u16)) / 100;
-                    
+
                     if recoil_damage > 0 {
                         let old_hp = attacker_pokemon.current_hp();
                         attacker_pokemon.take_damage(recoil_damage);
                         let new_hp = attacker_pokemon.current_hp();
                         let actual_damage = old_hp - new_hp;
-                        
+
                         if actual_damage > 0 {
                             bus.push(BattleEvent::DamageDealt {
                                 target: attacker_pokemon.species,
                                 damage: actual_damage,
                                 remaining_hp: new_hp,
                             });
-                            
+
                             // Check if the attacker fainted from recoil
                             if new_hp == 0 {
                                 bus.push(BattleEvent::PokemonFainted {

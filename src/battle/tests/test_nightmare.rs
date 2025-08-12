@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng, ActionFailureReason};
+    use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
     use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
@@ -17,7 +17,8 @@ mod tests {
 
         let mut pokemon = PokemonInst::new_for_test(
             species,
-            10, 0,
+            10,
+            0,
             0, // Will be set below
             [15; 6],
             [0; 6],
@@ -35,7 +36,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -68,16 +70,42 @@ mod tests {
         }
 
         // Dream Eater should succeed because target is asleep
-        let failed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::ActionFailed { reason: ActionFailureReason::MoveFailedToExecute }))
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::ActionFailed {
+                        reason: ActionFailureReason::MoveFailedToExecute
+                    }
+                )
+            })
             .collect();
-        assert!(failed_events.is_empty(), "Dream Eater should succeed when target is asleep");
+        assert!(
+            failed_events.is_empty(),
+            "Dream Eater should succeed when target is asleep"
+        );
 
         // Should have move used event for Dream Eater
-        let move_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Hypno, move_used: Move::DreamEater, .. }))
+        let move_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Hypno,
+                        move_used: Move::DreamEater,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(!move_used_events.is_empty(), "Dream Eater should be used successfully");
+        assert!(
+            !move_used_events.is_empty(),
+            "Dream Eater should be used successfully"
+        );
     }
 
     #[test]
@@ -86,7 +114,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -116,20 +145,52 @@ mod tests {
         }
 
         // Dream Eater should fail because target is not asleep
-        let failed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::ActionFailed { reason: ActionFailureReason::MoveFailedToExecute }))
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::ActionFailed {
+                        reason: ActionFailureReason::MoveFailedToExecute
+                    }
+                )
+            })
             .collect();
-        assert!(!failed_events.is_empty(), "Dream Eater should fail when target is not asleep");
+        assert!(
+            !failed_events.is_empty(),
+            "Dream Eater should fail when target is not asleep"
+        );
 
         // Should NOT have move used event for Dream Eater
-        let move_used_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::MoveUsed { pokemon: Species::Hypno, move_used: Move::DreamEater, .. }))
+        let move_used_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::MoveUsed {
+                        pokemon: Species::Hypno,
+                        move_used: Move::DreamEater,
+                        ..
+                    }
+                )
+            })
             .collect();
-        assert!(move_used_events.is_empty(), "Dream Eater should not be used when it fails");
+        assert!(
+            move_used_events.is_empty(),
+            "Dream Eater should not be used when it fails"
+        );
 
         // Player 2 should not take any damage since Dream Eater failed
-        let initial_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
-        assert_eq!(initial_hp, 100, "Target should not take damage when Dream Eater fails");
+        let initial_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        assert_eq!(
+            initial_hp, 100,
+            "Target should not take damage when Dream Eater fails"
+        );
     }
 
     #[test]
@@ -138,7 +199,8 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -171,9 +233,21 @@ mod tests {
         }
 
         // Dream Eater should fail because target is paralyzed, not asleep
-        let failed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::ActionFailed { reason: ActionFailureReason::MoveFailedToExecute }))
+        let failed_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::ActionFailed {
+                        reason: ActionFailureReason::MoveFailedToExecute
+                    }
+                )
+            })
             .collect();
-        assert!(!failed_events.is_empty(), "Dream Eater should fail when target is paralyzed (not asleep)");
+        assert!(
+            !failed_events.is_empty(),
+            "Dream Eater should fail when target is paralyzed (not asleep)"
+        );
     }
 }

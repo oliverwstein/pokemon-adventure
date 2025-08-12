@@ -7,7 +7,11 @@ mod tests {
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
 
-    fn create_test_pokemon_with_level(species: Species, level: u8, moves: Vec<Move>) -> PokemonInst {
+    fn create_test_pokemon_with_level(
+        species: Species,
+        level: u8,
+        moves: Vec<Move>,
+    ) -> PokemonInst {
         let mut pokemon_moves = [const { None }; 4];
         for (i, mv) in moves.into_iter().enumerate() {
             if i < 4 {
@@ -18,10 +22,10 @@ mod tests {
         let mut pokemon = PokemonInst::new_for_test(
             species,
             level,
-            0, // curr_exp
-            0, // Will be set below
-            [15; 6], // ivs
-            [0; 6],  // evs
+            0,                         // curr_exp
+            0,                         // Will be set below
+            [15; 6],                   // ivs
+            [0; 6],                    // evs
             [100, 80, 80, 80, 80, 80], // curr_stats
             pokemon_moves,
             None, // status
@@ -36,18 +40,27 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(Species::Alakazam, 25, vec![Move::PayDay])], // Level 25 Pokemon with Pay Day
+            vec![create_test_pokemon_with_level(
+                Species::Alakazam,
+                25,
+                vec![Move::PayDay],
+            )], // Level 25 Pokemon with Pay Day
         );
 
         let player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(Species::Machamp, 30, vec![Move::Splash])],
+            vec![create_test_pokemon_with_level(
+                Species::Machamp,
+                30,
+                vec![Move::Splash],
+            )],
         );
 
         // Initially no ante
@@ -72,22 +85,43 @@ mod tests {
 
         // Player 2's ante should be increased by 2x Player 1's level (25 * 2 = 50)
         let expected_ante = 25u32 * 2;
-        assert_eq!(battle_state.players[1].get_ante(), expected_ante, "Player 2's ante should be increased by 2x attacker's level");
-        
+        assert_eq!(
+            battle_state.players[1].get_ante(),
+            expected_ante,
+            "Player 2's ante should be increased by 2x attacker's level"
+        );
+
         // Player 1's ante should remain 0
-        assert_eq!(battle_state.players[0].get_ante(), 0, "Player 1's ante should remain unchanged");
+        assert_eq!(
+            battle_state.players[0].get_ante(),
+            0,
+            "Player 1's ante should remain unchanged"
+        );
 
         // Should have AnteIncreased event
-        let ante_events: Vec<_> = event_bus.events().iter()
+        let ante_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::AnteIncreased { .. }))
             .collect();
         assert!(!ante_events.is_empty(), "Should have AnteIncreased event");
 
         // Check event details
-        if let BattleEvent::AnteIncreased { player_index, amount, new_total } = &ante_events[0] {
+        if let BattleEvent::AnteIncreased {
+            player_index,
+            amount,
+            new_total,
+        } = &ante_events[0]
+        {
             assert_eq!(*player_index, 1, "Should target player 2");
-            assert_eq!(*amount, expected_ante, "Amount should be 2x attacker's level");
-            assert_eq!(*new_total, expected_ante, "New total should match expected ante");
+            assert_eq!(
+                *amount, expected_ante,
+                "Amount should be 2x attacker's level"
+            );
+            assert_eq!(
+                *new_total, expected_ante,
+                "New total should match expected ante"
+            );
         }
     }
 
@@ -97,19 +131,28 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         // Test with level 10 Pokemon
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(Species::Alakazam, 10, vec![Move::PayDay])],
+            vec![create_test_pokemon_with_level(
+                Species::Alakazam,
+                10,
+                vec![Move::PayDay],
+            )],
         );
 
         let player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(Species::Machamp, 50, vec![Move::Splash])],
+            vec![create_test_pokemon_with_level(
+                Species::Machamp,
+                50,
+                vec![Move::Splash],
+            )],
         );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
@@ -122,7 +165,11 @@ mod tests {
 
         // Should be 10 * 2 = 20 ante
         let expected_ante = 10u32 * 2;
-        assert_eq!(battle_state.players[1].get_ante(), expected_ante, "Ante should be 2x level 10 = 20");
+        assert_eq!(
+            battle_state.players[1].get_ante(),
+            expected_ante,
+            "Ante should be 2x level 10 = 20"
+        );
     }
 
     #[test]
@@ -131,18 +178,27 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(Species::Alakazam, 20, vec![Move::PayDay])],
+            vec![create_test_pokemon_with_level(
+                Species::Alakazam,
+                20,
+                vec![Move::PayDay],
+            )],
         );
 
         let player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(Species::Machamp, 30, vec![Move::Splash])],
+            vec![create_test_pokemon_with_level(
+                Species::Machamp,
+                30,
+                vec![Move::Splash],
+            )],
         );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
@@ -158,12 +214,17 @@ mod tests {
         // If Pay Day has less than 99% chance, ante should remain 0
         // This test validates the chance-based nature rather than specific values
         // since we don't know the exact chance percentage for Pay Day
-        let ante_events: Vec<_> = event_bus.events().iter()
+        let ante_events: Vec<_> = event_bus
+            .events()
+            .iter()
             .filter(|event| matches!(event, BattleEvent::AnteIncreased { .. }))
             .collect();
 
         // The test outcome depends on Pay Day's actual chance percentage in the data files
-        println!("Player 2 final ante: {}", battle_state.players[1].get_ante());
+        println!(
+            "Player 2 final ante: {}",
+            battle_state.players[1].get_ante()
+        );
         println!("AnteIncreased events: {}", ante_events.len());
     }
 
@@ -173,18 +234,27 @@ mod tests {
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(Species::Alakazam, 15, vec![Move::PayDay])],
+            vec![create_test_pokemon_with_level(
+                Species::Alakazam,
+                15,
+                vec![Move::PayDay],
+            )],
         );
 
         let player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(Species::Machamp, 25, vec![Move::Splash])],
+            vec![create_test_pokemon_with_level(
+                Species::Machamp,
+                25,
+                vec![Move::Splash],
+            )],
         );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
@@ -214,7 +284,11 @@ mod tests {
             // First use succeeded, check if second use also succeeded
             assert!(second_ante >= first_ante, "Ante should not decrease");
             if second_ante > first_ante {
-                assert_eq!(second_ante, first_ante + expected_per_use, "Ante should accumulate correctly");
+                assert_eq!(
+                    second_ante,
+                    first_ante + expected_per_use,
+                    "Ante should accumulate correctly"
+                );
             }
         }
 

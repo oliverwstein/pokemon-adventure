@@ -19,7 +19,8 @@ mod tests {
         {
             let mut pokemon = PokemonInst::new_for_test(
                 species,
-                10,0,
+                10,
+                0,
                 0, // Will be set below
                 [15; 6],
                 [0; 6],
@@ -69,7 +70,7 @@ mod tests {
 
         // Create RNG with values that will guarantee critical hits
         let test_rng = TurnRng::new_for_test(vec![
-            2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3 // Low values to ensure critical hits
+            2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3, // Low values to ensure critical hits
         ]);
 
         // Execute turn

@@ -110,6 +110,11 @@ pub enum BattleEvent {
         old_stage: i8,
         new_stage: i8,
     },
+    StatChangeBlocked {
+        target: Species,
+        stat: StatType,
+        reason: String,
+    },
 
     // Action Failures
     ActionFailed {

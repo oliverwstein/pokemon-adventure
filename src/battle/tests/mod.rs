@@ -48,3 +48,6 @@ mod test_reflect_lightscreen;
 
 #[cfg(test)]
 mod test_team_condition_expiry;
+
+#[cfg(test)]
+mod test_mist;

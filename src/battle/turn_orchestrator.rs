@@ -989,17 +989,32 @@ fn apply_move_effects(
                     let target_player = &mut battle_state.players[target_index];
                     if let Some(pokemon_species) = target_player.active_pokemon().map(|p| p.species)
                     {
-                        let old_stage = target_player.get_stat_stage(player_stat);
-                        target_player.modify_stat_stage(player_stat, *stages);
-                        let new_stage = target_player.get_stat_stage(player_stat);
-
-                        if old_stage != new_stage {
-                            bus.push(BattleEvent::StatStageChanged {
+                        // Check if Mist prevents this stat change
+                        // Mist only prevents negative stat changes from enemy moves
+                        let is_enemy_move = target_index != attacker_index;
+                        let is_negative_change = *stages < 0;
+                        let has_mist = target_player.has_team_condition(&crate::player::TeamCondition::Mist);
+                        
+                        if is_enemy_move && is_negative_change && has_mist {
+                            // Mist prevents the stat change - do nothing
+                            bus.push(BattleEvent::StatChangeBlocked {
                                 target: pokemon_species,
                                 stat: player_stat,
-                                old_stage,
-                                new_stage,
+                                reason: "Mist prevented stat reduction".to_string(),
                             });
+                        } else {
+                            let old_stage = target_player.get_stat_stage(player_stat);
+                            target_player.modify_stat_stage(player_stat, *stages);
+                            let new_stage = target_player.get_stat_stage(player_stat);
+
+                            if old_stage != new_stage {
+                                bus.push(BattleEvent::StatStageChanged {
+                                    target: pokemon_species,
+                                    stat: player_stat,
+                                    old_stage,
+                                    new_stage,
+                                });
+                            }
                         }
                     }
                 }

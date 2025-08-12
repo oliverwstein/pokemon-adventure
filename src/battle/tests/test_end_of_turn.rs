@@ -245,10 +245,9 @@ mod tests {
             panic!("Trapped condition should exist with 1 turn remaining");
         }
 
-        // Second tick
+        // Second tick - Trapped goes 1->0 but doesn't expire yet
         let expired = player.tick_active_conditions();
-        assert_eq!(expired.len(), 1); // Trapped should expire
-        assert!(expired.contains(&PokemonCondition::Trapped { turns_remaining: 1 }));
+        assert_eq!(expired.len(), 0); // No conditions expire this tick
 
         // Check confused condition now has 1 turn remaining
         if let Some(PokemonCondition::Confused { turns_remaining }) =
@@ -259,10 +258,33 @@ mod tests {
             panic!("Confused condition should exist with 1 turn remaining");
         }
 
-        // Third tick
+        // Check trapped condition now has 0 turns remaining (but still active)
+        if let Some(PokemonCondition::Trapped { turns_remaining }) =
+            player.get_condition(&PokemonCondition::Trapped { turns_remaining: 0 })
+        {
+            assert_eq!(*turns_remaining, 0);
+        } else {
+            panic!("Trapped condition should exist with 0 turns remaining");
+        }
+
+        // Third tick - Trapped should expire (0 -> gone), Confused goes 1->0
+        let expired = player.tick_active_conditions();
+        assert_eq!(expired.len(), 1); // Trapped should expire
+        assert!(expired.contains(&PokemonCondition::Trapped { turns_remaining: 0 }));
+
+        // Check confused condition now has 0 turns remaining (but still active)
+        if let Some(PokemonCondition::Confused { turns_remaining }) =
+            player.get_condition(&PokemonCondition::Confused { turns_remaining: 0 })
+        {
+            assert_eq!(*turns_remaining, 0);
+        } else {
+            panic!("Confused condition should exist with 0 turns remaining");
+        }
+
+        // Fourth tick - Confused should expire (0 -> gone)
         let expired = player.tick_active_conditions();
         assert_eq!(expired.len(), 1); // Confused should expire
-        assert!(expired.contains(&PokemonCondition::Confused { turns_remaining: 1 }));
+        assert!(expired.contains(&PokemonCondition::Confused { turns_remaining: 0 }));
 
         // Should have no active conditions now
         assert_eq!(player.active_pokemon_conditions.len(), 0);

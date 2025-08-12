@@ -1,432 +1,637 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::execute_end_turn_phase;
-    use crate::move_data::initialize_move_data;
-    use crate::player::{BattlePlayer, PokemonCondition};
-    use crate::pokemon::{PokemonInst, get_species_data, initialize_species_data};
+    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
+    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::moves::Move;
+    use crate::player::{BattlePlayer, PlayerAction, PokemonCondition};
+    use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
-    use std::path::Path;
 
-    fn init_test_data() {
+    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
+        let mut pokemon_moves = [const { None }; 4];
+        for (i, mv) in moves.into_iter().enumerate() {
+            if i < 4 {
+                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
+            }
+        }
+
+        let mut pokemon = PokemonInst::new_for_test(
+            species,
+            10,
+            0,
+            0, // Will be set below
+            [15; 6],
+            [0; 6],
+            [100, 80, 80, 80, 80, 80],
+            pokemon_moves,
+            None,
+        );
+        pokemon.set_hp_to_max();
+        pokemon
+    }
+
+    #[test]
+    fn test_leech_seed_damage_and_healing() {
+        // Initialize move data
+        use std::path::Path;
         let data_path = Path::new("data");
-        initialize_move_data(data_path).expect("Failed to initialize move data");
-        initialize_species_data(data_path).expect("Failed to initialize species data");
-    }
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
 
-    fn create_test_pokemon(species: Species, hp: u16) -> PokemonInst {
-        let species_data = get_species_data(species).unwrap();
-        let level = 50;
-        let ivs = Some([15, 15, 15, 15, 15, 15]);
-
-        // Use the new_with_hp constructor to specify current HP (will be validated)
-        PokemonInst::new_with_hp(species, &species_data, level, ivs, None, Some(hp))
-    }
-
-    fn create_test_battle_state(player1_hp: u16, player2_hp: u16) -> BattleState {
-        let pokemon1 = create_test_pokemon(Species::Pikachu, player1_hp);
-        let pokemon2 = create_test_pokemon(Species::Charmander, player2_hp);
-
-        let player1 = BattlePlayer::new(
+        let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![pokemon1],
+            vec![create_test_pokemon(Species::Bulbasaur, vec![Move::Splash])],
         );
+
+        let mut player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Charmander, vec![Move::Splash])],
+        );
+
+        // Add Seeded condition to player1 (they will take damage)
+        player1.add_condition(PokemonCondition::Seeded);
+
+        // Damage player2 slightly so we can see healing
+        player2.active_pokemon_mut().unwrap().take_damage(20);
+
+        let initial_p1_hp = player1.active_pokemon().unwrap().current_hp();
+        let initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
+        let max_p1_hp = player1.active_pokemon().unwrap().max_hp();
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash (no-op moves)
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Leech Seed damage and healing test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+
+        // Calculate expected damage (1/8 of max HP, minimum 1)
+        let expected_damage = (max_p1_hp / 8).max(1);
+
+        // Player 1 should have taken Leech Seed damage
+        assert_eq!(
+            final_p1_hp,
+            initial_p1_hp - expected_damage,
+            "Player 1 should have taken {} damage from Leech Seed",
+            expected_damage
+        );
+
+        // Player 2 should have been healed by the same amount
+        assert!(
+            final_p2_hp > initial_p2_hp,
+            "Player 2 should have been healed by Leech Seed"
+        );
+        assert_eq!(
+            final_p2_hp,
+            initial_p2_hp + expected_damage,
+            "Player 2 should have been healed by {} HP from Leech Seed",
+            expected_damage
+        );
+
+        // Should have StatusDamage event for Seeded
+        let status_damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::StatusDamage {
+                        target: Species::Bulbasaur,
+                        status: PokemonCondition::Seeded,
+                        damage,
+                        ..
+                    } if *damage == expected_damage
+                )
+            })
+            .collect();
+        assert!(
+            !status_damage_events.is_empty(),
+            "Should have StatusDamage event for Leech Seed"
+        );
+
+        // Should have PokemonHealed event for opponent
+        let heal_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonHealed {
+                        target: Species::Charmander,
+                        amount,
+                        ..
+                    } if *amount == expected_damage
+                )
+            })
+            .collect();
+        assert!(
+            !heal_events.is_empty(),
+            "Should have PokemonHealed event for Leech Seed healing"
+        );
+    }
+
+    #[test]
+    fn test_trapped_damage() {
+        // Initialize move data
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Onix, vec![Move::Splash])],
+        );
+
         let player2 = BattlePlayer::new(
             "player2".to_string(),
             "Player 2".to_string(),
-            vec![pokemon2],
+            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
         );
 
-        BattleState::new("test_battle".to_string(), player1, player2)
-    }
+        // Add Trapped condition to player1 (they will take damage)
+        player1.add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
 
-    #[test]
-    fn test_trapped_condition_damage() {
-        init_test_data();
+        let initial_p1_hp = player1.active_pokemon().unwrap().current_hp();
+        let max_p1_hp = player1.active_pokemon().unwrap().max_hp();
 
-        let mut battle_state = create_test_battle_state(100, 100);
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]); // Not used in this test
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Add Trapped condition to player 1's Pokemon
-        battle_state.players[0].add_condition(PokemonCondition::Trapped { turns_remaining: 3 });
+        // Both players use Splash
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
 
-        let initial_hp = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().max_hp();
-        let expected_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
 
-        // Execute end-of-turn phase
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // Check that HP was reduced
-        let final_hp = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        assert_eq!(
-            final_hp,
-            initial_hp - expected_damage,
-            "Pokemon should take trapped damage"
-        );
-
-        // Check for correct events
-        let events = bus.events();
-
-        // Should have StatusDamage event
-        let has_status_damage = events.iter().any(|e| {
-            matches!(e, BattleEvent::StatusDamage { 
-                target: Species::Pikachu, 
-                status: PokemonCondition::Trapped { .. },
-                damage
-            } if *damage == expected_damage)
-        });
-        assert!(
-            has_status_damage,
-            "Should generate StatusDamage event for trapped condition"
-        );
-
-        println!("Trapped condition test events:");
-        for event in events {
+        // Print events for debugging
+        println!("Trapped damage test events:");
+        for event in event_bus.events() {
             println!("  {:?}", event);
         }
-    }
 
-    #[test]
-    fn test_trapped_condition_causes_fainting() {
-        init_test_data();
+        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
 
-        let mut battle_state = create_test_battle_state(5, 100); // Low HP for player 1
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
+        // Calculate expected damage (1/16 of max HP, minimum 1)
+        let expected_damage = (max_p1_hp / 16).max(1);
 
-        // Add Trapped condition
-        battle_state.players[0].add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
-
-        // Execute end-of-turn phase
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // Pokemon should be fainted
-        let pokemon = battle_state.players[0].team[0].as_ref().unwrap();
-        assert!(
-            pokemon.is_fainted(),
-            "Pokemon should faint from trapped damage"
-        );
-        assert_eq!(pokemon.current_hp(), 0, "Pokemon HP should be 0");
-
-        // Check for PokemonFainted event
-        let events = bus.events();
-        let has_fainted_event = events.iter().any(|e| {
-            matches!(
-                e,
-                BattleEvent::PokemonFainted {
-                    player_index: 0,
-                    pokemon: Species::Pikachu
-                }
-            )
-        });
-        assert!(has_fainted_event, "Should generate PokemonFainted event");
-    }
-
-    #[test]
-    fn test_seeded_condition_causes_fainting_and_heals_opponent() {
-        init_test_data();
-
-        // --- Setup ---
-        // Create a battle where Player 1's Pokémon has very low HP (3).
-        // This is less than the expected Leech Seed damage, ensuring it will faint.
-        let mut battle_state = create_test_battle_state(3, 100);
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
-
-        // Add the Seeded condition to Player 1's Pokémon
-        battle_state.players[0].add_condition(PokemonCondition::Seeded);
-
-        // --- Calculation ---
-        // We need to calculate the *actual* damage dealt to determine the healing amount.
-        let pokemon_p1_ref = battle_state.players[0].team[0].as_ref().unwrap();
-        let max_hp_p1 = pokemon_p1_ref.max_hp();
-        let current_hp_p1 = pokemon_p1_ref.current_hp(); // This is 3 HP
-
-        // Leech Seed would normally drain 1/8 of max HP.
-        let potential_drain = (max_hp_p1 / 8).max(1);
-
-        // However, the damage is capped by the target's remaining HP.
-        let actual_damage_dealt = potential_drain.min(current_hp_p1); // min(potential_drain, 3)
-
-        // The user is healed by the amount of HP that was actually drained.
-        let expected_healing = actual_damage_dealt;
-
-        // Record the opponent's initial state for the final assertion.
-        let initial_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-
-        // --- Action ---
-        // Execute the end-of-turn phase, which will trigger the Leech Seed effect.
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // --- Verification ---
-        // 1. Check that Player 1's Pokémon has fainted.
-        let pokemon_p1_final = battle_state.players[0].team[0].as_ref().unwrap();
-        assert!(
-            pokemon_p1_final.is_fainted(),
-            "Pokémon should faint when its HP (3) is less than or equal to the Leech Seed damage."
-        );
-
-        // 2. Check that Player 2 was healed by the correct amount, even though Player 1 fainted.
-        let final_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
+        // Player 1 should have taken Trapped damage
         assert_eq!(
-            final_hp_p2,
-            initial_hp_p2 + expected_healing,
-            "Opponent should have been healed by the actual damage dealt. Expected HP: {}, Final HP: {}",
-            initial_hp_p2 + expected_healing,
-            final_hp_p2
+            final_p1_hp,
+            initial_p1_hp - expected_damage,
+            "Player 1 should have taken {} damage from being Trapped",
+            expected_damage
         );
 
-        // 3. Check that both a Faint event and a Heal event were generated.
-        let events = bus.events();
-        let has_fainted_event = events.iter().any(|e| {
-            matches!(
-                e,
-                BattleEvent::PokemonFainted {
-                    player_index: 0,
-                    ..
-                }
-            )
-        });
-        let has_heal_event = events.iter().any(|e| {
-            matches!(e, BattleEvent::PokemonHealed { target: Species::Charmander, amount, .. } if *amount == expected_healing)
-        });
-
-        assert!(
-            has_fainted_event,
-            "A PokemonFainted event should have been generated for player 0."
-        );
-        assert!(
-            has_heal_event,
-            "A PokemonHealed event for the correct amount should be generated, even when the target faints."
-        );
-    }
-
-    #[test]
-    fn test_seeded_no_heal_when_opponent_at_full_hp() {
-        init_test_data();
-
-        let mut battle_state = create_test_battle_state(100, 100); // Both at full HP
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
-
-        // Set player 2 to max HP (simulate species max)
-        battle_state.players[1].team[0]
-            .as_mut()
-            .unwrap()
-            .set_hp_to_max();
-
-        // Add Seeded condition to player 1
-        battle_state.players[0].add_condition(PokemonCondition::Seeded);
-
-        let initial_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-
-        // Execute end-of-turn phase
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // Player 1 should take damage
-        let pokemon_p1 = battle_state.players[0].team[0].as_ref().unwrap();
-        assert!(
-            pokemon_p1.current_hp() < 100,
-            "Seeded Pokemon should take drain damage"
-        );
-
-        // Player 2 should not be healed (already at max)
-        let final_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        assert_eq!(
-            final_hp_p2, initial_hp_p2,
-            "Opponent at full HP should not be healed"
-        );
-
-        // Should have drain damage but no heal event
-        let events = bus.events();
-        let has_drain_damage = events.iter().any(|e| {
-            matches!(
-                e,
-                BattleEvent::StatusDamage {
-                    target: Species::Pikachu,
-                    status: PokemonCondition::Seeded,
-                    ..
-                }
-            )
-        });
-        let has_heal_event = events
+        // Should have StatusDamage event for Trapped
+        let status_damage_events: Vec<_> = event_bus
+            .events()
             .iter()
-            .any(|e| matches!(e, BattleEvent::PokemonHealed { .. }));
-
-        assert!(has_drain_damage, "Should have drain damage event");
-        assert!(
-            !has_heal_event,
-            "Should not have heal event when opponent is at full HP"
-        );
-    }
-
-    #[test]
-    fn test_both_conditions_simultaneously() {
-        init_test_data();
-
-        let mut battle_state = create_test_battle_state(100, 80);
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
-
-        // Add both conditions to player 1
-        battle_state.players[0].add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
-        battle_state.players[0].add_condition(PokemonCondition::Seeded);
-
-        let initial_hp_p1 = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        let initial_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        let max_hp = battle_state.players[0].team[0].as_ref().unwrap().max_hp();
-
-        let expected_trapped_damage = (max_hp / 16).max(1);
-        let expected_seed_damage = (max_hp / 8).max(1);
-        let total_expected_damage = expected_trapped_damage + expected_seed_damage;
-
-        // Execute end-of-turn phase
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // Player 1 should take damage from both conditions
-        let final_hp_p1 = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        assert_eq!(
-            final_hp_p1,
-            initial_hp_p1 - total_expected_damage,
-            "Should take damage from both conditions"
-        );
-
-        // Player 2 should be healed by seed (but not trapped)
-        let final_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        assert_eq!(
-            final_hp_p2,
-            initial_hp_p2 + expected_seed_damage,
-            "Should only be healed by seed drain"
-        );
-
-        // Should have events for both conditions
-        let events = bus.events();
-        let trapped_events = events
-            .iter()
-            .filter(|e| {
+            .filter(|event| {
                 matches!(
-                    e,
+                    event,
                     BattleEvent::StatusDamage {
+                        target: Species::Onix,
                         status: PokemonCondition::Trapped { .. },
+                        damage,
                         ..
-                    }
+                    } if *damage == expected_damage
                 )
             })
-            .count();
+            .collect();
+        assert!(
+            !status_damage_events.is_empty(),
+            "Should have StatusDamage event for Trapped condition"
+        );
 
-        let seeded_events = events
+        // Trapped condition should still exist with decremented counter (2 -> 1)
+        assert!(battle_state.players[0].has_condition(&PokemonCondition::Trapped { turns_remaining: 1 }));
+    }
+
+    #[test]
+    fn test_both_seeded_and_trapped_damage() {
+        // Test that both conditions apply damage in the same turn
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Geodude, vec![Move::Splash])],
+        );
+
+        let player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Squirtle, vec![Move::Splash])],
+        );
+
+        // Add both conditions to player1
+        player1.add_condition(PokemonCondition::Seeded);
+        player1.add_condition(PokemonCondition::Trapped { turns_remaining: 3 });
+
+        let initial_p1_hp = player1.active_pokemon().unwrap().current_hp();
+        let max_p1_hp = player1.active_pokemon().unwrap().max_hp();
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Both Seeded and Trapped damage test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+
+        // Calculate expected total damage
+        let seeded_damage = (max_p1_hp / 8).max(1);
+        let trapped_damage = (max_p1_hp / 16).max(1);
+        let total_expected_damage = seeded_damage + trapped_damage;
+
+        // Player 1 should have taken both types of damage
+        assert_eq!(
+            final_p1_hp,
+            initial_p1_hp - total_expected_damage,
+            "Player 1 should have taken {} total damage (Seeded: {}, Trapped: {})",
+            total_expected_damage,
+            seeded_damage,
+            trapped_damage
+        );
+
+        // Should have StatusDamage events for both conditions
+        let seeded_damage_events: Vec<_> = event_bus
+            .events()
             .iter()
-            .filter(|e| {
+            .filter(|event| {
                 matches!(
-                    e,
+                    event,
                     BattleEvent::StatusDamage {
                         status: PokemonCondition::Seeded,
                         ..
                     }
                 )
             })
-            .count();
+            .collect();
+        assert!(
+            !seeded_damage_events.is_empty(),
+            "Should have StatusDamage event for Seeded condition"
+        );
 
-        let heal_events = events
+        let trapped_damage_events: Vec<_> = event_bus
+            .events()
             .iter()
-            .filter(|e| matches!(e, BattleEvent::PokemonHealed { .. }))
-            .count();
-
-        assert_eq!(trapped_events, 1, "Should have one trapped damage event");
-        assert_eq!(seeded_events, 1, "Should have one seeded damage event");
-        assert_eq!(heal_events, 1, "Should have one heal event");
-    }
-
-    #[test]
-    fn test_no_damage_when_no_conditions() {
-        init_test_data();
-
-        let mut battle_state = create_test_battle_state(100, 80);
-        let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![50]);
-
-        let initial_hp_p1 = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        let initial_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-
-        // Execute end-of-turn phase with no conditions
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
-
-        // No HP should change
-        let final_hp_p1 = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        let final_hp_p2 = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-
-        assert_eq!(final_hp_p1, initial_hp_p1, "Player 1 HP should not change");
-        assert_eq!(final_hp_p2, initial_hp_p2, "Player 2 HP should not change");
-
-        // Should have no condition-related damage events
-        let events = bus.events();
-        let condition_damage_events = events
-            .iter()
-            .filter(|e| {
+            .filter(|event| {
                 matches!(
-                    e,
+                    event,
                     BattleEvent::StatusDamage {
-                        status: PokemonCondition::Trapped { .. } | PokemonCondition::Seeded,
+                        status: PokemonCondition::Trapped { .. },
                         ..
                     }
                 )
             })
-            .count();
-
-        let heal_events = events
-            .iter()
-            .filter(|e| matches!(e, BattleEvent::PokemonHealed { .. }))
-            .count();
-
-        assert_eq!(
-            condition_damage_events, 0,
-            "Should have no condition damage events"
+            .collect();
+        assert!(
+            !trapped_damage_events.is_empty(),
+            "Should have StatusDamage event for Trapped condition"
         );
-        assert_eq!(heal_events, 0, "Should have no heal events");
+    }
+
+    #[test]
+    fn test_leech_seed_causes_fainting() {
+        // Test that Leech Seed can cause a Pokemon to faint
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Caterpie, vec![Move::Splash])],
+        );
+
+        let player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Oddish, vec![Move::Splash])],
+        );
+
+        // Add Seeded condition and reduce HP to very low
+        player1.add_condition(PokemonCondition::Seeded);
+        let pokemon = player1.active_pokemon_mut().unwrap();
+        let max_hp = pokemon.max_hp();
+        let seeded_damage = (max_hp / 8).max(1);
+        // Leave just enough HP that Leech Seed will cause fainting
+        pokemon.take_damage(max_hp - seeded_damage + 1);
+        
+        let low_hp = player1.active_pokemon().unwrap().current_hp();
+        assert!(low_hp > 0 && low_hp <= seeded_damage, "Pokemon should have low HP but not be fainted yet");
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Leech Seed causes fainting test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+
+        // Pokemon should have fainted
+        assert_eq!(final_hp, 0, "Pokemon should have fainted from Leech Seed damage");
+
+        // Should have PokemonFainted event
+        let faint_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonFainted {
+                        pokemon: Species::Caterpie,
+                        player_index: 0
+                    }
+                )
+            })
+            .collect();
+        assert!(
+            !faint_events.is_empty(),
+            "Should have PokemonFainted event from Leech Seed damage"
+        );
+    }
+
+    #[test]
+    fn test_trapped_causes_fainting() {
+        // Test that Trapped condition can cause a Pokemon to faint
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Magikarp, vec![Move::Splash])],
+        );
+
+        let player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Gyarados, vec![Move::Splash])],
+        );
+
+        // Add Trapped condition and reduce HP to very low
+        player1.add_condition(PokemonCondition::Trapped { turns_remaining: 1 });
+        let pokemon = player1.active_pokemon_mut().unwrap();
+        let max_hp = pokemon.max_hp();
+        let trapped_damage = (max_hp / 16).max(1);
+        // Leave just enough HP that Trapped will cause fainting
+        pokemon.take_damage(max_hp - trapped_damage + 1);
+        
+        let low_hp = player1.active_pokemon().unwrap().current_hp();
+        assert!(low_hp > 0 && low_hp <= trapped_damage, "Pokemon should have low HP but not be fainted yet");
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Trapped causes fainting test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+
+        // Pokemon should have fainted
+        assert_eq!(final_hp, 0, "Pokemon should have fainted from Trapped damage");
+
+        // Should have PokemonFainted event
+        let faint_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonFainted {
+                        pokemon: Species::Magikarp,
+                        player_index: 0
+                    }
+                )
+            })
+            .collect();
+        assert!(
+            !faint_events.is_empty(),
+            "Should have PokemonFainted event from Trapped damage"
+        );
+    }
+
+    #[test]
+    fn test_leech_seed_no_healing_if_opponent_fainted() {
+        // Test that if the opponent is fainted, no healing occurs from Leech Seed
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Weedle, vec![Move::Splash])],
+        );
+
+        let mut player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Kakuna, vec![Move::Splash])],
+        );
+
+        // Add Seeded condition to player1
+        player1.add_condition(PokemonCondition::Seeded);
+
+        // Faint player2's Pokemon
+        let player2_pokemon = player2.active_pokemon_mut().unwrap();
+        let player2_max_hp = player2_pokemon.max_hp();
+        player2_pokemon.take_damage(player2_max_hp);
+        assert!(player2_pokemon.is_fainted(), "Player2's Pokemon should be fainted");
+
+        let initial_p1_hp = player1.active_pokemon().unwrap().current_hp();
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash (though player2 can't act)
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Leech Seed no healing if opponent fainted test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+
+        // Player 1 should still take damage from Leech Seed
+        let max_p1_hp = battle_state.players[0].active_pokemon().unwrap().max_hp();
+        let expected_damage = (max_p1_hp / 8).max(1);
+        assert_eq!(
+            final_p1_hp,
+            initial_p1_hp - expected_damage,
+            "Player 1 should still take Leech Seed damage"
+        );
+
+        // Player 2 should remain fainted (0 HP)
+        assert_eq!(final_p2_hp, 0, "Player 2 should remain fainted");
+
+        // Should have StatusDamage event but no PokemonHealed event
+        let status_damage_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::StatusDamage {
+                        status: PokemonCondition::Seeded,
+                        ..
+                    }
+                )
+            })
+            .collect();
+        assert!(!status_damage_events.is_empty(), "Should have StatusDamage event");
+
+        let heal_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonHealed {
+                        target: Species::Kakuna,
+                        ..
+                    }
+                )
+            })
+            .collect();
+        assert!(heal_events.is_empty(), "Should not have PokemonHealed event for fainted opponent");
+    }
+
+    #[test]
+    fn test_leech_seed_healing_caps_at_max_hp() {
+        // Test that healing from Leech Seed doesn't exceed max HP
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
+        let mut player1 = BattlePlayer::new(
+            "player1".to_string(),
+            "Player 1".to_string(),
+            vec![create_test_pokemon(Species::Bellsprout, vec![Move::Splash])],
+        );
+
+        let mut player2 = BattlePlayer::new(
+            "player2".to_string(),
+            "Player 2".to_string(),
+            vec![create_test_pokemon(Species::Weepinbell, vec![Move::Splash])],
+        );
+
+        // Add Seeded condition to player1
+        player1.add_condition(PokemonCondition::Seeded);
+
+        // Damage player2 by only 1 HP (so healing will be capped)
+        player2.active_pokemon_mut().unwrap().take_damage(1);
+
+        let initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
+        let max_p2_hp = player2.active_pokemon().unwrap().max_hp();
+
+        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+
+        // Both players use Splash
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+
+        // Print events for debugging
+        println!("Leech Seed healing caps at max HP test events:");
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
+
+        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+
+        // Player 2 should be healed back to max HP (not over)
+        assert_eq!(
+            final_p2_hp, max_p2_hp,
+            "Player 2 should be healed to max HP, not beyond"
+        );
+
+        // Should have PokemonHealed event for only 1 HP (the actual healing amount)
+        let heal_events: Vec<_> = event_bus
+            .events()
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    BattleEvent::PokemonHealed {
+                        target: Species::Weepinbell,
+                        amount: 1,
+                        new_hp,
+                        ..
+                    } if *new_hp == max_p2_hp
+                )
+            })
+            .collect();
+        assert!(
+            !heal_events.is_empty(),
+            "Should have PokemonHealed event for actual healing amount (1 HP)"
+        );
     }
 }

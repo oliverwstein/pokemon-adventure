@@ -1204,9 +1204,9 @@ mod tests {
             vec![create_test_pokemon(Species::Pikachu, vec![Move::Lightning])],
         );
 
-        // Apply Biding condition with 1 turn left and some stored damage
+        // Apply Biding condition with 0 turns left (ready to execute) and some stored damage
         player1.add_condition(PokemonCondition::Biding {
-            turns_remaining: 1,
+            turns_remaining: 0,
             damage: 50,
         });
 

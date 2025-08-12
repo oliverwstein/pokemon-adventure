@@ -42,3 +42,9 @@ mod test_cure_status;
 
 #[cfg(test)]
 mod test_reckless;
+
+#[cfg(test)]
+mod test_reflect_lightscreen;
+
+#[cfg(test)]
+mod test_team_condition_expiry;

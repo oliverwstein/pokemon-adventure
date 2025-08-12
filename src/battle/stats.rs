@@ -16,16 +16,16 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
             _ => None,
         }) {
         match move_data.category {
-            MoveCategory::Physical => transform_condition.curr_stats[1], // Attack
-            MoveCategory::Special => transform_condition.curr_stats[3],  // Special Attack
+            MoveCategory::Physical => transform_condition.stats.attack,
+            MoveCategory::Special => transform_condition.stats.sp_attack,
             MoveCategory::Status => return 0,
             MoveCategory::Other => return 0,
         }
     } else {
         match move_data.category {
-            MoveCategory::Physical => pokemon.curr_stats[1], // Attack
-            MoveCategory::Special => pokemon.curr_stats[3],  // Special Attack
-            MoveCategory::Status => return 0,                // Status moves don't use attack stats
+            MoveCategory::Physical => pokemon.stats.attack,
+            MoveCategory::Special => pokemon.stats.sp_attack,
+            MoveCategory::Status => return 0, // Status moves don't use attack stats
             MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use attack stats
         }
     };
@@ -71,16 +71,16 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
             _ => None,
         }) {
         match move_data.category {
-            MoveCategory::Physical => transform_condition.curr_stats[2], // Defense
-            MoveCategory::Special => transform_condition.curr_stats[4],  // Special Defense
+            MoveCategory::Physical => transform_condition.stats.defense,
+            MoveCategory::Special => transform_condition.stats.sp_defense,
             MoveCategory::Status => return 0,
             MoveCategory::Other => return 0,
         }
     } else {
         match move_data.category {
-            MoveCategory::Physical => pokemon.curr_stats[2], // Defense
-            MoveCategory::Special => pokemon.curr_stats[4],  // Special Defense
-            MoveCategory::Status => return 0,                // Status moves don't target defense
+            MoveCategory::Physical => pokemon.stats.defense,
+            MoveCategory::Special => pokemon.stats.sp_defense,
+            MoveCategory::Status => return 0, // Status moves don't target defense
             MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use defense stats
         }
     };
@@ -145,9 +145,9 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
             crate::player::PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
-        transform_condition.curr_stats[5] // Use transformed Pokemon's speed
+        transform_condition.stats.speed
     } else {
-        pokemon.curr_stats[5] // Use own speed
+        pokemon.stats.speed
     };
 
     // Apply stat stage modifiers

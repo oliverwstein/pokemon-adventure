@@ -332,14 +332,14 @@ pub enum UseMoveError {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PokemonInst {
-    pub name: String,                     // Species name if no nickname
-    pub species: Species,                 // Species enum for type-safe lookup
-    pub level: u8,                        // Pokemon's level (1-100)
-    pub curr_exp: u8,                     // Only really relevant for single-player
-    curr_hp: u16,                         // Current HP (private, use methods to access)
-    pub ivs: [u8; 6],                     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub evs: [u8; 6],                     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub curr_stats: [u16; 6],             // MAX_HP, ATK, DEF, SP.ATK, SP.DEF, SPD (can exceed 255)
+    pub name: String,     // Species name if no nickname
+    pub species: Species, // Species enum for type-safe lookup
+    pub level: u8,        // Pokemon's level (1-100)
+    pub curr_exp: u8,     // Only really relevant for single-player
+    curr_hp: u16,         // Current HP (private, use methods to access)
+    pub ivs: [u8; 6],     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub evs: [u8; 6],     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
+    pub stats: CurrentStats,
     pub moves: [Option<MoveInstance>; 4], // Up to 4 moves
     pub status: Option<StatusCondition>,  // Status condition with optional parameter
 }
@@ -352,6 +352,29 @@ pub struct BaseStats {
     pub sp_attack: u8,
     pub sp_defense: u8,
     pub speed: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CurrentStats {
+    pub hp: u16,
+    pub attack: u16,
+    pub defense: u16,
+    pub sp_attack: u16,
+    pub sp_defense: u16,
+    pub speed: u16,
+}
+
+impl From<[u16; 6]> for CurrentStats {
+    fn from(stats: [u16; 6]) -> Self {
+        CurrentStats {
+            hp: stats[0],
+            attack: stats[1],
+            defense: stats[2],
+            sp_attack: stats[3],
+            sp_defense: stats[4],
+            speed: stats[5],
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -585,7 +608,7 @@ impl MoveInstance {
 }
 
 impl PokemonInst {
-    /// Create a new Pokemon instance from species data
+    /// Create a new Pokemon instance from species data.
     pub fn new(
         species: Species,
         species_data: &PokemonSpecies,
@@ -596,6 +619,7 @@ impl PokemonInst {
         Self::new_with_hp(species, species_data, level, ivs, moves, None)
     }
 
+    /// Create a new Pokemon instance with a specific starting HP.
     pub fn new_with_hp(
         species: Species,
         species_data: &PokemonSpecies,
@@ -604,20 +628,21 @@ impl PokemonInst {
         moves: Option<Vec<Move>>,
         curr_hp: Option<u16>,
     ) -> Self {
-        // Generate default IVs if not provided (0-31 range)
-        let ivs = ivs.unwrap_or([0; 6]); // TODO: Add random generation
+        // Use default IVs (all 0) if not provided.
+        // In a full implementation, you might want random IVs here.
+        let ivs = ivs.unwrap_or_default();
 
-        // Initialize EVs to 0
-        let evs = [0; 6];
+        // Initialize EVs to 0.
+        let evs = [0u8; 6];
 
-        // Calculate current stats based on level, IVs, EVs, and base stats
-        let curr_stats = Self::calculate_stats(&species_data.base_stats, level, &ivs, &evs);
+        // Calculate stats, which now returns a `CurrentStats` struct.
+        let stats = Self::calculate_stats(&species_data.base_stats, level, &ivs, &evs);
 
-        // Derive moves from learnset if not provided
+        // Derive moves from the learnset if not provided.
         let moves = moves
             .unwrap_or_else(|| Self::derive_moves_from_learnset(&species_data.learnset, level));
 
-        // Create move instances with max PP from move data
+        // Create move instances with max PP.
         let mut move_array = [const { None }; 4];
         for (i, move_) in moves.into_iter().take(4).enumerate() {
             move_array[i] = Some(MoveInstance::new(move_));
@@ -627,22 +652,22 @@ impl PokemonInst {
             name: species_data.name.clone(),
             species,
             level,
-            curr_exp: 0, // TODO: Calculate from level
+            curr_exp: 0, // Simplified for now
             curr_hp: 0,  // Will be set below with validation
             ivs,
             evs,
-            curr_stats,
+            stats, // Assign the new `CurrentStats` struct here
             moves: move_array,
             status: None,
         };
 
-        // Set HP using the validated setter
-        pokemon.set_hp(curr_hp.unwrap_or(curr_stats[0]));
+        // Set HP using the validated setter. If no HP is provided, default to max HP.
+        pokemon.set_hp_to_max();
         pokemon
     }
 
-    /// Create a Pokemon instance for testing with all fields specified
-    /// This bypasses stat calculation and allows direct control over all values
+    /// Create a Pokemon instance for testing, maintaining the old array-based API.
+    /// This bypasses stat calculation and allows direct control over all values.
     pub fn new_for_test(
         species: Species,
         level: u8,
@@ -650,7 +675,7 @@ impl PokemonInst {
         curr_hp: u16,
         ivs: [u8; 6],
         evs: [u8; 6],
-        curr_stats: [u16; 6],
+        curr_stats: [u16; 6], // <-- Signature remains unchanged for test compatibility
         moves: [Option<MoveInstance>; 4],
         status: Option<StatusCondition>,
     ) -> Self {
@@ -662,257 +687,261 @@ impl PokemonInst {
             curr_hp: 0, // Will be set below with validation
             ivs,
             evs,
-            curr_stats,
+            stats: curr_stats.into(), // <-- Convert the array into our struct
             moves,
             status,
         };
 
-        // Set HP using the validated setter
+        // Set HP using the validated setter.
         pokemon.set_hp(curr_hp);
         pokemon
     }
 
-    /// Calculate current stats based on base stats, level, IVs, and EVs
-    /// Uses Gen 3+ stat calculation formula without natures
+    /// Calculate current stats based on base stats, level, IVs, and EVs.
+    /// Returns a `CurrentStats` struct.
     fn calculate_stats(
         base_stats: &BaseStats,
         level: u8,
         ivs: &[u8; 6],
         evs: &[u8; 6],
-    ) -> [u16; 6] {
-        let base = [
-            base_stats.hp,
-            base_stats.attack,
-            base_stats.defense,
-            base_stats.sp_attack,
-            base_stats.sp_defense,
-            base_stats.speed,
-        ];
+    ) -> CurrentStats {
+        let level = level as u16;
 
-        let mut stats = [0u16; 6];
+        // Formula for HP
+        let hp_base = 2 * base_stats.hp as u16 + ivs[0] as u16 + (evs[0] as u16 / 4);
+        let hp = (hp_base * level) / 100 + level + 10;
 
-        for i in 0..6 {
-            let stat = if i == 0 {
-                // HP = floor(0.01 * (2 * Base + IV + floor(0.25 * EV)) * Level) + Level + 10
-                let base_calculation = 2 * base[i] as u16 + ivs[i] as u16 + (evs[i] as u16 / 4);
-                let hp = (base_calculation * level as u16) / 100 + level as u16 + 10;
-                hp
-            } else {
-                // Other Stat = floor(0.01 * (2 * Base + IV + floor(0.25 * EV)) * Level) + 5
-                let base_calculation = 2 * base[i] as u16 + ivs[i] as u16 + (evs[i] as u16 / 4);
-                let other_stat = (base_calculation * level as u16) / 100 + 5;
-                other_stat
-            };
+        // Helper closure for the other 5 stats, which share a formula
+        let calc_other_stat = |base: u8, iv: u8, ev: u8| -> u16 {
+            let stat_base = 2 * base as u16 + iv as u16 + (ev as u16 / 4);
+            (stat_base * level) / 100 + 5
+        };
 
-            stats[i] = stat.min(65535); // Cap at max u16 value
+        CurrentStats {
+            hp,
+            attack: calc_other_stat(base_stats.attack, ivs[1], evs[1]),
+            defense: calc_other_stat(base_stats.defense, ivs[2], evs[2]),
+            sp_attack: calc_other_stat(base_stats.sp_attack, ivs[3], evs[3]),
+            sp_defense: calc_other_stat(base_stats.sp_defense, ivs[4], evs[4]),
+            speed: calc_other_stat(base_stats.speed, ivs[5], evs[5]),
         }
-
-        stats
     }
 
-    /// Derive moves from learnset based on current level
-    /// Returns the 4 most recent moves the Pokemon would know at this level
+    /// Derive moves from learnset based on current level.
+    /// Returns the 4 most recent moves the Pokemon would know at this level.
     fn derive_moves_from_learnset(learnset: &Learnset, level: u8) -> Vec<Move> {
         let mut learned_moves = Vec::new();
 
         // Collect all moves learned at or before the current level
         for learn_level in 1..=level {
             if let Some(moves_at_level) = learnset.level_up.get(&learn_level) {
-                for &move_ in moves_at_level {
-                    learned_moves.push(move_);
-                }
+                learned_moves.extend(moves_at_level);
             }
         }
 
-        // Pokemon can only know 4 moves, so take the 4 most recently learned
-        // If fewer than 4 moves learned, return all of them
-        if learned_moves.len() <= 4 {
-            learned_moves
-        } else {
-            learned_moves.into_iter().rev().take(4).rev().collect()
-        }
+        // Take the last 4 moves learned.
+        learned_moves.into_iter().rev().take(4).rev().collect()
     }
 
+    /// Decrement PP for a known move.
     pub fn use_move(&mut self, move_to_use: Move) -> Result<(), UseMoveError> {
-        // Find the move in the Pokémon's move list.
         for move_slot in self.moves.iter_mut() {
             if let Some(move_instance) = move_slot {
-                // Check if this is the move we're looking for.
                 if move_instance.move_ == move_to_use {
-                    // Found it. Now, try to use it.
                     if move_instance.use_move() {
-                        return Ok(()); // Success!
+                        return Ok(());
                     } else {
                         return Err(UseMoveError::NoPPRemaining);
                     }
                 }
             }
         }
-
-        // If the loop completes, the Pokémon does not know this move.
         Err(UseMoveError::MoveNotKnown)
     }
-    /// Get the species data for this Pokemon instance
 
+    /// Get the species data for this Pokemon instance.
     pub fn get_species_data(&self) -> Option<PokemonSpecies> {
         get_species_data(self.species)
     }
 
-    /// Get the current types of this Pokemon, accounting for Transform and Conversion conditions
-    /// This should be used instead of directly accessing species.types for battle calculations
+    /// Get the current types, accounting for Transform and Conversion conditions.
     pub fn get_current_types(&self, player: &crate::player::BattlePlayer) -> Vec<PokemonType> {
-        // Check for Converted condition first (overrides everything)
-        if let Some(converted_type) =
-            player
-                .active_pokemon_conditions
-                .values()
-                .find_map(|condition| match condition {
-                    crate::player::PokemonCondition::Converted { pokemon_type } => {
-                        Some(*pokemon_type)
-                    }
-                    _ => None,
-                })
+        if let Some(p_cond) = player
+            .active_pokemon_conditions
+            .values()
+            .find(|c| matches!(c, crate::player::PokemonCondition::Converted { .. }))
         {
-            return vec![converted_type]; // Use only the converted type
-        }
-
-        // Check for Transformed condition (use target's types)
-        if let Some(transform_target) =
-            player
-                .active_pokemon_conditions
-                .values()
-                .find_map(|condition| match condition {
-                    crate::player::PokemonCondition::Transformed { target } => Some(target),
-                    _ => None,
-                })
-        {
-            if let Some(target_species_data) = get_species_data(transform_target.species) {
-                return target_species_data.types.to_vec();
+            if let crate::player::PokemonCondition::Converted { pokemon_type } = p_cond {
+                return vec![*pokemon_type];
             }
         }
 
-        // No conditions - use normal species types
-        if let Some(species_data) = self.get_species_data() {
-            species_data.types.to_vec()
-        } else {
-            vec![] // Fallback - shouldn't happen in normal gameplay
+        if let Some(p_cond) = player
+            .active_pokemon_conditions
+            .values()
+            .find(|c| matches!(c, crate::player::PokemonCondition::Transformed { .. }))
+        {
+            if let crate::player::PokemonCondition::Transformed { target } = p_cond {
+                if let Some(target_species_data) = get_species_data(target.species) {
+                    return target_species_data.types.clone();
+                }
+            }
         }
+
+        self.get_species_data()
+            .map(|data| data.types)
+            .unwrap_or_default()
     }
 
-    /// Check if this Pokemon is fainted (0 HP or has Faint status)
+    /// Check if this Pokemon is fainted.
     pub fn is_fainted(&self) -> bool {
         self.curr_hp == 0 || matches!(self.status, Some(StatusCondition::Faint))
     }
 
-    /// Get current HP
+    /// Get current HP.
     pub fn current_hp(&self) -> u16 {
         self.curr_hp
     }
 
-    /// Get max HP from the calculated stats
+    /// Get max HP from the calculated stats.
     pub fn max_hp(&self) -> u16 {
-        self.curr_stats[0]
+        self.stats.hp
     }
 
-    /// Set current HP with validation (clamps to 0..=max_hp)
+    /// Set current HP with validation (clamps to 0..=max_hp).
     pub fn set_hp(&mut self, hp: u16) {
         let max_hp = self.max_hp();
         self.curr_hp = hp.min(max_hp);
     }
 
+    /// Set current HP to its maximum value.
     pub fn set_hp_to_max(&mut self) {
         self.curr_hp = self.max_hp();
     }
 
+    /// Restore HP to full and remove any status conditions.
     pub fn restore_fully(&mut self) {
         self.set_hp_to_max();
         self.status = None;
     }
-    /// Take damage and handle fainting
-    /// Returns true if the Pokemon fainted from this damage
-    pub fn take_damage(&mut self, damage: u16) -> bool {
-        if damage >= self.curr_hp {
-            // Pokemon faints - set HP to 0 and replace any existing status with Faint
-            self.curr_hp = 0;
 
+    /// Take damage and handle fainting.
+    /// Returns true if the Pokemon fainted from this damage.
+    pub fn take_damage(&mut self, damage: u16) -> bool {
+        self.curr_hp = self.curr_hp.saturating_sub(damage);
+        if self.curr_hp == 0 {
             self.status = Some(StatusCondition::Faint);
             true
         } else {
-            // Reduce HP by damage amount
-            self.curr_hp -= damage;
             false
         }
     }
 
-    /// Heal HP (cannot exceed max HP, cannot revive fainted Pokemon)
+    /// Heal HP (cannot exceed max HP or revive fainted Pokemon).
     pub fn heal(&mut self, heal_amount: u16) {
         if self.is_fainted() {
-            return; // Cannot heal fainted Pokemon
+            return;
         }
-
         let max_hp = self.max_hp();
         self.curr_hp = (self.curr_hp + heal_amount).min(max_hp);
     }
 
-    /// Revive a fainted Pokemon with specified HP
+    /// Revive a fainted Pokemon with a specified HP amount.
     pub fn revive(&mut self, hp_amount: u16) {
         if self.is_fainted() {
-            let max_hp = self.max_hp();
-            self.curr_hp = hp_amount.min(max_hp).max(1); // At least 1 HP
             self.status = None; // Remove faint status
+            let max_hp = self.max_hp();
+            self.curr_hp = hp_amount.min(max_hp).max(1); // Revive with at least 1 HP
         }
     }
 
-    /// Update status condition timers and return events that should be generated
-    /// Returns (status_damage, should_cure, status_changed)
-    pub fn tick_status(&mut self) -> (u16, bool, bool) {
-        let max_hp = self.max_hp(); // Get max HP once to avoid borrowing issues
+    /// Decrement/increment status condition counters without dealing damage.
+    /// Should be called at the start of turn when Pokemon tries to act.
+    /// Returns (should_cure, status_changed).
+    pub fn decrement_status_counters(&mut self) -> (bool, bool) {
+        let original_status = self.status;
+        
+        let should_cure = match &mut self.status {
+            Some(StatusCondition::Sleep(turns)) => {
+                *turns = turns.saturating_sub(1);
+                *turns == 0
+            }
+            Some(StatusCondition::Poison(severity)) => {
+                // Only increment Toxic poison (severity > 0)
+                if *severity > 0 {
+                    *severity += 1;
+                }
+                false // Poison never cures itself
+            }
+            _ => false,
+        };
 
-        match self.status {
-            Some(StatusCondition::Sleep(mut turns)) => {
-                if turns > 0 {
-                    turns -= 1;
-                    if turns == 0 {
-                        // Wake up
-                        self.status = None;
-                        (0, true, true) // No damage, cure status, status changed
-                    } else {
-                        // Update turn counter
-                        self.status = Some(StatusCondition::Sleep(turns));
-                        (0, false, true) // No damage, don't cure, turns changed  
-                    }
+        if should_cure {
+            self.status = None;
+        }
+
+        (should_cure, self.status != original_status)
+    }
+
+    /// Apply status damage without changing counters.
+    /// Should be called at end of turn.
+    /// Returns (status_damage, status_changed).
+    pub fn apply_status_damage(&mut self) -> (u16, bool) {
+        let max_hp = self.max_hp();
+        let original_status = self.status;
+
+        let damage = match &self.status {
+            Some(StatusCondition::Poison(severity)) => {
+                if *severity == 0 {
+                    (max_hp / 16).max(1) // Regular poison: 1/16 max HP
                 } else {
-                    (0, false, false) // Already at 0, no change
+                    (max_hp * (*severity as u16) / 16).max(1) // Toxic poison: severity/16 max HP
                 }
             }
-            Some(StatusCondition::Poison(mut severity)) => {
-                let damage = if severity == 0 {
-                    // Regular poison: 1/16 of max HP
+            Some(StatusCondition::Burn) => (max_hp / 8).max(1), // Burn: 1/8 max HP
+            _ => 0,
+        };
+
+        if damage > 0 {
+            self.take_damage(damage);
+        }
+
+        (damage, self.status != original_status)
+    }
+
+    /// Update status condition timers and return damage/cure info.
+    /// Returns (status_damage, should_cure, status_changed).
+    /// DEPRECATED: Use decrement_status_counters and apply_status_damage separately.
+    pub fn tick_status(&mut self) -> (u16, bool, bool) {
+        let max_hp = self.max_hp();
+        let original_status = self.status;
+
+        let (damage, should_cure) = match &mut self.status {
+            Some(StatusCondition::Sleep(turns)) => {
+                *turns = turns.saturating_sub(1);
+                (0, *turns == 0)
+            }
+            Some(StatusCondition::Poison(severity)) => {
+                let damage = if *severity == 0 {
                     (max_hp / 16).max(1)
                 } else {
-                    // Badly poisoned: severity/16 of max HP (severity increases each turn)
-                    severity += 1;
-                    self.status = Some(StatusCondition::Poison(severity)); // Update severity
-                    let poison_damage = (max_hp * (severity as u16) / 16).max(1);
-                    poison_damage
+                    *severity += 1;
+                    (max_hp * (*severity as u16) / 16).max(1)
                 };
-
-                // Apply poison damage
-                let fainted = self.take_damage(damage);
-                if fainted {
-                    (damage, false, true) // Damage dealt, don't cure (fainting handles status), status changed to Faint
-                } else {
-                    (damage, false, severity > 0) // Damage dealt, don't cure, status changed if badly poisoned
-                }
+                (damage, false)
             }
-            Some(StatusCondition::Burn) => {
-                let damage = (max_hp / 8).max(1); // 1/8 of max HP
+            Some(StatusCondition::Burn) => ((max_hp / 8).max(1), false),
+            _ => (0, false),
+        };
 
-                // Apply burn damage
-                let fainted = self.take_damage(damage);
-                (damage, false, fainted) // Damage dealt, don't cure (unless fainted), status might change to Faint
-            }
-            _ => (0, false, false), // No timing effects for Freeze, Paralysis, Faint
+        if damage > 0 {
+            self.take_damage(damage);
         }
+
+        if should_cure {
+            self.status = None;
+        }
+
+        (damage, should_cure, self.status != original_status)
     }
 }

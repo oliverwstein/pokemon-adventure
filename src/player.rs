@@ -283,7 +283,7 @@ impl BattlePlayer {
 
                 // Multi-turn conditions with countdown timers
                 PokemonCondition::Confused { turns_remaining } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((
@@ -296,7 +296,7 @@ impl BattlePlayer {
                 }
 
                 PokemonCondition::Exhausted { turns_remaining } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((
@@ -309,7 +309,7 @@ impl BattlePlayer {
                 }
 
                 PokemonCondition::Trapped { turns_remaining } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((
@@ -325,7 +325,7 @@ impl BattlePlayer {
                     pokemon_move,
                     turns_remaining,
                 } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((
@@ -339,7 +339,7 @@ impl BattlePlayer {
                 }
 
                 PokemonCondition::Rampaging { turns_remaining } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((
@@ -355,7 +355,7 @@ impl BattlePlayer {
                     turns_remaining,
                     damage,
                 } => {
-                    if *turns_remaining <= 1 {
+                    if *turns_remaining < 1 {
                         expired_conditions.push(key.clone());
                     } else {
                         updated_conditions.push((

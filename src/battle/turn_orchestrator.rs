@@ -1515,7 +1515,7 @@ fn perform_special_move(
                 {
                     let (turns_remaining, stored_damage) = bide_condition;
 
-                    if turns_remaining <= 1 {
+                    if turns_remaining < 1 {
                         // Last turn of Bide - execute stored damage
                         let damage_to_deal = (stored_damage * 2).max(1); // Double damage, minimum 1
 

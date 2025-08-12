@@ -129,12 +129,12 @@ fn main() {
         );
         println!(
             "  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}",
-            my_pikachu.curr_stats[0],
-            my_pikachu.curr_stats[1],
-            my_pikachu.curr_stats[2],
-            my_pikachu.curr_stats[3],
-            my_pikachu.curr_stats[4],
-            my_pikachu.curr_stats[5]
+            my_pikachu.stats.hp,
+            my_pikachu.stats.attack,
+            my_pikachu.stats.defense,
+            my_pikachu.stats.sp_attack,
+            my_pikachu.stats.sp_defense,
+            my_pikachu.stats.speed,
         );
         println!("  Moves:");
         for (i, move_slot) in my_pikachu.moves.iter().enumerate() {
@@ -163,12 +163,12 @@ fn main() {
         println!("  Name: {}", auto_pikachu.name);
         println!(
             "  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}",
-            auto_pikachu.curr_stats[0],
-            auto_pikachu.curr_stats[1],
-            auto_pikachu.curr_stats[2],
-            auto_pikachu.curr_stats[3],
-            auto_pikachu.curr_stats[4],
-            auto_pikachu.curr_stats[5]
+            auto_pikachu.stats.hp,
+            auto_pikachu.stats.attack,
+            auto_pikachu.stats.defense,
+            auto_pikachu.stats.sp_attack,
+            auto_pikachu.stats.sp_defense,
+            auto_pikachu.stats.speed,
         );
         println!("  Moves (auto-derived from level {} learnset):", 25);
         for (i, move_slot) in auto_pikachu.moves.iter().enumerate() {

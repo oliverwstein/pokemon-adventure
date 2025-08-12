@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 131,
     description: "Capable of living in or out of water. When out of water, it sweats to keep its body slimy.",
     evolution_data: Some((
-        evolves_into: "Poliwrath",
+        evolves_into: Poliwrath,
         method: Item(WaterStone),
     )),
 )

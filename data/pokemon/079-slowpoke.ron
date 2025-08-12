@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 99,
     description: "Incredibly slow and dopey. It takes five seconds for it to feel pain when under attack.",
     evolution_data: Some((
-        evolves_into: "Slowbro",
+        evolves_into: Slowbro,
         method: Level(37),
     )),
 )

@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 144,
     description: "A mystical Pokemon that exudes a gentle aura. Has the ability to change climate conditions.",
     evolution_data: Some((
-        evolves_into: "Dragonite",
+        evolves_into: Dragonite,
         method: Level(55),
     )),
 )

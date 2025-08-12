@@ -34,7 +34,7 @@ PokemonSpecies(
     base_exp: 105,
     description: "Drifts in shallow seas. Anglers who hook them by accident are often punished by its stinging acid.",
     evolution_data: Some((
-        evolves_into: "Tentacruel",
+        evolves_into: Tentacruel,
         method: Level(30),
     )),
 )

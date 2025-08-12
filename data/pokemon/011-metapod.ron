@@ -21,7 +21,7 @@ PokemonSpecies(
     base_exp: 72,
     description: "This Pokemon is vulnerable to attack while its shell is soft, exposing its weak and tender body.",
     evolution_data: Some((
-        evolves_into: "Butterfree",
+        evolves_into: Butterfree,
         method: Level(10),
     )),
 )

@@ -23,7 +23,7 @@ PokemonSpecies(
     base_exp: 40,
     description: "In the distant past, it was somewhat stronger than the horribly weak descendants that exist today.",
     evolution_data: Some((
-        evolves_into: "Gyarados",
+        evolves_into: Gyarados,
         method: Level(20),
     )),
 )

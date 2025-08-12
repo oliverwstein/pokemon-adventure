@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 102,
     description: "Puts enemies to sleep then eats their dreams. Occasionally gets sick from eating bad dreams.",
     evolution_data: Some((
-        evolves_into: "Hypno",
+        evolves_into: Hypno,
         method: Level(26),
     )),
 )

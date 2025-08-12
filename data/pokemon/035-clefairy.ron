@@ -34,7 +34,7 @@ PokemonSpecies(
     base_exp: 113,
     description: "Its magical and cute appeal has many admirers. It is rare and found only in certain areas.",
     evolution_data: Some((
-        evolves_into: "Clefable",
+        evolves_into: Clefable,
         method: Item(MoonStone),
     )),
 )

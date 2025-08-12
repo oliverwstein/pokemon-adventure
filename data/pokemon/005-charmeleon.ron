@@ -35,7 +35,7 @@ PokemonSpecies(
     base_exp: 142,
     description: "When it swings its burning tail, it elevates the temperature to unbearably hot levels.",
     evolution_data: Some((
-        evolves_into: "Charizard",
+        evolves_into: Charizard,
         method: Level(36),
     )),
 )

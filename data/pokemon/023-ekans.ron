@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 62,
     description: "Moves silently and stealthily. Eats the eggs of birds, such as Pidgey and Spearow, whole.",
     evolution_data: Some((
-        evolves_into: "Arbok",
+        evolves_into: Arbok,
         method: Level(22),
     )),
 )

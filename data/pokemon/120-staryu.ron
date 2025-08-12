@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 106,
     description: "An enigmatic Pokemon that can effortlessly regenerate any appendage it loses in battle.",
     evolution_data: Some((
-        evolves_into: "Starmie",
+        evolves_into: Starmie,
         method: Item(WaterStone),
     )),
 )

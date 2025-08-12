@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 146,
     description: "Its muscular body is so powerful, it must wear a power save belt to be able to regulate its motions.",
     evolution_data: Some((
-        evolves_into: "Machamp",
+        evolves_into: Machamp,
         method: Level(36),
     )),
 )

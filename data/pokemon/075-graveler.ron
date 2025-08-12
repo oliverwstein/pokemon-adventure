@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 134,
     description: "Rolls down slopes to move. It rolls over any obstacle without slowing or changing its direction.",
     evolution_data: Some((
-        evolves_into: "Golem",
+        evolves_into: Golem,
         method: Level(40),
     )),
 )

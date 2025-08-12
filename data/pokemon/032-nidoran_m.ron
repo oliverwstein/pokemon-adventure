@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 60,
     description: "Stiffens its ears to sense danger. The larger its horns, the more powerful its secreted venom.",
     evolution_data: Some((
-        evolves_into: "Nidorino",
+        evolves_into: Nidorino,
         method: Level(16),
     )),
 )

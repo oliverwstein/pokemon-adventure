@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 111,
     description: "Its tail fin billows like an elegant ballroom dress, giving it the nickname of the Water Queen.",
     evolution_data: Some((
-        evolves_into: "Seaking",
+        evolves_into: Seaking,
         method: Level(33),
     )),
 )

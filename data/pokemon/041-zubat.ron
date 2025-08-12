@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 54,
     description: "Forms colonies in perpetually dark places. Uses ultrasonic waves to identify and approach targets.",
     evolution_data: Some((
-        evolves_into: "Golbat",
+        evolves_into: Golbat,
         method: Level(22),
     )),
 )

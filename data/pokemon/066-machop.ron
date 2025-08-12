@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 88,
     description: "Loves to build its muscles. It trains in all styles of martial arts to become even stronger.",
     evolution_data: Some((
-        evolves_into: "Machoke",
+        evolves_into: Machoke,
         method: Level(28),
     )),
 )

@@ -21,7 +21,7 @@ PokemonSpecies(
     base_exp: 53,
     description: "Its short feet are tipped with suction pads that enable it to tirelessly climb slopes and walls.",
     evolution_data: Some((
-        evolves_into: "Metapod",
+        evolves_into: Metapod,
         method: Level(7),
     )),
 )

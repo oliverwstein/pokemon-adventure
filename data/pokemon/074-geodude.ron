@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 73,
     description: "Found in fields and mountains. Mistaking them for boulders, people often step or trip on them.",
     evolution_data: Some((
-        evolves_into: "Graveler",
+        evolves_into: Graveler,
         method: Level(25),
     )),
 )

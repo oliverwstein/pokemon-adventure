@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 65,
     description: "Uses anti-gravity to stay suspended. Appears without warning and uses Thunder Wave and similar moves.",
     evolution_data: Some((
-        evolves_into: "Magneton",
+        evolves_into: Magneton,
         method: Level(30),
     )),
 )

@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 132,
     description: "The fluid that oozes from its mouth isn't drool. It is a nectar that is used to attract prey.",
     evolution_data: Some((
-        evolves_into: "Vileplume",
+        evolves_into: Vileplume,
         method: Item(LeafStone),
     )),
 )

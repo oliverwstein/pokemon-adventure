@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 113,
     description: "Very protective of its sprawling territorial area, this Pokemon will fiercely peck at any intruder.",
     evolution_data: Some((
-        evolves_into: "Pidgeot",
+        evolves_into: Pidgeot,
         method: Level(36),
     )),
 )

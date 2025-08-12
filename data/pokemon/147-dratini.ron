@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 67,
     description: "Long considered a mythical Pokemon until recently when a small colony was found living underwater.",
     evolution_data: Some((
-        evolves_into: "Dragonair",
+        evolves_into: Dragonair,
         method: Level(30),
     )),
 )

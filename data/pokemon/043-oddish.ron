@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 78,
     description: "During the day, it keeps its face buried in the ground. At night, it wanders around sowing its seeds.",
     evolution_data: Some((
-        evolves_into: "Gloom",
+        evolves_into: Gloom,
         method: Level(21),
     )),
 )

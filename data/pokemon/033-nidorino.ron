@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 118,
     description: "An aggressive Pokemon that is quick to attack. The horn on its head secretes a powerful venom.",
     evolution_data: Some((
-        evolves_into: "Nidoking",
+        evolves_into: Nidoking,
         method: Item(MoonStone),
     )),
 )

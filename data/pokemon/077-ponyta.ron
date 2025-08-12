@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 82,
     description: "Its hooves are 10 times harder than diamonds. It can trample anything completely flat in little time.",
     evolution_data: Some((
-        evolves_into: "Rapidash",
+        evolves_into: Rapidash,
         method: Level(40),
     )),
 )

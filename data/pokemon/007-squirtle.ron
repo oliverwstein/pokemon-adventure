@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 66,
     description: "After birth, its back swells and hardens into a shell. Powerfully sprays foam from its mouth.",
     evolution_data: Some((
-        evolves_into: "Wartortle",
+        evolves_into: Wartortle,
         method: Level(16),
     )),
 )

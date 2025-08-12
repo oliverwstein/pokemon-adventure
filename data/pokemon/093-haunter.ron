@@ -28,7 +28,7 @@ PokemonSpecies(
     base_exp: 126,
     description: "Because of its ability to slip through block walls, it is said to be from another dimension.",
     evolution_data: Some((
-        evolves_into: "Gengar",
+        evolves_into: Gengar,
         method: Level(40),
     )),
 )

@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 98,
     description: "Often mistaken for eggs. When disturbed, they quickly gather and attack in swarms.",
     evolution_data: Some((
-        evolves_into: "Exeggutor",
+        evolves_into: Exeggutor,
         method: Item(LeafStone),
     )),
 )

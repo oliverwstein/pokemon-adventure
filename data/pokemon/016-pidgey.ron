@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 55,
     description: "A common sight in forests and woods. It flaps its wings at ground level to kick up blinding sand.",
     evolution_data: Some((
-        evolves_into: "Pidgeotto",
+        evolves_into: Pidgeotto,
         method: Level(18),
     )),
 )

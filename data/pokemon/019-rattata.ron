@@ -29,7 +29,7 @@ PokemonSpecies(
     base_exp: 57,
     description: "Bites anything when it attacks. Small and very quick, it is a common sight in many places.",
     evolution_data: Some((
-        evolves_into: "Raticate",
+        evolves_into: Raticate,
         method: Level(20),
     )),
 )

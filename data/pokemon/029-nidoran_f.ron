@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 59,
     description: "Although small, its venomous barbs render this Pokemon dangerous. The female has smaller horns.",
     evolution_data: Some((
-        evolves_into: "Nidorina",
+        evolves_into: Nidorina,
         method: Level(16),
     )),
 )

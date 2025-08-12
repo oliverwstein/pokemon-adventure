@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 114,
     description: "Because it stores several kinds of toxic gases in its body, it is prone to exploding without warning.",
     evolution_data: Some((
-        evolves_into: "Weezing",
+        evolves_into: Weezing,
         method: Level(35),
     )),
 )

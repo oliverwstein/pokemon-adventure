@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 135,
     description: "Its massive bones are 1000 times harder than human bones. It can easily knock a trailer truck flying.",
     evolution_data: Some((
-        evolves_into: "Rhydon",
+        evolves_into: Rhydon,
         method: Level(42),
     )),
 )

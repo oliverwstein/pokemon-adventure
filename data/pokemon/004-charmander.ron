@@ -35,7 +35,7 @@ PokemonSpecies(
     base_exp: 65,
     description: "Obviously prefers hot places. When it rains, steam is said to spout from the tip of its tail.",
     evolution_data: Some((
-        evolves_into: "Charmeleon",
+        evolves_into: Charmeleon,
         method: Level(16),
     )),
 )

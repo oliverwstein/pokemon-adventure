@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 119,
     description: "A Pokemon that was resurrected from a fossil found in what was once the ocean floor eons ago.",
     evolution_data: Some((
-        evolves_into: "Kabutops",
+        evolves_into: Kabutops,
         method: Level(40),
     )),
 )

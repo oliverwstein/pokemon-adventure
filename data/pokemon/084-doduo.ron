@@ -29,7 +29,7 @@ PokemonSpecies(
     base_exp: 96,
     description: "A bird that makes up for its poor flying with its fast foot speed. Leaves giant footprints.",
     evolution_data: Some((
-        evolves_into: "Dodrio",
+        evolves_into: Dodrio,
         method: Level(31),
     )),
 )

@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 75,
     description: "Lives in the shadows of tall trees where it eats insects. It is attracted to light at night.",
     evolution_data: Some((
-        evolves_into: "Venomoth",
+        evolves_into: Venomoth,
         method: Level(31),
     )),
 )

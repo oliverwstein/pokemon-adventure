@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 70,
     description: "Burrows to suck tree roots. The mushrooms on its back grow by drawing nutrients from the bug host.",
     evolution_data: Some((
-        evolves_into: "Parasect",
+        evolves_into: Parasect,
         method: Level(24),
     )),
 )

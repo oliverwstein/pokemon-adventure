@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 81,
     description: "Lives about one yard underground where it feeds on plant roots. It also appears above ground.",
     evolution_data: Some((
-        evolves_into: "Dugtrio",
+        evolves_into: Dugtrio,
         method: Level(26),
     )),
 )

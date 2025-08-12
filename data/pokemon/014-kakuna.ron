@@ -21,7 +21,7 @@ PokemonSpecies(
     base_exp: 71,
     description: "Almost incapable of moving, this Pokemon can only harden its shell to protect itself from predators.",
     evolution_data: Some((
-        evolves_into: "Beedrill",
+        evolves_into: Beedrill,
         method: Level(10),
     )),
 )

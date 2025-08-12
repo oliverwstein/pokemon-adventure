@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 103,
     description: "Usually found in power plants. Easily mistaken for a Poke Ball, they have zapped many people.",
     evolution_data: Some((
-        evolves_into: "Electrode",
+        evolves_into: Electrode,
         method: Level(30),
     )),
 )

@@ -33,7 +33,7 @@ PokemonSpecies(
     base_exp: 143,
     description: "Often hides in water to stalk unwary prey. For swimming fast, it moves its ears to maintain balance.",
     evolution_data: Some((
-        evolves_into: "Blastoise",
+        evolves_into: Blastoise,
         method: Level(36),
     )),
 )

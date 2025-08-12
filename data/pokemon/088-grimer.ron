@@ -31,7 +31,7 @@ PokemonSpecies(
     base_exp: 90,
     description: "Appears in filthy areas. Thrives by sucking up polluted sludge that is pumped out of factories.",
     evolution_data: Some((
-        evolves_into: "Muk",
+        evolves_into: Muk,
         method: Level(38),
     )),
 )

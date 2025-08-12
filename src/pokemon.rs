@@ -392,7 +392,7 @@ pub enum EvolutionMethod {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvolutionData {
-    pub evolves_into: String, // Pokemon name
+    pub evolves_into: Species, // Species name
     pub method: EvolutionMethod,
 }
 

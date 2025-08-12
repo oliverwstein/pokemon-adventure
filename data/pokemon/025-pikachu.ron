@@ -35,7 +35,7 @@ PokemonSpecies(
     base_exp: 82,
     description: "When several of these Pokemon gather, their electricity could build and cause lightning storms.",
     evolution_data: Some((
-        evolves_into: "Raichu",
+        evolves_into: Raichu,
         method: Item(ThunderStone),
     )),
 )

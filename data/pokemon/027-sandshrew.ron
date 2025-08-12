@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 93,
     description: "Burrows deep underground in arid locations far from water. It only emerges to hunt for food.",
     evolution_data: Some((
-        evolves_into: "Sandslash",
+        evolves_into: Sandslash,
         method: Level(22),
     )),
 )

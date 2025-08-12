@@ -26,7 +26,7 @@ PokemonSpecies(
     base_exp: 73,
     description: "Using its ability to read minds, it will identify impending danger and teleport to safety.",
     evolution_data: Some((
-        evolves_into: "Kadabra",
+        evolves_into: Kadabra,
         method: Level(16),
     )),
 )

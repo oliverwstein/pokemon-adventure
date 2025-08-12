@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 100,
     description: "The protruding horn on its head is very hard. It is used for bashing through thick ice.",
     evolution_data: Some((
-        evolves_into: "Dewgong",
+        evolves_into: Dewgong,
         method: Level(34),
     )),
 )

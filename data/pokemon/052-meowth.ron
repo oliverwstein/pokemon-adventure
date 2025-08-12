@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 69,
     description: "Adores circular objects. Wanders the streets on a nightly basis to look for dropped loose change.",
     evolution_data: Some((
-        evolves_into: "Persian",
+        evolves_into: Persian,
         method: Level(28),
     )),
 )

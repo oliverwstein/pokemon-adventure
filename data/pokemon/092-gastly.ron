@@ -27,7 +27,7 @@ PokemonSpecies(
     base_exp: 95,
     description: "Almost invisible, this gaseous Pokémon cloaks the target and puts it to sleep without notice.",
     evolution_data: Some((
-        evolves_into: "Haunter",
+        evolves_into: Haunter,
         method: Level(25),
     )),
 )

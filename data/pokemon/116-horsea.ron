@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 83,
     description: "Known to shoot down flying bugs with precision blasts of ink from the surface of the water.",
     evolution_data: Some((
-        evolves_into: "Seadra",
+        evolves_into: Seadra,
         method: Level(32),
     )),
 )

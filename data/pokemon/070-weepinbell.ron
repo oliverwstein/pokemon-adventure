@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 151,
     description: "It spits out PoisonPowder to immobilize the enemy and then finishes it with a spray of Acid.",
     evolution_data: Some((
-        evolves_into: "Victreebel",
+        evolves_into: Victreebel,
         method: Item(LeafStone),
     )),
 )

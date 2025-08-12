@@ -21,7 +21,7 @@ PokemonSpecies(
     base_exp: 52,
     description: "Often found in forests, eating leaves. It has a sharp venomous stinger on its head.",
     evolution_data: Some((
-        evolves_into: "Kakuna",
+        evolves_into: Kakuna,
         method: Level(7),
     )),
 )

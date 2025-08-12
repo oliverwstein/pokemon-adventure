@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 80,
     description: "While lulling its enemies with its vacant look, this wily Pokemon will use psychokinetic powers.",
     evolution_data: Some((
-        evolves_into: "Golduck",
+        evolves_into: Golduck,
         method: Level(33),
     )),
 )

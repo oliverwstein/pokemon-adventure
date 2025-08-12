@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 58,
     description: "Eats bugs in grassy areas. It has to flap its short wings at high speed to stay airborne.",
     evolution_data: Some((
-        evolves_into: "Fearow",
+        evolves_into: Fearow,
         method: Level(20),
     )),
 )

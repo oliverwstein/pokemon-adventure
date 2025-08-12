@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 120,
     description: "Although long extinct, in rare cases, it can be genetically resurrected from fossils.",
     evolution_data: Some((
-        evolves_into: "Omastar",
+        evolves_into: Omastar,
         method: Level(40),
     )),
 )

@@ -30,7 +30,7 @@ PokemonSpecies(
     base_exp: 115,
     description: "Its pincers are not only powerful, they are also very dexterous. It can catch prey or fight enemies.",
     evolution_data: Some((
-        evolves_into: "Kingler",
+        evolves_into: Kingler,
         method: Level(28),
     )),
 )

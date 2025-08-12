@@ -32,7 +32,7 @@ PokemonSpecies(
     base_exp: 77,
     description: "Its newly grown legs prevent it from running. It appears to prefer swimming than trying to stand.",
     evolution_data: Some((
-        evolves_into: "Poliwhirl",
+        evolves_into: Poliwhirl,
         method: Level(25),
     )),
 )

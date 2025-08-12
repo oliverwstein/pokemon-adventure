@@ -34,7 +34,7 @@ PokemonSpecies(
     base_exp: 95,
     description: "When its huge eyes light up, it sings a mysteriously soothing melody that lulls its enemies to sleep.",
     evolution_data: Some((
-        evolves_into: "Wigglytuff",
+        evolves_into: Wigglytuff,
         method: Item(MoonStone),
     )),
 )

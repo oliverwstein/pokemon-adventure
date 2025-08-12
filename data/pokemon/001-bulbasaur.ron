@@ -35,7 +35,7 @@ PokemonSpecies(
     base_exp: 64,
     description: "A strange seed was planted on its back at birth. The plant sprouts and grows with this Pokémon.",
     evolution_data: Some((
-        evolves_into: "Ivysaur",
+        evolves_into: Ivysaur,
         method: Level(16),
     )),
 )

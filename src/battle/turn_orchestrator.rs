@@ -1645,6 +1645,110 @@ fn perform_special_move(
                 
                 return true;
             }
+            crate::move_data::MoveEffect::Metronome => {
+                // Get all possible moves except Metronome itself
+                let all_moves = [
+                    // Normal Type
+                    Move::Pound, Move::Doubleslap, Move::PayDay, Move::Scratch, Move::Guillotine,
+                    Move::SwordsDance, Move::Cut, Move::Bind, Move::Slam, Move::Stomp,
+                    Move::Headbutt, Move::HornAttack, Move::FuryAttack, Move::HornDrill, Move::Tackle,
+                    Move::BodySlam, Move::Wrap, Move::Harden, Move::TakeDown, Move::Thrash,
+                    Move::DoubleEdge, Move::TailWhip, Move::Leer, Move::Bite, Move::Growl,
+                    Move::Roar, Move::Sing, Move::Supersonic, Move::SonicBoom, Move::Disable,
+                    Move::Agility, Move::QuickAttack, Move::Rage, Move::Mimic, Move::Screech,
+                    Move::DoubleTeam, Move::Recover, Move::Minimize, Move::Withdraw, Move::DefenseCurl,
+                    Move::Barrier, Move::FocusEnergy, Move::Bide, Move::MirrorMove,
+                    Move::SelfDestruct, Move::Clamp, Move::Swift, Move::SpikeCannon, Move::Constrict,
+                    Move::SoftBoiled, Move::Glare, Move::Transform, Move::Explosion, Move::FurySwipes,
+                    Move::Rest, Move::HyperFang, Move::Sharpen, Move::Conversion, Move::TriAttack,
+                    Move::SuperFang, Move::Slash, Move::Substitute, Move::HyperBeam,
+                    
+                    // Fighting Type
+                    Move::KarateChop, Move::CometPunch, Move::MegaPunch, Move::KoPunch, Move::DoubleKick,
+                    Move::MegaKick, Move::JumpKick, Move::RollingKick, Move::Submission, Move::LowKick,
+                    Move::Counter, Move::SeismicToss, Move::Strength, Move::Meditate, Move::HighJumpKick,
+                    Move::Barrage, Move::DizzyPunch,
+                    
+                    // Flying Type
+                    Move::RazorWind, Move::Gust, Move::WingAttack, Move::Whirlwind, Move::Fly,
+                    Move::Peck, Move::DrillPeck, Move::SkyAttack,
+                    
+                    // Rock Type
+                    Move::Vicegrip, Move::RockThrow, Move::SkullBash, Move::RockSlide, Move::AncientPower,
+                    
+                    // Ground Type
+                    Move::SandAttack, Move::Earthquake, Move::Fissure, Move::Dig, Move::BoneClub,
+                    Move::Bonemerang,
+                    
+                    // Poison Type
+                    Move::PoisonSting, Move::Twineedle, Move::Acid, Move::Toxic, Move::Haze,
+                    Move::Smog, Move::Sludge, Move::PoisonJab, Move::PoisonGas, Move::AcidArmor,
+                    
+                    // Bug Type
+                    Move::PinMissile, Move::SilverWind, Move::StringShot, Move::LeechLife,
+                    
+                    // Fire Type
+                    Move::FirePunch, Move::BlazeKick, Move::FireFang, Move::Ember, Move::Flamethrower,
+                    Move::WillOWisp, Move::FireSpin, Move::Smokescreen, Move::FireBlast,
+                    
+                    // Water Type
+                    Move::Mist, Move::WaterGun, Move::HydroPump, Move::Surf, Move::Bubblebeam,
+                    Move::Waterfall, Move::Bubble, Move::Splash, Move::Bubblehammer,
+                    
+                    // Grass Type
+                    Move::VineWhip, Move::Absorb, Move::MegaDrain, Move::GigaDrain, Move::LeechSeed,
+                    Move::Growth, Move::RazorLeaf, Move::Solarbeam, Move::PoisonPowder, Move::StunSpore,
+                    Move::SleepPowder, Move::PetalDance, Move::Spore, Move::EggBomb,
+                    
+                    // Ice Type
+                    Move::IcePunch, Move::IceBeam, Move::Blizzard, Move::AuroraBeam,
+                    
+                    // Electric Type
+                    Move::ThunderPunch, Move::Shock, Move::Discharge, Move::ThunderWave, Move::Thunderclap,
+                    Move::ChargeBeam, Move::Lightning, Move::Flash,
+                    
+                    // Psychic Type
+                    Move::Confusion, Move::Psybeam, Move::Perplex, Move::Hypnosis, Move::Teleport,
+                    Move::ConfuseRay, Move::LightScreen, Move::Reflect, Move::Amnesia, Move::Kinesis,
+                    Move::Psychic, Move::Psywave, Move::DreamEater, Move::LovelyKiss,
+                    
+                    // Ghost Type
+                    Move::NightShade, Move::Lick, Move::ShadowBall,
+                    
+                    // Dragon Type
+                    Move::Outrage, Move::DragonRage,
+                ];
+                
+                // Randomly select a move
+                let random_index = (rng.next_outcome() as usize) % all_moves.len();
+                let selected_move = all_moves[random_index];
+                
+                // Get Pokemon species for event logging
+                let pokemon_species = if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
+                    pokemon.species
+                } else {
+                    return true;
+                };
+                
+                // Log the Metronome selection
+                bus.push(BattleEvent::MoveUsed {
+                    player_index: attacker_index,
+                    pokemon: pokemon_species,
+                    move_used: selected_move,
+                });
+                
+                // Create a BattleAction for the selected move and execute it
+                let metronome_action = BattleAction::AttackHit {
+                    attacker_index,
+                    defender_index,
+                    move_used: selected_move,
+                    hit_number: 1, // Must be greater than zero to avoid trying to use PP
+                };
+                
+                // Execute the selected move with full battle action processing
+                execute_battle_action(metronome_action, battle_state, action_stack, bus, rng);
+                return true; // Skip standard execution
+            }
 
             // Other effects are handled elsewhere
             _ => {}

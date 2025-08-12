@@ -57,3 +57,6 @@ mod test_team_condition_moves;
 
 #[cfg(test)]
 mod test_ante;
+
+#[cfg(test)]
+mod test_metronome;

@@ -855,16 +855,20 @@ impl PokemonInst {
         }
     }
 
-    /// Decrement/increment status condition counters without dealing damage.
+    /// Update status condition counters without dealing damage.
     /// Should be called at the start of turn when Pokemon tries to act.
     /// Returns (should_cure, status_changed).
-    pub fn decrement_status_counters(&mut self) -> (bool, bool) {
+    pub fn update_status_progress(&mut self) -> (bool, bool) {
         let original_status = self.status;
         
         let should_cure = match &mut self.status {
             Some(StatusCondition::Sleep(turns)) => {
-                *turns = turns.saturating_sub(1);
-                *turns == 0
+                if *turns == 0 {
+                    true // Wake up if already at 0
+                } else {
+                    *turns = turns.saturating_sub(1);
+                    false // Don't wake up until next turn when it starts at 0
+                }
             }
             Some(StatusCondition::Poison(severity)) => {
                 // Only increment Toxic poison (severity > 0)
@@ -886,7 +890,7 @@ impl PokemonInst {
     /// Apply status damage without changing counters.
     /// Should be called at end of turn.
     /// Returns (status_damage, status_changed).
-    pub fn apply_status_damage(&mut self) -> (u16, bool) {
+    pub fn deal_status_damage(&mut self) -> (u16, bool) {
         let max_hp = self.max_hp();
         let original_status = self.status;
 
@@ -909,39 +913,4 @@ impl PokemonInst {
         (damage, self.status != original_status)
     }
 
-    /// Update status condition timers and return damage/cure info.
-    /// Returns (status_damage, should_cure, status_changed).
-    /// DEPRECATED: Use decrement_status_counters and apply_status_damage separately.
-    pub fn tick_status(&mut self) -> (u16, bool, bool) {
-        let max_hp = self.max_hp();
-        let original_status = self.status;
-
-        let (damage, should_cure) = match &mut self.status {
-            Some(StatusCondition::Sleep(turns)) => {
-                *turns = turns.saturating_sub(1);
-                (0, *turns == 0)
-            }
-            Some(StatusCondition::Poison(severity)) => {
-                let damage = if *severity == 0 {
-                    (max_hp / 16).max(1)
-                } else {
-                    *severity += 1;
-                    (max_hp * (*severity as u16) / 16).max(1)
-                };
-                (damage, false)
-            }
-            Some(StatusCondition::Burn) => ((max_hp / 8).max(1), false),
-            _ => (0, false),
-        };
-
-        if damage > 0 {
-            self.take_damage(damage);
-        }
-
-        if should_cure {
-            self.status = None;
-        }
-
-        (damage, should_cure, self.status != original_status)
-    }
 }

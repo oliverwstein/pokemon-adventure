@@ -626,26 +626,86 @@ fn execute_switch(
 /// Returns Some(ActionFailureReason) if action should be prevented, None if action can proceed
 fn check_action_preventing_conditions(
     player_index: usize,
-    battle_state: &BattleState,
+    battle_state: &mut BattleState,
     rng: &mut TurnRng,
     move_used: Move,
+    bus: &mut EventBus,
 ) -> Option<ActionFailureReason> {
-    let player = &battle_state.players[player_index];
-    let pokemon = player.team[player.active_pokemon_index].as_ref()?;
-
-    // Check Pokemon status conditions first (sleep, freeze, etc.)
-    if let Some(status) = pokemon.status {
+    // Check Pokemon status conditions BEFORE updating counters
+    let pokemon_status = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index]
+        .as_ref()?
+        .status;
+    
+    // First check if Pokemon should fail to act (including Sleep > 0)
+    if let Some(status) = pokemon_status {
         match status {
-            crate::pokemon::StatusCondition::Sleep(_) => {
-                return Some(ActionFailureReason::IsAsleep);
+            crate::pokemon::StatusCondition::Sleep(turns) => {
+                if turns > 0 {
+                    // Pokemon is still asleep, update counters after determining failure
+                    if let Some(pokemon) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+                        let (should_cure, status_changed) = pokemon.update_status_progress();
+                        
+                        if should_cure && status_changed {
+                            let old_status = pokemon.status; // Save before clearing
+                            bus.push(BattleEvent::PokemonStatusRemoved {
+                                target: pokemon.species,
+                                status: old_status.unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
+                            });
+                        }
+                    }
+                    return Some(ActionFailureReason::IsAsleep);
+                }
             }
             crate::pokemon::StatusCondition::Freeze => {
-                return Some(ActionFailureReason::IsFrozen);
+                // 25% chance to thaw out when trying to act
+                let roll = rng.next_outcome(); // 0-100
+                if roll < 25 {
+                    // Pokemon thaws out
+                    if let Some(pokemon_mut) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+                        let species = pokemon_mut.species;
+                        pokemon_mut.status = None;
+                        
+                        bus.push(BattleEvent::PokemonStatusRemoved {
+                            target: species,
+                            status: crate::pokemon::StatusCondition::Freeze,
+                        });
+                    }
+                    // Pokemon can act this turn after thawing
+                } else {
+                    return Some(ActionFailureReason::IsFrozen);
+                }
             }
             _ => {} // Other status conditions don't prevent actions
         }
     }
 
+    // Update status counters for Pokemon that are not asleep with turns > 0 (they were handled above)
+    let current_status = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index]
+        .as_ref()?
+        .status;
+    
+    // Only update counters if Pokemon doesn't have sleep with turns > 0 (those were already updated above)
+    let should_update_counters = match current_status {
+        Some(crate::pokemon::StatusCondition::Sleep(turns)) => turns == 0,
+        _ => true,
+    };
+    
+    if should_update_counters {
+        if let Some(pokemon) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+            let (should_cure, status_changed) = pokemon.update_status_progress();
+            
+            if should_cure && status_changed {
+                let old_status = pokemon.status; // Save before clearing
+                bus.push(BattleEvent::PokemonStatusRemoved {
+                    target: pokemon.species,
+                    status: old_status.unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
+                });
+            }
+        }
+    }
+
+    let player = &battle_state.players[player_index];
+    
     // Check active Pokemon conditions
     if player.has_condition(&crate::player::PokemonCondition::Flinched) {
         return Some(ActionFailureReason::IsFlinching);
@@ -661,7 +721,7 @@ fn check_action_preventing_conditions(
     }
 
     // Check paralysis - 25% chance to be fully paralyzed
-    if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon.status {
+    if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon_status {
         let roll = rng.next_outcome(); // 0-100
         if roll < 25 {
             return Some(ActionFailureReason::IsParalyzed);
@@ -1923,16 +1983,6 @@ pub fn execute_attack_hit(
     rng: &mut TurnRng,
     battle_state: &mut BattleState, // Swapped order to satisfy linter/convention
 ) {
-    let attacker_player = &battle_state.players[attacker_index];
-    let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index]
-        .as_ref()
-        .expect("Attacker pokemon should exist");
-
-    let defender_player = &battle_state.players[defender_index];
-    let defender_pokemon = defender_player.team[defender_player.active_pokemon_index]
-        .as_ref()
-        .expect("Defender pokemon should exist");
-
     // If the defender has already fainted (e.g., from a previous hit in a multi-hit sequence),
     // the subsequent hits should fail immediately.
     if battle_state.players[defender_index].team
@@ -1947,7 +1997,7 @@ pub fn execute_attack_hit(
 
     // Check all action-preventing conditions
     if let Some(failure_reason) =
-        check_action_preventing_conditions(attacker_index, battle_state, rng, move_used)
+        check_action_preventing_conditions(attacker_index, battle_state, rng, move_used, bus)
     {
         // Always generate ActionFailed event first
         bus.push(BattleEvent::ActionFailed {
@@ -1966,6 +2016,18 @@ pub fn execute_attack_hit(
         }
         return; // Attack is prevented
     }
+
+    // Now get the player and pokemon references
+    let attacker_player = &battle_state.players[attacker_index];
+    let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index]
+        .as_ref()
+        .expect("Attacker pokemon should exist");
+
+    let defender_player = &battle_state.players[defender_index];
+    let defender_pokemon = defender_player.team[defender_player.active_pokemon_index]
+        .as_ref()
+        .expect("Defender pokemon should exist");
+
     // Generate MoveUsed event (only for first hit)
     if hit_number == 0 {
         bus.push(BattleEvent::MoveUsed {
@@ -2547,8 +2609,8 @@ pub fn execute_end_turn_phase(
                 continue;
             }
 
-            // 1. Process Pokemon status conditions (Sleep, Poison, Burn)
-            let (status_damage, should_cure, status_changed) = pokemon.tick_status();
+            // 1. Process Pokemon status damage (Poison, Burn)
+            let (status_damage, status_changed) = pokemon.deal_status_damage();
 
             if status_damage > 0 {
                 // Generate status damage event
@@ -2562,29 +2624,6 @@ pub fn execute_end_turn_phase(
                 }
             }
 
-            if should_cure && status_changed {
-                // Status was cured (e.g., sleep ended)
-                bus.push(BattleEvent::PokemonStatusRemoved {
-                    target: pokemon.species,
-                    status: crate::pokemon::StatusCondition::Sleep(0), // Will be the previous status
-                });
-            }
-
-            // Check for frozen Pokemon defrosting (25% chance)
-            if matches!(
-                pokemon.status,
-                Some(crate::pokemon::StatusCondition::Freeze)
-            ) {
-                let defrost_roll = rng.next_outcome();
-                if defrost_roll <= 25 {
-                    // 25% chance (25/99)
-                    pokemon.status = None;
-                    bus.push(BattleEvent::PokemonStatusRemoved {
-                        target: pokemon.species,
-                        status: crate::pokemon::StatusCondition::Freeze,
-                    });
-                }
-            }
         }
 
         // 2. Process active Pokemon conditions (outside of pokemon borrow to avoid conflicts)

@@ -54,16 +54,15 @@ mod tests {
         // Apply regular poison (severity 0)
         pokemon.status = Some(StatusCondition::Poison(0));
 
-        // Tick status - should deal 1/16 of max HP damage
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
+        // Deal status damage - should deal 1/16 of max HP damage
+        let (damage, status_changed) = pokemon.deal_status_damage();
 
         assert_eq!(
             damage,
             (max_hp / 16).max(1),
             "Regular poison should deal 1/16 of max hp"
         );
-        assert!(!should_cure, "Poison should not go away at end of turn.");
-        assert!(!status_changed, "Regular poisoning should not worsen."); // Regular poison doesn't change severity
+        assert!(!status_changed, "Status should not change when dealing poison damage.");
         assert_eq!(
             pokemon.current_hp(),
             initial_hp - damage,
@@ -89,26 +88,22 @@ mod tests {
         pokemon.status = Some(StatusCondition::Poison(1)); // Start with "badly poisoned" severity 1
 
         // --- Action ---
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
+        // Deal damage based on current severity (1)
+        let (damage, status_changed) = pokemon.deal_status_damage();
 
         // --- Verification ---
-        let expected_damage = (max_hp * 2 / 16).max(1);
+        let expected_damage = (max_hp * 1 / 16).max(1); // Should be severity 1, not 2
 
         // If this fails, the test will print our custom message.
         assert_eq!(
             damage, expected_damage,
-            "Damage dealt ({}) did not match the expected value ({}) for severity 2",
+            "Damage dealt ({}) did not match the expected value ({}) for severity 1",
             damage, expected_damage
         );
 
         assert!(
-            !should_cure,
-            "Poison status should not be cured after a single tick"
-        );
-
-        assert!(
-            status_changed,
-            "The status_changed flag should be true because badly poisoned severity increases"
+            !status_changed,
+            "Status should not change when dealing poison damage"
         );
 
         assert_eq!(
@@ -119,8 +114,8 @@ mod tests {
 
         // For `matches!`, you have to wrap it in `assert!` to add a message.
         assert!(
-            matches!(pokemon.status, Some(StatusCondition::Poison(2))),
-            "Pokémon status should be Poison(2), but was {:?}",
+            matches!(pokemon.status, Some(StatusCondition::Poison(1))),
+            "Pokémon status should still be Poison(1) after damage, but was {:?}",
             pokemon.status
         );
     }
@@ -140,15 +135,14 @@ mod tests {
         // Apply burn
         pokemon.status = Some(StatusCondition::Burn);
 
-        // Tick status - should deal 1/8 of max HP damage
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
+        // Deal status damage - should deal 1/8 of max HP damage
+        let (damage, status_changed) = pokemon.deal_status_damage();
 
         assert_eq!(
             damage,
             (max_hp / 8).max(1),
             "Damage should be at most 1/8 of max hp."
         );
-        assert!(!should_cure, "The burn should not go away");
         assert_eq!(
             pokemon.current_hp(),
             initial_hp - damage,
@@ -173,24 +167,27 @@ mod tests {
         // Apply sleep for 3 turns
         pokemon.status = Some(StatusCondition::Sleep(3));
 
-        // First tick - should reduce to 2 turns, no wake up
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
-        assert_eq!(damage, 0);
+        // First progress update - should reduce to 2 turns, no wake up
+        let (should_cure, status_changed) = pokemon.update_status_progress();
         assert!(!should_cure);
         assert!(status_changed);
         assert_eq!(pokemon.current_hp(), initial_hp); // No damage from sleep
         assert!(matches!(pokemon.status, Some(StatusCondition::Sleep(2))));
 
-        // Second tick - should reduce to 1 turn
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
-        assert_eq!(damage, 0);
+        // Second progress update - should reduce to 1 turn
+        let (should_cure, status_changed) = pokemon.update_status_progress();
         assert!(!should_cure);
         assert!(status_changed);
         assert!(matches!(pokemon.status, Some(StatusCondition::Sleep(1))));
 
-        // Third tick - should wake up
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
-        assert_eq!(damage, 0);
+        // Third progress update - should reduce to 0 turn
+        let (should_cure, status_changed) = pokemon.update_status_progress();
+        assert!(!should_cure);
+        assert!(status_changed);
+        assert!(matches!(pokemon.status, Some(StatusCondition::Sleep(0))));
+
+        // Fourth progress update - should wake up (starting at 0)
+        let (should_cure, status_changed) = pokemon.update_status_progress();
         assert!(should_cure);
         assert!(status_changed);
         assert!(pokemon.status.is_none());
@@ -307,12 +304,11 @@ mod tests {
         let expected_damage = (pokemon.max_hp() / 16).max(1);
 
         // If damage >= current HP, should faint
-        let (damage, should_cure, status_changed) = pokemon.tick_status();
+        let (damage, status_changed) = pokemon.deal_status_damage();
 
         if expected_damage >= 3 {
             // Should faint
             assert_eq!(damage, expected_damage);
-            assert!(!should_cure); // Fainting handles status removal
             assert!(status_changed); // Status changed to Faint
             assert_eq!(pokemon.current_hp(), 0);
             assert!(matches!(pokemon.status, Some(StatusCondition::Faint)));
@@ -327,7 +323,10 @@ mod tests {
     fn test_frozen_defrost_25_percent_chance() {
         init_test_data();
 
-        // Test successful defrost (roll <= 64)
+        // Test successful defrost when Pokemon tries to act
+        use crate::battle::turn_orchestrator::{BattleAction, ActionStack};
+        use crate::moves::Move;
+        
         let mut battle_state = create_test_battle_state();
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
             .as_mut()
@@ -335,9 +334,20 @@ mod tests {
         pokemon.status = Some(StatusCondition::Freeze);
 
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![25]); // Exactly 25% threshold
+        let mut rng = TurnRng::new_for_test(vec![24, 100, 100, 100]); // Below 25% threshold - should defrost, plus extra values for other RNG calls
 
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
+        // Test defrost by trying to execute an attack (this will call check_action_preventing_conditions)
+        let mut action_stack = ActionStack::new();
+        crate::battle::turn_orchestrator::execute_attack_hit(
+            0, // attacker_index
+            1, // defender_index
+            Move::Tackle,
+            0, // hit_number
+            &mut action_stack,
+            &mut bus,
+            &mut rng,
+            &mut battle_state,
+        );
 
         // Pokemon should be defrosted
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
@@ -360,7 +370,10 @@ mod tests {
     fn test_frozen_no_defrost_75_percent_chance() {
         init_test_data();
 
-        // Test failed defrost (roll > 64)
+        // Test failed defrost when Pokemon tries to act
+        use crate::battle::turn_orchestrator::{BattleAction, ActionStack};
+        use crate::moves::Move;
+        
         let mut battle_state = create_test_battle_state();
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
             .as_mut()
@@ -368,9 +381,20 @@ mod tests {
         pokemon.status = Some(StatusCondition::Freeze);
 
         let mut bus = EventBus::new();
-        let mut rng = TurnRng::new_for_test(vec![26]); // Just above 25% threshold
+        let mut rng = TurnRng::new_for_test(vec![25, 100, 100, 100]); // At 25% threshold - should remain frozen, plus extra values
 
-        execute_end_turn_phase(&mut battle_state, &mut bus, &mut rng);
+        // Test freeze check by trying to execute an attack (this will call check_action_preventing_conditions)
+        let mut action_stack = ActionStack::new();
+        crate::battle::turn_orchestrator::execute_attack_hit(
+            0, // attacker_index
+            1, // defender_index
+            Move::Tackle,
+            0, // hit_number
+            &mut action_stack,
+            &mut bus,
+            &mut rng,
+            &mut battle_state,
+        );
 
         // Pokemon should still be frozen
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]

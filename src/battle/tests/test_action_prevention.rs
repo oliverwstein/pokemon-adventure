@@ -290,7 +290,7 @@ mod tests {
 
         // Test that status conditions (sleep) take priority over active conditions (flinch)
         let mut battle_state = create_test_battle_state(
-            Some(StatusCondition::Sleep(1)),
+            Some(StatusCondition::Sleep(2)),
             vec![PokemonCondition::Flinched],
         );
 
@@ -311,7 +311,8 @@ mod tests {
 
         let events = bus.events();
         assert_eq!(events.len(), 1);
-        // Should fail due to sleep, not flinch
+        
+        // Should fail due to sleep (Sleep(2) -> Sleep(1)), not flinch
         assert!(matches!(
             events[0],
             BattleEvent::ActionFailed {

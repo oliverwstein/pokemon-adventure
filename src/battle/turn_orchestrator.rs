@@ -1600,6 +1600,51 @@ fn perform_special_move(
                 });
                 return true; // Skip standard execution since we handled the failure
             }
+            crate::move_data::MoveEffect::Rest(sleep_turns) => {
+                let attacker_player = &mut battle_state.players[attacker_index];
+                
+                // Get Pokemon species first
+                let pokemon_species = if let Some(pokemon) = attacker_player.active_pokemon() {
+                    pokemon.species
+                } else {
+                    return true;
+                };
+                
+                // Full heal - restore HP to maximum and apply sleep
+                if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
+                    let max_hp = attacker_pokemon.max_hp();
+                    let current_hp = attacker_pokemon.current_hp();
+                    if current_hp < max_hp {
+                        let heal_amount = max_hp - current_hp;
+                        attacker_pokemon.set_hp_to_max();
+                        bus.push(BattleEvent::PokemonHealed {
+                            target: pokemon_species,
+                            amount: heal_amount,
+                            new_hp: max_hp,
+                        });
+                    }
+                    
+                    // Apply Sleep status for specified turns
+                    attacker_pokemon.status = Some(crate::pokemon::StatusCondition::Sleep(*sleep_turns));
+                    bus.push(BattleEvent::PokemonStatusApplied {
+                        target: pokemon_species,
+                        status: crate::pokemon::StatusCondition::Sleep(*sleep_turns),
+                    });
+                }
+                
+                // Clear all active Pokemon conditions (after releasing the pokemon borrow)
+                let cleared_conditions: Vec<_> = attacker_player.active_pokemon_conditions.keys().cloned().collect();
+                for condition_key in cleared_conditions {
+                    if let Some(removed_condition) = attacker_player.active_pokemon_conditions.remove(&condition_key) {
+                        bus.push(BattleEvent::ConditionExpired {
+                            target: pokemon_species,
+                            condition: removed_condition,
+                        });
+                    }
+                }
+                
+                return true;
+            }
 
             // Other effects are handled elsewhere
             _ => {}

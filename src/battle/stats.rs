@@ -353,7 +353,6 @@ pub fn calculate_attack_damage(
     // Critical Hit: 2x multiplier
     let crit_multiplier = if is_critical { 2.0 } else { 1.0 };
 
-    // Type Advantage: Placeholder for now
     // Use the centralized type getter that handles Transform and Conversion
     let defender_types = defender.get_current_types(defender_player);
     let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_types);

@@ -765,6 +765,15 @@ fn check_action_preventing_conditions(
         }
     }
 
+    // Check for disabled moves
+    for condition in player.active_pokemon_conditions.values() {
+        if let crate::player::PokemonCondition::Disabled { pokemon_move, turns_remaining } = condition {
+            if *turns_remaining > 0 && *pokemon_move == move_used {
+                return Some(ActionFailureReason::MoveFailedToExecute);
+            }
+        }
+    }
+
     // Check for Nightmare effect - move fails unless target is asleep
     if let Some(move_data) = crate::move_data::get_move_data(move_used) {
         for effect in &move_data.effects {

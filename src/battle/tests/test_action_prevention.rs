@@ -339,6 +339,87 @@ mod tests {
     }
 
     #[test]
+    fn test_disabled_move_prevents_action() {
+        init_test_data();
+
+        let mut battle_state = create_test_battle_state(
+            None,
+            vec![PokemonCondition::Disabled { 
+                pokemon_move: Move::Tackle, 
+                turns_remaining: 2 
+            }],
+        );
+
+        let mut bus = EventBus::new();
+        let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
+        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle, // This move is disabled
+                hit_number: 0,
+            },
+            &mut battle_state,
+            &mut action_stack,
+            &mut bus,
+            &mut rng,
+        );
+
+        let events = bus.events();
+        println!("Disabled move events: {:?}", events);
+        assert_eq!(events.len(), 1);
+        assert!(matches!(
+            events[0],
+            BattleEvent::ActionFailed {
+                reason: ActionFailureReason::MoveFailedToExecute
+            }
+        ));
+    }
+
+    #[test]
+    fn test_disabled_move_allows_different_move() {
+        init_test_data();
+
+        let mut battle_state = create_test_battle_state(
+            None,
+            vec![PokemonCondition::Disabled { 
+                pokemon_move: Move::Tackle, // Tackle is disabled
+                turns_remaining: 2 
+            }],
+        );
+
+        let mut bus = EventBus::new();
+        let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]);
+        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Ember, // Different move should work
+                hit_number: 0,
+            },
+            &mut battle_state,
+            &mut action_stack,
+            &mut bus,
+            &mut rng,
+        );
+
+        let events = bus.events();
+        println!("Non-disabled move events: {:?}", events);
+        // Should proceed with normal attack flow
+        assert!(events.len() >= 1);
+        assert!(matches!(events[0], BattleEvent::MoveUsed { .. }));
+
+        // Should not have any ActionFailed events
+        for event in events {
+            assert!(!matches!(event, BattleEvent::ActionFailed { .. }));
+        }
+    }
+
+    #[test]
     fn test_no_preventing_conditions_allows_action() {
         init_test_data();
 

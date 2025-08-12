@@ -4,7 +4,7 @@
 * DOUBLESLAP (Normal, 50, PHYS, 90, 30)
     * MultiHit(2,2)
  * PAY DAY (Normal, 30, PHYS, 90, 30)
-    * Ante(2)
+    * Ante(100)
  * SCRATCH (Normal, 40, PHYS, 90, 40)
     * Flinch(10)
  * GUILLOTINE (Normal,--, OTHER, 30, 5)

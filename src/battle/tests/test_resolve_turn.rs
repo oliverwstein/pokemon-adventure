@@ -21,7 +21,7 @@ mod tests {
 
         PokemonInst::new_for_test(
             species,
-            0,
+            10, 0,
             100,                       // Set current HP directly
             [15; 6],                   // Decent IVs
             [0; 6],                    // No EVs for simplicity
@@ -41,6 +41,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 200,
         }
     }
 

@@ -1172,6 +1172,30 @@ fn apply_move_effects(
                     println!("{:?} used Mist!", pokemon_species);
                 }
             }
+            
+            // Ante effect (Pay Day)
+            crate::move_data::MoveEffect::Ante(chance) => {
+                if rng.next_outcome() <= *chance {
+                    // Ante increases the opponent's ante by 2x the user's Pokemon level
+                    let attacker_player = &battle_state.players[attacker_index];
+                    if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+                        let pokemon_level = attacker_pokemon.level as u32;
+                        let ante_amount = pokemon_level * 2;
+                        
+                        // Add ante to the opponent (defender)
+                        let defender_player = &mut battle_state.players[defender_index];
+                        defender_player.add_ante(ante_amount);
+                        let new_ante = defender_player.get_ante();
+                        
+                        // Generate ante increased event
+                        bus.push(BattleEvent::AnteIncreased {
+                            player_index: defender_index,
+                            amount: ante_amount,
+                            new_total: new_ante,
+                        });
+                    }
+                }
+            }
 
             // Skip other effects that don't have chance percentages or are handled elsewhere
             _ => {}

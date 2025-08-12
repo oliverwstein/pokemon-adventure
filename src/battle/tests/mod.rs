@@ -54,3 +54,6 @@ mod test_mist;
 
 #[cfg(test)]
 mod test_team_condition_moves;
+
+#[cfg(test)]
+mod test_ante;

@@ -19,7 +19,7 @@ mod tests {
         {
             let mut pokemon = PokemonInst::new_for_test(
                 species,
-                0,
+                10,0,
                 0, // Will be set below
                 [15; 6],
                 [0; 6],
@@ -42,6 +42,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 200,
         }
     }
 

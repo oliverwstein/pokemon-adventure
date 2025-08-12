@@ -18,7 +18,7 @@ mod tests {
     fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
         PokemonInst::new_for_test(
             species,
-            0,
+            10,0,
             hp, // Set current HP directly
             [15, 15, 15, 15, 15, 15],
             [0, 0, 0, 0, 0, 0],

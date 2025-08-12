@@ -448,7 +448,7 @@ mod tests {
     fn test_effective_speed_paralysis() {
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
-            0,
+            0, 0,
             100,
             [15; 6],
             [0; 6],
@@ -466,6 +466,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 200
         };
 
         // Paralysis should quarter speed: 100 / 4 = 25
@@ -484,7 +485,7 @@ mod tests {
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
-            0,
+            0, 0,
             100, // Set current HP directly
             [15; 6],
             [0; 6],
@@ -502,6 +503,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 200,
         };
 
         // Burn should halve physical attack: 80 / 2 = 40
@@ -537,6 +539,7 @@ mod tests {
 
         let pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
+            10,
             0,
             100,
             [15; 6],
@@ -555,6 +558,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 0
         };
 
         // Test with deterministic RNG - low roll should not be critical hit
@@ -613,7 +617,7 @@ mod tests {
         // Test Pokemon with burn status
         let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
-            0,
+            10, 0,
             100, // Set current HP directly to max
             [15; 6],
             [0; 6],
@@ -625,13 +629,14 @@ mod tests {
         // Test Pokemon with paralysis
         let mut paralyzed_pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
-            0,
+            10, 0,
             100, // Set current HP directly to max
             [15; 6],
             [0; 6],
             [100, 80, 60, 80, 60, 100], // Attack=80, Defense=60, Speed=100
             [const { None }; 4],
             Some(crate::pokemon::StatusCondition::Paralysis),
+            
         );
 
         let player = crate::player::BattlePlayer {
@@ -643,6 +648,7 @@ mod tests {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             last_move: None,
+            ante: 200
         };
 
         // Test burn effects

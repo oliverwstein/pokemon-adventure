@@ -139,7 +139,7 @@ pub enum MoveEffect {
     // Utility
     Heal(u8),                       // heal % of max HP
     CureStatus(Target, StatusType), // cure specific status
-    Ante(u8),                       // gain money (Pay Day effect)
+    Ante(u8),                       // percent chance to gain money equal to 2x level (Pay Day effect)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

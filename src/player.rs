@@ -111,6 +111,9 @@ pub struct BattlePlayer {
     // HashMap for stat stage modifications, value is stage (-6 to +6)
     pub stat_stages: HashMap<StatType, i8>,
 
+    // Money/prize amount accumulated during battle (altered by Pay Day)
+    pub ante: u32,
+
     pub last_move: Option<Move>,
 }
 
@@ -130,6 +133,7 @@ impl BattlePlayer {
             team_conditions: HashMap::new(),
             active_pokemon_conditions: HashMap::new(),
             stat_stages: HashMap::new(),
+            ante: 0,
             last_move: None,
         }
     }
@@ -392,5 +396,17 @@ impl BattlePlayer {
         }
 
         expired_conditions
+    }
+
+    // === Ante Management ===
+
+    /// Get current ante amount
+    pub fn get_ante(&self) -> u32 {
+        self.ante
+    }
+
+    /// Add to ante amount
+    pub fn add_ante(&mut self, amount: u32) {
+        self.ante = self.ante.saturating_add(amount);
     }
 }

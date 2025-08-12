@@ -6,6 +6,6 @@ MoveData(
     accuracy: Some(90),
     max_pp: 30,
     effects: [
-        Ante(2),
+        Ante(100),
     ],
 )

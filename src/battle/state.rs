@@ -121,6 +121,13 @@ pub enum BattleEvent {
         reason: ActionFailureReason,
     },
 
+    // Money/Ante
+    AnteIncreased {
+        player_index: usize,
+        amount: u32,
+        new_total: u32,
+    },
+
     // Battle End
     PlayerDefeated {
         player_index: usize,

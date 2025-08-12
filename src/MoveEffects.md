@@ -2,7 +2,7 @@
 ## Move Effects
 
 * Multihit (min, max)
-* Ante (multiplier)
+* Ante (%)
 * Burn (%)
 * Paralyze (%)
 * Freeze (%)

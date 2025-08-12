@@ -109,6 +109,24 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
             break;
         }
     }
+
+    // Apply team condition modifiers (Reflect/Light Screen)
+    match move_data.category {
+        MoveCategory::Physical => {
+            // Reflect reduces damage from physical moves by 50%
+            if player.has_team_condition(&crate::player::TeamCondition::Reflect) {
+                multiplied_defense = (multiplied_defense as f64 * 2.0).round() as u16;
+            }
+        }
+        MoveCategory::Special => {
+            // Light Screen reduces damage from special moves by 50%
+            if player.has_team_condition(&crate::player::TeamCondition::LightScreen) {
+                multiplied_defense = (multiplied_defense as f64 * 2.0).round() as u16;
+            }
+        }
+        _ => {} // Status and Other moves don't use defense stats
+    }
+
     // TODO: Apply move-specific modifiers based on move_data
     // Examples: Psyshock/Psystrike use special attack vs physical defense
 

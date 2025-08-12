@@ -397,7 +397,7 @@ fn convert_player_action_to_battle_action(
 }
 
 /// Execute a single battle action, potentially adding more actions to the stack
-fn execute_battle_action(
+pub fn execute_battle_action(
     action: BattleAction,
     battle_state: &mut BattleState,
     action_stack: &mut ActionStack,
@@ -460,6 +460,29 @@ fn execute_battle_action(
                     });
                     return;
                 }
+            }
+
+            // Check all action-preventing conditions (sleep, freeze, paralysis, confusion, etc.)
+            // This needs to happen BEFORE any move processing (including special moves)
+            if let Some(failure_reason) =
+                check_action_preventing_conditions(attacker_index, battle_state, rng, move_used, bus)
+            {
+                // Always generate ActionFailed event first
+                bus.push(BattleEvent::ActionFailed {
+                    reason: failure_reason.clone(),
+                });
+
+                // Special case for confusion - also causes self-damage after the action fails
+                if matches!(failure_reason, ActionFailureReason::IsConfused) {
+                    // Add confusion self-attack action to the stack
+                    action_stack.push_front(BattleAction::AttackHit {
+                        attacker_index,
+                        defender_index: attacker_index, // Attack self
+                        move_used: Move::HittingItself,
+                        hit_number: 1, // Hit number > 0 to avoid pp check.
+                    });
+                }
+                return; // Attack is prevented
             }
             if hit_number == 0 {
                 let attacker_pokemon = battle_state.players[attacker_index].team
@@ -1995,29 +2018,7 @@ pub fn execute_attack_hit(
         return;
     }
 
-    // Check all action-preventing conditions
-    if let Some(failure_reason) =
-        check_action_preventing_conditions(attacker_index, battle_state, rng, move_used, bus)
-    {
-        // Always generate ActionFailed event first
-        bus.push(BattleEvent::ActionFailed {
-            reason: failure_reason.clone(),
-        });
-
-        // Special case for confusion - also causes self-damage after the action fails
-        if matches!(failure_reason, ActionFailureReason::IsConfused) {
-            // Add confusion self-attack action to the stack
-            action_stack.push_front(BattleAction::AttackHit {
-                attacker_index,
-                defender_index: attacker_index, // Attack self
-                move_used: Move::HittingItself,
-                hit_number: 0,
-            });
-        }
-        return; // Attack is prevented
-    }
-
-    // Now get the player and pokemon references
+    // Get the player and pokemon references
     let attacker_player = &battle_state.players[attacker_index];
     let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index]
         .as_ref()

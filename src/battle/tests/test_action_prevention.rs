@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::execute_attack_hit;
+    use crate::battle::turn_orchestrator::{execute_battle_action, BattleAction};
     use crate::move_data::initialize_move_data;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PokemonCondition};
@@ -27,8 +27,8 @@ mod tests {
         let pikachu_data = crate::pokemon::get_species_data(Species::Pikachu).unwrap();
         let charmander_data = crate::pokemon::get_species_data(Species::Charmander).unwrap();
 
-        let mut pikachu = PokemonInst::new(Species::Pikachu, &pikachu_data, 25, None, None);
-        let charmander = PokemonInst::new(Species::Charmander, &charmander_data, 25, None, None);
+        let mut pikachu = PokemonInst::new(Species::Pikachu, &pikachu_data, 25, None, Some(vec![Move::Tackle, Move::Ember]));
+        let charmander = PokemonInst::new(Species::Charmander, &charmander_data, 25, None, Some(vec![Move::Tackle, Move::Ember]));
 
         // Set attacker status
         pikachu.status = attacker_status;
@@ -61,15 +61,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![128]);
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -92,15 +94,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![24]); // 24 < 25, so paralyzed (25% chance)
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -123,15 +127,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![25, 75, 60, 80, 90, 85]); // 25 >= 25, so not paralyzed + extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -153,15 +159,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80, 85, 70, 65, 95, 88, 92]); // 49 < 50, so confused (50% chance) + many extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Ember,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Ember,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         // When confused, the Pokemon should add a self-attack to the action stack
@@ -178,15 +186,17 @@ mod tests {
                     assert_eq!(attacker_index, defender_index);
                     assert_eq!(attacker_index, 0);
                     assert_eq!(move_used, Move::HittingItself);
-                    execute_attack_hit(
-                        attacker_index,
-                        defender_index,
-                        move_used,
-                        hit_number,
+                    execute_battle_action(
+                        BattleAction::AttackHit {
+                            attacker_index,
+                            defender_index,
+                            move_used,
+                            hit_number,
+                        },
+                        &mut battle_state,
                         &mut action_stack,
                         &mut bus,
                         &mut rng,
-                        &mut battle_state,
                     );
                 }
                 _ => panic!("Expected AttackHit action from confusion"),
@@ -197,6 +207,7 @@ mod tests {
 
         let events = bus.events();
         // Should have both ActionFailed event AND self-damage events
+        println!("Confusion events: {:?}", events);
         assert!(events.len() >= 3); // ActionFailed + MoveUsed + DamageDealt at minimum
 
         // First event should be ActionFailed due to confusion
@@ -207,11 +218,11 @@ mod tests {
             }
         ));
 
-        // Should also have events for self-damage (MoveUsed, DamageDealt)
+        // Should also have events for self-damage (MoveHit, DamageDealt)
         assert!(
             events
                 .iter()
-                .any(|e| matches!(e, BattleEvent::MoveUsed { .. }))
+                .any(|e| matches!(e, BattleEvent::MoveHit { move_used: Move::HittingItself, .. }))
         );
         assert!(
             events
@@ -233,15 +244,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![50, 75, 60, 80, 90, 85]); // 50 >= 50, so not confused this turn + extra values
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -263,15 +276,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -298,15 +313,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![75]);
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();
@@ -331,15 +348,17 @@ mod tests {
         let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]); // Good rolls for accuracy, etc.
         let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
 
-        execute_attack_hit(
-            0,
-            1,
-            Move::Tackle,
-            0,
+        execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         let events = bus.events();

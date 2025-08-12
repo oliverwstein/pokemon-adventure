@@ -338,15 +338,17 @@ mod tests {
 
         // Test defrost by trying to execute an attack (this will call check_action_preventing_conditions)
         let mut action_stack = ActionStack::new();
-        crate::battle::turn_orchestrator::execute_attack_hit(
-            0, // attacker_index
-            1, // defender_index
-            Move::Tackle,
-            0, // hit_number
+        crate::battle::turn_orchestrator::execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         // Pokemon should be defrosted
@@ -385,15 +387,17 @@ mod tests {
 
         // Test freeze check by trying to execute an attack (this will call check_action_preventing_conditions)
         let mut action_stack = ActionStack::new();
-        crate::battle::turn_orchestrator::execute_attack_hit(
-            0, // attacker_index
-            1, // defender_index
-            Move::Tackle,
-            0, // hit_number
+        crate::battle::turn_orchestrator::execute_battle_action(
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
             &mut action_stack,
             &mut bus,
             &mut rng,
-            &mut battle_state,
         );
 
         // Pokemon should still be frozen

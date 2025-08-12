@@ -860,7 +860,7 @@ impl PokemonInst {
     /// Returns (should_cure, status_changed).
     pub fn update_status_progress(&mut self) -> (bool, bool) {
         let original_status = self.status;
-        
+
         let should_cure = match &mut self.status {
             Some(StatusCondition::Sleep(turns)) => {
                 if *turns == 0 {
@@ -912,5 +912,4 @@ impl PokemonInst {
 
         (damage, self.status != original_status)
     }
-
 }

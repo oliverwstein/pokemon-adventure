@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::{execute_battle_action, BattleAction};
+    use crate::battle::turn_orchestrator::{BattleAction, execute_battle_action};
     use crate::move_data::initialize_move_data;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PokemonCondition};
@@ -27,8 +27,20 @@ mod tests {
         let pikachu_data = crate::pokemon::get_species_data(Species::Pikachu).unwrap();
         let charmander_data = crate::pokemon::get_species_data(Species::Charmander).unwrap();
 
-        let mut pikachu = PokemonInst::new(Species::Pikachu, &pikachu_data, 25, None, Some(vec![Move::Tackle, Move::Ember]));
-        let charmander = PokemonInst::new(Species::Charmander, &charmander_data, 25, None, Some(vec![Move::Tackle, Move::Ember]));
+        let mut pikachu = PokemonInst::new(
+            Species::Pikachu,
+            &pikachu_data,
+            25,
+            None,
+            Some(vec![Move::Tackle, Move::Ember]),
+        );
+        let charmander = PokemonInst::new(
+            Species::Charmander,
+            &charmander_data,
+            25,
+            None,
+            Some(vec![Move::Tackle, Move::Ember]),
+        );
 
         // Set attacker status
         pikachu.status = attacker_status;
@@ -219,11 +231,13 @@ mod tests {
         ));
 
         // Should also have events for self-damage (MoveHit, DamageDealt)
-        assert!(
-            events
-                .iter()
-                .any(|e| matches!(e, BattleEvent::MoveHit { move_used: Move::HittingItself, .. }))
-        );
+        assert!(events.iter().any(|e| matches!(
+            e,
+            BattleEvent::MoveHit {
+                move_used: Move::HittingItself,
+                ..
+            }
+        )));
         assert!(
             events
                 .iter()
@@ -328,7 +342,7 @@ mod tests {
 
         let events = bus.events();
         assert_eq!(events.len(), 1);
-        
+
         // Should fail due to sleep (Sleep(2) -> Sleep(1)), not flinch
         assert!(matches!(
             events[0],
@@ -344,9 +358,9 @@ mod tests {
 
         let mut battle_state = create_test_battle_state(
             None,
-            vec![PokemonCondition::Disabled { 
-                pokemon_move: Move::Tackle, 
-                turns_remaining: 2 
+            vec![PokemonCondition::Disabled {
+                pokemon_move: Move::Tackle,
+                turns_remaining: 2,
             }],
         );
 
@@ -384,9 +398,9 @@ mod tests {
 
         let mut battle_state = create_test_battle_state(
             None,
-            vec![PokemonCondition::Disabled { 
+            vec![PokemonCondition::Disabled {
                 pokemon_move: Move::Tackle, // Tackle is disabled
-                turns_remaining: 2 
+                turns_remaining: 2,
             }],
         );
 

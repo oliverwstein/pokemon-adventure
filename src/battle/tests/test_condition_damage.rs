@@ -76,8 +76,14 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let final_p1_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        let final_p2_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Calculate expected damage (1/8 of max HP, minimum 1)
         let expected_damage = (max_p1_hp / 8).max(1);
@@ -186,7 +192,10 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_p1_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Calculate expected damage (1/16 of max HP, minimum 1)
         let expected_damage = (max_p1_hp / 16).max(1);
@@ -221,7 +230,10 @@ mod tests {
         );
 
         // Trapped condition should still exist with decremented counter (2 -> 1)
-        assert!(battle_state.players[0].has_condition(&PokemonCondition::Trapped { turns_remaining: 1 }));
+        assert!(
+            battle_state.players[0]
+                .has_condition(&PokemonCondition::Trapped { turns_remaining: 1 })
+        );
     }
 
     #[test]
@@ -267,7 +279,10 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_p1_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Calculate expected total damage
         let seeded_damage = (max_p1_hp / 8).max(1);
@@ -350,9 +365,12 @@ mod tests {
         let seeded_damage = (max_hp / 8).max(1);
         // Leave just enough HP that Leech Seed will cause fainting
         pokemon.take_damage(max_hp - seeded_damage + 1);
-        
+
         let low_hp = player1.active_pokemon().unwrap().current_hp();
-        assert!(low_hp > 0 && low_hp <= seeded_damage, "Pokemon should have low HP but not be fainted yet");
+        assert!(
+            low_hp > 0 && low_hp <= seeded_damage,
+            "Pokemon should have low HP but not be fainted yet"
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -369,10 +387,16 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Pokemon should have fainted
-        assert_eq!(final_hp, 0, "Pokemon should have fainted from Leech Seed damage");
+        assert_eq!(
+            final_hp, 0,
+            "Pokemon should have fainted from Leech Seed damage"
+        );
 
         // Should have PokemonFainted event
         let faint_events: Vec<_> = event_bus
@@ -422,9 +446,12 @@ mod tests {
         let trapped_damage = (max_hp / 16).max(1);
         // Leave just enough HP that Trapped will cause fainting
         pokemon.take_damage(max_hp - trapped_damage + 1);
-        
+
         let low_hp = player1.active_pokemon().unwrap().current_hp();
-        assert!(low_hp > 0 && low_hp <= trapped_damage, "Pokemon should have low HP but not be fainted yet");
+        assert!(
+            low_hp > 0 && low_hp <= trapped_damage,
+            "Pokemon should have low HP but not be fainted yet"
+        );
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
@@ -441,10 +468,16 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Pokemon should have fainted
-        assert_eq!(final_hp, 0, "Pokemon should have fainted from Trapped damage");
+        assert_eq!(
+            final_hp, 0,
+            "Pokemon should have fainted from Trapped damage"
+        );
 
         // Should have PokemonFainted event
         let faint_events: Vec<_> = event_bus
@@ -494,7 +527,10 @@ mod tests {
         let player2_pokemon = player2.active_pokemon_mut().unwrap();
         let player2_max_hp = player2_pokemon.max_hp();
         player2_pokemon.take_damage(player2_max_hp);
-        assert!(player2_pokemon.is_fainted(), "Player2's Pokemon should be fainted");
+        assert!(
+            player2_pokemon.is_fainted(),
+            "Player2's Pokemon should be fainted"
+        );
 
         let initial_p1_hp = player1.active_pokemon().unwrap().current_hp();
 
@@ -513,8 +549,14 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_p1_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let final_p1_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        let final_p2_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Player 1 should still take damage from Leech Seed
         let max_p1_hp = battle_state.players[0].active_pokemon().unwrap().max_hp();
@@ -542,7 +584,10 @@ mod tests {
                 )
             })
             .collect();
-        assert!(!status_damage_events.is_empty(), "Should have StatusDamage event");
+        assert!(
+            !status_damage_events.is_empty(),
+            "Should have StatusDamage event"
+        );
 
         let heal_events: Vec<_> = event_bus
             .events()
@@ -557,7 +602,10 @@ mod tests {
                 )
             })
             .collect();
-        assert!(heal_events.is_empty(), "Should not have PokemonHealed event for fainted opponent");
+        assert!(
+            heal_events.is_empty(),
+            "Should not have PokemonHealed event for fainted opponent"
+        );
     }
 
     #[test]
@@ -605,7 +653,10 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_p2_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
+        let final_p2_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
 
         // Player 2 should be healed back to max HP (not over)
         assert_eq!(

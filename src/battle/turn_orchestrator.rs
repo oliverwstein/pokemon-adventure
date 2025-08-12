@@ -464,9 +464,13 @@ pub fn execute_battle_action(
 
             // Check all action-preventing conditions (sleep, freeze, paralysis, confusion, etc.)
             // This needs to happen BEFORE any move processing (including special moves)
-            if let Some(failure_reason) =
-                check_action_preventing_conditions(attacker_index, battle_state, rng, move_used, bus)
-            {
+            if let Some(failure_reason) = check_action_preventing_conditions(
+                attacker_index,
+                battle_state,
+                rng,
+                move_used,
+                bus,
+            ) {
                 // Always generate ActionFailed event first
                 bus.push(BattleEvent::ActionFailed {
                     reason: failure_reason.clone(),
@@ -655,24 +659,29 @@ fn check_action_preventing_conditions(
     bus: &mut EventBus,
 ) -> Option<ActionFailureReason> {
     // Check Pokemon status conditions BEFORE updating counters
-    let pokemon_status = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index]
+    let pokemon_status = battle_state.players[player_index].team
+        [battle_state.players[player_index].active_pokemon_index]
         .as_ref()?
         .status;
-    
+
     // First check if Pokemon should fail to act (including Sleep > 0)
     if let Some(status) = pokemon_status {
         match status {
             crate::pokemon::StatusCondition::Sleep(turns) => {
                 if turns > 0 {
                     // Pokemon is still asleep, update counters after determining failure
-                    if let Some(pokemon) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+                    if let Some(pokemon) = battle_state.players[player_index].team
+                        [battle_state.players[player_index].active_pokemon_index]
+                        .as_mut()
+                    {
                         let (should_cure, status_changed) = pokemon.update_status_progress();
-                        
+
                         if should_cure && status_changed {
                             let old_status = pokemon.status; // Save before clearing
                             bus.push(BattleEvent::PokemonStatusRemoved {
                                 target: pokemon.species,
-                                status: old_status.unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
+                                status: old_status
+                                    .unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
                             });
                         }
                     }
@@ -684,10 +693,13 @@ fn check_action_preventing_conditions(
                 let roll = rng.next_outcome(); // 0-100
                 if roll < 25 {
                     // Pokemon thaws out
-                    if let Some(pokemon_mut) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+                    if let Some(pokemon_mut) = battle_state.players[player_index].team
+                        [battle_state.players[player_index].active_pokemon_index]
+                        .as_mut()
+                    {
                         let species = pokemon_mut.species;
                         pokemon_mut.status = None;
-                        
+
                         bus.push(BattleEvent::PokemonStatusRemoved {
                             target: species,
                             status: crate::pokemon::StatusCondition::Freeze,
@@ -703,20 +715,24 @@ fn check_action_preventing_conditions(
     }
 
     // Update status counters for Pokemon that are not asleep with turns > 0 (they were handled above)
-    let current_status = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index]
+    let current_status = battle_state.players[player_index].team
+        [battle_state.players[player_index].active_pokemon_index]
         .as_ref()?
         .status;
-    
+
     // Only update counters if Pokemon doesn't have sleep with turns > 0 (those were already updated above)
     let should_update_counters = match current_status {
         Some(crate::pokemon::StatusCondition::Sleep(turns)) => turns == 0,
         _ => true,
     };
-    
+
     if should_update_counters {
-        if let Some(pokemon) = battle_state.players[player_index].team[battle_state.players[player_index].active_pokemon_index].as_mut() {
+        if let Some(pokemon) = battle_state.players[player_index].team
+            [battle_state.players[player_index].active_pokemon_index]
+            .as_mut()
+        {
             let (should_cure, status_changed) = pokemon.update_status_progress();
-            
+
             if should_cure && status_changed {
                 let old_status = pokemon.status; // Save before clearing
                 bus.push(BattleEvent::PokemonStatusRemoved {
@@ -728,7 +744,7 @@ fn check_action_preventing_conditions(
     }
 
     let player = &battle_state.players[player_index];
-    
+
     // Check active Pokemon conditions
     if player.has_condition(&crate::player::PokemonCondition::Flinched) {
         return Some(ActionFailureReason::IsFlinching);
@@ -767,7 +783,11 @@ fn check_action_preventing_conditions(
 
     // Check for disabled moves
     for condition in player.active_pokemon_conditions.values() {
-        if let crate::player::PokemonCondition::Disabled { pokemon_move, turns_remaining } = condition {
+        if let crate::player::PokemonCondition::Disabled {
+            pokemon_move,
+            turns_remaining,
+        } = condition
+        {
             if *turns_remaining > 0 && *pokemon_move == move_used {
                 return Some(ActionFailureReason::MoveFailedToExecute);
             }
@@ -2633,7 +2653,6 @@ pub fn execute_end_turn_phase(
                     });
                 }
             }
-
         }
 
         // 2. Process active Pokemon conditions (outside of pokemon borrow to avoid conflicts)

@@ -62,7 +62,10 @@ mod tests {
             (max_hp / 16).max(1),
             "Regular poison should deal 1/16 of max hp"
         );
-        assert!(!status_changed, "Status should not change when dealing poison damage.");
+        assert!(
+            !status_changed,
+            "Status should not change when dealing poison damage."
+        );
         assert_eq!(
             pokemon.current_hp(),
             initial_hp - damage,
@@ -324,9 +327,9 @@ mod tests {
         init_test_data();
 
         // Test successful defrost when Pokemon tries to act
-        use crate::battle::turn_orchestrator::{BattleAction, ActionStack};
+        use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
         use crate::moves::Move;
-        
+
         let mut battle_state = create_test_battle_state();
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
             .as_mut()
@@ -373,9 +376,9 @@ mod tests {
         init_test_data();
 
         // Test failed defrost when Pokemon tries to act
-        use crate::battle::turn_orchestrator::{BattleAction, ActionStack};
+        use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
         use crate::moves::Move;
-        
+
         let mut battle_state = create_test_battle_state();
         let pokemon = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
             .as_mut()

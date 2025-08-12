@@ -126,7 +126,7 @@ mod tests {
 
         // Create Pokemon with low HP to ensure fainting
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
-        let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 20); // Low HP
+        let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 10); // Low HP
 
         let player1 = create_test_player(pokemon1);
         let player2 = create_test_player(pokemon2);

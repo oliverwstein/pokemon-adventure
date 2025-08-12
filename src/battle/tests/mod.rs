@@ -51,3 +51,6 @@ mod test_team_condition_expiry;
 
 #[cfg(test)]
 mod test_mist;
+
+#[cfg(test)]
+mod test_team_condition_moves;

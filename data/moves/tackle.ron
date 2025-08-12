@@ -1,11 +1,10 @@
 MoveData(
     name: "Tackle",
     move_type: Normal,
-    power: Some(60),
+    power: Some(40),
     category: Physical,
-    accuracy: Some(95),
+    accuracy: Some(90),
     max_pp: 40,
     effects: [
-        Exhaust(10),
     ],
 )

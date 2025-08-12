@@ -36,3 +36,6 @@ mod test_heal;
 
 #[cfg(test)]
 mod test_haze;
+
+#[cfg(test)]
+mod test_cure_status;

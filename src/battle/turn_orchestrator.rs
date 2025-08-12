@@ -1094,6 +1094,36 @@ fn apply_move_effects(
                 }
             }
 
+            // CureStatus effect - cures specific status condition for user or target
+            crate::move_data::MoveEffect::CureStatus(target, status_type) => {
+                let target_index = match target {
+                    crate::move_data::Target::User => attacker_index,
+                    crate::move_data::Target::Target => defender_index,
+                };
+
+                let target_player = &mut battle_state.players[target_index];
+                if let Some(target_pokemon) = target_player.active_pokemon_mut() {
+                    // Check if the Pokemon has the status condition we want to cure
+                    let should_cure = match (&target_pokemon.status, status_type) {
+                        (Some(crate::pokemon::StatusCondition::Sleep(_)), crate::move_data::StatusType::Sleep) => true,
+                        (Some(crate::pokemon::StatusCondition::Poison(_)), crate::move_data::StatusType::Poison) => true,
+                        (Some(crate::pokemon::StatusCondition::Burn), crate::move_data::StatusType::Burn) => true,
+                        (Some(crate::pokemon::StatusCondition::Freeze), crate::move_data::StatusType::Freeze) => true,
+                        (Some(crate::pokemon::StatusCondition::Paralysis), crate::move_data::StatusType::Paralysis) => true,
+                        _ => false, // No matching status to cure
+                    };
+
+                    if should_cure {
+                        if let Some(old_status) = target_pokemon.status.take() {
+                            bus.push(BattleEvent::PokemonStatusRemoved {
+                                target: target_pokemon.species,
+                                status: old_status,
+                            });
+                        }
+                    }
+                }
+            }
+
             // Skip other effects that don't have chance percentages or are handled elsewhere
             _ => {}
         }

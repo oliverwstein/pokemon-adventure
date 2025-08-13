@@ -84,13 +84,21 @@ pub fn calculate_attack_outcome(
             }));
         }
         
-        // Calculate critical hit for normal (non-special) damage moves
-        if crate::battle::stats::calculate_special_attack_damage(
-            move_used,
-            attacker_pokemon,
-            defender_pokemon,
-        ).is_none() {
-            // This is a normal damage move, check for critical hit
+        // Calculate damage
+        let damage = if let Some(special_damage) =
+            crate::battle::stats::calculate_special_attack_damage(
+                move_used,
+                attacker_pokemon,
+                defender_pokemon,
+            ) {
+            // Special damage move
+            if type_adv_multiplier > 0.1 {
+                special_damage
+            } else {
+                0
+            }
+        } else {
+            // Normal damage move - check for critical hit first
             let is_critical = move_is_critical_hit(attacker_pokemon, attacker_player, move_used, rng);
             
             if is_critical {
@@ -100,10 +108,28 @@ pub fn calculate_attack_outcome(
                     move_used,
                 }));
             }
+            
+            // Calculate normal attack damage
+            crate::battle::stats::calculate_attack_damage(
+                attacker_pokemon,
+                defender_pokemon,
+                attacker_player,
+                defender_player,
+                move_used,
+                is_critical,
+                rng,
+            )
+        };
+        
+        // Generate damage command if damage > 0
+        if damage > 0 {
+            commands.push(BattleCommand::DealDamage {
+                target: PlayerTarget::from_index(defender_index),
+                amount: damage,
+            });
         }
         
         // TODO: In future iterations, add:
-        // - Damage calculation
         // - Move effects
         // - Status applications
         // - Fainting checks
@@ -192,18 +218,20 @@ mod tests {
         }
 
         let state = create_test_battle_state();
-        let mut rng = TurnRng::new_for_test(vec![1, 99]); // Hit + no critical hit
+        let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
         
         let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
-        // Should have MoveUsed, MoveHit, and possibly type effectiveness events
-        assert!(commands.len() >= 2);
+        // Should have MoveUsed, MoveHit, and DealDamage commands at minimum
+        assert!(commands.len() >= 3);
         
         assert!(matches!(commands[0], BattleCommand::EmitEvent(BattleEvent::MoveUsed { .. })));
         assert!(matches!(commands[1], BattleCommand::EmitEvent(BattleEvent::MoveHit { .. })));
         
-        // May have type effectiveness event if not normal effectiveness
-        // May have critical hit event if critical hit occurred
+        // Should have DealDamage command (last command after any events)
+        assert!(commands.iter().any(|cmd| matches!(cmd, BattleCommand::DealDamage { .. })));
+        
+        // May have type effectiveness or critical hit events
     }
 
     #[test]

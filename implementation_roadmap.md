@@ -4,26 +4,14 @@
 1. **Initial Validation** - Defender fainted check (lines 2040-2050)
 2. **MoveUsed Event** - First hit only (lines 2063-2070, now in calculator)  
 3. **Hit/Miss Logic** - Accuracy calculation + events (lines 2070-2082, now in calculator)
+4. **Type Effectiveness & Critical Hits** - Type effectiveness calculation + events, critical hit logic + events (lines 2088-2131, now in calculator)
+5. **Core Damage Calculation** - Special and normal damage calculation with type effectiveness application (lines 2098-2131, now in calculator)
 
-**Status**: Basic scaffolding complete, hit/miss bridge working, all 129 tests passing.
+**Status**: Core damage calculation complete. Calculator now handles hit/miss, type effectiveness, critical hits, and damage calculation. Bridge pattern working correctly with event extraction.
 
 ---
 
 ## **🎯 REMAINING TO IMPLEMENT**
-
-### **Iteration 3: Type Effectiveness & Critical Hits**
-**Lines: 2088-2131**
-- Type effectiveness calculation (`get_type_effectiveness`)
-- Type effectiveness event emission  
-- Critical hit calculation (`move_is_critical_hit`)
-- Critical hit event emission
-- Special damage vs normal damage branching
-
-### **Iteration 4: Core Damage Calculation** 
-**Lines: 2098-2131**
-- Special attack damage (`calculate_special_attack_damage`)
-- Normal attack damage (`calculate_attack_damage`) 
-- Type effectiveness application to damage
 
 ### **Iteration 5: Substitute Damage Absorption**
 **Lines: 2133-2175**
@@ -139,6 +127,6 @@ The next logical iteration is **Iteration 3: Type Effectiveness & Critical Hits*
 - Sets up foundation for damage calculation
 - Has existing pure functions to leverage
 
-**Current Progress**: 3/16 iterations complete (~19% of attack logic migrated)
+**Current Progress**: 5/15 iterations complete (~33% of attack logic migrated)
 
 This is a **comprehensive battle system** with authentic Generation 1 mechanics plus custom enhancements. The roadmap shows significant work ahead, but the incremental approach makes it very manageable!

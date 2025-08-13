@@ -3,12 +3,11 @@ use crate::battle::commands::execute_commands_locally;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
 };
-use crate::battle::stats::{effective_speed, move_hits, move_is_critical_hit};
+use crate::battle::stats::effective_speed;
 use crate::move_data::get_move_data;
 use crate::moves::Move;
 use crate::player::PlayerAction;
 use crate::player::PokemonCondition;
-use crate::species::Species;
 use std::collections::VecDeque;
 
 /// Internal action types for the action stack
@@ -2060,6 +2059,14 @@ pub fn execute_attack_hit(
         rng
     );
     
+    // Extract damage amount from calculator commands BEFORE executing
+    let damage = hit_miss_commands.iter()
+        .find_map(|cmd| match cmd {
+            crate::battle::commands::BattleCommand::DealDamage { amount, .. } => Some(*amount),
+            _ => None,
+        })
+        .unwrap_or(0);
+    
     // Execute the commands immediately using local bridge function
     if let Err(e) = execute_commands_locally(hit_miss_commands, battle_state, bus, action_stack) {
         eprintln!("Error executing hit/miss commands: {:?}", e);
@@ -2073,7 +2080,7 @@ pub fn execute_attack_hit(
     });
     
     // Extract critical hit information from calculator events
-    let is_critical = bus.events().iter().rev().take(10).any(|event| {
+    let _is_critical = bus.events().iter().rev().take(10).any(|event| {
         matches!(event, BattleEvent::CriticalHit { .. })
     });
 
@@ -2090,36 +2097,7 @@ pub fn execute_attack_hit(
 
     if hits {
         // === END BRIDGE ===
-        // Type effectiveness and critical hit logic now handled by calculator
-        
-        let move_data = get_move_data(move_used).expect("Move data must exist");
-        let defender_types = defender_pokemon.get_current_types(defender_player);
-        let type_adv_multiplier =
-            crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
-
-        let damage = if let Some(special_damage) =
-            crate::battle::stats::calculate_special_attack_damage(
-                move_used,
-                attacker_pokemon,
-                defender_pokemon,
-            ) {
-            if (type_adv_multiplier > 0.1) {
-                special_damage
-            } else {
-                0
-            }
-        } else {
-            // Critical hit already calculated by calculator
-            crate::battle::stats::calculate_attack_damage(
-                attacker_pokemon,
-                defender_pokemon,
-                attacker_player,
-                defender_player,
-                move_used,
-                is_critical,
-                rng,
-            )
-        };
+        // Type effectiveness, critical hit, and damage calculation now handled by calculator
 
         let defender_fainted = if damage > 0 {
             let defender_player_mut = &mut battle_state.players[defender_index];

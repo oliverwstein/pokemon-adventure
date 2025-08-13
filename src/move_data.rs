@@ -240,6 +240,9 @@ impl MoveEffect {
             MoveEffect::Trap(chance) => {
                 EffectResult::Continue(self.apply_trap_effect(*chance, context, state, rng))
             }
+            MoveEffect::Seed(chance) => {
+                EffectResult::Continue(self.apply_seed_effect(*chance, context, state, rng))
+            }
             MoveEffect::Exhaust(chance) => {
                 EffectResult::Continue(self.apply_exhaust_effect(*chance, context, state, rng))
             }
@@ -635,6 +638,37 @@ impl MoveEffect {
                 let condition = PokemonCondition::Trapped {
                     turns_remaining: trap_turns,
                 };
+
+                commands.push(BattleCommand::AddCondition {
+                    target: PlayerTarget::from_index(context.defender_index),
+                    condition: condition.clone(),
+                });
+                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: target_pokemon.species,
+                    status: condition,
+                }));
+            }
+        }
+
+        commands
+    }
+
+    fn apply_seed_effect(
+        &self,
+        chance: u8,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+        rng: &mut crate::battle::state::TurnRng,
+    ) -> Vec<crate::battle::commands::BattleCommand> {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::state::BattleEvent;
+
+        let mut commands = Vec::new();
+
+        if rng.next_outcome("Apply Seeded Effect") <= chance {
+            let target_player = &state.players[context.defender_index];
+            if let Some(target_pokemon) = target_player.active_pokemon() {
+                let condition = PokemonCondition::Seeded;
 
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),

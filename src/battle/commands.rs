@@ -134,6 +134,58 @@ pub fn execute_commands_locally(
     Ok(())
 }
 
+/// Helper function to execute commands that operate on the active Pokemon
+fn execute_pokemon_command<F>(
+    target: PlayerTarget,
+    state: &mut BattleState,
+    operation: F,
+) -> Result<(), ExecutionError>
+where
+    F: FnOnce(&mut crate::pokemon::PokemonInst, usize) -> Result<(), ExecutionError>,
+{
+    let player_index = target.to_index();
+    let player = &mut state.players[player_index];
+    if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
+        operation(pokemon, player_index)
+    } else {
+        Err(ExecutionError::NoPokemon)
+    }
+}
+
+/// Helper function specifically for DealDamage command with event emission
+fn execute_deal_damage_command(
+    target: PlayerTarget,
+    amount: u16,
+    state: &mut BattleState,
+    bus: &mut EventBus,
+) -> Result<(), ExecutionError> {
+    let player_index = target.to_index();
+    let player = &mut state.players[player_index];
+    if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
+        let did_faint = pokemon.take_damage(amount);
+        let remaining_hp = pokemon.current_hp();
+        
+        // Emit DamageDealt event
+        bus.push(crate::battle::state::BattleEvent::DamageDealt {
+            target: pokemon.species,
+            damage: amount,
+            remaining_hp,
+        });
+        
+        // Emit PokemonFainted event if needed
+        if did_faint {
+            bus.push(crate::battle::state::BattleEvent::PokemonFainted {
+                player_index,
+                pokemon: pokemon.species,
+            });
+        }
+        
+        Ok(())
+    } else {
+        Err(ExecutionError::NoPokemon)
+    }
+}
+
 fn execute_command_locally(
     command: BattleCommand,
     state: &mut BattleState,
@@ -146,62 +198,26 @@ fn execute_command_locally(
             Ok(())
         }
         BattleCommand::DealDamage { target, amount } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-                let did_faint = pokemon.take_damage(amount);
-                let remaining_hp = pokemon.current_hp();
-                
-                // Emit DamageDealt event
-                bus.push(crate::battle::state::BattleEvent::DamageDealt {
-                    target: pokemon.species,
-                    damage: amount,
-                    remaining_hp,
-                });
-                
-                // Emit PokemonFainted event if needed
-                if did_faint {
-                    bus.push(crate::battle::state::BattleEvent::PokemonFainted {
-                        player_index,
-                        pokemon: pokemon.species,
-                    });
-                }
-                
-                Ok(())
-            } else {
-                Err(ExecutionError::NoPokemon)
-            }
+            execute_deal_damage_command(target, amount, state, bus)
         }
         BattleCommand::HealPokemon { target, amount } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
+            execute_pokemon_command(target, state, |pokemon, _| {
                 pokemon.heal(amount);
                 Ok(())
-            } else {
-                Err(ExecutionError::NoPokemon)
-            }
+            })
         }
         BattleCommand::SetPokemonStatus { target, status } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
+            execute_pokemon_command(target, state, |pokemon, _| {
                 pokemon.status = status;
                 Ok(())
-            } else {
-                Err(ExecutionError::NoPokemon)
-            }
+            })
         }
         BattleCommand::FaintPokemon { target } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
+            execute_pokemon_command(target, state, |pokemon, _| {
                 // Set HP to 0, which will trigger fainting in take_damage
                 pokemon.take_damage(pokemon.current_hp());
                 Ok(())
-            } else {
-                Err(ExecutionError::NoPokemon)
-            }
+            })
         }
         BattleCommand::ChangeStatStage { target, stat, delta } => {
             let player_index = target.to_index();

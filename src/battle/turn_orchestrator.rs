@@ -2173,48 +2173,6 @@ pub fn execute_attack_hit(
                 break;
             }
         }
-    } else {
-        bus.push(BattleEvent::MoveMissed {
-            attacker: attacker_pokemon.species,
-            defender: defender_pokemon.species,
-            move_used,
-        });
-
-        // Check for Reckless effect - user takes damage when move misses
-        let move_data = get_move_data(move_used).expect("Move data must exist");
-        for effect in &move_data.effects {
-            if let crate::move_data::MoveEffect::Reckless(percentage) = effect {
-                let attacker_player = &mut battle_state.players[attacker_index];
-                if let Some(attacker_pokemon) = attacker_player.active_pokemon_mut() {
-                    let max_hp = attacker_pokemon.max_hp();
-                    let recoil_damage = (max_hp * (*percentage as u16)) / 100;
-
-                    if recoil_damage > 0 {
-                        let old_hp = attacker_pokemon.current_hp();
-                        attacker_pokemon.take_damage(recoil_damage);
-                        let new_hp = attacker_pokemon.current_hp();
-                        let actual_damage = old_hp - new_hp;
-
-                        if actual_damage > 0 {
-                            bus.push(BattleEvent::DamageDealt {
-                                target: attacker_pokemon.species,
-                                damage: actual_damage,
-                                remaining_hp: new_hp,
-                            });
-
-                            // Check if the attacker fainted from recoil
-                            if new_hp == 0 {
-                                bus.push(BattleEvent::PokemonFainted {
-                                    player_index: attacker_index,
-                                    pokemon: attacker_pokemon.species,
-                                });
-                            }
-                        }
-                    }
-                }
-                break; // Only process one Reckless effect
-            }
-        }
     }
 }
 

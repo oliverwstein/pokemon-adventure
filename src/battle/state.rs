@@ -206,6 +206,7 @@ impl TurnRng {
         let outcome = self.outcomes[self.index];
 
         // The magic line: Print the consumption event to the console during tests.
+        #[cfg(test)]
         println!("[RNG] Consumed {} for: {}", outcome, reason);
 
         self.index += 1;

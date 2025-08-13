@@ -2109,12 +2109,6 @@ pub fn execute_attack_hit(
             false // No fainting in these cases
         };
 
-        // TODO: Future iterations will handle:
-        // - Normal damage application with fainting (Iteration 6)
-        // - Counter condition logic (Iteration 7)
-        // - Bide condition logic (Iteration 8)
-        // - Enraged condition logic (Iteration 9)
-
         // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
         let move_data = get_move_data(move_used).expect("Move data must exist");
         if damage > 0

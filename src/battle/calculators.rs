@@ -90,8 +90,17 @@ pub fn calculate_attack_outcome(
             let context =
                 crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
             for effect in &move_data.effects {
-                let effect_commands = effect.apply(&context, state, rng);
-                commands.extend(effect_commands);
+                let effect_result = effect.apply(&context, state, rng);
+                match effect_result {
+                    crate::move_data::EffectResult::Continue(effect_commands) => {
+                        commands.extend(effect_commands);
+                    }
+                    crate::move_data::EffectResult::Skip(effect_commands) => {
+                        commands.extend(effect_commands);
+                        // Note: Skip behavior would need to be handled at a higher level
+                        // For now, we just apply the commands and continue normally
+                    }
+                }
             }
         }
 
@@ -154,6 +163,30 @@ pub fn calculate_attack_outcome(
     }
 
     commands
+}
+
+/// Check if any move effects should skip normal attack execution
+pub fn should_skip_attack_execution(
+    state: &BattleState,
+    attacker_index: usize,
+    defender_index: usize,
+    move_used: Move,
+    rng: &mut TurnRng,
+) -> Option<Vec<crate::battle::commands::BattleCommand>> {
+    use crate::move_data::{get_move_data, EffectContext};
+
+    let move_data = get_move_data(move_used).expect("Move data must exist");
+    let context = EffectContext::new(attacker_index, defender_index, move_used);
+
+    // Check each effect to see if any want to skip attack execution
+    for effect in &move_data.effects {
+        let effect_result = effect.apply(&context, state, rng);
+        if let crate::move_data::EffectResult::Skip(commands) = effect_result {
+            return Some(commands);
+        }
+    }
+
+    None // No effects want to skip attack execution
 }
 
 /// Validate that both Pokemon can participate in the attack

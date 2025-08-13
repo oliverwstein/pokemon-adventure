@@ -193,8 +193,7 @@ fn main() {
 }
 
 fn run_npc_battle_demo() {
-    use battle::state::{BattleState, GameState, TurnRng};
-    use battle::turn_orchestrator::{collect_player_actions, resolve_turn};
+    use battle::runner::BattleRunner;
     
     // Create two trainers with multiple Pokemon each
     let trainer1_team = vec![
@@ -221,111 +220,99 @@ fn run_npc_battle_demo() {
         trainer2_team,
     );
     
-    let mut battle_state = BattleState::new("npc_vs_npc_demo".to_string(), player1, player2);
+    let mut battle_runner = BattleRunner::new("npc_vs_npc_demo".to_string(), player1, player2);
     
     println!("🔥 Battle begins!");
+    let battle_info = battle_runner.get_battle_info();
     println!("  {} sends out {}!", 
-             battle_state.players[0].player_name,
-             battle_state.players[0].active_pokemon().unwrap().name);
+             battle_info.players[0].player_name,
+             battle_info.players[0].active_pokemon.as_ref().unwrap().name);
     println!("  {} sends out {}!", 
-             battle_state.players[1].player_name,
-             battle_state.players[1].active_pokemon().unwrap().name);
+             battle_info.players[1].player_name,
+             battle_info.players[1].active_pokemon.as_ref().unwrap().name);
     println!();
     
-    let mut turn_number = 1;
-    let mut rng_values = generate_battle_rng(); // Generate enough RNG for the whole battle
-    let mut rng_index = 0;
+    let mut execution_count = 0;
     
     // Battle loop - continue until one trainer has no Pokemon left
-    while !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
-        println!("--- Turn {} ---", turn_number);
+    while !battle_runner.is_battle_ended() {
+        let battle_info = battle_runner.get_battle_info();
+        
+        // Only print turn header for actual battle turns (not replacements)
+        let current_turn = battle_runner.get_turn_number();
+        println!("--- Turn {} ---", current_turn);
         
         // Print current Pokemon status
-        for (i, player) in battle_state.players.iter().enumerate() {
-            if let Some(pokemon) = player.active_pokemon() {
+        for player in &battle_info.players {
+            if let Some(pokemon) = &player.active_pokemon {
                 println!("  {}: {} (HP: {}/{})", 
                          player.player_name,
                          pokemon.name,
-                         pokemon.current_hp(),
-                         pokemon.stats.hp);
+                         pokemon.current_hp,
+                         pokemon.max_hp);
             }
         }
         println!();
         
-        // Generate NPC actions using the deterministic AI
-        if let Err(e) = collect_player_actions(&mut battle_state) {
-            println!("Error collecting actions: {}", e);
-            break;
-        }
-        
-        // Show what actions were chosen
-        for (i, action) in battle_state.action_queue.iter().enumerate() {
-            if let Some(action) = action {
-                match action {
-                    player::PlayerAction::UseMove { move_index } => {
-                        if let Some(pokemon) = battle_state.players[i].active_pokemon() {
-                            if let Some(move_inst) = &pokemon.moves[*move_index] {
-                                println!("  {} chooses {:?}!", 
-                                         battle_state.players[i].player_name,
-                                         move_inst.move_);
-                            }
-                        }
-                    },
-                    player::PlayerAction::SwitchPokemon { team_index } => {
-                        if let Some(pokemon) = &battle_state.players[i].team[*team_index] {
-                            println!("  {} switches to {}!", 
-                                     battle_state.players[i].player_name,
-                                     pokemon.name);
-                        }
-                    },
-                    _ => println!("  {} takes an action", battle_state.players[i].player_name),
+        // Auto-generate NPC actions and execute if ready
+        match battle_runner.auto_execute_if_ready() {
+            Ok(Some(result)) => {
+                // Show what actions were chosen based on events
+                for event in &result.events {
+                    match event {
+                        battle::state::BattleEvent::MoveUsed { player_index, pokemon, move_used } => {
+                            println!("  {} chooses {:?}!", 
+                                     battle_info.players[*player_index].player_name,
+                                     move_used);
+                        },
+                        battle::state::BattleEvent::PokemonSwitched { player_index, new_pokemon, .. } => {
+                            println!("  {} switches to {:?}!", 
+                                     battle_info.players[*player_index].player_name,
+                                     new_pokemon);
+                        },
+                        _ => {} // Don't print other events here
+                    }
                 }
+                
+                // Print ALL events like the tests do
+                if !result.events.is_empty() {
+                    println!("  Events generated this turn:");
+                    for (i, event) in result.events.iter().enumerate() {
+                        println!("    {}: {:?}", i + 1, event);
+                    }
+                    println!();
+                }
+                
+                execution_count += 1;
+                
+                // Safety check to prevent infinite loops
+                if execution_count > 50 {
+                    println!("Battle reached execution limit - ending demo");
+                    break;
+                }
+            },
+            Ok(None) => {
+                println!("Waiting for actions...");
+                break;
+            },
+            Err(e) => {
+                println!("Error executing battle: {}", e);
+                break;
             }
         }
-        println!();
-        
-        // Execute the turn
-        let turn_rng = TurnRng::new_for_test(
-            rng_values[rng_index..rng_index + 10].to_vec()
-        );
-        rng_index += 10;
-        
-        let event_bus = resolve_turn(&mut battle_state, turn_rng);
-        
-        // Print ALL events like the tests do
-        println!("  Events generated this turn:");
-        for (i, event) in event_bus.events().iter().enumerate() {
-            println!("    {}: {:?}", i + 1, event);
-        }
-        
-        turn_number += 1;
-        
-        // Safety check to prevent infinite loops
-        if turn_number > 50 {
-            println!("Battle reached turn limit - ending demo");
-            break;
-        }
-        
-        println!();
     }
     
     // Announce the winner
-    match battle_state.game_state {
-        GameState::Player1Win => {
-            println!("🏆 {} wins the battle!", battle_state.players[0].player_name);
-        },
-        GameState::Player2Win => {
-            println!("🏆 {} wins the battle!", battle_state.players[1].player_name);
-        },
-        GameState::Draw => {
-            println!("🤝 The battle ended in a draw!");
-        },
-        _ => {
-            println!("🔚 Battle ended (Turn limit reached)");
-        }
+    if let Some(winner_index) = battle_runner.get_winner() {
+        let battle_info = battle_runner.get_battle_info();
+        println!("🏆 {} wins the battle!", battle_info.players[winner_index].player_name);
+    } else if battle_runner.is_battle_ended() {
+        println!("🤝 The battle ended in a draw!");
+    } else {
+        println!("🔚 Battle ended (Execution limit reached)");
     }
     
-    println!("Battle completed after {} turns.", turn_number - 1);
+    println!("Battle completed after {} turn(s).", battle_runner.get_turn_number());
 }
 
 fn create_demo_pokemon(species: Species, level: u8) -> PokemonInst {
@@ -333,36 +320,3 @@ fn create_demo_pokemon(species: Species, level: u8) -> PokemonInst {
     PokemonInst::new(species, &species_data, level, None, None)
 }
 
-fn generate_battle_rng() -> Vec<u8> {
-    // Generate enough random values for a full battle
-    // Pattern: moderate hit chances, some crits, some misses
-    vec![
-        75, 60, 45, 80, 95, 30, 85, 50, 70, 40,  // Turn 1
-        65, 90, 55, 25, 88, 35, 92, 48, 73, 62,  // Turn 2
-        58, 82, 43, 97, 67, 28, 91, 54, 76, 39,  // Turn 3
-        71, 46, 83, 59, 94, 37, 86, 52, 68, 41,  // Turn 4
-        64, 89, 56, 26, 87, 33, 93, 49, 74, 63,  // Turn 5
-        // Continue pattern for more turns...
-        77, 42, 84, 57, 96, 29, 90, 51, 69, 38,  // Turn 6
-        66, 81, 44, 98, 65, 27, 89, 53, 75, 61,  // Turn 7
-        72, 47, 85, 58, 95, 36, 87, 50, 67, 40,  // Turn 8
-        63, 88, 55, 24, 86, 32, 92, 48, 73, 62,  // Turn 9
-        59, 83, 41, 99, 68, 25, 91, 54, 76, 37,  // Turn 10
-        // Repeat and extend for longer battles
-        75, 60, 45, 80, 95, 30, 85, 50, 70, 40,  
-        65, 90, 55, 25, 88, 35, 92, 48, 73, 62,  
-        58, 82, 43, 97, 67, 28, 91, 54, 76, 39,  
-        71, 46, 83, 59, 94, 37, 86, 52, 68, 41,  
-        64, 89, 56, 26, 87, 33, 93, 49, 74, 63,  
-        77, 42, 84, 57, 96, 29, 90, 51, 69, 38,  
-        66, 81, 44, 98, 65, 27, 89, 53, 75, 61,  
-        72, 47, 85, 58, 95, 36, 87, 50, 67, 40,  
-        63, 88, 55, 24, 86, 32, 92, 48, 73, 62,  
-        59, 83, 41, 99, 68, 25, 91, 54, 76, 37,  
-        75, 60, 45, 80, 95, 30, 85, 50, 70, 40,  
-        65, 90, 55, 25, 88, 35, 92, 48, 73, 62,  
-        58, 82, 43, 97, 67, 28, 91, 54, 76, 39,  
-        71, 46, 83, 59, 94, 37, 86, 52, 68, 41,  
-        64, 89, 56, 26, 87, 33, 93, 49, 74, 63,  
-    ]
-}

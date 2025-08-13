@@ -155,253 +155,6 @@ impl TurnResult {
     }
 }
 
-/// Unified battle executor that handles both single-player and multiplayer scenarios
-pub struct BattleExecutor {
-    battle_state: BattleState,
-    event_bus: EventBus,
-    action_stack: ActionStack,
-    pending_actions: HashMap<usize, PlayerAction>, // player_index -> action
-}
-
-impl BattleExecutor {
-    /// Create a new battle executor with the given battle state
-    pub fn new(battle_state: BattleState) -> Self {
-        Self {
-            battle_state,
-            event_bus: EventBus::new(),
-            action_stack: ActionStack::new(),
-            pending_actions: HashMap::new(),
-        }
-    }
-
-    /// Convenience method for single-player scenarios - submit both actions and execute immediately
-    pub fn execute_single_turn(
-        &mut self, 
-        player1_action: PlayerAction, 
-        player2_action: PlayerAction
-    ) -> Result<TurnResult, BattleExecutionError> {
-        self.submit_action(0, player1_action)?;
-        self.submit_action(1, player2_action)?;
-        self.execute_turn()
-    }
-
-    /// Get pending actions (for API queries)
-    pub fn pending_actions(&self) -> &HashMap<usize, PlayerAction> {
-        &self.pending_actions
-    }
-
-    /// Check which players still need to submit actions
-    pub fn players_pending_actions(&self) -> Vec<usize> {
-        match self.battle_state.game_state {
-            GameState::WaitingForBothActions => {
-                (0..2).filter(|&i| !self.pending_actions.contains_key(&i)).collect()
-            }
-            GameState::WaitingForPlayer1Replacement => {
-                if self.pending_actions.contains_key(&0) { vec![] } else { vec![0] }
-            }
-            GameState::WaitingForPlayer2Replacement => {
-                if self.pending_actions.contains_key(&1) { vec![] } else { vec![1] }
-            }
-            GameState::WaitingForBothReplacements => {
-                (0..2).filter(|&i| !self.pending_actions.contains_key(&i)).collect()
-            }
-            _ => vec![],
-        }
-    }
-
-    /// Submit an action for a player
-    pub fn submit_action(&mut self, player_index: usize, action: PlayerAction) -> Result<(), BattleExecutionError> {
-        // Validate player index
-        if player_index >= 2 {
-            return Err(BattleExecutionError::InvalidPlayerAction(
-                format!("Invalid player index: {}", player_index)
-            ));
-        }
-
-        // Check if game is in a state that accepts actions
-        if !self.accepts_actions() {
-            return Err(BattleExecutionError::GameNotWaitingForActions);
-        }
-
-        // Check if player already submitted an action
-        if self.pending_actions.contains_key(&player_index) {
-            return Err(BattleExecutionError::PlayerAlreadySubmitted(
-                format!("Player {} already submitted an action", player_index)
-            ));
-        }
-
-        // Validate the action against current state
-        self.validate_action(player_index, &action)?;
-
-        // Store the action
-        self.pending_actions.insert(player_index, action);
-
-        Ok(())
-    }
-
-    /// Check if the battle is ready to execute a turn
-    pub fn ready_for_execution(&self) -> bool {
-        match self.battle_state.game_state {
-            GameState::WaitingForBothActions => self.pending_actions.len() == 2,
-            GameState::WaitingForPlayer1Replacement => self.pending_actions.contains_key(&0),
-            GameState::WaitingForPlayer2Replacement => self.pending_actions.contains_key(&1),
-            GameState::WaitingForBothReplacements => self.pending_actions.len() == 2,
-            _ => false,
-        }
-    }
-
-    /// Execute a complete turn when ready, returning the results
-    pub fn execute_turn(&mut self) -> Result<TurnResult, BattleExecutionError> {
-        if !self.ready_for_execution() {
-            return Err(BattleExecutionError::InvalidGameState);
-        }
-
-        // Clear event bus for this turn
-        self.event_bus = EventBus::new();
-
-        // Set pending actions in battle state
-        for (&player_index, action) in &self.pending_actions {
-            self.battle_state.action_queue[player_index] = Some(action.clone());
-        }
-
-        // Clear pending actions
-        self.pending_actions.clear();
-
-        // Execute the turn using existing turn resolution logic
-        let turn_events = crate::battle::turn_orchestrator::resolve_turn(
-            &mut self.battle_state, 
-            crate::battle::state::TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50])
-        );
-
-        Ok(TurnResult::new(turn_events.events().to_vec(), self.battle_state.game_state.clone()))
-    }
-
-    /// Execute commands immediately (for internal use)
-    pub fn execute_commands(&mut self, commands: Vec<BattleCommand>) -> Result<(), BattleExecutionError> {
-        execute_command_batch(commands, &mut self.battle_state, &mut self.event_bus, &mut self.action_stack)
-            .map_err(BattleExecutionError::CommandExecutionFailed)
-    }
-
-    /// Get the current battle state (read-only)
-    pub fn battle_state(&self) -> &BattleState {
-        &self.battle_state
-    }
-
-    /// Get the current event bus (read-only)
-    pub fn events(&self) -> &EventBus {
-        &self.event_bus
-    }
-
-    /// Get mutable access to battle state for testing
-    #[cfg(test)]
-    pub fn battle_state_mut(&mut self) -> &mut BattleState {
-        &mut self.battle_state
-    }
-
-    /// Check if the executor accepts new actions in the current state
-    fn accepts_actions(&self) -> bool {
-        matches!(
-            self.battle_state.game_state,
-            GameState::WaitingForBothActions
-                | GameState::WaitingForPlayer1Replacement
-                | GameState::WaitingForPlayer2Replacement
-                | GameState::WaitingForBothReplacements
-        )
-    }
-
-    /// Validate that an action is legal in the current state
-    fn validate_action(&self, player_index: usize, action: &PlayerAction) -> Result<(), BattleExecutionError> {
-        let player = &self.battle_state.players[player_index];
-        
-        match action {
-            PlayerAction::UseMove { move_index } => {
-                // Check if player has an active Pokemon
-                if player.active_pokemon().is_none() {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "No active Pokemon".to_string()
-                    ));
-                }
-
-                let pokemon = player.active_pokemon().unwrap();
-                
-                // Check if move index is valid and has PP
-                if *move_index >= pokemon.moves.len() {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "Invalid move index".to_string()
-                    ));
-                }
-
-                if let Some(move_instance) = &pokemon.moves[*move_index] {
-                    if move_instance.pp == 0 {
-                        return Err(BattleExecutionError::InvalidPlayerAction(
-                            "Move has no PP remaining".to_string()
-                        ));
-                    }
-                } else {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "No move in that slot".to_string()
-                    ));
-                }
-            }
-            PlayerAction::ForcedMove { pokemon_move } => {
-                // Check if player has an active Pokemon
-                if player.active_pokemon().is_none() {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "No active Pokemon".to_string()
-                    ));
-                }
-
-                let pokemon = player.active_pokemon().unwrap();
-                
-                // Check if Pokemon knows this move and has PP
-                let has_move = pokemon.moves.iter().any(|move_slot| {
-                    if let Some(move_instance) = move_slot {
-                        move_instance.move_ == *pokemon_move && move_instance.pp > 0
-                    } else {
-                        false
-                    }
-                });
-
-                if !has_move {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        format!("Pokemon doesn't know move {:?} or has no PP", pokemon_move)
-                    ));
-                }
-            }
-            PlayerAction::SwitchPokemon { team_index } => {
-                // Check if target Pokemon exists and is not fainted
-                if *team_index >= player.team.len() {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "Invalid Pokemon index".to_string()
-                    ));
-                }
-
-                if let Some(target_pokemon) = &player.team[*team_index] {
-                    if target_pokemon.current_hp() == 0 {
-                        return Err(BattleExecutionError::InvalidPlayerAction(
-                            "Cannot switch to fainted Pokemon".to_string()
-                        ));
-                    }
-                    if *team_index == player.active_pokemon_index {
-                        return Err(BattleExecutionError::InvalidPlayerAction(
-                            "Pokemon is already active".to_string()
-                        ));
-                    }
-                } else {
-                    return Err(BattleExecutionError::InvalidPlayerAction(
-                        "Pokemon does not exist".to_string()
-                    ));
-                }
-            }
-            PlayerAction::Forfeit => {
-                // Forfeit is always valid
-            }
-        }
-
-        Ok(())
-    }
-}
-
 /// Execute a batch of commands atomically
 pub fn execute_command_batch(
     commands: Vec<BattleCommand>,
@@ -848,86 +601,94 @@ mod tests {
         assert_eq!(state.game_state, GameState::TurnInProgress);
     }
 
-    // BattleExecutor tests
+    // BattleRunner tests
     #[test]
-    fn test_battle_executor_creation() {
+    fn test_battle_runner_creation() {
         // Initialize move data for tests
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         
         let state = create_test_battle_state();
-        let executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
-        assert_eq!(executor.pending_actions().len(), 0);
-        assert!(executor.accepts_actions());
-        assert!(!executor.ready_for_execution());
+        assert_eq!(runner.players_needing_actions().len(), 2);
+        assert!(!runner.ready_for_execution());
+        assert!(!runner.is_battle_ended());
     }
 
     #[test]
     fn test_submit_single_action() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         let action = PlayerAction::UseMove { move_index: 0 };
-        let result = executor.submit_action(0, action.clone());
+        let result = runner.submit_action(0, action);
         
         assert!(result.is_ok());
-        assert_eq!(executor.pending_actions().len(), 1);
-        assert_eq!(executor.pending_actions()[&0], action);
-        assert!(!executor.ready_for_execution()); // Still need player 2
+        assert!(result.unwrap().is_none()); // No execution yet, waiting for player 2
+        assert_eq!(runner.players_needing_actions(), vec![1]);
+        assert!(!runner.ready_for_execution()); // Still need player 2
     }
 
     #[test]
     fn test_submit_both_actions_and_execute() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         let action1 = PlayerAction::UseMove { move_index: 0 };
         let action2 = PlayerAction::UseMove { move_index: 0 };
         
-        executor.submit_action(0, action1).unwrap();
-        executor.submit_action(1, action2).unwrap();
+        let result1 = runner.submit_action(0, action1).unwrap();
+        assert!(result1.is_none()); // No execution yet
         
-        assert!(executor.ready_for_execution());
+        let result2 = runner.submit_action(1, action2).unwrap();
+        assert!(result2.is_some()); // Should auto-execute
         
-        let result = executor.execute_turn();
-        assert!(result.is_ok());
-        
-        let turn_result = result.unwrap();
-        assert!(!turn_result.events.is_empty());
-        assert_eq!(executor.pending_actions().len(), 0); // Actions cleared after execution
+        let execution_result = result2.unwrap();
+        assert!(!execution_result.events.is_empty());
+        assert_eq!(runner.players_needing_actions().len(), 2); // Ready for next turn
     }
 
     #[test]
     fn test_single_turn_convenience_method() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         let action1 = PlayerAction::UseMove { move_index: 0 };
         let action2 = PlayerAction::UseMove { move_index: 0 };
         
-        let result = executor.execute_single_turn(action1, action2);
+        let result = runner.execute_single_turn(action1, action2);
         assert!(result.is_ok());
         
-        let turn_result = result.unwrap();
-        assert!(!turn_result.events.is_empty());
+        let execution_result = result.unwrap();
+        assert!(!execution_result.events.is_empty());
     }
 
     #[test]
     fn test_invalid_action_validation() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         // Try to use an invalid move index
         let invalid_action = PlayerAction::UseMove { move_index: 99 };
-        let result = executor.submit_action(0, invalid_action);
+        let result = runner.submit_action(0, invalid_action);
         
         assert!(result.is_err());
         match result.unwrap_err() {
-            BattleExecutionError::InvalidPlayerAction(msg) => {
+            crate::battle::runner::BattleRunnerError::InvalidPlayerAction(msg) => {
                 assert!(msg.contains("Invalid move index"));
             }
             _ => panic!("Expected InvalidPlayerAction error"),
@@ -938,54 +699,65 @@ mod tests {
     fn test_duplicate_action_submission() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         let action = PlayerAction::UseMove { move_index: 0 };
         
         // Submit first action
-        executor.submit_action(0, action.clone()).unwrap();
+        runner.submit_action(0, action.clone()).unwrap();
         
         // Try to submit again for same player
-        let result = executor.submit_action(0, action);
+        let result = runner.submit_action(0, action);
         assert!(result.is_err());
         match result.unwrap_err() {
-            BattleExecutionError::PlayerAlreadySubmitted(_) => {},
+            crate::battle::runner::BattleRunnerError::PlayerAlreadySubmitted(_) => {},
             _ => panic!("Expected PlayerAlreadySubmitted error"),
         }
     }
 
     #[test]
-    fn test_players_pending_actions() {
+    fn test_players_needing_actions() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
         // Initially both players need to submit
-        assert_eq!(executor.players_pending_actions(), vec![0, 1]);
+        assert_eq!(runner.players_needing_actions(), vec![0, 1]);
         
         // After player 0 submits
         let action = PlayerAction::UseMove { move_index: 0 };
-        executor.submit_action(0, action).unwrap();
-        assert_eq!(executor.players_pending_actions(), vec![1]);
+        runner.submit_action(0, action).unwrap();
+        assert_eq!(runner.players_needing_actions(), vec![1]);
         
-        // After player 1 submits
+        // After player 1 submits (auto-executes)
         let action = PlayerAction::UseMove { move_index: 0 };
-        executor.submit_action(1, action).unwrap();
-        assert_eq!(executor.players_pending_actions(), Vec::<usize>::new());
+        runner.submit_action(1, action).unwrap();
+        assert_eq!(runner.players_needing_actions(), vec![0, 1]); // Ready for next turn
     }
 
     #[test]
-    fn test_execute_without_ready() {
+    fn test_battle_runner_automatic_execution() {
         let _ = crate::move_data::initialize_move_data(std::path::Path::new("data"));
         let state = create_test_battle_state();
-        let mut executor = BattleExecutor::new(state);
+        let player1 = state.players[0].clone();
+        let player2 = state.players[1].clone();
+        let mut runner = crate::battle::runner::BattleRunner::new("test_battle".to_string(), player1, player2);
         
-        // Try to execute without submitting actions
-        let result = executor.execute_turn();
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            BattleExecutionError::InvalidGameState => {},
-            _ => panic!("Expected InvalidGameState error"),
-        }
+        // BattleRunner automatically executes when both actions are submitted        
+        let action1 = PlayerAction::UseMove { move_index: 0 };
+        let action2 = PlayerAction::UseMove { move_index: 0 };
+        
+        let result1 = runner.submit_action(0, action1).unwrap();
+        assert!(result1.is_none()); // Not ready yet
+        
+        let result2 = runner.submit_action(1, action2).unwrap();
+        assert!(result2.is_some()); // Auto-executed!
+        
+        let execution_result = result2.unwrap();
+        assert!(!execution_result.events.is_empty());
     }
 }

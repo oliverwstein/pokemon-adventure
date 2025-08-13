@@ -121,18 +121,65 @@ pub fn calculate_attack_outcome(
             )
         };
         
-        // Generate damage command if damage > 0
+        // Handle substitute damage absorption
         if damage > 0 {
-            commands.push(BattleCommand::DealDamage {
-                target: PlayerTarget::from_index(defender_index),
-                amount: damage,
-            });
+            // Check for Substitute protection
+            if let Some(substitute_condition) = defender_player
+                .active_pokemon_conditions
+                .values()
+                .find_map(|condition| match condition {
+                    crate::player::PokemonCondition::Substitute { hp } => Some(*hp),
+                    _ => None,
+                })
+            {
+                // Substitute absorbs the damage
+                let substitute_hp = substitute_condition;
+                let actual_damage = damage.min(substitute_hp as u16);
+                let remaining_substitute_hp = substitute_hp.saturating_sub(actual_damage as u8);
+
+                if remaining_substitute_hp == 0 {
+                    // Substitute is destroyed
+                    commands.push(BattleCommand::RemoveCondition {
+                        target: PlayerTarget::from_index(defender_index),
+                        condition_type: crate::battle::commands::PokemonConditionType::Substitute,
+                    });
+                    commands.push(BattleCommand::EmitEvent(BattleEvent::StatusRemoved {
+                        target: defender_pokemon.species,
+                        status: crate::player::PokemonCondition::Substitute { hp: substitute_hp },
+                    }));
+                } else {
+                    // Update substitute HP - remove old and add new
+                    commands.push(BattleCommand::RemoveCondition {
+                        target: PlayerTarget::from_index(defender_index),
+                        condition_type: crate::battle::commands::PokemonConditionType::Substitute,
+                    });
+                    commands.push(BattleCommand::AddCondition {
+                        target: PlayerTarget::from_index(defender_index),
+                        condition: crate::player::PokemonCondition::Substitute {
+                            hp: remaining_substitute_hp,
+                        },
+                    });
+                }
+
+                // No damage to Pokemon, substitute took it all - emit 0 damage event
+                commands.push(BattleCommand::EmitEvent(BattleEvent::DamageDealt {
+                    target: defender_pokemon.species,
+                    damage: 0,
+                    remaining_hp: defender_pokemon.current_hp(),
+                }));
+            } else {
+                // No substitute, normal damage to Pokemon
+                commands.push(BattleCommand::DealDamage {
+                    target: PlayerTarget::from_index(defender_index),
+                    amount: damage,
+                });
+            }
         }
         
         // TODO: In future iterations, add:
         // - Move effects
         // - Status applications
-        // - Fainting checks
+        // - Fainting checks (for normal damage case)
     } else {
         // Move misses - emit miss event
         commands.push(BattleCommand::EmitEvent(BattleEvent::MoveMissed {
@@ -294,5 +341,65 @@ mod tests {
                 reason: crate::battle::state::ActionFailureReason::NoEnemyPresent 
             })
         ));
+    }
+
+    #[test]
+    fn test_calculate_attack_outcome_with_substitute() {
+        // Initialize move data for tests
+        use std::path::Path;
+        let data_path = Path::new("data");
+        if crate::move_data::initialize_move_data(data_path).is_err() {
+            // Skip if move data isn't available
+            return;
+        }
+
+        let mut state = create_test_battle_state();
+        // Add substitute condition to defender
+        state.players[1].add_condition(crate::player::PokemonCondition::Substitute { hp: 50 });
+        
+        let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
+        
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        
+        // Should have MoveUsed, MoveHit, and substitute-related commands
+        assert!(commands.len() >= 3);
+        
+        assert!(matches!(commands[0], BattleCommand::EmitEvent(BattleEvent::MoveUsed { .. })));
+        assert!(matches!(commands[1], BattleCommand::EmitEvent(BattleEvent::MoveHit { .. })));
+        
+        // Should have a DamageDealt event with 0 damage (substitute absorbed it)
+        assert!(commands.iter().any(|cmd| matches!(cmd, BattleCommand::EmitEvent(BattleEvent::DamageDealt { damage: 0, .. }))));
+        
+        // Should have condition update commands (RemoveCondition and possibly AddCondition if substitute survives)
+        assert!(commands.iter().any(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. })));
+    }
+
+    #[test]
+    fn test_calculate_attack_outcome_substitute_destroyed() {
+        // Initialize move data for tests
+        use std::path::Path;
+        let data_path = Path::new("data");
+        if crate::move_data::initialize_move_data(data_path).is_err() {
+            // Skip if move data isn't available
+            return;
+        }
+
+        let mut state = create_test_battle_state();
+        // Add weak substitute that will be destroyed by tackle
+        state.players[1].add_condition(crate::player::PokemonCondition::Substitute { hp: 1 });
+        
+        let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
+        
+        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        
+        // Should have substitute destruction event
+        assert!(commands.iter().any(|cmd| matches!(cmd, BattleCommand::EmitEvent(BattleEvent::StatusRemoved { .. }))));
+        
+        // Should only have RemoveCondition (no AddCondition since substitute is destroyed)
+        let remove_condition_count = commands.iter().filter(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. })).count();
+        let add_condition_count = commands.iter().filter(|cmd| matches!(cmd, BattleCommand::AddCondition { .. })).count();
+        
+        assert_eq!(remove_condition_count, 1);
+        assert_eq!(add_condition_count, 0);
     }
 }

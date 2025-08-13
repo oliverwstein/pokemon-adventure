@@ -2097,167 +2097,26 @@ pub fn execute_attack_hit(
 
     if hits {
         // === END BRIDGE ===
-        // Type effectiveness, critical hit, and damage calculation now handled by calculator
+        // Type effectiveness, critical hit, damage calculation, and substitute logic now handled by calculator
+        
+        // Check if damage was absorbed by substitute by looking for 0-damage DamageDealt event
+        let damage_absorbed_by_substitute = bus.events().iter().rev().take(10).any(|event| {
+            matches!(event, BattleEvent::DamageDealt { damage: 0, .. })
+        });
 
-        let defender_fainted = if damage > 0 {
-            let defender_player_mut = &mut battle_state.players[defender_index];
-
-            // Check for Substitute protection
-            if let Some(substitute_condition) = defender_player_mut
-                .active_pokemon_conditions
-                .values()
-                .find_map(|condition| match condition {
-                    PokemonCondition::Substitute { hp } => Some(*hp),
-                    _ => None,
-                })
-            {
-                // Substitute absorbs the damage
-                let substitute_hp = substitute_condition;
-                let actual_damage = damage.min(substitute_hp as u16);
-                let remaining_substitute_hp = substitute_hp.saturating_sub(actual_damage as u8);
-
-                if remaining_substitute_hp == 0 {
-                    // Substitute is destroyed
-                    defender_player_mut
-                        .remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
-                    bus.push(BattleEvent::StatusRemoved {
-                        target: defender_player_mut.active_pokemon().unwrap().species,
-                        status: PokemonCondition::Substitute { hp: substitute_hp },
-                    });
-                } else {
-                    // Update substitute HP
-                    defender_player_mut
-                        .remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
-                    defender_player_mut.add_condition(PokemonCondition::Substitute {
-                        hp: remaining_substitute_hp,
-                    });
-                }
-
-                // No damage to Pokemon, substitute took it all
-                bus.push(BattleEvent::DamageDealt {
-                    target: defender_player_mut.active_pokemon().unwrap().species,
-                    damage: 0,
-                    remaining_hp: defender_player_mut.active_pokemon().unwrap().current_hp(),
-                });
-
-                false // Pokemon doesn't faint when substitute absorbs damage
-            } else {
-                // No substitute, normal damage
-                let defender_pokemon_mut = defender_player_mut.team
-                    [defender_player_mut.active_pokemon_index]
-                    .as_mut()
-                    .expect("Defender pokemon should exist");
-
-                let did_faint = defender_pokemon_mut.take_damage(damage);
-                let remaining_hp = defender_pokemon_mut.current_hp();
-
-                bus.push(BattleEvent::DamageDealt {
-                    target: defender_pokemon_mut.species,
-                    damage,
-                    remaining_hp,
-                });
-
-                if did_faint {
-                    bus.push(BattleEvent::PokemonFainted {
-                        player_index: defender_index,
-                        pokemon: defender_pokemon_mut.species,
-                    });
-                }
-
-                // Get pokemon species before releasing borrow
-                let pokemon_species = defender_pokemon_mut.species;
-
-                // Release the pokemon borrow and update conditions
-                let _ = defender_pokemon_mut;
-
-                // Handle Counter and Bide conditions if defender has them
-                let move_data = get_move_data(move_used).expect("Move data must exist");
-                let should_counter =
-                    matches!(move_data.category, crate::move_data::MoveCategory::Physical)
-                        && defender_player_mut
-                            .has_condition(&PokemonCondition::Countering { damage: 0 })
-                        && !did_faint; // Can only counter if still alive after taking damage
-
-                // Release the defender_player_mut borrow before accessing attacker
-                let _ = defender_player_mut;
-
-                if should_counter {
-                    // Deal 2x the physical damage back to attacker immediately
-                    let counter_damage = damage * 2;
-
-                    let attacker_player_mut = &mut battle_state.players[attacker_index];
-                    if let Some(attacker_pokemon) =
-                        attacker_player_mut.team[attacker_player_mut.active_pokemon_index].as_mut()
-                    {
-                        if !attacker_pokemon.is_fainted() {
-                            let did_faint = attacker_pokemon.take_damage(counter_damage);
-                            let remaining_hp = attacker_pokemon.current_hp();
-
-                            bus.push(BattleEvent::DamageDealt {
-                                target: attacker_pokemon.species,
-                                damage: counter_damage,
-                                remaining_hp,
-                            });
-
-                            if did_faint {
-                                bus.push(BattleEvent::PokemonFainted {
-                                    player_index: attacker_index,
-                                    pokemon: attacker_pokemon.species,
-                                });
-                            }
-                        }
-                    }
-                }
-
-                // Re-borrow defender for Bide condition handling
-                let defender_player_mut = &mut battle_state.players[defender_index];
-
-                // Update Biding condition with any damage type
-                if let Some(bide_condition) = defender_player_mut
-                    .active_pokemon_conditions
-                    .values()
-                    .find_map(|condition| match condition {
-                        PokemonCondition::Biding {
-                            turns_remaining,
-                            damage: stored_damage,
-                        } => Some((*turns_remaining, *stored_damage)),
-                        _ => None,
-                    })
-                {
-                    let (turns_remaining, stored_damage) = bide_condition;
-                    defender_player_mut.remove_condition(&PokemonCondition::Biding {
-                        turns_remaining,
-                        damage: stored_damage,
-                    });
-                    defender_player_mut.add_condition(PokemonCondition::Biding {
-                        turns_remaining,
-                        damage: stored_damage + damage,
-                    });
-                }
-
-                // Update Enraged condition (increase attack when hit)
-                if defender_player_mut.has_condition(&PokemonCondition::Enraged) {
-                    let old_stage =
-                        defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
-                    defender_player_mut.modify_stat_stage(crate::player::StatType::Attack, 1);
-                    let new_stage =
-                        defender_player_mut.get_stat_stage(crate::player::StatType::Attack);
-
-                    if old_stage != new_stage {
-                        bus.push(BattleEvent::StatStageChanged {
-                            target: pokemon_species,
-                            stat: crate::player::StatType::Attack,
-                            old_stage,
-                            new_stage,
-                        });
-                    }
-                }
-
-                did_faint
-            }
+        let defender_fainted = if damage > 0 && !damage_absorbed_by_substitute {
+            // Normal damage case - calculator issued DealDamage command, and damage wasn't absorbed by substitute
+            false // Fainting will be handled in next iteration
         } else {
-            false
+            // Either no damage or substitute absorbed it
+            false // No fainting in these cases
         };
+
+        // TODO: Future iterations will handle:
+        // - Normal damage application with fainting (Iteration 6)
+        // - Counter condition logic (Iteration 7)  
+        // - Bide condition logic (Iteration 8)
+        // - Enraged condition logic (Iteration 9)
 
         // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
         let move_data = get_move_data(move_used).expect("Move data must exist");

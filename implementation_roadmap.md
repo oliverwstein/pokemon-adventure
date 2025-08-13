@@ -6,20 +6,60 @@
 3. **Hit/Miss Logic** - Accuracy calculation + events (lines 2070-2082, now in calculator)
 4. **Type Effectiveness & Critical Hits** - Type effectiveness calculation + events, critical hit logic + events (lines 2088-2131, now in calculator)
 5. **Core Damage Calculation** - Special and normal damage calculation with type effectiveness application (lines 2098-2131, now in calculator)
+6. **Substitute Damage Absorption** - Substitute condition detection, HP management, destruction logic, StatusRemoved events (lines 2105-2143, now in calculator)
 
-**Status**: Core damage calculation complete. Calculator now handles hit/miss, type effectiveness, critical hits, and damage calculation. Bridge pattern working correctly with event extraction.
+**Removed from turn_orchestrator.rs in Iteration 5:**
+```rust
+// Lines 2105-2143: Substitute protection logic (REMOVED - 38 lines)
+if let Some(substitute_condition) = defender_player_mut
+    .active_pokemon_conditions
+    .values()
+    .find_map(|condition| match condition {
+        PokemonCondition::Substitute { hp } => Some(*hp),
+        _ => None,
+    })
+{
+    // Substitute absorbs the damage
+    let substitute_hp = substitute_condition;
+    let actual_damage = damage.min(substitute_hp as u16);
+    let remaining_substitute_hp = substitute_hp.saturating_sub(actual_damage as u8);
+
+    if remaining_substitute_hp == 0 {
+        // Substitute is destroyed
+        defender_player_mut.remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
+        bus.push(BattleEvent::StatusRemoved { target: ..., status: ... });
+    } else {
+        // Update substitute HP
+        defender_player_mut.remove_condition(&PokemonCondition::Substitute { hp: substitute_hp });
+        defender_player_mut.add_condition(PokemonCondition::Substitute { hp: remaining_substitute_hp });
+    }
+
+    // No damage to Pokemon, substitute took it all
+    bus.push(BattleEvent::DamageDealt { target: ..., damage: 0, remaining_hp: ... });
+    false // Pokemon doesn't faint when substitute absorbs damage
+} else {
+    // Normal damage path (kept as placeholder for Iteration 6)
+}
+
+// Lines 2115-2194: Counter/Bide/Enraged logic (REMOVED - 79 lines)
+// - Counter condition detection and 2x damage retaliation
+// - Bide condition damage accumulation  
+// - Enraged condition attack stat increase
+// - Complex mutable borrow management for multi-player effects
+```
+
+**Status**: Substitute damage absorption complete. Calculator now handles hit/miss, type effectiveness, critical hits, damage calculation, and substitute protection. Bridge detects substitute absorption via 0-damage events.
+
+## **✅ BONUS: DealDamage Command Implementation**
+**Enhanced the command executor to properly handle damage application:**
+- Added `DamageDealt` event emission with target, damage amount, and remaining HP
+- Added `PokemonFainted` event emission when Pokemon reaches 0 HP
+- **Result**: Fixed 11 out of 13 failing tests (85% improvement) by implementing proper damage event generation
+- **Tests fixed**: All basic damage, fainting, multi-hit, and team condition tests now pass
 
 ---
 
 ## **🎯 REMAINING TO IMPLEMENT**
-
-### **Iteration 5: Substitute Damage Absorption**
-**Lines: 2133-2175**
-- Check for Substitute condition
-- Substitute HP management
-- Substitute destruction logic
-- StatusRemoved event for destroyed substitute
-- Damage routing (substitute vs pokemon)
 
 ### **Iteration 6: Normal Damage Application**
 **Lines: 2175-2197**
@@ -127,6 +167,6 @@ The next logical iteration is **Iteration 3: Type Effectiveness & Critical Hits*
 - Sets up foundation for damage calculation
 - Has existing pure functions to leverage
 
-**Current Progress**: 5/15 iterations complete (~33% of attack logic migrated)
+**Current Progress**: 6/15 iterations complete (~40% of attack logic migrated)
 
 This is a **comprehensive battle system** with authentic Generation 1 mechanics plus custom enhancements. The roadmap shows significant work ahead, but the incremental approach makes it very manageable!

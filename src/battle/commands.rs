@@ -149,7 +149,24 @@ fn execute_command_locally(
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-                pokemon.take_damage(amount);
+                let did_faint = pokemon.take_damage(amount);
+                let remaining_hp = pokemon.current_hp();
+                
+                // Emit DamageDealt event
+                bus.push(crate::battle::state::BattleEvent::DamageDealt {
+                    target: pokemon.species,
+                    damage: amount,
+                    remaining_hp,
+                });
+                
+                // Emit PokemonFainted event if needed
+                if did_faint {
+                    bus.push(crate::battle::state::BattleEvent::PokemonFainted {
+                        player_index,
+                        pokemon: pokemon.species,
+                    });
+                }
+                
                 Ok(())
             } else {
                 Err(ExecutionError::NoPokemon)

@@ -232,6 +232,7 @@ fn handle_successful_hit(
             &mut commands,
         );
 
+        // Handle damage-triggered condition reactions
         handle_damage_triggered_conditions(
             damage,
             defender_pokemon,
@@ -393,7 +394,7 @@ fn handle_substitute_damage_absorption(
     }));
 }
 
-/// Handle Counter/Bide/Enraged conditions triggered by damage
+/// Handle conditions triggered by damage using the new condition method system
 fn handle_damage_triggered_conditions(
     damage: u16,
     defender_pokemon: &crate::pokemon::PokemonInst,
@@ -414,108 +415,24 @@ fn handle_damage_triggered_conditions(
     }
 
     let move_data = get_move_data(move_used).expect("Move data must exist");
+    let attacker_target = PlayerTarget::from_index(attacker_index);
+    let defender_target = PlayerTarget::from_index(defender_index);
 
-    // Counter Logic: Retaliate with 2x physical damage (only if defender survives)
-    handle_counter_condition(
-        damage,
-        defender_pokemon,
-        defender_player,
-        attacker_index,
-        &move_data,
-        commands,
-    );
-
-    // Bide Logic: Accumulate damage for future release
-    handle_bide_condition(damage, defender_player, defender_index, commands);
-
-    // Enraged Logic: Increase attack when hit
-    handle_enraged_condition(defender_pokemon, defender_player, defender_index, commands);
-}
-
-/// Handle Counter condition retaliation
-fn handle_counter_condition(
-    damage: u16,
-    defender_pokemon: &crate::pokemon::PokemonInst,
-    defender_player: &crate::player::BattlePlayer,
-    attacker_index: usize,
-    move_data: &crate::move_data::MoveData,
-    commands: &mut Vec<BattleCommand>,
-) {
-    let defender_will_faint = damage >= defender_pokemon.current_hp();
-
-    if matches!(move_data.category, crate::move_data::MoveCategory::Physical)
-        && defender_player.has_condition(&PokemonCondition::Countering { damage: 0 })
-        && !defender_will_faint
-    // Can only counter if defender survives the damage
-    {
-        let counter_damage = damage * 2;
-        commands.push(BattleCommand::DealDamage {
-            target: PlayerTarget::from_index(attacker_index),
-            amount: counter_damage,
-        });
+    // Let each condition handle its own damage reaction
+    for condition in defender_player.active_pokemon_conditions.values() {
+        let condition_commands = condition.on_damage_taken(
+            damage,
+            attacker_target,
+            defender_target,
+            defender_pokemon.species,
+            move_data.category,
+            defender_pokemon.current_hp(),
+            defender_player.get_stat_stage(crate::player::StatType::Attack),
+        );
+        commands.extend(condition_commands);
     }
 }
 
-/// Handle Bide condition damage accumulation
-fn handle_bide_condition(
-    damage: u16,
-    defender_player: &crate::player::BattlePlayer,
-    defender_index: usize,
-    commands: &mut Vec<BattleCommand>,
-) {
-    if let Some((turns_remaining, stored_damage)) = defender_player
-        .active_pokemon_conditions
-        .values()
-        .find_map(|condition| match condition {
-            PokemonCondition::Biding {
-                turns_remaining,
-                damage: stored_damage,
-            } => Some((turns_remaining, stored_damage)),
-            _ => None,
-        })
-    {
-        // Remove old condition
-        commands.push(BattleCommand::RemoveCondition {
-            target: PlayerTarget::from_index(defender_index),
-            condition_type: PokemonConditionType::Biding,
-        });
-        // Add updated condition with accumulated damage
-        commands.push(BattleCommand::AddCondition {
-            target: PlayerTarget::from_index(defender_index),
-            condition: PokemonCondition::Biding {
-                turns_remaining: *turns_remaining,
-                damage: stored_damage + damage,
-            },
-        });
-    }
-}
-
-/// Handle Enraged condition attack stat increase
-fn handle_enraged_condition(
-    defender_pokemon: &crate::pokemon::PokemonInst,
-    defender_player: &crate::player::BattlePlayer,
-    defender_index: usize,
-    commands: &mut Vec<BattleCommand>,
-) {
-    if defender_player.has_condition(&PokemonCondition::Enraged) {
-        let old_stage = defender_player.get_stat_stage(crate::player::StatType::Attack);
-        let new_stage = (old_stage + 1).min(6); // Cap at +6
-
-        if old_stage != new_stage {
-            commands.push(BattleCommand::ChangeStatStage {
-                target: PlayerTarget::from_index(defender_index),
-                stat: crate::player::StatType::Attack,
-                delta: 1,
-            });
-            commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                target: defender_pokemon.species,
-                stat: crate::player::StatType::Attack,
-                old_stage,
-                new_stage,
-            }));
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {

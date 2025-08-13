@@ -3,9 +3,9 @@ MoveData(
     move_type: Normal,
     power: Some(15),
     category: Physical,
-    accuracy: Some(100),
+    accuracy: Some(70),
     max_pp: 30,
     effects: [
-        MultiHit(2, 50),
+        MultiHit(2, 70),
     ],
 )

@@ -37,7 +37,7 @@ pub fn calculate_attack_outcome(
             move_used,
         }));
     }
-
+    let move_data = get_move_data(move_used).expect("Move data must exist");
     // Check if the move hits
     let hit_result = move_hits(
         attacker_pokemon,
@@ -80,7 +80,6 @@ pub fn calculate_attack_outcome(
         });
 
         // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
-        let move_data = get_move_data(move_used).expect("Move data must exist");
         if damage > 0
             || matches!(
                 move_data.category,
@@ -111,41 +110,6 @@ pub fn calculate_attack_outcome(
             let damage_commands = move_data.apply_damage_based_effects(&context, state, damage);
             commands.extend(damage_commands);
         }
-
-        // Handle multi-hit logic
-        let defender_will_faint =
-            damage > 0 && !damage_absorbed_by_substitute && damage >= defender_pokemon.current_hp();
-        if !defender_will_faint {
-            for effect in &move_data.effects {
-                if let crate::move_data::MoveEffect::MultiHit(
-                    guaranteed_hits,
-                    continuation_chance,
-                ) = effect
-                {
-                    let next_hit_number = hit_number + 1;
-
-                    // Check if we should queue another hit
-                    let should_queue_next_hit = if hit_number + 1 < *guaranteed_hits {
-                        // We haven't met the guaranteed number of hits yet, so always continue
-                        true
-                    } else {
-                        // We are past the guaranteed hits, so roll for continuation
-                        rng.next_outcome() <= *continuation_chance
-                    };
-
-                    if should_queue_next_hit {
-                        commands.push(BattleCommand::PushAction(BattleAction::AttackHit {
-                            attacker_index,
-                            defender_index,
-                            move_used,
-                            hit_number: next_hit_number,
-                        }));
-                    }
-                    // We found the MultiHit effect, so we don't need to check other effects for this
-                    break;
-                }
-            }
-        }
     } else {
         // Handle miss
         commands.push(BattleCommand::EmitEvent(BattleEvent::MoveMissed {
@@ -155,13 +119,21 @@ pub fn calculate_attack_outcome(
         }));
 
         // Handle miss-based effects (like Reckless)
-        let move_data = get_move_data(move_used).expect("Move data must exist");
         let context =
             crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
         let miss_commands = move_data.apply_miss_based_effects(&context, state);
         commands.extend(miss_commands);
     }
+    // Handle Multi-hit logic
+    let context = crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
 
+    for effect in &move_data.effects {
+        if let Some(command) = effect.apply_multi_hit_continuation(&context, rng, hit_number) {
+            commands.push(command);
+            // We found the multi-hit effect, so we don't need to check other effects for this.
+            break;
+        }
+    }
     commands
 }
 

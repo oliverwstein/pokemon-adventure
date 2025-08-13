@@ -99,7 +99,7 @@ mod tests {
             90, // Crit roll (no crit)
             90, // Damage variance roll
             // Continuation roll for Hit 4 (needs <= 50):
-            60, // FAIL! Stop the sequence.
+            90, // FAIL! Stop the sequence.
             // Defender's turn (Pidgey) - needs rolls even if we don't care about the outcome
             50, 90, 90, 75, 80, 85, 55, 60, 70, 45,
         ]);

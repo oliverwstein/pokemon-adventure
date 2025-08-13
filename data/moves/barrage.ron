@@ -3,7 +3,7 @@ MoveData(
     move_type: Fighting,
     power: Some(20),
     category: Physical,
-    accuracy: Some(100),
+    accuracy: Some(90),
     max_pp: 15,
     effects: [
         MultiHit(2, 50),

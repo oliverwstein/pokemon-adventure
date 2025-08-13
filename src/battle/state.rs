@@ -195,11 +195,19 @@ impl TurnRng {
         Self { outcomes, index: 0 }
     }
 
-    pub fn next_outcome(&mut self) -> u8 {
+    pub fn next_outcome(&mut self, reason: &str) -> u8 {
         if self.index >= self.outcomes.len() {
-            panic!("TurnRng exhausted! Need more random values for this turn.");
+            // Add the reason to the panic message for better debugging!
+            panic!(
+                "TurnRng exhausted! Tried to get a value for: '{}'. Need more random values.",
+                reason
+            );
         }
         let outcome = self.outcomes[self.index];
+
+        // The magic line: Print the consumption event to the console during tests.
+        println!("[RNG] Consumed {} for: {}", outcome, reason);
+
         self.index += 1;
         outcome
     }

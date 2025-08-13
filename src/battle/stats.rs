@@ -212,7 +212,7 @@ pub fn move_is_critical_hit(
     };
 
     // Roll for critical hit
-    let roll = rng.next_outcome();
+    let roll = rng.next_outcome("Critical Hit Check");
     roll <= crit_threshold
 }
 
@@ -251,7 +251,7 @@ pub fn move_hits(
     let clamped_accuracy = modified_accuracy.clamp(1, 100);
 
     // Roll for hit/miss
-    let roll = rng.next_outcome();
+    let roll = rng.next_outcome("Hit/Miss Check");
     roll <= clamped_accuracy
 }
 
@@ -358,7 +358,8 @@ pub fn calculate_attack_damage(
     let defender_types = defender.get_current_types(defender_player);
     let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_types);
     // Random Variance: A random multiplier between 0.85 and 1.00
-    let random_multiplier = (85.0 + (rng.next_outcome() % 16) as f64) / 100.0;
+    let random_multiplier =
+        (85.0 + (rng.next_outcome("Random Damage Multiplier Roll") % 16) as f64) / 100.0;
 
     // Other modifiers (e.g., from items, abilities). Placeholder for now.
     let other_modifiers = 1.0;

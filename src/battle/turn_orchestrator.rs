@@ -677,7 +677,7 @@ fn check_action_preventing_conditions(
             }
             crate::pokemon::StatusCondition::Freeze => {
                 // 25% chance to thaw out when trying to act
-                let roll = rng.next_outcome(); // 0-100
+                let roll = rng.next_outcome("Defrost Check"); // 0-100
                 if roll < 25 {
                     // Pokemon thaws out
                     if let Some(pokemon_mut) = battle_state.players[player_index].team
@@ -748,7 +748,7 @@ fn check_action_preventing_conditions(
 
     // Check paralysis - 25% chance to be fully paralyzed
     if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon_status {
-        let roll = rng.next_outcome(); // 0-100
+        let roll = rng.next_outcome("Immobilized by Paralysis Check"); // 0-100
         if roll < 25 {
             return Some(ActionFailureReason::IsParalyzed);
         }
@@ -758,7 +758,7 @@ fn check_action_preventing_conditions(
     for condition in player.active_pokemon_conditions.values() {
         if let PokemonCondition::Confused { turns_remaining } = condition {
             if *turns_remaining > 0 {
-                let roll = rng.next_outcome(); // 1-100
+                let roll = rng.next_outcome("Hit Itself in Confusion Check"); // 1-100
                 if roll < 50 {
                     return Some(ActionFailureReason::IsConfused);
                 }

@@ -325,6 +325,48 @@ impl MoveEffect {
         }
     }
 
+    /// If this effect is MultiHit, calculates if another hit should be queued and returns the command.
+    /// This function assumes preconditions (like the defender not fainting) have already been checked by the caller.
+    pub fn apply_multi_hit_continuation(
+        &self,
+        context: &EffectContext,
+        rng: &mut crate::battle::state::TurnRng,
+        hit_number: u8,
+    ) -> Option<crate::battle::commands::BattleCommand> {
+        use crate::battle::commands::BattleCommand;
+        use crate::battle::turn_orchestrator::BattleAction;
+
+        // This logic only applies if the effect is actually a MultiHit variant.
+        if let MoveEffect::MultiHit(guaranteed_hits, continuation_chance) = self {
+            let next_hit_number = hit_number + 1;
+
+            // Determine if the next hit should be queued.
+            let should_queue_next_hit = if next_hit_number <= *guaranteed_hits {
+                // We are still within the guaranteed number of hits.
+                true
+            } else {
+                // Past the guaranteed hits, so roll for continuation.
+                // Assuming a max of 7 hits for any sequence.
+                // This is a change from a max of 5 because we allow each hit to miss indepedently
+                next_hit_number <= 7
+                    && rng.next_outcome("Multi-Hit Continuation Check") <= *continuation_chance
+            };
+
+            if should_queue_next_hit {
+                // Return a command to push the next hit onto the action stack.
+                return Some(BattleCommand::PushAction(BattleAction::AttackHit {
+                    attacker_index: context.attacker_index,
+                    defender_index: context.defender_index,
+                    move_used: context.move_used,
+                    hit_number: next_hit_number,
+                }));
+            }
+        }
+
+        // If not a multi-hit effect or if the continuation roll fails, return None.
+        None
+    }
+
     /// Apply burn status effect
     fn apply_burn_effect(
         &self,
@@ -338,7 +380,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Burn Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Only apply if Pokemon has no status
@@ -373,7 +415,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Paralysis Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Only apply if Pokemon has no status
@@ -408,7 +450,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Freeze Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Only apply if Pokemon has no status
@@ -443,7 +485,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Poison Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Only apply if Pokemon has no status
@@ -478,13 +520,13 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Sedate Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     // Sleep for 1-3 turns (random)
-                    let sleep_turns = (rng.next_outcome() % 3) + 1; // 1, 2, or 3 turns
+                    let sleep_turns = (rng.next_outcome("Generate Sleep Duration") % 3) + 1; // 1, 2, or 3 turns
                     let sleep_status = crate::pokemon::StatusCondition::Sleep(sleep_turns);
 
                     commands.push(BattleCommand::SetPokemonStatus {
@@ -517,7 +559,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Flinch Effect") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 let condition = PokemonCondition::Flinched;
@@ -549,11 +591,11 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Confuse Effect") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Confuse for 1-4 turns (random)
-                let confuse_turns = (rng.next_outcome() % 4) + 1;
+                let confuse_turns = (rng.next_outcome("Generate Confusion Duration") % 4) + 1;
                 let condition = PokemonCondition::Confused {
                     turns_remaining: confuse_turns,
                 };
@@ -585,11 +627,11 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Trap Check") <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Trap for 2-5 turns (random)
-                let trap_turns = (rng.next_outcome() % 4) + 2;
+                let trap_turns = (rng.next_outcome("Generate Trap Duration") % 4) + 2;
                 let condition = PokemonCondition::Trapped {
                     turns_remaining: trap_turns,
                 };
@@ -621,7 +663,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Exhaust Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                 let condition = PokemonCondition::Exhausted {
@@ -657,8 +699,8 @@ impl MoveEffect {
         use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
-
-        if rng.next_outcome() <= chance {
+        let rng_reason = format!("Apply {:?} {:?} Effect: ", stat, stages);
+        if rng.next_outcome(&rng_reason) <= chance {
             let target_index = context.target_index(target);
             let target_player = &state.players[target_index];
 
@@ -725,7 +767,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Raise All Stats Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                 let stats_to_raise = [
@@ -817,7 +859,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Haze Check") <= chance {
             // Clear stat stages for both players
             for player_index in 0..2 {
                 let player = &state.players[player_index];
@@ -936,7 +978,7 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome() <= chance {
+        if rng.next_outcome("Apply Ante Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                 let pokemon_level = attacker_pokemon.level as u32;
@@ -1432,7 +1474,11 @@ impl MoveEffect {
 
         if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
             // Rampage lasts 2-3 turns (50/50 chance)
-            let turns = if rng.next_outcome() <= 50 { 2 } else { 3 };
+            let turns = if rng.next_outcome("Generate Rampage Duration") <= 50 {
+                2
+            } else {
+                3
+            };
             let condition = PokemonCondition::Rampaging {
                 turns_remaining: turns,
             };
@@ -1886,7 +1932,8 @@ impl MoveEffect {
         ];
 
         // Randomly select a move
-        let random_index = (rng.next_outcome() as usize) % all_moves.len();
+        let random_index =
+            (rng.next_outcome("Generate Metronome Move Select") as usize) % all_moves.len();
         let selected_move = all_moves[random_index];
 
         let attacker_player = &state.players[context.attacker_index];
@@ -1949,7 +1996,7 @@ impl MoveData {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct MoveData {
     pub name: String,
     pub move_type: PokemonType,

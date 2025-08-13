@@ -151,14 +151,18 @@ pub struct EffectContext {
 }
 
 impl EffectContext {
-    pub fn new(attacker_index: usize, defender_index: usize, move_used: crate::moves::Move) -> Self {
+    pub fn new(
+        attacker_index: usize,
+        defender_index: usize,
+        move_used: crate::moves::Move,
+    ) -> Self {
         Self {
             attacker_index,
             defender_index,
             move_used,
         }
     }
-    
+
     pub fn target_index(&self, target: &Target) -> usize {
         match target {
             Target::User => self.attacker_index,
@@ -176,47 +180,27 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         match self {
-            MoveEffect::Burn(chance) => {
-                self.apply_burn_effect(*chance, context, state, rng)
-            }
+            MoveEffect::Burn(chance) => self.apply_burn_effect(*chance, context, state, rng),
             MoveEffect::Paralyze(chance) => {
                 self.apply_paralyze_effect(*chance, context, state, rng)
             }
-            MoveEffect::Freeze(chance) => {
-                self.apply_freeze_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Poison(chance) => {
-                self.apply_poison_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Sedate(chance) => {
-                self.apply_sedate_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Flinch(chance) => {
-                self.apply_flinch_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Confuse(chance) => {
-                self.apply_confuse_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Trap(chance) => {
-                self.apply_trap_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Exhaust(chance) => {
-                self.apply_exhaust_effect(*chance, context, state, rng)
-            }
+            MoveEffect::Freeze(chance) => self.apply_freeze_effect(*chance, context, state, rng),
+            MoveEffect::Poison(chance) => self.apply_poison_effect(*chance, context, state, rng),
+            MoveEffect::Sedate(chance) => self.apply_sedate_effect(*chance, context, state, rng),
+            MoveEffect::Flinch(chance) => self.apply_flinch_effect(*chance, context, state, rng),
+            MoveEffect::Confuse(chance) => self.apply_confuse_effect(*chance, context, state, rng),
+            MoveEffect::Trap(chance) => self.apply_trap_effect(*chance, context, state, rng),
+            MoveEffect::Exhaust(chance) => self.apply_exhaust_effect(*chance, context, state, rng),
             MoveEffect::StatChange(target, stat, stages, chance) => {
                 self.apply_stat_change_effect(target, stat, *stages, *chance, context, state, rng)
             }
             MoveEffect::RaiseAllStats(chance) => {
                 self.apply_raise_all_stats_effect(*chance, context, state, rng)
             }
-            MoveEffect::Heal(percentage) => {
-                self.apply_heal_effect(*percentage, context, state)
-            }
-            MoveEffect::Haze(chance) => {
-                self.apply_haze_effect(*chance, context, state, rng)
-            }
+            MoveEffect::Heal(percentage) => self.apply_heal_effect(*percentage, context, state),
+            MoveEffect::Haze(chance) => self.apply_haze_effect(*chance, context, state, rng),
             MoveEffect::CureStatus(target, status_type) => {
                 self.apply_cure_status_effect(target, status_type, context, state)
             }
@@ -237,7 +221,7 @@ impl MoveEffect {
             }
         }
     }
-    
+
     /// Apply burn status effect
     fn apply_burn_effect(
         &self,
@@ -248,9 +232,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -260,17 +244,19 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Burn),
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                        target: target_pokemon.species,
-                        status: crate::pokemon::StatusCondition::Burn,
-                    }));
+                    commands.push(BattleCommand::EmitEvent(
+                        BattleEvent::PokemonStatusApplied {
+                            target: target_pokemon.species,
+                            status: crate::pokemon::StatusCondition::Burn,
+                        },
+                    ));
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply paralyze status effect  
     fn apply_paralyze_effect(
         &self,
@@ -281,9 +267,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -293,17 +279,19 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Paralysis),
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                        target: target_pokemon.species,
-                        status: crate::pokemon::StatusCondition::Paralysis,
-                    }));
+                    commands.push(BattleCommand::EmitEvent(
+                        BattleEvent::PokemonStatusApplied {
+                            target: target_pokemon.species,
+                            status: crate::pokemon::StatusCondition::Paralysis,
+                        },
+                    ));
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply freeze status effect
     fn apply_freeze_effect(
         &self,
@@ -314,9 +302,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -326,17 +314,19 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Freeze),
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                        target: target_pokemon.species,
-                        status: crate::pokemon::StatusCondition::Freeze,
-                    }));
+                    commands.push(BattleCommand::EmitEvent(
+                        BattleEvent::PokemonStatusApplied {
+                            target: target_pokemon.species,
+                            status: crate::pokemon::StatusCondition::Freeze,
+                        },
+                    ));
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply poison status effect
     fn apply_poison_effect(
         &self,
@@ -347,9 +337,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -359,17 +349,19 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Poison(0)),
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                        target: target_pokemon.species,
-                        status: crate::pokemon::StatusCondition::Poison(0),
-                    }));
+                    commands.push(BattleCommand::EmitEvent(
+                        BattleEvent::PokemonStatusApplied {
+                            target: target_pokemon.species,
+                            status: crate::pokemon::StatusCondition::Poison(0),
+                        },
+                    ));
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply sedate (sleep) status effect
     fn apply_sedate_effect(
         &self,
@@ -380,9 +372,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -391,22 +383,24 @@ impl MoveEffect {
                     // Sleep for 1-3 turns (random)
                     let sleep_turns = (rng.next_outcome() % 3) + 1; // 1, 2, or 3 turns
                     let sleep_status = crate::pokemon::StatusCondition::Sleep(sleep_turns);
-                    
+
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(sleep_status),
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                        target: target_pokemon.species,
-                        status: sleep_status,
-                    }));
+                    commands.push(BattleCommand::EmitEvent(
+                        BattleEvent::PokemonStatusApplied {
+                            target: target_pokemon.species,
+                            status: sleep_status,
+                        },
+                    ));
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply flinch condition effect
     fn apply_flinch_effect(
         &self,
@@ -417,14 +411,14 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 let condition = crate::player::PokemonCondition::Flinched;
-                
+
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
@@ -435,10 +429,10 @@ impl MoveEffect {
                 }));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply confuse condition effect
     fn apply_confuse_effect(
         &self,
@@ -449,9 +443,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -460,7 +454,7 @@ impl MoveEffect {
                 let condition = crate::player::PokemonCondition::Confused {
                     turns_remaining: confuse_turns,
                 };
-                
+
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
@@ -471,10 +465,10 @@ impl MoveEffect {
                 }));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply trap condition effect
     fn apply_trap_effect(
         &self,
@@ -485,9 +479,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
@@ -496,7 +490,7 @@ impl MoveEffect {
                 let condition = crate::player::PokemonCondition::Trapped {
                     turns_remaining: trap_turns,
                 };
-                
+
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
@@ -507,10 +501,10 @@ impl MoveEffect {
                 }));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply exhaust condition effect (targets user, not opponent)
     fn apply_exhaust_effect(
         &self,
@@ -521,16 +515,16 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                 let condition = crate::player::PokemonCondition::Exhausted {
                     turns_remaining: 2, // Decremented same turn, so start at 2
                 };
-                
+
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.attacker_index),
                     condition: condition.clone(),
@@ -541,10 +535,10 @@ impl MoveEffect {
                 }));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply stat change effect
     fn apply_stat_change_effect(
         &self,
@@ -558,13 +552,13 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let target_index = context.target_index(target);
             let target_player = &state.players[target_index];
-            
+
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 let player_stat = match stat {
                     StatType::Atk => crate::player::StatType::Attack,
@@ -577,12 +571,13 @@ impl MoveEffect {
                     StatType::Crit => crate::player::StatType::Focus,
                     _ => return commands, // Skip unsupported stats
                 };
-                
+
                 // Check if Mist prevents this stat change
                 let is_enemy_move = target_index != context.attacker_index;
                 let is_negative_change = stages < 0;
-                let has_mist = target_player.has_team_condition(&crate::player::TeamCondition::Mist);
-                
+                let has_mist =
+                    target_player.has_team_condition(&crate::player::TeamCondition::Mist);
+
                 if is_enemy_move && is_negative_change && has_mist {
                     // Mist prevents the stat change
                     commands.push(BattleCommand::EmitEvent(BattleEvent::StatChangeBlocked {
@@ -593,7 +588,7 @@ impl MoveEffect {
                 } else {
                     let old_stage = target_player.get_stat_stage(player_stat);
                     let new_stage = (old_stage + stages).clamp(-6, 6);
-                    
+
                     if old_stage != new_stage {
                         commands.push(BattleCommand::ChangeStatStage {
                             target: PlayerTarget::from_index(target_index),
@@ -610,10 +605,10 @@ impl MoveEffect {
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply raise all stats effect (targets user)
     fn apply_raise_all_stats_effect(
         &self,
@@ -624,9 +619,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
@@ -637,11 +632,11 @@ impl MoveEffect {
                     crate::player::StatType::SpecialDefense,
                     crate::player::StatType::Speed,
                 ];
-                
+
                 for stat in &stats_to_raise {
                     let old_stage = attacker_player.get_stat_stage(*stat);
                     let new_stage = (old_stage + 1).clamp(-6, 6);
-                    
+
                     if old_stage != new_stage {
                         commands.push(BattleCommand::ChangeStatStage {
                             target: PlayerTarget::from_index(context.attacker_index),
@@ -658,10 +653,10 @@ impl MoveEffect {
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply heal effect (targets user)
     fn apply_heal_effect(
         &self,
@@ -671,14 +666,14 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         let attacker_player = &state.players[context.attacker_index];
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
             let max_hp = attacker_pokemon.max_hp();
             let current_hp = attacker_pokemon.current_hp();
-            
+
             // Don't heal if already at full HP or fainted
             if current_hp > 0 && current_hp < max_hp {
                 let heal_amount = (max_hp * (percentage as u16)) / 100;
@@ -687,11 +682,11 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.attacker_index),
                         amount: heal_amount,
                     });
-                    
+
                     // Calculate new HP for event (capped at max)
                     let new_hp = (current_hp + heal_amount).min(max_hp);
                     let actual_heal = new_hp - current_hp;
-                    
+
                     if actual_heal > 0 {
                         commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
                             target: attacker_pokemon.species,
@@ -702,10 +697,10 @@ impl MoveEffect {
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply haze effect (clears all stat stages for both players)
     fn apply_haze_effect(
         &self,
@@ -716,9 +711,9 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         if rng.next_outcome() <= chance {
             // Clear stat stages for both players
             for player_index in 0..2 {
@@ -734,7 +729,7 @@ impl MoveEffect {
                         crate::player::StatType::Evasion,
                         crate::player::StatType::Focus,
                     ];
-                    
+
                     for stat in &all_stats {
                         let current_stage = player.get_stat_stage(*stat);
                         if current_stage != 0 {
@@ -743,24 +738,26 @@ impl MoveEffect {
                                 stat: *stat,
                                 delta: -current_stage, // Reset to 0
                             });
-                            commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                                target: pokemon.species,
-                                stat: *stat,
-                                old_stage: current_stage,
-                                new_stage: 0,
-                            }));
+                            commands.push(BattleCommand::EmitEvent(
+                                BattleEvent::StatStageChanged {
+                                    target: pokemon.species,
+                                    stat: *stat,
+                                    old_stage: current_stage,
+                                    new_stage: 0,
+                                },
+                            ));
                         }
                     }
-                    
+
                     // Note: Individual stat changes already emit StatStageChanged events
                     // A general Haze event could be added to BattleEvent if needed
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply cure status effect
     fn apply_cure_status_effect(
         &self,
@@ -771,12 +768,12 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         let target_index = context.target_index(target);
         let target_player = &state.players[target_index];
-        
+
         if let Some(target_pokemon) = target_player.active_pokemon() {
             // Check if the Pokemon has the status condition we want to cure
             let should_cure = match (&target_pokemon.status, status_type) {
@@ -787,24 +784,26 @@ impl MoveEffect {
                 (Some(crate::pokemon::StatusCondition::Paralysis), StatusType::Paralysis) => true,
                 _ => false,
             };
-            
+
             if should_cure {
                 let old_status = target_pokemon.status.clone().unwrap();
-                
+
                 commands.push(BattleCommand::SetPokemonStatus {
                     target: PlayerTarget::from_index(target_index),
                     status: None,
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusRemoved {
-                    target: target_pokemon.species,
-                    status: old_status,
-                }));
+                commands.push(BattleCommand::EmitEvent(
+                    BattleEvent::PokemonStatusRemoved {
+                        target: target_pokemon.species,
+                        status: old_status,
+                    },
+                ));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply reflect effect (team condition)
     fn apply_reflect_effect(
         &self,
@@ -813,24 +812,24 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         let mut commands = Vec::new();
-        
+
         let team_condition = match reflect_type {
             ReflectType::Physical => crate::player::TeamCondition::Reflect,
             ReflectType::Special => crate::player::TeamCondition::LightScreen,
         };
-        
+
         // Apply to user's team (attacker)
         commands.push(BattleCommand::AddTeamCondition {
             target: PlayerTarget::from_index(context.attacker_index),
             condition: team_condition,
             turns: 5, // Standard duration
         });
-        
+
         commands
     }
-    
+
     /// Apply damage-based effects that require the damage amount
     pub fn apply_damage_based_effects(
         &self,
@@ -839,17 +838,22 @@ impl MoveEffect {
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         let mut commands = Vec::new();
-        
+
         // Only process if damage was actually dealt
         if damage_dealt == 0 {
             return commands;
         }
-        
+
         match self {
             MoveEffect::Recoil(percentage) => {
-                commands.extend(self.apply_recoil_effect(*percentage, context, state, damage_dealt));
+                commands.extend(self.apply_recoil_effect(
+                    *percentage,
+                    context,
+                    state,
+                    damage_dealt,
+                ));
             }
             MoveEffect::Drain(percentage) => {
                 commands.extend(self.apply_drain_effect(*percentage, context, state, damage_dealt));
@@ -858,10 +862,10 @@ impl MoveEffect {
                 // Not a damage-based effect
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply recoil effect (attacker takes damage)
     fn apply_recoil_effect(
         &self,
@@ -871,9 +875,9 @@ impl MoveEffect {
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         let mut commands = Vec::new();
-        
+
         let recoil_damage = (damage_dealt * (percentage as u16)) / 100;
         if recoil_damage > 0 {
             commands.push(BattleCommand::DealDamage {
@@ -881,10 +885,10 @@ impl MoveEffect {
                 amount: recoil_damage,
             });
         }
-        
+
         commands
     }
-    
+
     /// Apply drain effect (attacker heals based on damage)
     fn apply_drain_effect(
         &self,
@@ -895,27 +899,27 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
-        
+
         let heal_amount = (damage_dealt * (percentage as u16)) / 100;
         if heal_amount > 0 {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                 let current_hp = attacker_pokemon.current_hp();
                 let max_hp = attacker_pokemon.max_hp();
-                
+
                 // Only heal if not at full HP or fainted
                 if current_hp > 0 && current_hp < max_hp {
                     commands.push(BattleCommand::HealPokemon {
                         target: PlayerTarget::from_index(context.attacker_index),
                         amount: heal_amount,
                     });
-                    
+
                     // Calculate actual healing for event (capped at max)
                     let new_hp = (current_hp + heal_amount).min(max_hp);
                     let actual_heal = new_hp - current_hp;
-                    
+
                     if actual_heal > 0 {
                         commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
                             target: attacker_pokemon.species,
@@ -926,10 +930,10 @@ impl MoveEffect {
                 }
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply miss-based effects that trigger when a move misses
     pub fn apply_miss_based_effects(
         &self,
@@ -937,9 +941,9 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         let mut commands = Vec::new();
-        
+
         match self {
             MoveEffect::Reckless(percentage) => {
                 commands.extend(self.apply_reckless_effect(*percentage, context, state));
@@ -948,10 +952,10 @@ impl MoveEffect {
                 // Not a miss-based effect
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply reckless effect (attacker takes damage based on max HP when move misses)
     fn apply_reckless_effect(
         &self,
@@ -960,14 +964,14 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        
+
         let mut commands = Vec::new();
-        
+
         let attacker_player = &state.players[context.attacker_index];
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
             let max_hp = attacker_pokemon.max_hp();
             let recoil_damage = (max_hp * (percentage as u16)) / 100;
-            
+
             if recoil_damage > 0 {
                 commands.push(BattleCommand::DealDamage {
                     target: PlayerTarget::from_index(context.attacker_index),
@@ -975,7 +979,7 @@ impl MoveEffect {
                 });
             }
         }
-        
+
         commands
     }
 }
@@ -989,15 +993,15 @@ impl MoveData {
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         let mut all_commands = Vec::new();
-        
+
         for effect in &self.effects {
             let effect_commands = effect.apply_damage_based_effects(context, state, damage_dealt);
             all_commands.extend(effect_commands);
         }
-        
+
         all_commands
     }
-    
+
     /// Apply all miss-based effects for this move
     pub fn apply_miss_based_effects(
         &self,
@@ -1005,12 +1009,12 @@ impl MoveData {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         let mut all_commands = Vec::new();
-        
+
         for effect in &self.effects {
             let effect_commands = effect.apply_miss_based_effects(context, state);
             all_commands.extend(effect_commands);
         }
-        
+
         all_commands
     }
 }

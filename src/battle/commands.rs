@@ -18,14 +18,14 @@ impl PlayerTarget {
             PlayerTarget::Player2 => 1,
         }
     }
-    
+
     pub fn opponent(self) -> PlayerTarget {
         match self {
             PlayerTarget::Player1 => PlayerTarget::Player2,
             PlayerTarget::Player2 => PlayerTarget::Player1,
         }
     }
-    
+
     pub fn from_index(index: usize) -> PlayerTarget {
         match index {
             0 => PlayerTarget::Player1,
@@ -88,23 +88,61 @@ pub enum BattleCommand {
     SetGameState(crate::battle::state::GameState),
     IncrementTurnNumber,
     ClearActionQueue,
-    
+
     // Pokemon modifications
-    DealDamage { target: PlayerTarget, amount: u16 },
-    HealPokemon { target: PlayerTarget, amount: u16 },
-    SetPokemonStatus { target: PlayerTarget, status: Option<StatusCondition> },
-    FaintPokemon { target: PlayerTarget },
-    RestorePP { target: PlayerTarget, move_slot: usize, amount: u8 },
-    
+    DealDamage {
+        target: PlayerTarget,
+        amount: u16,
+    },
+    HealPokemon {
+        target: PlayerTarget,
+        amount: u16,
+    },
+    SetPokemonStatus {
+        target: PlayerTarget,
+        status: Option<StatusCondition>,
+    },
+    FaintPokemon {
+        target: PlayerTarget,
+    },
+    RestorePP {
+        target: PlayerTarget,
+        move_slot: usize,
+        amount: u8,
+    },
+
     // Player state changes
-    ChangeStatStage { target: PlayerTarget, stat: StatType, delta: i8 },
-    AddCondition { target: PlayerTarget, condition: PokemonCondition },
-    RemoveCondition { target: PlayerTarget, condition_type: PokemonConditionType },
-    AddTeamCondition { target: PlayerTarget, condition: TeamCondition, turns: u8 },
-    RemoveTeamCondition { target: PlayerTarget, condition: TeamCondition },
-    SetLastMove { target: PlayerTarget, move_used: Move },
-    SwitchPokemon { target: PlayerTarget, new_pokemon_index: usize },
-    
+    ChangeStatStage {
+        target: PlayerTarget,
+        stat: StatType,
+        delta: i8,
+    },
+    AddCondition {
+        target: PlayerTarget,
+        condition: PokemonCondition,
+    },
+    RemoveCondition {
+        target: PlayerTarget,
+        condition_type: PokemonConditionType,
+    },
+    AddTeamCondition {
+        target: PlayerTarget,
+        condition: TeamCondition,
+        turns: u8,
+    },
+    RemoveTeamCondition {
+        target: PlayerTarget,
+        condition: TeamCondition,
+    },
+    SetLastMove {
+        target: PlayerTarget,
+        move_used: Move,
+    },
+    SwitchPokemon {
+        target: PlayerTarget,
+        new_pokemon_index: usize,
+    },
+
     // Battle flow
     EmitEvent(BattleEvent),
     PushAction(BattleAction),
@@ -123,10 +161,10 @@ pub enum ExecutionError {
 /// Temporary bridge function for the incremental refactoring
 /// This will be replaced by a proper CommandExecutor in Step 4
 pub fn execute_commands_locally(
-    commands: Vec<BattleCommand>, 
-    state: &mut BattleState, 
+    commands: Vec<BattleCommand>,
+    state: &mut BattleState,
     bus: &mut EventBus,
-    action_stack: &mut ActionStack
+    action_stack: &mut ActionStack,
 ) -> Result<(), ExecutionError> {
     for command in commands {
         execute_command_locally(command, state, bus, action_stack)?;
@@ -164,14 +202,14 @@ fn execute_deal_damage_command(
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
         let did_faint = pokemon.take_damage(amount);
         let remaining_hp = pokemon.current_hp();
-        
+
         // Emit DamageDealt event
         bus.push(crate::battle::state::BattleEvent::DamageDealt {
             target: pokemon.species,
             damage: amount,
             remaining_hp,
         });
-        
+
         // Emit PokemonFainted event if needed
         if did_faint {
             bus.push(crate::battle::state::BattleEvent::PokemonFainted {
@@ -179,7 +217,7 @@ fn execute_deal_damage_command(
                 pokemon: pokemon.species,
             });
         }
-        
+
         Ok(())
     } else {
         Err(ExecutionError::NoPokemon)
@@ -190,7 +228,7 @@ fn execute_command_locally(
     command: BattleCommand,
     state: &mut BattleState,
     bus: &mut EventBus,
-    action_stack: &mut ActionStack
+    action_stack: &mut ActionStack,
 ) -> Result<(), ExecutionError> {
     match command {
         BattleCommand::EmitEvent(event) => {
@@ -219,7 +257,11 @@ fn execute_command_locally(
                 Ok(())
             })
         }
-        BattleCommand::ChangeStatStage { target, stat, delta } => {
+        BattleCommand::ChangeStatStage {
+            target,
+            stat,
+            delta,
+        } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             let current_stage = player.get_stat_stage(stat);
@@ -233,11 +275,15 @@ fn execute_command_locally(
             player.add_condition(condition);
             Ok(())
         }
-        BattleCommand::RemoveCondition { target, condition_type } => {
+        BattleCommand::RemoveCondition {
+            target,
+            condition_type,
+        } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             // Find and remove condition of this type
-            let conditions_to_remove: Vec<_> = player.active_pokemon_conditions
+            let conditions_to_remove: Vec<_> = player
+                .active_pokemon_conditions
                 .iter()
                 .filter_map(|(key, condition)| {
                     if condition.get_type() == condition_type {
@@ -247,13 +293,17 @@ fn execute_command_locally(
                     }
                 })
                 .collect();
-            
+
             for key in conditions_to_remove {
                 player.active_pokemon_conditions.remove(&key);
             }
             Ok(())
         }
-        BattleCommand::AddTeamCondition { target, condition, turns } => {
+        BattleCommand::AddTeamCondition {
+            target,
+            condition,
+            turns,
+        } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.add_team_condition(condition, turns);
@@ -271,7 +321,10 @@ fn execute_command_locally(
             player.last_move = Some(move_used);
             Ok(())
         }
-        BattleCommand::SwitchPokemon { target, new_pokemon_index } => {
+        BattleCommand::SwitchPokemon {
+            target,
+            new_pokemon_index,
+        } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             if new_pokemon_index < player.team.len() && player.team[new_pokemon_index].is_some() {
@@ -293,7 +346,11 @@ fn execute_command_locally(
             state.action_queue = [None, None];
             Ok(())
         }
-        BattleCommand::RestorePP { target, move_slot, amount } => {
+        BattleCommand::RestorePP {
+            target,
+            move_slot,
+            amount,
+        } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
@@ -338,7 +395,7 @@ mod tests {
             [const { None }; 4],
             None,
         );
-        
+
         let pokemon2 = PokemonInst::new_for_test(
             Species::Charmander,
             1,
@@ -354,7 +411,14 @@ mod tests {
         let player1 = BattlePlayer {
             player_id: "test1".to_string(),
             player_name: "Player 1".to_string(),
-            team: [Some(pokemon1), const { None }, const { None }, const { None }, const { None }, const { None }],
+            team: [
+                Some(pokemon1),
+                const { None },
+                const { None },
+                const { None },
+                const { None },
+                const { None },
+            ],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
             team_conditions: HashMap::new(),
@@ -366,7 +430,14 @@ mod tests {
         let player2 = BattlePlayer {
             player_id: "test2".to_string(),
             player_name: "Player 2".to_string(),
-            team: [Some(pokemon2), const { None }, const { None }, const { None }, const { None }, const { None }],
+            team: [
+                Some(pokemon2),
+                const { None },
+                const { None },
+                const { None },
+                const { None },
+                const { None },
+            ],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
             team_conditions: HashMap::new(),
@@ -395,12 +466,15 @@ mod tests {
         let mut action_stack = ActionStack::new();
 
         let initial_hp = state.players[0].active_pokemon().unwrap().current_hp();
-        
+
         let result = execute_commands_locally(
-            vec![BattleCommand::DealDamage { target: PlayerTarget::Player1, amount: 20 }],
+            vec![BattleCommand::DealDamage {
+                target: PlayerTarget::Player1,
+                amount: 20,
+            }],
             &mut state,
             &mut bus,
-            &mut action_stack
+            &mut action_stack,
         );
 
         assert!(result.is_ok());
@@ -418,20 +492,27 @@ mod tests {
 
         // First damage the Pokemon
         execute_commands_locally(
-            vec![BattleCommand::DealDamage { target: PlayerTarget::Player1, amount: 30 }],
+            vec![BattleCommand::DealDamage {
+                target: PlayerTarget::Player1,
+                amount: 30,
+            }],
             &mut state,
             &mut bus,
-            &mut action_stack
-        ).unwrap();
+            &mut action_stack,
+        )
+        .unwrap();
 
         let damaged_hp = state.players[0].active_pokemon().unwrap().current_hp();
 
         // Then heal it
         let result = execute_commands_locally(
-            vec![BattleCommand::HealPokemon { target: PlayerTarget::Player1, amount: 10 }],
+            vec![BattleCommand::HealPokemon {
+                target: PlayerTarget::Player1,
+                amount: 10,
+            }],
             &mut state,
             &mut bus,
-            &mut action_stack
+            &mut action_stack,
         );
 
         assert!(result.is_ok());
@@ -448,17 +529,20 @@ mod tests {
         let mut action_stack = ActionStack::new();
 
         let event = BattleEvent::TurnStarted { turn_number: 1 };
-        
+
         let result = execute_commands_locally(
             vec![BattleCommand::EmitEvent(event.clone())],
             &mut state,
             &mut bus,
-            &mut action_stack
+            &mut action_stack,
         );
 
         assert!(result.is_ok());
         assert_eq!(bus.events().len(), 1);
-        assert!(matches!(bus.events()[0], BattleEvent::TurnStarted { turn_number: 1 }));
+        assert!(matches!(
+            bus.events()[0],
+            BattleEvent::TurnStarted { turn_number: 1 }
+        ));
     }
 
     #[test]
@@ -468,14 +552,14 @@ mod tests {
         let mut action_stack = ActionStack::new();
 
         let result = execute_commands_locally(
-            vec![BattleCommand::ChangeStatStage { 
-                target: PlayerTarget::Player1, 
-                stat: StatType::Attack, 
-                delta: 2 
+            vec![BattleCommand::ChangeStatStage {
+                target: PlayerTarget::Player1,
+                stat: StatType::Attack,
+                delta: 2,
             }],
             &mut state,
             &mut bus,
-            &mut action_stack
+            &mut action_stack,
         );
 
         assert!(result.is_ok());
@@ -492,7 +576,7 @@ mod tests {
             vec![BattleCommand::SetGameState(GameState::TurnInProgress)],
             &mut state,
             &mut bus,
-            &mut action_stack
+            &mut action_stack,
         );
 
         assert!(result.is_ok());

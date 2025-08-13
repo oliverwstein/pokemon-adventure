@@ -830,25 +830,25 @@ fn apply_move_effects(
     bus: &mut EventBus,
     rng: &mut TurnRng,
 ) {
-    use crate::move_data::{get_move_data, EffectContext, MoveEffect};
     use crate::battle::commands::execute_commands_locally;
-    
+    use crate::move_data::{EffectContext, MoveEffect, get_move_data};
+
     // Now we look up the move_data inside the function
     let move_data = get_move_data(move_used).expect("Move data must exist for effects");
-    
+
     // Create context for the move effects
     let context = EffectContext::new(attacker_index, defender_index, move_used);
     let action_stack = &mut ActionStack::new(); // Temporary action stack
-    
+
     // Check if defender has a Substitute - affects which effects can be applied
     let defender_has_substitute = battle_state.players[defender_index]
         .active_pokemon_conditions
         .values()
         .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
-    
+
     // Collect all commands from effects that can be applied
     let mut all_commands = Vec::new();
-    
+
     for effect in &move_data.effects {
         // Apply Substitute filtering
         let should_apply_effect = if defender_has_substitute {
@@ -859,26 +859,30 @@ fn apply_move_effects(
                 MoveEffect::Heal(_) => true,
                 MoveEffect::Exhaust(_) => true,
                 MoveEffect::Haze(_) => true, // Affects both players
-                MoveEffect::CureStatus(target, _) => matches!(target, crate::move_data::Target::User), // Allow self-cure
+                MoveEffect::CureStatus(target, _) => {
+                    matches!(target, crate::move_data::Target::User)
+                } // Allow self-cure
                 MoveEffect::Reflect(_) => true, // Team condition, affects user
-                _ => false, // All other effects blocked by Substitute
+                _ => false,                  // All other effects blocked by Substitute
             }
         } else {
             true // No substitute, apply all effects
         };
-        
+
         if should_apply_effect {
             // Get commands from the new system for migrated effects
             let effect_commands = effect.apply(&context, battle_state, rng);
             all_commands.extend(effect_commands);
-            
+
             // Handle effects not yet migrated to the new system
             match effect {
                 // Legacy effects handled inline
                 MoveEffect::Mist => {
                     let attacker_player = &mut battle_state.players[attacker_index];
                     attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
-                    if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                    if let Some(pokemon_species) =
+                        attacker_player.active_pokemon().map(|p| p.species)
+                    {
                         println!("{:?} used Mist!", pokemon_species);
                     }
                 }
@@ -888,11 +892,11 @@ fn apply_move_effects(
                         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
                             let pokemon_level = attacker_pokemon.level as u32;
                             let ante_amount = pokemon_level * 2;
-                            
+
                             let defender_player = &mut battle_state.players[defender_index];
                             defender_player.add_ante(ante_amount);
                             let new_ante = defender_player.get_ante();
-                            
+
                             bus.push(BattleEvent::AnteIncreased {
                                 player_index: defender_index,
                                 amount: ante_amount,
@@ -906,10 +910,11 @@ fn apply_move_effects(
             }
         }
     }
-    
+
     // Execute all generated commands
     if !all_commands.is_empty() {
-        if let Err(error) = execute_commands_locally(all_commands, battle_state, bus, action_stack) {
+        if let Err(error) = execute_commands_locally(all_commands, battle_state, bus, action_stack)
+        {
             eprintln!("Error executing move effect commands: {:?}", error);
         }
     }
@@ -1443,7 +1448,7 @@ fn apply_on_damage_effects(
     damage_dealt: u16,
 ) {
     use crate::battle::commands::execute_commands_locally;
-    use crate::move_data::{get_move_data, EffectContext, MoveEffect};
+    use crate::move_data::{EffectContext, MoveEffect, get_move_data};
     // Early return if no damage was dealt
     if damage_dealt == 0 {
         return;
@@ -1452,13 +1457,16 @@ fn apply_on_damage_effects(
     let context = EffectContext::new(attacker_index, 0, move_used);
     // Create context for damage-based effects
     let action_stack = &mut ActionStack::new(); // Temporary action stack
-    
+
     // Get commands from the new damage-based effects system
-    let damage_commands = move_data.apply_damage_based_effects(&context, battle_state, damage_dealt);
-    
+    let damage_commands =
+        move_data.apply_damage_based_effects(&context, battle_state, damage_dealt);
+
     // Execute all generated commands
     if !damage_commands.is_empty() {
-        if let Err(error) = execute_commands_locally(damage_commands, battle_state, bus, action_stack) {
+        if let Err(error) =
+            execute_commands_locally(damage_commands, battle_state, bus, action_stack)
+        {
             eprintln!("Error executing damage-based effect commands: {:?}", error);
         }
     }
@@ -2096,22 +2104,23 @@ pub fn execute_attack_hit(
     // === THE BRIDGE ===
     // Use the new pure calculator for hit/miss logic
     let hit_miss_commands = calculate_attack_outcome(
-        battle_state, 
-        attacker_index, 
-        defender_index, 
-        move_used, 
-        hit_number, 
-        rng
+        battle_state,
+        attacker_index,
+        defender_index,
+        move_used,
+        hit_number,
+        rng,
     );
-    
+
     // Extract damage amount from calculator commands BEFORE executing
-    let damage = hit_miss_commands.iter()
+    let damage = hit_miss_commands
+        .iter()
         .find_map(|cmd| match cmd {
             crate::battle::commands::BattleCommand::DealDamage { amount, .. } => Some(*amount),
             _ => None,
         })
         .unwrap_or(0);
-    
+
     // Execute the commands immediately using local bridge function
     if let Err(e) = execute_commands_locally(hit_miss_commands, battle_state, bus, action_stack) {
         eprintln!("Error executing hit/miss commands: {:?}", e);
@@ -2120,14 +2129,20 @@ pub fn execute_attack_hit(
 
     // Determine if the move hit by checking the current state
     // (This is temporary until we expand the calculator to handle all hit logic)
-    let hits = bus.events().iter().rev().take(10).any(|event| {
-        matches!(event, BattleEvent::MoveHit { .. })
-    });
-    
+    let hits = bus
+        .events()
+        .iter()
+        .rev()
+        .take(10)
+        .any(|event| matches!(event, BattleEvent::MoveHit { .. }));
+
     // Extract critical hit information from calculator events
-    let _is_critical = bus.events().iter().rev().take(10).any(|event| {
-        matches!(event, BattleEvent::CriticalHit { .. })
-    });
+    let _is_critical = bus
+        .events()
+        .iter()
+        .rev()
+        .take(10)
+        .any(|event| matches!(event, BattleEvent::CriticalHit { .. }));
 
     // Get the player and pokemon references AFTER executing commands
     let attacker_player = &battle_state.players[attacker_index];
@@ -2143,11 +2158,14 @@ pub fn execute_attack_hit(
     if hits {
         // === END BRIDGE ===
         // Type effectiveness, critical hit, damage calculation, and substitute logic now handled by calculator
-        
+
         // Check if damage was absorbed by substitute by looking for 0-damage DamageDealt event
-        let damage_absorbed_by_substitute = bus.events().iter().rev().take(10).any(|event| {
-            matches!(event, BattleEvent::DamageDealt { damage: 0, .. })
-        });
+        let damage_absorbed_by_substitute = bus
+            .events()
+            .iter()
+            .rev()
+            .take(10)
+            .any(|event| matches!(event, BattleEvent::DamageDealt { damage: 0, .. }));
 
         let defender_fainted = if damage > 0 && !damage_absorbed_by_substitute {
             // Normal damage case - calculator issued DealDamage command, and damage wasn't absorbed by substitute
@@ -2159,7 +2177,7 @@ pub fn execute_attack_hit(
 
         // TODO: Future iterations will handle:
         // - Normal damage application with fainting (Iteration 6)
-        // - Counter condition logic (Iteration 7)  
+        // - Counter condition logic (Iteration 7)
         // - Bide condition logic (Iteration 8)
         // - Enraged condition logic (Iteration 9)
 

@@ -1,5 +1,5 @@
 use crate::battle::calculators::calculate_attack_outcome;
-use crate::battle::commands::execute_commands_locally;
+use crate::battle::commands::execute_command_batch;
 use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
@@ -840,7 +840,7 @@ pub fn execute_attack_hit(
 
     // 3. Execution: Pass the resulting list of commands to the executor bridge.
     //    This step applies all the calculated state changes and emits all events.
-    if let Err(e) = execute_commands_locally(commands, battle_state, bus, action_stack) {
+    if let Err(e) = execute_command_batch(commands, battle_state, bus, action_stack) {
         eprintln!("Error executing attack commands: {:?}", e);
         // In a real application, this might warrant more robust error handling.
     }

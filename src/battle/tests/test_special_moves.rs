@@ -36,6 +36,13 @@ mod tests {
 
     #[test]
     fn test_two_turn_move_charging() {
+        // Initialize move data
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         // Test ChargeUp moves like Solar Beam
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -102,7 +109,7 @@ mod tests {
 
         // Turn 1: Fly should go in air
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have InAir condition
@@ -140,7 +147,7 @@ mod tests {
 
         // Turn 1: Dig should go underground
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Underground condition
@@ -150,6 +157,13 @@ mod tests {
 
     #[test]
     fn test_rampage_move() {
+        // Initialize move data
+        use std::path::Path;
+        let data_path = Path::new("data");
+        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        crate::pokemon::initialize_species_data(data_path)
+            .expect("Failed to initialize species data");
+
         // Test Rampaging moves like Thrash
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -167,7 +181,7 @@ mod tests {
 
         // Turn 1: Thrash should apply Rampaging condition
         collect_player_actions(&mut battle_state).expect("Should collect actions");
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]); // 50% chance for 2-3 turns
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]); // More values for RNG
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Player 1 should now have Rampaging condition
@@ -222,7 +236,7 @@ mod tests {
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Mirror Move
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Lightning
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Check what events were generated to debug the issue

@@ -1701,11 +1701,10 @@ fn calculate_action_priority(
 ) -> ActionPriority {
     match action {
         PlayerAction::SwitchPokemon { .. } => {
-            let speed = get_player_speed(player_index, battle_state);
             ActionPriority {
                 action_priority: 6, // Switches go first
                 move_priority: 0,   // N/A for switches
-                speed,
+                speed: player_index as u16, // Just always have player 0 switch first if they both switch.
             }
         }
         PlayerAction::Forfeit => {
@@ -1777,14 +1776,6 @@ fn calculate_action_priority(
     }
 }
 
-fn get_player_speed(player_index: usize, battle_state: &BattleState) -> u16 {
-    let player = &battle_state.players[player_index];
-    if let Some(active_pokemon) = &player.team[player.active_pokemon_index] {
-        effective_speed(active_pokemon, player)
-    } else {
-        0 // Should not happen, but safety fallback
-    }
-}
 
 /// Apply damage/healing effects from active Pokemon conditions (Trapped, Seeded)
 fn apply_condition_damage(battle_state: &mut BattleState, bus: &mut EventBus) {

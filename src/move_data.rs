@@ -57,12 +57,6 @@ pub enum Target {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ReflectType {
-    Physical,
-    Special,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RampageEndCondition {
     Confuse,
     Exhaust,
@@ -130,11 +124,10 @@ pub enum MoveEffect {
     Rampage(RampageEndCondition), // rampage with end condition
 
     // Field effects
-    Haze(u8),             // remove all stat changes, chance %
-    Reflect(ReflectType), // reduce physical/special damage
-    Mist,                 // prevent stat reduction
-    Seed(u8),             // leech seed effect, chance %
-    Nightmare,            // only works on sleeping targets
+    Haze(u8), // remove all stat changes, chance %
+    SetTeamCondition(crate::player::TeamCondition, u8),
+    Seed(u8),  // leech seed effect, chance %
+    Nightmare, // only works on sleeping targets
 
     // Utility
     Heal(u8),                       // heal % of max HP
@@ -181,6 +174,21 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
 
+        let defender_has_substitute = state.players[context.defender_index]
+            .active_pokemon_conditions
+            .values()
+            .any(|condition| {
+                matches!(
+                    condition,
+                    crate::player::PokemonCondition::Substitute { .. }
+                )
+            });
+
+        // 2. If so, ask the effect if it's blocked and return early if it is.
+        if defender_has_substitute && self.is_blocked_by_substitute() {
+            return Vec::new(); // Effect is nullified.
+        }
+
         match self {
             MoveEffect::Burn(chance) => self.apply_burn_effect(*chance, context, state, rng),
             MoveEffect::Paralyze(chance) => {
@@ -204,8 +212,8 @@ impl MoveEffect {
             MoveEffect::CureStatus(target, status_type) => {
                 self.apply_cure_status_effect(target, status_type, context, state)
             }
-            MoveEffect::Reflect(reflect_type) => {
-                self.apply_reflect_effect(reflect_type, context, state)
+            MoveEffect::SetTeamCondition(condition, turns) => {
+                self.apply_team_condition_effect(condition, *turns, context)
             }
             MoveEffect::Ante(chance) => self.apply_ante_effect(*chance, context, state, rng),
             MoveEffect::Recoil(_) | MoveEffect::Drain(_) => {
@@ -220,6 +228,52 @@ impl MoveEffect {
                 // For effects not yet migrated, return empty command list
                 Vec::new()
             }
+        }
+    }
+
+    pub fn is_blocked_by_substitute(&self) -> bool {
+        use crate::move_data::{MoveEffect, Target};
+
+        match self {
+            // --- EFFECTS THAT BYPASS SUBSTITUTE ---
+
+            // Effects that explicitly target the user.
+            MoveEffect::Heal(_)
+            | MoveEffect::Exhaust(_)
+            | MoveEffect::RaiseAllStats(_)
+            | MoveEffect::Rest(_)
+            | MoveEffect::Rage(_)
+            | MoveEffect::Substitute
+            | MoveEffect::Transform
+            | MoveEffect::Conversion
+            | MoveEffect::Counter
+            | MoveEffect::Bide(_)
+            | MoveEffect::Explode
+            | MoveEffect::Reckless(_)
+            | MoveEffect::MirrorMove
+            | MoveEffect::Metronome => false,
+
+            // Damage modifiers that affect the user's calculation, not the target.
+            MoveEffect::Recoil(_)
+            | MoveEffect::Drain(_)
+            | MoveEffect::Crit(_)
+            | MoveEffect::IgnoreDef(_)
+            | MoveEffect::Priority(_)
+            | MoveEffect::MultiHit(_, _) => false,
+
+            // Field effects or team conditions that affect the user's side.
+            MoveEffect::Haze(_) | MoveEffect::SetTeamCondition(..) => false,
+
+            // Conditional effects: blocked only if they target the opponent.
+            MoveEffect::StatChange(target, ..) => matches!(target, Target::Target),
+            MoveEffect::CureStatus(target, ..) => matches!(target, Target::Target),
+
+            // --- EFFECTS THAT ARE BLOCKED BY SUBSTITUTE ---
+
+            // All other effects are assumed to target the opponent and are blocked by default.
+            // This includes all primary status conditions (Burn, Flinch, etc.),
+            // stat-lowering effects on the target, and other debilitating conditions.
+            _ => true,
         }
     }
 
@@ -805,30 +859,20 @@ impl MoveEffect {
         commands
     }
 
-    /// Apply reflect effect (team condition)
-    fn apply_reflect_effect(
+    fn apply_team_condition_effect(
         &self,
-        reflect_type: &ReflectType,
+        condition: &crate::player::TeamCondition,
+        turns: u8,
         context: &EffectContext,
-        state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
 
-        let mut commands = Vec::new();
-
-        let team_condition = match reflect_type {
-            ReflectType::Physical => crate::player::TeamCondition::Reflect,
-            ReflectType::Special => crate::player::TeamCondition::LightScreen,
-        };
-
-        // Apply to user's team (attacker)
-        commands.push(BattleCommand::AddTeamCondition {
+        // This function is now incredibly simple. It just creates the command.
+        vec![BattleCommand::AddTeamCondition {
             target: PlayerTarget::from_index(context.attacker_index),
-            condition: team_condition,
-            turns: 5, // Standard duration
-        });
-
-        commands
+            condition: *condition,
+            turns,
+        }]
     }
 
     /// Apply ante effect (Pay Day)
@@ -841,7 +885,7 @@ impl MoveEffect {
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        
+
         let mut commands = Vec::new();
 
         if rng.next_outcome() <= chance {
@@ -859,7 +903,7 @@ impl MoveEffect {
                     target: PlayerTarget::from_index(context.defender_index),
                     amount: ante_amount,
                 });
-                
+
                 // Command to emit the event
                 commands.push(BattleCommand::EmitEvent(BattleEvent::AnteIncreased {
                     player_index: context.defender_index,
@@ -868,10 +912,10 @@ impl MoveEffect {
                 }));
             }
         }
-        
+
         commands
     }
-    
+
     /// Apply damage-based effects that require the damage amount
     pub fn apply_damage_based_effects(
         &self,

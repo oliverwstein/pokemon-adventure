@@ -18,7 +18,7 @@ pub enum PlayerAction {
     Forfeit,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum TeamCondition {
     Reflect,
     LightScreen,

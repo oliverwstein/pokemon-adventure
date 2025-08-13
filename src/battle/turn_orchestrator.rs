@@ -831,70 +831,23 @@ fn apply_move_effects(
     rng: &mut TurnRng,
 ) {
     use crate::battle::commands::execute_commands_locally;
-    use crate::move_data::{EffectContext, MoveEffect, get_move_data};
+    use crate::move_data::{EffectContext, get_move_data};
 
-    // Now we look up the move_data inside the function
     let move_data = get_move_data(move_used).expect("Move data must exist for effects");
 
-    // Create context for the move effects
+    // The orchestrator creates the simplest possible context.
     let context = EffectContext::new(attacker_index, defender_index, move_used);
-    let action_stack = &mut ActionStack::new(); // Temporary action stack
 
-    // Check if defender has a Substitute - affects which effects can be applied
-    let defender_has_substitute = battle_state.players[defender_index]
-        .active_pokemon_conditions
-        .values()
-        .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
-
-    // Collect all commands from effects that can be applied
     let mut all_commands = Vec::new();
 
     for effect in &move_data.effects {
-        // Apply Substitute filtering
-        let should_apply_effect = if defender_has_substitute {
-            match effect {
-                // Self-targeting effects that bypass Substitute
-                MoveEffect::StatChange(crate::move_data::Target::User, _, _, _) => true,
-                MoveEffect::RaiseAllStats(_) => true,
-                MoveEffect::Heal(_) => true,
-                MoveEffect::Exhaust(_) => true,
-                MoveEffect::Haze(_) => true, // Affects both players
-                MoveEffect::CureStatus(target, _) => {
-                    matches!(target, crate::move_data::Target::User)
-                } // Allow self-cure
-                MoveEffect::Reflect(_) => true, // Team condition, affects user
-                _ => false,                  // All other effects blocked by Substitute
-            }
-        } else {
-            true // No substitute, apply all effects
-        };
-
-        if should_apply_effect {
-            // Get commands from the new system for migrated effects
-            let effect_commands = effect.apply(&context, battle_state, rng);
-            all_commands.extend(effect_commands);
-
-            // Handle effects not yet migrated to the new system
-            match effect {
-                // Legacy effects handled inline
-                MoveEffect::Mist => {
-                    let attacker_player = &mut battle_state.players[attacker_index];
-                    attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
-                    if let Some(pokemon_species) =
-                        attacker_player.active_pokemon().map(|p| p.species)
-                    {
-                        println!("{:?} used Mist!", pokemon_species);
-                    }
-                }
-                // All other effects are handled by the new system or skipped
-                _ => {}
-            }
-        }
+        all_commands.extend(effect.apply(&context, battle_state, rng));
     }
 
-    // Execute all generated commands
     if !all_commands.is_empty() {
-        if let Err(error) = execute_commands_locally(all_commands, battle_state, bus, action_stack)
+        let mut temp_action_stack = ActionStack::new();
+        if let Err(error) =
+            execute_commands_locally(all_commands, battle_state, bus, &mut temp_action_stack)
         {
             eprintln!("Error executing move effect commands: {:?}", error);
         }
@@ -1353,42 +1306,42 @@ fn apply_move_effects_legacy(
                     }
                 }
             }
+            //Commented out in legacy code because I removed these MoveEffects.
+            // // Team conditions
+            // crate::move_data::MoveEffect::Reflect(reflect_type) => {
+            //     let attacker_player = &mut battle_state.players[attacker_index];
+            //     let team_condition = match reflect_type {
+            //         crate::move_data::ReflectType::Physical => {
+            //             crate::player::TeamCondition::Reflect
+            //         }
+            //         crate::move_data::ReflectType::Special => {
+            //             crate::player::TeamCondition::LightScreen
+            //         }
+            //     };
 
-            // Team conditions
-            crate::move_data::MoveEffect::Reflect(reflect_type) => {
-                let attacker_player = &mut battle_state.players[attacker_index];
-                let team_condition = match reflect_type {
-                    crate::move_data::ReflectType::Physical => {
-                        crate::player::TeamCondition::Reflect
-                    }
-                    crate::move_data::ReflectType::Special => {
-                        crate::player::TeamCondition::LightScreen
-                    }
-                };
+            //     // Team conditions typically last 5 turns in Pokemon
+            //     attacker_player.add_team_condition(team_condition, 5);
 
-                // Team conditions typically last 5 turns in Pokemon
-                attacker_player.add_team_condition(team_condition, 5);
+            //     if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            //         // Generate an appropriate event (we can use a generic message for now)
+            //         let condition_name = match reflect_type {
+            //             crate::move_data::ReflectType::Physical => "Reflect",
+            //             crate::move_data::ReflectType::Special => "Light Screen",
+            //         };
+            //         println!("{:?} used {}!", pokemon_species, condition_name);
+            //     }
+            // }
 
-                if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
-                    // Generate an appropriate event (we can use a generic message for now)
-                    let condition_name = match reflect_type {
-                        crate::move_data::ReflectType::Physical => "Reflect",
-                        crate::move_data::ReflectType::Special => "Light Screen",
-                    };
-                    println!("{:?} used {}!", pokemon_species, condition_name);
-                }
-            }
+            // crate::move_data::MoveEffect::Mist => {
+            //     let attacker_player = &mut battle_state.players[attacker_index];
 
-            crate::move_data::MoveEffect::Mist => {
-                let attacker_player = &mut battle_state.players[attacker_index];
+            //     // Mist typically lasts 5 turns in Pokemon
+            //     attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
 
-                // Mist typically lasts 5 turns in Pokemon
-                attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
-
-                if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
-                    println!("{:?} used Mist!", pokemon_species);
-                }
-            }
+            //     if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            //         println!("{:?} used Mist!", pokemon_species);
+            //     }
+            // }
 
             // Ante effect (Pay Day)
             crate::move_data::MoveEffect::Ante(chance) => {

@@ -6,6 +6,6 @@ MoveData(
     accuracy: None,
     max_pp: 10,
     effects: [
-        Reflect(Physical),
+        SetTeamCondition(Reflect, 5),
     ],
 )

@@ -821,8 +821,100 @@ fn check_action_preventing_conditions(
     None // No conditions prevent action
 }
 
-/// Apply all chance-based move effects
+/// Apply all chance-based move effects using the new command-based system
 fn apply_move_effects(
+    attacker_index: usize,
+    defender_index: usize,
+    move_data: &crate::move_data::MoveData,
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+    rng: &mut TurnRng,
+) {
+    use crate::move_data::{EffectContext, MoveEffect};
+    use crate::battle::commands::execute_commands_locally;
+    
+    // Create context for the move effects
+    let context = EffectContext::new(attacker_index, defender_index, crate::moves::Move::Tackle); // TODO: Pass actual move
+    let action_stack = &mut ActionStack::new(); // Temporary action stack
+    
+    // Check if defender has a Substitute - affects which effects can be applied
+    let defender_has_substitute = battle_state.players[defender_index]
+        .active_pokemon_conditions
+        .values()
+        .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
+    
+    // Collect all commands from effects that can be applied
+    let mut all_commands = Vec::new();
+    
+    for effect in &move_data.effects {
+        // Apply Substitute filtering
+        let should_apply_effect = if defender_has_substitute {
+            match effect {
+                // Self-targeting effects that bypass Substitute
+                MoveEffect::StatChange(crate::move_data::Target::User, _, _, _) => true,
+                MoveEffect::RaiseAllStats(_) => true,
+                MoveEffect::Heal(_) => true,
+                MoveEffect::Exhaust(_) => true,
+                MoveEffect::Haze(_) => true, // Affects both players
+                MoveEffect::CureStatus(target, _) => matches!(target, crate::move_data::Target::User), // Allow self-cure
+                MoveEffect::Reflect(_) => true, // Team condition, affects user
+                _ => false, // All other effects blocked by Substitute
+            }
+        } else {
+            true // No substitute, apply all effects
+        };
+        
+        if should_apply_effect {
+            // Get commands from the new system for migrated effects
+            let effect_commands = effect.apply(&context, battle_state, rng);
+            all_commands.extend(effect_commands);
+            
+            // Handle effects not yet migrated to the new system
+            match effect {
+                // Legacy effects handled inline
+                MoveEffect::Mist => {
+                    let attacker_player = &mut battle_state.players[attacker_index];
+                    attacker_player.add_team_condition(crate::player::TeamCondition::Mist, 5);
+                    if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                        println!("{:?} used Mist!", pokemon_species);
+                    }
+                }
+                MoveEffect::Ante(chance) => {
+                    if rng.next_outcome() <= *chance {
+                        let attacker_player = &battle_state.players[attacker_index];
+                        if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+                            let pokemon_level = attacker_pokemon.level as u32;
+                            let ante_amount = pokemon_level * 2;
+                            
+                            let defender_player = &mut battle_state.players[defender_index];
+                            defender_player.add_ante(ante_amount);
+                            let new_ante = defender_player.get_ante();
+                            
+                            bus.push(BattleEvent::AnteIncreased {
+                                player_index: defender_index,
+                                amount: ante_amount,
+                                new_total: new_ante,
+                            });
+                        }
+                    }
+                }
+                // All other effects are handled by the new system or skipped
+                _ => {}
+            }
+        }
+    }
+    
+    // Execute all generated commands
+    if !all_commands.is_empty() {
+        if let Err(error) = execute_commands_locally(all_commands, battle_state, bus, action_stack) {
+            eprintln!("Error executing move effect commands: {:?}", error);
+        }
+    }
+}
+
+/// Legacy apply_move_effects implementation - kept for reference during migration
+#[allow(dead_code)]
+fn apply_move_effects_legacy(
     attacker_index: usize,
     defender_index: usize,
     move_data: &crate::move_data::MoveData,
@@ -1337,7 +1429,7 @@ fn apply_move_effects(
             _ => {}
         }
     }
-}
+} // End of legacy function
 
 /// Apply damage-based effects that always trigger when damage is dealt (recoil, drain)
 fn apply_on_damage_effects(
@@ -1347,74 +1439,25 @@ fn apply_on_damage_effects(
     bus: &mut EventBus,
     damage_dealt: u16,
 ) {
+    use crate::move_data::EffectContext;
+    use crate::battle::commands::execute_commands_locally;
+    
+    // Early return if no damage was dealt
     if damage_dealt == 0 {
-        return; // No damage-based effects if no damage was dealt
+        return;
     }
-
-    for effect in &move_data.effects {
-        match effect {
-            // Recoil damage to attacker
-            crate::move_data::MoveEffect::Recoil(percentage) => {
-                let recoil_damage = (damage_dealt * (*percentage as u16)) / 100;
-                if recoil_damage > 0 {
-                    let attacker_player = &mut battle_state.players[attacker_index];
-                    if let Some(attacker_pokemon) =
-                        attacker_player.team[attacker_player.active_pokemon_index].as_mut()
-                    {
-                        let attacker_species = attacker_pokemon.species;
-                        let fainted = attacker_pokemon.take_damage(recoil_damage);
-                        let remaining_hp = attacker_pokemon.current_hp();
-
-                        bus.push(BattleEvent::DamageDealt {
-                            target: attacker_species,
-                            damage: recoil_damage,
-                            remaining_hp,
-                        });
-
-                        if fainted {
-                            bus.push(BattleEvent::PokemonFainted {
-                                player_index: attacker_index,
-                                pokemon: attacker_species,
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Drain healing to attacker
-            crate::move_data::MoveEffect::Drain(percentage) => {
-                let heal_amount = (damage_dealt * (*percentage as u16)) / 100;
-                println!("Heal amount: {}", heal_amount);
-                if heal_amount > 0 {
-                    let attacker_player = &mut battle_state.players[attacker_index];
-                    if let Some(attacker_pokemon) =
-                        attacker_player.team[attacker_player.active_pokemon_index].as_mut()
-                    {
-                        let attacker_species = attacker_pokemon.species;
-                        let old_hp = attacker_pokemon.current_hp();
-                        attacker_pokemon.heal(heal_amount);
-                        let new_hp = attacker_pokemon.current_hp();
-                        let actual_heal = new_hp - old_hp;
-                        println!("Actual Heal: {}", actual_heal);
-                        println!(
-                            "Max HP: {}, Current HP: {}, Initial HP: {}",
-                            attacker_pokemon.max_hp(),
-                            attacker_pokemon.current_hp(),
-                            old_hp
-                        );
-                        if actual_heal > 0 {
-                            bus.push(BattleEvent::PokemonHealed {
-                                target: attacker_species,
-                                amount: actual_heal,
-                                new_hp,
-                            });
-                        }
-                    }
-                }
-            }
-
-            // Other effects are handled elsewhere or don't apply to on-hit
-            _ => {}
+    
+    // Create context for damage-based effects
+    let context = EffectContext::new(attacker_index, 0, crate::moves::Move::Tackle); // Defender index not needed for damage-based effects
+    let action_stack = &mut ActionStack::new(); // Temporary action stack
+    
+    // Get commands from the new damage-based effects system
+    let damage_commands = move_data.apply_damage_based_effects(&context, battle_state, damage_dealt);
+    
+    // Execute all generated commands
+    if !damage_commands.is_empty() {
+        if let Err(error) = execute_commands_locally(damage_commands, battle_state, bus, action_stack) {
+            eprintln!("Error executing damage-based effect commands: {:?}", error);
         }
     }
 }

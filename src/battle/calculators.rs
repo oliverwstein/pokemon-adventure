@@ -64,6 +64,12 @@ pub fn calculate_attack_outcome(
             defender: defender_pokemon.species,
             move_used,
         }));
+        
+        // Handle miss-based effects (like Reckless)
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        let context = crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
+        let miss_commands = move_data.apply_miss_based_effects(&context, state);
+        commands.extend(miss_commands);
     }
     
     commands

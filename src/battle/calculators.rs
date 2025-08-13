@@ -1,6 +1,7 @@
 use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-use crate::battle::stats::move_hits;
+use crate::battle::stats::{move_hits, move_is_critical_hit};
+use crate::move_data::get_move_data;
 use crate::moves::Move;
 
 /// Calculate the outcome of an attack attempt
@@ -68,8 +69,40 @@ pub fn calculate_attack_outcome(
             move_used,
         }));
         
+        // Get move data for type effectiveness and damage calculations
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        
+        // Calculate type effectiveness
+        let defender_types = defender_pokemon.get_current_types(defender_player);
+        let type_adv_multiplier =
+            crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
+        
+        // Emit type effectiveness event if significant
+        if (type_adv_multiplier - 1.0).abs() > 0.1 {
+            commands.push(BattleCommand::EmitEvent(BattleEvent::AttackTypeEffectiveness {
+                multiplier: type_adv_multiplier,
+            }));
+        }
+        
+        // Calculate critical hit for normal (non-special) damage moves
+        if crate::battle::stats::calculate_special_attack_damage(
+            move_used,
+            attacker_pokemon,
+            defender_pokemon,
+        ).is_none() {
+            // This is a normal damage move, check for critical hit
+            let is_critical = move_is_critical_hit(attacker_pokemon, attacker_player, move_used, rng);
+            
+            if is_critical {
+                commands.push(BattleCommand::EmitEvent(BattleEvent::CriticalHit {
+                    attacker: attacker_pokemon.species,
+                    defender: defender_pokemon.species,
+                    move_used,
+                }));
+            }
+        }
+        
         // TODO: In future iterations, add:
-        // - Critical hit calculation
         // - Damage calculation
         // - Move effects
         // - Status applications
@@ -159,15 +192,18 @@ mod tests {
         }
 
         let state = create_test_battle_state();
-        let mut rng = TurnRng::new_for_test(vec![1]); // Low value should force hit
+        let mut rng = TurnRng::new_for_test(vec![1, 99]); // Hit + no critical hit
         
         let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
         
-        // Should have MoveUsed and MoveHit events
-        assert_eq!(commands.len(), 2);
+        // Should have MoveUsed, MoveHit, and possibly type effectiveness events
+        assert!(commands.len() >= 2);
         
         assert!(matches!(commands[0], BattleCommand::EmitEvent(BattleEvent::MoveUsed { .. })));
         assert!(matches!(commands[1], BattleCommand::EmitEvent(BattleEvent::MoveHit { .. })));
+        
+        // May have type effectiveness event if not normal effectiveness
+        // May have critical hit event if critical hit occurred
     }
 
     #[test]

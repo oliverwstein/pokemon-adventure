@@ -2068,8 +2068,13 @@ pub fn execute_attack_hit(
 
     // Determine if the move hit by checking the current state
     // (This is temporary until we expand the calculator to handle all hit logic)
-    let hits = bus.events().iter().rev().take(5).any(|event| {
+    let hits = bus.events().iter().rev().take(10).any(|event| {
         matches!(event, BattleEvent::MoveHit { .. })
+    });
+    
+    // Extract critical hit information from calculator events
+    let is_critical = bus.events().iter().rev().take(10).any(|event| {
+        matches!(event, BattleEvent::CriticalHit { .. })
     });
 
     // Get the player and pokemon references AFTER executing commands
@@ -2085,15 +2090,12 @@ pub fn execute_attack_hit(
 
     if hits {
         // === END BRIDGE ===
+        // Type effectiveness and critical hit logic now handled by calculator
+        
         let move_data = get_move_data(move_used).expect("Move data must exist");
         let defender_types = defender_pokemon.get_current_types(defender_player);
         let type_adv_multiplier =
             crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
-        if (type_adv_multiplier - 1.0).abs() > 0.1 {
-            bus.push(BattleEvent::AttackTypeEffectiveness {
-                multiplier: type_adv_multiplier,
-            });
-        }
 
         let damage = if let Some(special_damage) =
             crate::battle::stats::calculate_special_attack_damage(
@@ -2107,18 +2109,7 @@ pub fn execute_attack_hit(
                 0
             }
         } else {
-            let is_critical =
-                move_is_critical_hit(attacker_pokemon, attacker_player, move_used, rng);
-
-            if is_critical {
-                bus.push(BattleEvent::CriticalHit {
-                    attacker: attacker_pokemon.species,
-                    defender: defender_pokemon.species,
-                    move_used,
-                });
-            }
-            // Calculate type effectiveness multiplier.
-
+            // Critical hit already calculated by calculator
             crate::battle::stats::calculate_attack_damage(
                 attacker_pokemon,
                 defender_pokemon,

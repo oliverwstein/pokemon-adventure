@@ -290,31 +290,75 @@ pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
 pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBus {
     let mut bus = EventBus::new();
 
-    // 1. Initialization
-    initialize_turn(battle_state, &mut bus);
+    // Check if this is a replacement phase (inter-turn action)
+    let is_replacement_phase = matches!(
+        battle_state.game_state,
+        GameState::WaitingForPlayer1Replacement 
+            | GameState::WaitingForPlayer2Replacement 
+            | GameState::WaitingForBothReplacements
+    );
 
-    // 2. Build initial action stack from player actions
+    if is_replacement_phase {
+        // Handle forced replacements without turn progression
+        resolve_replacement_phase(battle_state, &mut bus);
+    } else {
+        // Normal battle turn processing
+        // 1. Initialization
+        initialize_turn(battle_state, &mut bus);
+
+        // 2. Build initial action stack from player actions
+        let mut action_stack = build_initial_action_stack(battle_state);
+
+        // 3. Execute actions from stack until empty
+        while let Some(action) = action_stack.pop_front() {
+            execute_battle_action(action, battle_state, &mut action_stack, &mut bus, &mut rng);
+
+            // Check if battle ended (forfeit, all Pokemon fainted, etc.)
+            if battle_state.game_state != GameState::TurnInProgress {
+                break;
+            }
+        }
+
+        // 4. End-of-Turn Phase (only if battle is still ongoing)
+        if battle_state.game_state == GameState::TurnInProgress {
+            execute_end_turn_phase(battle_state, &mut bus, &mut rng);
+        }
+
+        // 5. Cleanup & Finalization
+        finalize_turn(battle_state, &mut bus);
+    }
+
+    bus
+}
+
+/// Handle forced replacement phase without turn progression
+fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus) {
+    // Build action stack for replacement actions only
     let mut action_stack = build_initial_action_stack(battle_state);
 
-    // 3. Execute actions from stack until empty
+    // Execute replacement actions
     while let Some(action) = action_stack.pop_front() {
-        execute_battle_action(action, battle_state, &mut action_stack, &mut bus, &mut rng);
+        // Only process switch actions during replacement phase
+        if matches!(action, BattleAction::Switch { .. }) {
+            execute_battle_action(action, battle_state, &mut action_stack, bus, &mut TurnRng::new_for_test(vec![]));
+        }
 
-        // Check if battle ended (forfeit, all Pokemon fainted, etc.)
-        if battle_state.game_state != GameState::TurnInProgress {
+        // Check if battle ended (all Pokemon fainted, etc.)
+        if matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
             break;
         }
     }
 
-    // 4. End-of-Turn Phase (only if battle is still ongoing)
-    if battle_state.game_state == GameState::TurnInProgress {
-        execute_end_turn_phase(battle_state, &mut bus, &mut rng);
+    // After replacements, check win conditions and set next state
+    check_win_conditions(battle_state, bus);
+
+    // If battle is still ongoing, transition to waiting for actions
+    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+        battle_state.game_state = GameState::WaitingForBothActions;
     }
 
-    // 5. Cleanup & Finalization
-    finalize_turn(battle_state, &mut bus);
-
-    bus
+    // Clear action queue for next turn
+    battle_state.action_queue = [None, None];
 }
 
 fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
@@ -1136,8 +1180,11 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     // Check for win conditions first, as they override the need for replacements.
     check_win_conditions(battle_state, bus);
 
-    // Increment turn number
-    battle_state.turn_number += 1;
+    // Only increment turn number for actual battle turns, not replacement phases
+    let was_battle_turn = matches!(battle_state.game_state, GameState::TurnInProgress);
+    if was_battle_turn {
+        battle_state.turn_number += 1;
+    }
 
     // Set state back to waiting for actions (unless battle ended or replacements needed)
     if matches!(battle_state.game_state, GameState::TurnInProgress) {

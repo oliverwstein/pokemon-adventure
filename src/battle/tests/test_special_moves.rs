@@ -236,7 +236,9 @@ mod tests {
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Mirror Move
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Lightning
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![
+            50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+        ]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Check what events were generated to debug the issue

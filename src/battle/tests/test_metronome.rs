@@ -93,7 +93,8 @@ mod tests {
         );
 
         // Should have one Metronome event and one non-Metronome event
-        let metronome_events: Vec<_> = move_used_events.iter()
+        let metronome_events: Vec<_> = move_used_events
+            .iter()
             .filter(|event| {
                 if let BattleEvent::MoveUsed { move_used, .. } = event {
                     *move_used == Move::Metronome
@@ -102,8 +103,9 @@ mod tests {
                 }
             })
             .collect();
-        
-        let non_metronome_events: Vec<_> = move_used_events.iter()
+
+        let non_metronome_events: Vec<_> = move_used_events
+            .iter()
             .filter(|event| {
                 if let BattleEvent::MoveUsed { move_used, .. } = event {
                     *move_used != Move::Metronome
@@ -113,8 +115,16 @@ mod tests {
             })
             .collect();
 
-        assert_eq!(metronome_events.len(), 1, "Should have exactly one Metronome MoveUsed event");
-        assert_eq!(non_metronome_events.len(), 1, "Should have exactly one randomly selected move MoveUsed event");
+        assert_eq!(
+            metronome_events.len(),
+            1,
+            "Should have exactly one Metronome MoveUsed event"
+        );
+        assert_eq!(
+            non_metronome_events.len(),
+            1,
+            "Should have exactly one randomly selected move MoveUsed event"
+        );
 
         // Should have at least executed some action (move used event proves this)
         assert!(
@@ -175,11 +185,18 @@ mod tests {
                 .collect();
 
             // Should have both Metronome and the selected move
-            assert!(move_used_events.len() >= 2, "Should have MoveUsed events for both Metronome and the selected move");
-            assert!(move_used_events.contains(&Move::Metronome), "Should have Metronome MoveUsed event");
-            
+            assert!(
+                move_used_events.len() >= 2,
+                "Should have MoveUsed events for both Metronome and the selected move"
+            );
+            assert!(
+                move_used_events.contains(&Move::Metronome),
+                "Should have Metronome MoveUsed event"
+            );
+
             // Find the non-Metronome move (the selected move)
-            let selected_move = move_used_events.iter()
+            let selected_move = move_used_events
+                .iter()
                 .find(|&&mv| mv != Move::Metronome)
                 .expect("Should have selected a non-Metronome move");
 
@@ -349,10 +366,14 @@ mod tests {
             .collect();
 
         // Should have at least two MoveUsed events: one for Metronome, one for the selected move
-        assert!(move_used_events.len() >= 2, "Should have MoveUsed events for both Metronome and the selected move");
+        assert!(
+            move_used_events.len() >= 2,
+            "Should have MoveUsed events for both Metronome and the selected move"
+        );
 
         // Verify we have both Metronome and a non-Metronome move
-        let moves: Vec<_> = move_used_events.iter()
+        let moves: Vec<_> = move_used_events
+            .iter()
             .map(|event| {
                 if let BattleEvent::MoveUsed { move_used, .. } = event {
                     *move_used
@@ -361,8 +382,14 @@ mod tests {
                 }
             })
             .collect();
-        
-        assert!(moves.contains(&Move::Metronome), "Should have Metronome MoveUsed event");
-        assert!(moves.iter().any(|&mv| mv != Move::Metronome), "Should have a non-Metronome move selected");
+
+        assert!(
+            moves.contains(&Move::Metronome),
+            "Should have Metronome MoveUsed event"
+        );
+        assert!(
+            moves.iter().any(|&mv| mv != Move::Metronome),
+            "Should have a non-Metronome move selected"
+        );
     }
 }

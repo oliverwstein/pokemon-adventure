@@ -4,8 +4,8 @@ use crate::{
     battle::commands::{BattleCommand, PlayerTarget},
     battle::state::BattleEvent,
     moves::Move,
-    pokemon::{PokemonInst, PokemonType},
     player::StatType,
+    pokemon::{PokemonInst, PokemonType},
 };
 use std::hash::{Hash, Hasher};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -122,8 +122,10 @@ impl PokemonCondition {
             // Counter: Retaliate with 2x physical damage if defender survives
             PokemonCondition::Countering { .. } => {
                 let defender_will_faint = damage >= defender_current_hp;
-                
-                if matches!(move_category, crate::move_data::MoveCategory::Physical) && !defender_will_faint {
+
+                if matches!(move_category, crate::move_data::MoveCategory::Physical)
+                    && !defender_will_faint
+                {
                     let counter_damage = damage * 2;
                     commands.push(BattleCommand::DealDamage {
                         target: attacker_target,
@@ -131,9 +133,12 @@ impl PokemonCondition {
                     });
                 }
             }
-            
+
             // Bide: Accumulate damage for future release
-            PokemonCondition::Biding { turns_remaining, damage: stored_damage } => {
+            PokemonCondition::Biding {
+                turns_remaining,
+                damage: stored_damage,
+            } => {
                 // Remove old condition
                 commands.push(BattleCommand::RemoveCondition {
                     target: defender_target,
@@ -148,11 +153,11 @@ impl PokemonCondition {
                     },
                 });
             }
-            
+
             // Enraged: Increase attack stat when hit
             PokemonCondition::Enraged => {
                 let new_stage = (defender_stat_stage + 1).min(6); // Cap at +6
-                
+
                 if defender_stat_stage != new_stage {
                     commands.push(BattleCommand::ChangeStatStage {
                         target: defender_target,
@@ -167,7 +172,7 @@ impl PokemonCondition {
                     }));
                 }
             }
-            
+
             // Most conditions don't react to damage
             _ => {}
         }

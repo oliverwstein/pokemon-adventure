@@ -173,7 +173,7 @@ pub fn should_skip_attack_execution(
     move_used: Move,
     rng: &mut TurnRng,
 ) -> Option<Vec<crate::battle::commands::BattleCommand>> {
-    use crate::move_data::{get_move_data, EffectContext};
+    use crate::move_data::{EffectContext, get_move_data};
 
     let move_data = get_move_data(move_used).expect("Move data must exist");
     let context = EffectContext::new(attacker_index, defender_index, move_used);
@@ -465,7 +465,6 @@ fn handle_damage_triggered_conditions(
         commands.extend(condition_commands);
     }
 }
-
 
 #[cfg(test)]
 mod tests {

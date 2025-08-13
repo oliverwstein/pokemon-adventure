@@ -579,15 +579,15 @@ pub fn execute_battle_action(
             }
 
             execute_attack_hit(
-                    attacker_index,
-                    defender_index,
-                    move_used,
-                    hit_number,
-                    action_stack,
-                    bus,
-                    rng,
-                    battle_state,
-                );
+                attacker_index,
+                defender_index,
+                move_used,
+                hit_number,
+                action_stack,
+                bus,
+                rng,
+                battle_state,
+            );
         }
     }
 }

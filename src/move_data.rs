@@ -209,37 +209,61 @@ impl MoveEffect {
             MoveEffect::MirrorMove => self.apply_mirror_move_special(context, state),
             MoveEffect::Rest(sleep_turns) => self.apply_rest_special(*sleep_turns, context, state),
             MoveEffect::Metronome => self.apply_metronome_special(context, state, rng),
-            
+
             // Special moves that continue with attack execution
             MoveEffect::Rampage(_) => self.apply_rampage_special(context, state, rng),
             MoveEffect::Rage(_) => self.apply_rage_special(context, state),
             MoveEffect::Explode => self.apply_explode_special(context, state),
-            
+
             // Regular effects that always continue with attack execution
-            MoveEffect::Burn(chance) => EffectResult::Continue(self.apply_burn_effect(*chance, context, state, rng)),
-            MoveEffect::Paralyze(chance) => EffectResult::Continue(self.apply_paralyze_effect(*chance, context, state, rng)),
-            MoveEffect::Freeze(chance) => EffectResult::Continue(self.apply_freeze_effect(*chance, context, state, rng)),
-            MoveEffect::Poison(chance) => EffectResult::Continue(self.apply_poison_effect(*chance, context, state, rng)),
-            MoveEffect::Sedate(chance) => EffectResult::Continue(self.apply_sedate_effect(*chance, context, state, rng)),
-            MoveEffect::Flinch(chance) => EffectResult::Continue(self.apply_flinch_effect(*chance, context, state, rng)),
-            MoveEffect::Confuse(chance) => EffectResult::Continue(self.apply_confuse_effect(*chance, context, state, rng)),
-            MoveEffect::Trap(chance) => EffectResult::Continue(self.apply_trap_effect(*chance, context, state, rng)),
-            MoveEffect::Exhaust(chance) => EffectResult::Continue(self.apply_exhaust_effect(*chance, context, state, rng)),
+            MoveEffect::Burn(chance) => {
+                EffectResult::Continue(self.apply_burn_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Paralyze(chance) => {
+                EffectResult::Continue(self.apply_paralyze_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Freeze(chance) => {
+                EffectResult::Continue(self.apply_freeze_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Poison(chance) => {
+                EffectResult::Continue(self.apply_poison_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Sedate(chance) => {
+                EffectResult::Continue(self.apply_sedate_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Flinch(chance) => {
+                EffectResult::Continue(self.apply_flinch_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Confuse(chance) => {
+                EffectResult::Continue(self.apply_confuse_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Trap(chance) => {
+                EffectResult::Continue(self.apply_trap_effect(*chance, context, state, rng))
+            }
+            MoveEffect::Exhaust(chance) => {
+                EffectResult::Continue(self.apply_exhaust_effect(*chance, context, state, rng))
+            }
             MoveEffect::StatChange(target, stat, stages, chance) => EffectResult::Continue(
-                self.apply_stat_change_effect(target, stat, *stages, *chance, context, state, rng)
+                self.apply_stat_change_effect(target, stat, *stages, *chance, context, state, rng),
             ),
             MoveEffect::RaiseAllStats(chance) => EffectResult::Continue(
-                self.apply_raise_all_stats_effect(*chance, context, state, rng)
+                self.apply_raise_all_stats_effect(*chance, context, state, rng),
             ),
-            MoveEffect::Heal(percentage) => EffectResult::Continue(self.apply_heal_effect(*percentage, context, state)),
-            MoveEffect::Haze(chance) => EffectResult::Continue(self.apply_haze_effect(*chance, context, state, rng)),
+            MoveEffect::Heal(percentage) => {
+                EffectResult::Continue(self.apply_heal_effect(*percentage, context, state))
+            }
+            MoveEffect::Haze(chance) => {
+                EffectResult::Continue(self.apply_haze_effect(*chance, context, state, rng))
+            }
             MoveEffect::CureStatus(target, status_type) => EffectResult::Continue(
-                self.apply_cure_status_effect(target, status_type, context, state)
+                self.apply_cure_status_effect(target, status_type, context, state),
             ),
-            MoveEffect::SetTeamCondition(condition, turns) => EffectResult::Continue(
-                self.apply_team_condition_effect(condition, *turns, context)
-            ),
-            MoveEffect::Ante(chance) => EffectResult::Continue(self.apply_ante_effect(*chance, context, state, rng)),
+            MoveEffect::SetTeamCondition(condition, turns) => {
+                EffectResult::Continue(self.apply_team_condition_effect(condition, *turns, context))
+            }
+            MoveEffect::Ante(chance) => {
+                EffectResult::Continue(self.apply_ante_effect(*chance, context, state, rng))
+            }
             MoveEffect::Recoil(_) | MoveEffect::Drain(_) => {
                 // Damage-based effects are handled separately in apply_damage_based_effects
                 EffectResult::Continue(Vec::new())
@@ -1094,7 +1118,7 @@ impl MoveEffect {
     }
 
     // Special move effect implementations
-    
+
     /// Apply InAir effect (Fly move pattern)
     fn apply_in_air_special(
         &self,
@@ -1110,12 +1134,10 @@ impl MoveEffect {
 
         // If already in air, this is the second turn - clear condition and proceed with normal attack
         if attacker_player.has_condition(&PokemonCondition::InAir) {
-            let commands = vec![
-                BattleCommand::RemoveCondition {
-                    target: attacker_target,
-                    condition_type: crate::battle::conditions::PokemonConditionType::InAir,
-                },
-            ];
+            let commands = vec![BattleCommand::RemoveCondition {
+                target: attacker_target,
+                condition_type: crate::battle::conditions::PokemonConditionType::InAir,
+            }];
             return EffectResult::Continue(commands);
         }
 
@@ -1184,12 +1206,10 @@ impl MoveEffect {
 
         // If already charging, this is the second turn - clear condition and proceed with normal attack
         if attacker_player.has_condition(&PokemonCondition::Charging) {
-            let commands = vec![
-                BattleCommand::RemoveCondition {
-                    target: attacker_target,
-                    condition_type: crate::battle::conditions::PokemonConditionType::Charging,
-                },
-            ];
+            let commands = vec![BattleCommand::RemoveCondition {
+                target: attacker_target,
+                condition_type: crate::battle::conditions::PokemonConditionType::Charging,
+            }];
             return EffectResult::Continue(commands);
         }
 
@@ -1227,12 +1247,10 @@ impl MoveEffect {
 
         // If already underground, this is the second turn - clear condition and proceed with normal attack
         if attacker_player.has_condition(&PokemonCondition::Underground) {
-            let commands = vec![
-                BattleCommand::RemoveCondition {
-                    target: attacker_target,
-                    condition_type: crate::battle::conditions::PokemonConditionType::Underground,
-                },
-            ];
+            let commands = vec![BattleCommand::RemoveCondition {
+                target: attacker_target,
+                condition_type: crate::battle::conditions::PokemonConditionType::Underground,
+            }];
             return EffectResult::Continue(commands);
         }
 
@@ -1350,7 +1368,7 @@ impl MoveEffect {
             // Substitute uses 25% of max HP
             let substitute_hp = (attacker_pokemon.max_hp() / 4).max(1) as u8;
             let condition = PokemonCondition::Substitute { hp: substitute_hp };
-            
+
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
@@ -1479,13 +1497,11 @@ impl MoveEffect {
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
             let pokemon_species = attacker_pokemon.species;
             let current_hp = attacker_pokemon.current_hp();
-            
-            let commands = vec![
-                BattleCommand::DealDamage {
-                    target: attacker_target,
-                    amount: current_hp,
-                },
-            ];
+
+            let commands = vec![BattleCommand::DealDamage {
+                target: attacker_target,
+                amount: current_hp,
+            }];
             return EffectResult::Continue(commands); // Continue with attack
         }
 
@@ -1508,16 +1524,17 @@ impl MoveEffect {
         let defender_target = PlayerTarget::from_index(context.defender_index);
 
         // Check if already Biding
-        if let Some(bide_condition) = attacker_player
-            .active_pokemon_conditions
-            .values()
-            .find_map(|condition| match condition {
-                PokemonCondition::Biding {
-                    turns_remaining,
-                    damage,
-                } => Some((turns_remaining, damage)),
-                _ => None,
-            })
+        if let Some(bide_condition) =
+            attacker_player
+                .active_pokemon_conditions
+                .values()
+                .find_map(|condition| match condition {
+                    PokemonCondition::Biding {
+                        turns_remaining,
+                        damage,
+                    } => Some((turns_remaining, damage)),
+                    _ => None,
+                })
         {
             let (turns_remaining, stored_damage) = bide_condition;
 
@@ -1525,12 +1542,10 @@ impl MoveEffect {
                 // Last turn of Bide - execute stored damage
                 let damage_to_deal = (stored_damage * 2).max(1); // Double damage, minimum 1
 
-                let commands = vec![
-                    BattleCommand::DealDamage {
-                        target: defender_target,
-                        amount: damage_to_deal,
-                    },
-                ];
+                let commands = vec![BattleCommand::DealDamage {
+                    target: defender_target,
+                    amount: damage_to_deal,
+                }];
                 return EffectResult::Skip(commands); // Skip normal execution
             } else {
                 // Still Biding, skip normal execution (do nothing this turn)
@@ -1598,10 +1613,12 @@ impl MoveEffect {
                 target: attacker_target,
                 status: Some(crate::pokemon::StatusCondition::Sleep(sleep_turns)),
             });
-            commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
-                target: pokemon_species,
-                status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
-            }));
+            commands.push(BattleCommand::EmitEvent(
+                BattleEvent::PokemonStatusApplied {
+                    target: pokemon_species,
+                    status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
+                },
+            ));
 
             // Clear all active Pokemon conditions
             for condition in attacker_player.active_pokemon_conditions.values() {
@@ -1628,19 +1645,17 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::{BattleEvent, ActionFailureReason};
+        use crate::battle::state::{ActionFailureReason, BattleEvent};
         use crate::battle::turn_orchestrator::BattleAction;
 
         let defender_player = &state.players[context.defender_index];
-        
+
         if let Some(mirrored_move) = defender_player.last_move {
             // Don't allow mirroring Mirror Move (would cause infinite recursion)
             if mirrored_move == crate::moves::Move::MirrorMove {
-                let commands = vec![
-                    BattleCommand::EmitEvent(BattleEvent::ActionFailed {
-                        reason: ActionFailureReason::MoveFailedToExecute,
-                    }),
-                ];
+                let commands = vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+                    reason: ActionFailureReason::MoveFailedToExecute,
+                })];
                 return EffectResult::Skip(commands);
             }
 
@@ -1652,18 +1667,14 @@ impl MoveEffect {
                 hit_number: 1, // Must be greater than zero to avoid trying to use PP
             };
 
-            let commands = vec![
-                BattleCommand::PushAction(mirrored_action),
-            ];
+            let commands = vec![BattleCommand::PushAction(mirrored_action)];
             return EffectResult::Skip(commands);
         }
 
         // If no move to mirror, fail appropriately
-        let commands = vec![
-            BattleCommand::EmitEvent(BattleEvent::ActionFailed {
-                reason: ActionFailureReason::MoveFailedToExecute,
-            }),
-        ];
+        let commands = vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+            reason: ActionFailureReason::MoveFailedToExecute,
+        })];
         EffectResult::Skip(commands)
     }
 
@@ -1682,60 +1693,196 @@ impl MoveEffect {
         // Get all possible moves except Metronome itself
         let all_moves = [
             // Normal Type
-            Move::Pound, Move::Doubleslap, Move::PayDay, Move::Scratch, Move::Guillotine,
-            Move::SwordsDance, Move::Cut, Move::Bind, Move::Slam, Move::Stomp, Move::Headbutt,
-            Move::HornAttack, Move::FuryAttack, Move::HornDrill, Move::Tackle, Move::BodySlam,
-            Move::Wrap, Move::Harden, Move::TakeDown, Move::Thrash, Move::DoubleEdge,
-            Move::TailWhip, Move::Leer, Move::Bite, Move::Growl, Move::Roar, Move::Sing,
-            Move::Supersonic, Move::SonicBoom, Move::Disable, Move::Agility, Move::QuickAttack,
-            Move::Rage, Move::Mimic, Move::Screech, Move::DoubleTeam, Move::Recover,
-            Move::Minimize, Move::Withdraw, Move::DefenseCurl, Move::Barrier, Move::FocusEnergy,
-            Move::Bide, Move::MirrorMove, Move::SelfDestruct, Move::Clamp, Move::Swift,
-            Move::SpikeCannon, Move::Constrict, Move::SoftBoiled, Move::Glare, Move::Transform,
-            Move::Explosion, Move::FurySwipes, Move::Rest, Move::HyperFang, Move::Sharpen,
-            Move::Conversion, Move::TriAttack, Move::SuperFang, Move::Slash, Move::Substitute,
+            Move::Pound,
+            Move::Doubleslap,
+            Move::PayDay,
+            Move::Scratch,
+            Move::Guillotine,
+            Move::SwordsDance,
+            Move::Cut,
+            Move::Bind,
+            Move::Slam,
+            Move::Stomp,
+            Move::Headbutt,
+            Move::HornAttack,
+            Move::FuryAttack,
+            Move::HornDrill,
+            Move::Tackle,
+            Move::BodySlam,
+            Move::Wrap,
+            Move::Harden,
+            Move::TakeDown,
+            Move::Thrash,
+            Move::DoubleEdge,
+            Move::TailWhip,
+            Move::Leer,
+            Move::Bite,
+            Move::Growl,
+            Move::Roar,
+            Move::Sing,
+            Move::Supersonic,
+            Move::SonicBoom,
+            Move::Disable,
+            Move::Agility,
+            Move::QuickAttack,
+            Move::Rage,
+            Move::Mimic,
+            Move::Screech,
+            Move::DoubleTeam,
+            Move::Recover,
+            Move::Minimize,
+            Move::Withdraw,
+            Move::DefenseCurl,
+            Move::Barrier,
+            Move::FocusEnergy,
+            Move::Bide,
+            Move::MirrorMove,
+            Move::SelfDestruct,
+            Move::Clamp,
+            Move::Swift,
+            Move::SpikeCannon,
+            Move::Constrict,
+            Move::SoftBoiled,
+            Move::Glare,
+            Move::Transform,
+            Move::Explosion,
+            Move::FurySwipes,
+            Move::Rest,
+            Move::HyperFang,
+            Move::Sharpen,
+            Move::Conversion,
+            Move::TriAttack,
+            Move::SuperFang,
+            Move::Slash,
+            Move::Substitute,
             Move::HyperBeam,
             // Fighting Type
-            Move::KarateChop, Move::CometPunch, Move::MegaPunch, Move::KoPunch, Move::DoubleKick,
-            Move::MegaKick, Move::JumpKick, Move::RollingKick, Move::Submission, Move::LowKick,
-            Move::Counter, Move::SeismicToss, Move::Strength, Move::Meditate, Move::HighJumpKick,
-            Move::Barrage, Move::DizzyPunch,
+            Move::KarateChop,
+            Move::CometPunch,
+            Move::MegaPunch,
+            Move::KoPunch,
+            Move::DoubleKick,
+            Move::MegaKick,
+            Move::JumpKick,
+            Move::RollingKick,
+            Move::Submission,
+            Move::LowKick,
+            Move::Counter,
+            Move::SeismicToss,
+            Move::Strength,
+            Move::Meditate,
+            Move::HighJumpKick,
+            Move::Barrage,
+            Move::DizzyPunch,
             // Flying Type
-            Move::RazorWind, Move::Gust, Move::WingAttack, Move::Whirlwind, Move::Fly,
-            Move::Peck, Move::DrillPeck, Move::SkyAttack,
+            Move::RazorWind,
+            Move::Gust,
+            Move::WingAttack,
+            Move::Whirlwind,
+            Move::Fly,
+            Move::Peck,
+            Move::DrillPeck,
+            Move::SkyAttack,
             // Rock Type
-            Move::Vicegrip, Move::RockThrow, Move::SkullBash, Move::RockSlide, Move::AncientPower,
+            Move::Vicegrip,
+            Move::RockThrow,
+            Move::SkullBash,
+            Move::RockSlide,
+            Move::AncientPower,
             // Ground Type
-            Move::SandAttack, Move::Earthquake, Move::Fissure, Move::Dig, Move::BoneClub,
+            Move::SandAttack,
+            Move::Earthquake,
+            Move::Fissure,
+            Move::Dig,
+            Move::BoneClub,
             Move::Bonemerang,
             // Poison Type
-            Move::PoisonSting, Move::Twineedle, Move::Acid, Move::Toxic, Move::Haze,
-            Move::Smog, Move::Sludge, Move::PoisonJab, Move::PoisonGas, Move::AcidArmor,
+            Move::PoisonSting,
+            Move::Twineedle,
+            Move::Acid,
+            Move::Toxic,
+            Move::Haze,
+            Move::Smog,
+            Move::Sludge,
+            Move::PoisonJab,
+            Move::PoisonGas,
+            Move::AcidArmor,
             // Bug Type
-            Move::PinMissile, Move::SilverWind, Move::StringShot, Move::LeechLife,
+            Move::PinMissile,
+            Move::SilverWind,
+            Move::StringShot,
+            Move::LeechLife,
             // Fire Type
-            Move::FirePunch, Move::BlazeKick, Move::FireFang, Move::Ember, Move::Flamethrower,
-            Move::WillOWisp, Move::FireSpin, Move::Smokescreen, Move::FireBlast,
+            Move::FirePunch,
+            Move::BlazeKick,
+            Move::FireFang,
+            Move::Ember,
+            Move::Flamethrower,
+            Move::WillOWisp,
+            Move::FireSpin,
+            Move::Smokescreen,
+            Move::FireBlast,
             // Water Type
-            Move::Mist, Move::WaterGun, Move::HydroPump, Move::Surf, Move::Bubblebeam,
-            Move::Waterfall, Move::Bubble, Move::Splash, Move::Bubblehammer,
+            Move::Mist,
+            Move::WaterGun,
+            Move::HydroPump,
+            Move::Surf,
+            Move::Bubblebeam,
+            Move::Waterfall,
+            Move::Bubble,
+            Move::Splash,
+            Move::Bubblehammer,
             // Grass Type
-            Move::VineWhip, Move::Absorb, Move::MegaDrain, Move::GigaDrain, Move::LeechSeed,
-            Move::Growth, Move::RazorLeaf, Move::Solarbeam, Move::PoisonPowder, Move::StunSpore,
-            Move::SleepPowder, Move::PetalDance, Move::Spore, Move::EggBomb,
+            Move::VineWhip,
+            Move::Absorb,
+            Move::MegaDrain,
+            Move::GigaDrain,
+            Move::LeechSeed,
+            Move::Growth,
+            Move::RazorLeaf,
+            Move::Solarbeam,
+            Move::PoisonPowder,
+            Move::StunSpore,
+            Move::SleepPowder,
+            Move::PetalDance,
+            Move::Spore,
+            Move::EggBomb,
             // Ice Type
-            Move::IcePunch, Move::IceBeam, Move::Blizzard, Move::AuroraBeam,
+            Move::IcePunch,
+            Move::IceBeam,
+            Move::Blizzard,
+            Move::AuroraBeam,
             // Electric Type
-            Move::ThunderPunch, Move::Shock, Move::Discharge, Move::ThunderWave,
-            Move::Thunderclap, Move::ChargeBeam, Move::Lightning, Move::Flash,
+            Move::ThunderPunch,
+            Move::Shock,
+            Move::Discharge,
+            Move::ThunderWave,
+            Move::Thunderclap,
+            Move::ChargeBeam,
+            Move::Lightning,
+            Move::Flash,
             // Psychic Type
-            Move::Confusion, Move::Psybeam, Move::Perplex, Move::Hypnosis, Move::Teleport,
-            Move::ConfuseRay, Move::LightScreen, Move::Reflect, Move::Amnesia, Move::Kinesis,
-            Move::Psychic, Move::Psywave, Move::DreamEater, Move::LovelyKiss,
+            Move::Confusion,
+            Move::Psybeam,
+            Move::Perplex,
+            Move::Hypnosis,
+            Move::Teleport,
+            Move::ConfuseRay,
+            Move::LightScreen,
+            Move::Reflect,
+            Move::Amnesia,
+            Move::Kinesis,
+            Move::Psychic,
+            Move::Psywave,
+            Move::DreamEater,
+            Move::LovelyKiss,
             // Ghost Type
-            Move::NightShade, Move::Lick, Move::ShadowBall,
+            Move::NightShade,
+            Move::Lick,
+            Move::ShadowBall,
             // Dragon Type
-            Move::Outrage, Move::DragonRage,
+            Move::Outrage,
+            Move::DragonRage,
         ];
 
         // Randomly select a move

@@ -825,16 +825,19 @@ fn check_action_preventing_conditions(
 fn apply_move_effects(
     attacker_index: usize,
     defender_index: usize,
-    move_data: &crate::move_data::MoveData,
+    move_used: Move,
     battle_state: &mut BattleState,
     bus: &mut EventBus,
     rng: &mut TurnRng,
 ) {
-    use crate::move_data::{EffectContext, MoveEffect};
+    use crate::move_data::{get_move_data, EffectContext, MoveEffect};
     use crate::battle::commands::execute_commands_locally;
     
+    // Now we look up the move_data inside the function
+    let move_data = get_move_data(move_used).expect("Move data must exist for effects");
+    
     // Create context for the move effects
-    let context = EffectContext::new(attacker_index, defender_index, crate::moves::Move::Tackle); // TODO: Pass actual move
+    let context = EffectContext::new(attacker_index, defender_index, move_used);
     let action_stack = &mut ActionStack::new(); // Temporary action stack
     
     // Check if defender has a Substitute - affects which effects can be applied
@@ -1434,21 +1437,20 @@ fn apply_move_effects_legacy(
 /// Apply damage-based effects that always trigger when damage is dealt (recoil, drain)
 fn apply_on_damage_effects(
     attacker_index: usize,
-    move_data: &crate::move_data::MoveData,
+    move_used: Move,
     battle_state: &mut BattleState,
     bus: &mut EventBus,
     damage_dealt: u16,
 ) {
-    use crate::move_data::EffectContext;
     use crate::battle::commands::execute_commands_locally;
-    
+    use crate::move_data::{get_move_data, EffectContext, MoveEffect};
     // Early return if no damage was dealt
     if damage_dealt == 0 {
         return;
     }
-    
+    let move_data = get_move_data(move_used).expect("Move data must exist");
+    let context = EffectContext::new(attacker_index, 0, move_used);
     // Create context for damage-based effects
-    let context = EffectContext::new(attacker_index, 0, crate::moves::Move::Tackle); // Defender index not needed for damage-based effects
     let action_stack = &mut ActionStack::new(); // Temporary action stack
     
     // Get commands from the new damage-based effects system
@@ -2172,7 +2174,7 @@ pub fn execute_attack_hit(
             apply_move_effects(
                 attacker_index,
                 defender_index,
-                &move_data,
+                move_used,
                 battle_state,
                 bus,
                 rng,
@@ -2181,7 +2183,7 @@ pub fn execute_attack_hit(
 
         // Apply damage-based effects (recoil, drain) when damage was dealt
         if damage > 0 {
-            apply_on_damage_effects(attacker_index, &move_data, battle_state, bus, damage);
+            apply_on_damage_effects(attacker_index, move_used, battle_state, bus, damage);
         }
 
         // If the defender faints, the multi-hit sequence stops.

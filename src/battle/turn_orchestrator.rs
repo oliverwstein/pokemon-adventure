@@ -821,72 +821,6 @@ fn check_action_preventing_conditions(
     None // No conditions prevent action
 }
 
-/// Apply all chance-based move effects using the new command-based system
-fn apply_move_effects(
-    attacker_index: usize,
-    defender_index: usize,
-    move_used: Move,
-    battle_state: &mut BattleState,
-    bus: &mut EventBus,
-    rng: &mut TurnRng,
-) {
-    use crate::battle::commands::execute_commands_locally;
-    use crate::move_data::{EffectContext, get_move_data};
-
-    let move_data = get_move_data(move_used).expect("Move data must exist for effects");
-
-    // The orchestrator creates the simplest possible context.
-    let context = EffectContext::new(attacker_index, defender_index, move_used);
-
-    let mut all_commands = Vec::new();
-
-    for effect in &move_data.effects {
-        all_commands.extend(effect.apply(&context, battle_state, rng));
-    }
-
-    if !all_commands.is_empty() {
-        let mut temp_action_stack = ActionStack::new();
-        if let Err(error) =
-            execute_commands_locally(all_commands, battle_state, bus, &mut temp_action_stack)
-        {
-            eprintln!("Error executing move effect commands: {:?}", error);
-        }
-    }
-}
-
-/// Apply damage-based effects that always trigger when damage is dealt (recoil, drain)
-fn apply_on_damage_effects(
-    attacker_index: usize,
-    move_used: Move,
-    battle_state: &mut BattleState,
-    bus: &mut EventBus,
-    damage_dealt: u16,
-) {
-    use crate::battle::commands::execute_commands_locally;
-    use crate::move_data::{EffectContext, MoveEffect, get_move_data};
-    // Early return if no damage was dealt
-    if damage_dealt == 0 {
-        return;
-    }
-    let move_data = get_move_data(move_used).expect("Move data must exist");
-    let context = EffectContext::new(attacker_index, 0, move_used);
-    // Create context for damage-based effects
-    let action_stack = &mut ActionStack::new(); // Temporary action stack
-
-    // Get commands from the new damage-based effects system
-    let damage_commands =
-        move_data.apply_damage_based_effects(&context, battle_state, damage_dealt);
-
-    // Execute all generated commands
-    if !damage_commands.is_empty() {
-        if let Err(error) =
-            execute_commands_locally(damage_commands, battle_state, bus, action_stack)
-        {
-            eprintln!("Error executing damage-based effect commands: {:?}", error);
-        }
-    }
-}
-
 /// Apply user-targeted PokemonConditions from moves
 /// Returns true if any user condition effects were applied (indicating custom attack behavior)
 fn perform_special_move(
@@ -1497,26 +1431,23 @@ pub fn execute_attack_hit(
     defender_index: usize,
     move_used: Move,
     hit_number: u8,
-    action_stack: &mut ActionStack, // Used for multi-hit injection
+    action_stack: &mut ActionStack,
     bus: &mut EventBus,
     rng: &mut TurnRng,
-    battle_state: &mut BattleState, // Swapped order to satisfy linter/convention
+    battle_state: &mut BattleState,
 ) {
-    // If the defender has already fainted (e.g., from a previous hit in a multi-hit sequence),
-    // the subsequent hits should fail immediately.
-    if battle_state.players[defender_index].team
-        [battle_state.players[defender_index].active_pokemon_index]
-        .as_ref()
-        .unwrap()
-        .is_fainted()
+    // 1. Guard Clause: If the defender is already fainted (from a previous hit in a
+    //    multi-hit sequence), the entire action is silently stopped.
+    if battle_state.players[defender_index]
+        .active_pokemon()
+        .map_or(true, |p| p.is_fainted())
     {
-        // We don't even log an ActionFailed event here, because the move sequence just silently stops.
         return;
     }
 
-    // === THE BRIDGE ===
-    // Use the new pure calculator for hit/miss logic
-    let hit_miss_commands = calculate_attack_outcome(
+    // 2. Calculation: Delegate ALL game logic to the pure calculator function.
+    //    This single call determines everything that should happen as a result of the attack.
+    let commands = calculate_attack_outcome(
         battle_state,
         attacker_index,
         defender_index,
@@ -1525,127 +1456,11 @@ pub fn execute_attack_hit(
         rng,
     );
 
-    // Extract damage amount from calculator commands BEFORE executing
-    let damage = hit_miss_commands
-        .iter()
-        .find_map(|cmd| match cmd {
-            crate::battle::commands::BattleCommand::DealDamage { amount, .. } => Some(*amount),
-            _ => None,
-        })
-        .unwrap_or(0);
-
-    // Execute the commands immediately using local bridge function
-    if let Err(e) = execute_commands_locally(hit_miss_commands, battle_state, bus, action_stack) {
-        eprintln!("Error executing hit/miss commands: {:?}", e);
-        return;
-    }
-
-    // Determine if the move hit by checking the current state
-    // (This is temporary until we expand the calculator to handle all hit logic)
-    let hits = bus
-        .events()
-        .iter()
-        .rev()
-        .take(10)
-        .any(|event| matches!(event, BattleEvent::MoveHit { .. }));
-
-    // Extract critical hit information from calculator events
-    let _is_critical = bus
-        .events()
-        .iter()
-        .rev()
-        .take(10)
-        .any(|event| matches!(event, BattleEvent::CriticalHit { .. }));
-
-    // Get the player and pokemon references AFTER executing commands
-    let attacker_player = &battle_state.players[attacker_index];
-    let attacker_pokemon = attacker_player.team[attacker_player.active_pokemon_index]
-        .as_ref()
-        .expect("Attacker pokemon should exist");
-
-    let defender_player = &battle_state.players[defender_index];
-    let defender_pokemon = defender_player.team[defender_player.active_pokemon_index]
-        .as_ref()
-        .expect("Defender pokemon should exist");
-
-    if hits {
-        // === END BRIDGE ===
-        // Type effectiveness, critical hit, damage calculation, and substitute logic now handled by calculator
-
-        // Check if damage was absorbed by substitute by looking for 0-damage DamageDealt event
-        let damage_absorbed_by_substitute = bus
-            .events()
-            .iter()
-            .rev()
-            .take(10)
-            .any(|event| matches!(event, BattleEvent::DamageDealt { damage: 0, .. }));
-
-        let defender_fainted = if damage > 0 && !damage_absorbed_by_substitute {
-            // Normal damage case - calculator issued DealDamage command, and damage wasn't absorbed by substitute
-            false // Fainting will be handled in next iteration
-        } else {
-            // Either no damage or substitute absorbed it
-            false // No fainting in these cases
-        };
-
-        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
-        let move_data = get_move_data(move_used).expect("Move data must exist");
-        if damage > 0
-            || matches!(
-                move_data.category,
-                crate::move_data::MoveCategory::Other | crate::move_data::MoveCategory::Status
-            )
-        {
-            apply_move_effects(
-                attacker_index,
-                defender_index,
-                move_used,
-                battle_state,
-                bus,
-                rng,
-            );
-        }
-
-        // Apply damage-based effects (recoil, drain) when damage was dealt
-        if damage > 0 {
-            apply_on_damage_effects(attacker_index, move_used, battle_state, bus, damage);
-        }
-
-        // If the defender faints, the multi-hit sequence stops.
-        if defender_fainted {
-            return;
-        }
-
-        // --- PROBABILISTIC MULTI-HIT LOGIC ---
-        // Arguably this should be incorporated into apply_move_effects?
-        let move_data = get_move_data(move_used).expect("Move data must exist");
-        for effect in &move_data.effects {
-            if let crate::move_data::MoveEffect::MultiHit(guaranteed_hits, continuation_chance) =
-                effect
-            {
-                let next_hit_number = hit_number + 1;
-
-                // Check if we should queue another hit.
-                let should_queue_next_hit = if next_hit_number < *guaranteed_hits {
-                    // We haven't met the guaranteed number of hits yet, so always continue.
-                    true
-                } else {
-                    // We are past the guaranteed hits, so roll for continuation.
-                    rng.next_outcome() <= *continuation_chance
-                };
-
-                if should_queue_next_hit {
-                    action_stack.push_front(BattleAction::AttackHit {
-                        attacker_index,
-                        defender_index,
-                        move_used,
-                        hit_number: next_hit_number,
-                    });
-                }
-                // We found the MultiHit effect, so we don't need to check other effects for this.
-                break;
-            }
-        }
+    // 3. Execution: Pass the resulting list of commands to the executor bridge.
+    //    This step applies all the calculated state changes and emits all events.
+    if let Err(e) = execute_commands_locally(commands, battle_state, bus, action_stack) {
+        eprintln!("Error executing attack commands: {:?}", e);
+        // In a real application, this might warrant more robust error handling.
     }
 }
 

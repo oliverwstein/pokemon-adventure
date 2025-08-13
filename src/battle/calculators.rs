@@ -2,6 +2,7 @@ use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
+use crate::battle::turn_orchestrator::BattleAction;
 use crate::move_data::get_move_data;
 use crate::moves::Move;
 
@@ -49,7 +50,7 @@ pub fn calculate_attack_outcome(
 
     if hit_result {
         // Handle successful hit
-        commands.extend(handle_successful_hit(
+        let hit_commands = handle_successful_hit(
             attacker_pokemon,
             defender_pokemon,
             attacker_player,
@@ -58,7 +59,84 @@ pub fn calculate_attack_outcome(
             defender_index,
             move_used,
             rng,
-        ));
+        );
+        commands.extend(hit_commands.clone());
+
+        // Extract damage from the hit commands to determine if we should apply effects
+        let damage = hit_commands
+            .iter()
+            .find_map(|cmd| match cmd {
+                BattleCommand::DealDamage { amount, .. } => Some(*amount),
+                _ => None,
+            })
+            .unwrap_or(0);
+
+        // Check if damage was absorbed by substitute by looking for 0-damage DamageDealt event
+        let damage_absorbed_by_substitute = hit_commands.iter().any(|cmd| {
+            matches!(
+                cmd,
+                BattleCommand::EmitEvent(BattleEvent::DamageDealt { damage: 0, .. })
+            )
+        });
+
+        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
+        let move_data = get_move_data(move_used).expect("Move data must exist");
+        if damage > 0
+            || matches!(
+                move_data.category,
+                crate::move_data::MoveCategory::Other | crate::move_data::MoveCategory::Status
+            )
+        {
+            let context =
+                crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
+            for effect in &move_data.effects {
+                let effect_commands = effect.apply(&context, state, rng);
+                commands.extend(effect_commands);
+            }
+        }
+
+        // Apply damage-based effects (recoil, drain) when damage was dealt
+        if damage > 0 {
+            let context =
+                crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
+            let damage_commands = move_data.apply_damage_based_effects(&context, state, damage);
+            commands.extend(damage_commands);
+        }
+
+        // Handle multi-hit logic
+        let defender_will_faint =
+            damage > 0 && !damage_absorbed_by_substitute && damage >= defender_pokemon.current_hp();
+        if !defender_will_faint {
+            for effect in &move_data.effects {
+                if let crate::move_data::MoveEffect::MultiHit(
+                    guaranteed_hits,
+                    continuation_chance,
+                ) = effect
+                {
+                    let next_hit_number = hit_number + 1;
+
+                    // Check if we should queue another hit
+                    let should_queue_next_hit = if hit_number + 1 < *guaranteed_hits {
+                        // We haven't met the guaranteed number of hits yet, so always continue
+                        true
+                    } else {
+                        // We are past the guaranteed hits, so roll for continuation
+                        rng.next_outcome() <= *continuation_chance
+                    };
+
+                    if should_queue_next_hit {
+                        commands.push(BattleCommand::PushAction(BattleAction::AttackHit {
+                            attacker_index,
+                            defender_index,
+                            move_used,
+                            hit_number: next_hit_number,
+                        }));
+                    }
+                    // We found the MultiHit effect, so we don't need to check other effects for this
+                    break;
+                }
+            }
+        }
     } else {
         // Handle miss
         commands.push(BattleCommand::EmitEvent(BattleEvent::MoveMissed {

@@ -331,7 +331,7 @@ fn execute_command_locally(
             }
         }
         BattleCommand::PushAction(action) => {
-            action_stack.push_back(action);
+            action_stack.push_front(action);
             Ok(())
         }
     }

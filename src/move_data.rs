@@ -144,6 +144,15 @@ pub struct EffectContext {
     pub move_used: crate::moves::Move,
 }
 
+/// Result of applying a move effect, controlling execution flow
+#[derive(Debug, Clone)]
+pub enum EffectResult {
+    /// Apply commands and continue with normal attack execution
+    Continue(Vec<crate::battle::commands::BattleCommand>),
+    /// Apply commands and skip normal attack execution
+    Skip(Vec<crate::battle::commands::BattleCommand>),
+}
+
 impl EffectContext {
     pub fn new(
         attacker_index: usize,
@@ -166,13 +175,13 @@ impl EffectContext {
 }
 
 impl MoveEffect {
-    /// Apply this effect to the battle state, returning commands to execute
+    /// Apply this effect to the battle state, returning commands and execution control
     pub fn apply(
         &self,
         context: &EffectContext,
         state: &crate::battle::state::BattleState,
         rng: &mut crate::battle::state::TurnRng,
-    ) -> Vec<crate::battle::commands::BattleCommand> {
+    ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
 
         let defender_has_substitute = state.players[context.defender_index]
@@ -182,47 +191,66 @@ impl MoveEffect {
 
         // 2. If so, ask the effect if it's blocked and return early if it is.
         if defender_has_substitute && self.is_blocked_by_substitute() {
-            return Vec::new(); // Effect is nullified.
+            return EffectResult::Continue(Vec::new()); // Effect is nullified but continue with attack.
         }
 
+        // Handle all effects through unified apply system
         match self {
-            MoveEffect::Burn(chance) => self.apply_burn_effect(*chance, context, state, rng),
-            MoveEffect::Paralyze(chance) => {
-                self.apply_paralyze_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Freeze(chance) => self.apply_freeze_effect(*chance, context, state, rng),
-            MoveEffect::Poison(chance) => self.apply_poison_effect(*chance, context, state, rng),
-            MoveEffect::Sedate(chance) => self.apply_sedate_effect(*chance, context, state, rng),
-            MoveEffect::Flinch(chance) => self.apply_flinch_effect(*chance, context, state, rng),
-            MoveEffect::Confuse(chance) => self.apply_confuse_effect(*chance, context, state, rng),
-            MoveEffect::Trap(chance) => self.apply_trap_effect(*chance, context, state, rng),
-            MoveEffect::Exhaust(chance) => self.apply_exhaust_effect(*chance, context, state, rng),
-            MoveEffect::StatChange(target, stat, stages, chance) => {
+            // Special moves that may skip attack execution
+            MoveEffect::InAir => self.apply_in_air_special(context, state),
+            MoveEffect::Teleport(_) => self.apply_teleport_special(context, state),
+            MoveEffect::ChargeUp => self.apply_charge_up_special(context, state),
+            MoveEffect::Underground => self.apply_underground_special(context, state),
+            MoveEffect::Transform => self.apply_transform_special(context, state),
+            MoveEffect::Conversion => self.apply_conversion_special(context, state),
+            MoveEffect::Substitute => self.apply_substitute_special(context, state),
+            MoveEffect::Counter => self.apply_counter_special(context, state),
+            MoveEffect::Bide(turns) => self.apply_bide_special(*turns, context, state),
+            MoveEffect::MirrorMove => self.apply_mirror_move_special(context, state),
+            MoveEffect::Rest(sleep_turns) => self.apply_rest_special(*sleep_turns, context, state),
+            MoveEffect::Metronome => self.apply_metronome_special(context, state, rng),
+            
+            // Special moves that continue with attack execution
+            MoveEffect::Rampage(_) => self.apply_rampage_special(context, state, rng),
+            MoveEffect::Rage(_) => self.apply_rage_special(context, state),
+            MoveEffect::Explode => self.apply_explode_special(context, state),
+            
+            // Regular effects that always continue with attack execution
+            MoveEffect::Burn(chance) => EffectResult::Continue(self.apply_burn_effect(*chance, context, state, rng)),
+            MoveEffect::Paralyze(chance) => EffectResult::Continue(self.apply_paralyze_effect(*chance, context, state, rng)),
+            MoveEffect::Freeze(chance) => EffectResult::Continue(self.apply_freeze_effect(*chance, context, state, rng)),
+            MoveEffect::Poison(chance) => EffectResult::Continue(self.apply_poison_effect(*chance, context, state, rng)),
+            MoveEffect::Sedate(chance) => EffectResult::Continue(self.apply_sedate_effect(*chance, context, state, rng)),
+            MoveEffect::Flinch(chance) => EffectResult::Continue(self.apply_flinch_effect(*chance, context, state, rng)),
+            MoveEffect::Confuse(chance) => EffectResult::Continue(self.apply_confuse_effect(*chance, context, state, rng)),
+            MoveEffect::Trap(chance) => EffectResult::Continue(self.apply_trap_effect(*chance, context, state, rng)),
+            MoveEffect::Exhaust(chance) => EffectResult::Continue(self.apply_exhaust_effect(*chance, context, state, rng)),
+            MoveEffect::StatChange(target, stat, stages, chance) => EffectResult::Continue(
                 self.apply_stat_change_effect(target, stat, *stages, *chance, context, state, rng)
-            }
-            MoveEffect::RaiseAllStats(chance) => {
+            ),
+            MoveEffect::RaiseAllStats(chance) => EffectResult::Continue(
                 self.apply_raise_all_stats_effect(*chance, context, state, rng)
-            }
-            MoveEffect::Heal(percentage) => self.apply_heal_effect(*percentage, context, state),
-            MoveEffect::Haze(chance) => self.apply_haze_effect(*chance, context, state, rng),
-            MoveEffect::CureStatus(target, status_type) => {
+            ),
+            MoveEffect::Heal(percentage) => EffectResult::Continue(self.apply_heal_effect(*percentage, context, state)),
+            MoveEffect::Haze(chance) => EffectResult::Continue(self.apply_haze_effect(*chance, context, state, rng)),
+            MoveEffect::CureStatus(target, status_type) => EffectResult::Continue(
                 self.apply_cure_status_effect(target, status_type, context, state)
-            }
-            MoveEffect::SetTeamCondition(condition, turns) => {
+            ),
+            MoveEffect::SetTeamCondition(condition, turns) => EffectResult::Continue(
                 self.apply_team_condition_effect(condition, *turns, context)
-            }
-            MoveEffect::Ante(chance) => self.apply_ante_effect(*chance, context, state, rng),
+            ),
+            MoveEffect::Ante(chance) => EffectResult::Continue(self.apply_ante_effect(*chance, context, state, rng)),
             MoveEffect::Recoil(_) | MoveEffect::Drain(_) => {
                 // Damage-based effects are handled separately in apply_damage_based_effects
-                Vec::new()
+                EffectResult::Continue(Vec::new())
             }
             MoveEffect::Reckless(_) => {
                 // Miss-based effects are handled separately in apply_miss_based_effects
-                Vec::new()
+                EffectResult::Continue(Vec::new())
             }
             _ => {
                 // For effects not yet migrated, return empty command list
-                Vec::new()
+                EffectResult::Continue(Vec::new())
             }
         }
     }
@@ -1063,6 +1091,679 @@ impl MoveEffect {
         }
 
         commands
+    }
+
+    // Special move effect implementations
+    
+    /// Apply InAir effect (Fly move pattern)
+    fn apply_in_air_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        // If already in air, this is the second turn - clear condition and proceed with normal attack
+        if attacker_player.has_condition(&PokemonCondition::InAir) {
+            let commands = vec![
+                BattleCommand::RemoveCondition {
+                    target: attacker_target,
+                    condition_type: crate::battle::conditions::PokemonConditionType::InAir,
+                },
+            ];
+            return EffectResult::Continue(commands);
+        }
+
+        // First turn - apply condition and skip normal attack
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::InAir;
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Teleport effect
+    fn apply_teleport_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::Teleported;
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply ChargeUp effect (Solar Beam pattern)
+    fn apply_charge_up_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        // If already charging, this is the second turn - clear condition and proceed with normal attack
+        if attacker_player.has_condition(&PokemonCondition::Charging) {
+            let commands = vec![
+                BattleCommand::RemoveCondition {
+                    target: attacker_target,
+                    condition_type: crate::battle::conditions::PokemonConditionType::Charging,
+                },
+            ];
+            return EffectResult::Continue(commands);
+        }
+
+        // First turn - apply condition and skip normal attack
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::Charging;
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Underground effect (Dig move pattern)
+    fn apply_underground_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        // If already underground, this is the second turn - clear condition and proceed with normal attack
+        if attacker_player.has_condition(&PokemonCondition::Underground) {
+            let commands = vec![
+                BattleCommand::RemoveCondition {
+                    target: attacker_target,
+                    condition_type: crate::battle::conditions::PokemonConditionType::Underground,
+                },
+            ];
+            return EffectResult::Continue(commands);
+        }
+
+        // First turn - apply condition and skip normal attack
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::Underground;
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Transform effect
+    fn apply_transform_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let defender_player = &state.players[context.defender_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let (Some(attacker_species), Some(target_pokemon)) = (
+            attacker_player.active_pokemon().map(|p| p.species),
+            defender_player.active_pokemon().cloned(),
+        ) {
+            let condition = PokemonCondition::Transformed {
+                target: target_pokemon,
+            };
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: attacker_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Conversion effect
+    fn apply_conversion_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let defender_player = &state.players[context.defender_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let (Some(attacker_species), Some(target_type)) = (
+            attacker_player.active_pokemon().map(|p| p.species),
+            defender_player
+                .active_pokemon()
+                .map(|target_pokemon| target_pokemon.get_current_types(defender_player))
+                .and_then(|types| types.into_iter().next()), // Take first type
+        ) {
+            let condition = PokemonCondition::Converted {
+                pokemon_type: target_type,
+            };
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: attacker_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Substitute effect
+    fn apply_substitute_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            let pokemon_species = attacker_pokemon.species;
+            // Substitute uses 25% of max HP
+            let substitute_hp = (attacker_pokemon.max_hp() / 4).max(1) as u8;
+            let condition = PokemonCondition::Substitute { hp: substitute_hp };
+            
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Counter effect
+    fn apply_counter_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::Countering { damage: 0 };
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Rampage effect
+    fn apply_rampage_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+        rng: &mut crate::battle::state::TurnRng,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            // Rampage lasts 2-3 turns (50/50 chance)
+            let turns = if rng.next_outcome() <= 50 { 2 } else { 3 };
+            let condition = PokemonCondition::Rampaging {
+                turns_remaining: turns,
+            };
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Continue(commands); // Continue with attack
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Rage effect
+    fn apply_rage_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            let condition = PokemonCondition::Enraged;
+            let commands = vec![
+                BattleCommand::AddCondition {
+                    target: attacker_target,
+                    condition: condition.clone(),
+                },
+                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                    target: pokemon_species,
+                    status: condition,
+                }),
+            ];
+            return EffectResult::Continue(commands); // Continue with attack
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Explode effect
+    fn apply_explode_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            let pokemon_species = attacker_pokemon.species;
+            let current_hp = attacker_pokemon.current_hp();
+            
+            let commands = vec![
+                BattleCommand::DealDamage {
+                    target: attacker_target,
+                    amount: current_hp,
+                },
+            ];
+            return EffectResult::Continue(commands); // Continue with attack
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Bide effect (complex state machine)
+    fn apply_bide_special(
+        &self,
+        turns: u8,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::conditions::PokemonCondition;
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+        let defender_target = PlayerTarget::from_index(context.defender_index);
+
+        // Check if already Biding
+        if let Some(bide_condition) = attacker_player
+            .active_pokemon_conditions
+            .values()
+            .find_map(|condition| match condition {
+                PokemonCondition::Biding {
+                    turns_remaining,
+                    damage,
+                } => Some((turns_remaining, damage)),
+                _ => None,
+            })
+        {
+            let (turns_remaining, stored_damage) = bide_condition;
+
+            if *turns_remaining < 1 {
+                // Last turn of Bide - execute stored damage
+                let damage_to_deal = (stored_damage * 2).max(1); // Double damage, minimum 1
+
+                let commands = vec![
+                    BattleCommand::DealDamage {
+                        target: defender_target,
+                        amount: damage_to_deal,
+                    },
+                ];
+                return EffectResult::Skip(commands); // Skip normal execution
+            } else {
+                // Still Biding, skip normal execution (do nothing this turn)
+                return EffectResult::Skip(Vec::new());
+            }
+        } else {
+            // Not currently Biding - start new Bide
+            if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+                let condition = PokemonCondition::Biding {
+                    turns_remaining: turns,
+                    damage: 0,
+                };
+                let commands = vec![
+                    BattleCommand::AddCondition {
+                        target: attacker_target,
+                        condition: condition.clone(),
+                    },
+                    BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                        target: pokemon_species,
+                        status: condition,
+                    }),
+                ];
+                return EffectResult::Skip(commands);
+            }
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply Rest effect (heal, clear conditions, apply sleep)
+    fn apply_rest_special(
+        &self,
+        sleep_turns: u8,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::state::BattleEvent;
+
+        let attacker_player = &state.players[context.attacker_index];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            let pokemon_species = attacker_pokemon.species;
+            let max_hp = attacker_pokemon.max_hp();
+            let current_hp = attacker_pokemon.current_hp();
+            let mut commands = Vec::new();
+
+            // Full heal - restore HP to maximum
+            if current_hp < max_hp {
+                let heal_amount = max_hp - current_hp;
+                commands.push(BattleCommand::HealPokemon {
+                    target: attacker_target,
+                    amount: heal_amount,
+                });
+                commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
+                    target: pokemon_species,
+                    amount: heal_amount,
+                    new_hp: max_hp,
+                }));
+            }
+
+            // Apply Sleep status
+            commands.push(BattleCommand::SetPokemonStatus {
+                target: attacker_target,
+                status: Some(crate::pokemon::StatusCondition::Sleep(sleep_turns)),
+            });
+            commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusApplied {
+                target: pokemon_species,
+                status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
+            }));
+
+            // Clear all active Pokemon conditions
+            for condition in attacker_player.active_pokemon_conditions.values() {
+                commands.push(BattleCommand::RemoveCondition {
+                    target: attacker_target,
+                    condition_type: condition.get_type(),
+                });
+                commands.push(BattleCommand::EmitEvent(BattleEvent::ConditionExpired {
+                    target: pokemon_species,
+                    condition: condition.clone(),
+                }));
+            }
+
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
+    }
+
+    /// Apply MirrorMove effect (mirrors opponent's last move)
+    fn apply_mirror_move_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::state::{BattleEvent, ActionFailureReason};
+        use crate::battle::turn_orchestrator::BattleAction;
+
+        let defender_player = &state.players[context.defender_index];
+        
+        if let Some(mirrored_move) = defender_player.last_move {
+            // Don't allow mirroring Mirror Move (would cause infinite recursion)
+            if mirrored_move == crate::moves::Move::MirrorMove {
+                let commands = vec![
+                    BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+                        reason: ActionFailureReason::MoveFailedToExecute,
+                    }),
+                ];
+                return EffectResult::Skip(commands);
+            }
+
+            // Queue the mirrored move action
+            let mirrored_action = BattleAction::AttackHit {
+                attacker_index: context.attacker_index,
+                defender_index: context.defender_index,
+                move_used: mirrored_move,
+                hit_number: 1, // Must be greater than zero to avoid trying to use PP
+            };
+
+            let commands = vec![
+                BattleCommand::PushAction(mirrored_action),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        // If no move to mirror, fail appropriately
+        let commands = vec![
+            BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+                reason: ActionFailureReason::MoveFailedToExecute,
+            }),
+        ];
+        EffectResult::Skip(commands)
+    }
+
+    /// Apply Metronome effect (randomly selects and executes a move)
+    fn apply_metronome_special(
+        &self,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+        rng: &mut crate::battle::state::TurnRng,
+    ) -> EffectResult {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::state::BattleEvent;
+        use crate::battle::turn_orchestrator::BattleAction;
+        use crate::moves::Move;
+
+        // Get all possible moves except Metronome itself
+        let all_moves = [
+            // Normal Type
+            Move::Pound, Move::Doubleslap, Move::PayDay, Move::Scratch, Move::Guillotine,
+            Move::SwordsDance, Move::Cut, Move::Bind, Move::Slam, Move::Stomp, Move::Headbutt,
+            Move::HornAttack, Move::FuryAttack, Move::HornDrill, Move::Tackle, Move::BodySlam,
+            Move::Wrap, Move::Harden, Move::TakeDown, Move::Thrash, Move::DoubleEdge,
+            Move::TailWhip, Move::Leer, Move::Bite, Move::Growl, Move::Roar, Move::Sing,
+            Move::Supersonic, Move::SonicBoom, Move::Disable, Move::Agility, Move::QuickAttack,
+            Move::Rage, Move::Mimic, Move::Screech, Move::DoubleTeam, Move::Recover,
+            Move::Minimize, Move::Withdraw, Move::DefenseCurl, Move::Barrier, Move::FocusEnergy,
+            Move::Bide, Move::MirrorMove, Move::SelfDestruct, Move::Clamp, Move::Swift,
+            Move::SpikeCannon, Move::Constrict, Move::SoftBoiled, Move::Glare, Move::Transform,
+            Move::Explosion, Move::FurySwipes, Move::Rest, Move::HyperFang, Move::Sharpen,
+            Move::Conversion, Move::TriAttack, Move::SuperFang, Move::Slash, Move::Substitute,
+            Move::HyperBeam,
+            // Fighting Type
+            Move::KarateChop, Move::CometPunch, Move::MegaPunch, Move::KoPunch, Move::DoubleKick,
+            Move::MegaKick, Move::JumpKick, Move::RollingKick, Move::Submission, Move::LowKick,
+            Move::Counter, Move::SeismicToss, Move::Strength, Move::Meditate, Move::HighJumpKick,
+            Move::Barrage, Move::DizzyPunch,
+            // Flying Type
+            Move::RazorWind, Move::Gust, Move::WingAttack, Move::Whirlwind, Move::Fly,
+            Move::Peck, Move::DrillPeck, Move::SkyAttack,
+            // Rock Type
+            Move::Vicegrip, Move::RockThrow, Move::SkullBash, Move::RockSlide, Move::AncientPower,
+            // Ground Type
+            Move::SandAttack, Move::Earthquake, Move::Fissure, Move::Dig, Move::BoneClub,
+            Move::Bonemerang,
+            // Poison Type
+            Move::PoisonSting, Move::Twineedle, Move::Acid, Move::Toxic, Move::Haze,
+            Move::Smog, Move::Sludge, Move::PoisonJab, Move::PoisonGas, Move::AcidArmor,
+            // Bug Type
+            Move::PinMissile, Move::SilverWind, Move::StringShot, Move::LeechLife,
+            // Fire Type
+            Move::FirePunch, Move::BlazeKick, Move::FireFang, Move::Ember, Move::Flamethrower,
+            Move::WillOWisp, Move::FireSpin, Move::Smokescreen, Move::FireBlast,
+            // Water Type
+            Move::Mist, Move::WaterGun, Move::HydroPump, Move::Surf, Move::Bubblebeam,
+            Move::Waterfall, Move::Bubble, Move::Splash, Move::Bubblehammer,
+            // Grass Type
+            Move::VineWhip, Move::Absorb, Move::MegaDrain, Move::GigaDrain, Move::LeechSeed,
+            Move::Growth, Move::RazorLeaf, Move::Solarbeam, Move::PoisonPowder, Move::StunSpore,
+            Move::SleepPowder, Move::PetalDance, Move::Spore, Move::EggBomb,
+            // Ice Type
+            Move::IcePunch, Move::IceBeam, Move::Blizzard, Move::AuroraBeam,
+            // Electric Type
+            Move::ThunderPunch, Move::Shock, Move::Discharge, Move::ThunderWave,
+            Move::Thunderclap, Move::ChargeBeam, Move::Lightning, Move::Flash,
+            // Psychic Type
+            Move::Confusion, Move::Psybeam, Move::Perplex, Move::Hypnosis, Move::Teleport,
+            Move::ConfuseRay, Move::LightScreen, Move::Reflect, Move::Amnesia, Move::Kinesis,
+            Move::Psychic, Move::Psywave, Move::DreamEater, Move::LovelyKiss,
+            // Ghost Type
+            Move::NightShade, Move::Lick, Move::ShadowBall,
+            // Dragon Type
+            Move::Outrage, Move::DragonRage,
+        ];
+
+        // Randomly select a move
+        let random_index = (rng.next_outcome() as usize) % all_moves.len();
+        let selected_move = all_moves[random_index];
+
+        let attacker_player = &state.players[context.attacker_index];
+        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            // Log the Metronome selection
+            let metronome_action = BattleAction::AttackHit {
+                attacker_index: context.attacker_index,
+                defender_index: context.defender_index,
+                move_used: selected_move,
+                hit_number: 1, // Must be greater than zero to avoid trying to use PP
+            };
+
+            let commands = vec![
+                BattleCommand::EmitEvent(BattleEvent::MoveUsed {
+                    player_index: context.attacker_index,
+                    pokemon: pokemon_species,
+                    move_used: selected_move,
+                }),
+                BattleCommand::PushAction(metronome_action),
+            ];
+            return EffectResult::Skip(commands);
+        }
+
+        EffectResult::Continue(Vec::new())
     }
 }
 

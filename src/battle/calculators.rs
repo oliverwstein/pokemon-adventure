@@ -176,6 +176,75 @@ pub fn calculate_attack_outcome(
             }
         }
         
+        // Handle Counter/Bide/Enraged conditions when damage is dealt and not absorbed by substitute
+        if damage > 0 && !defender_player
+            .active_pokemon_conditions
+            .values()
+            .any(|condition| matches!(condition, crate::player::PokemonCondition::Substitute { .. }))
+        {
+            // Counter Logic (Iteration 7): Retaliate with 2x physical damage (only if defender survives)
+            let move_data = get_move_data(move_used).expect("Move data must exist");
+            let defender_will_faint = damage >= defender_pokemon.current_hp();
+            
+            if matches!(move_data.category, crate::move_data::MoveCategory::Physical)
+                && defender_player.has_condition(&crate::player::PokemonCondition::Countering { damage: 0 })
+                && !defender_will_faint  // Can only counter if defender survives the damage
+            {
+                let counter_damage = damage * 2;
+                commands.push(BattleCommand::DealDamage {
+                    target: PlayerTarget::from_index(attacker_index),
+                    amount: counter_damage,
+                });
+            }
+            
+            // Bide Logic (Iteration 8): Accumulate damage for future release
+            if let Some(bide_condition) = defender_player
+                .active_pokemon_conditions
+                .values()
+                .find_map(|condition| match condition {
+                    crate::player::PokemonCondition::Biding { turns_remaining, damage: stored_damage } => {
+                        Some((*turns_remaining, *stored_damage))
+                    },
+                    _ => None,
+                })
+            {
+                let (turns_remaining, stored_damage) = bide_condition;
+                // Remove old condition
+                commands.push(BattleCommand::RemoveCondition {
+                    target: PlayerTarget::from_index(defender_index),
+                    condition_type: crate::battle::commands::PokemonConditionType::Biding,
+                });
+                // Add updated condition with accumulated damage
+                commands.push(BattleCommand::AddCondition {
+                    target: PlayerTarget::from_index(defender_index),
+                    condition: crate::player::PokemonCondition::Biding {
+                        turns_remaining,
+                        damage: stored_damage + damage,
+                    },
+                });
+            }
+            
+            // Enraged Logic (Iteration 9): Increase attack when hit
+            if defender_player.has_condition(&crate::player::PokemonCondition::Enraged) {
+                let old_stage = defender_player.get_stat_stage(crate::player::StatType::Attack);
+                let new_stage = (old_stage + 1).min(6); // Cap at +6
+                
+                if old_stage != new_stage {
+                    commands.push(BattleCommand::ChangeStatStage {
+                        target: PlayerTarget::from_index(defender_index),
+                        stat: crate::player::StatType::Attack,
+                        delta: 1,
+                    });
+                    commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
+                        target: defender_pokemon.species,
+                        stat: crate::player::StatType::Attack,
+                        old_stage,
+                        new_stage,
+                    }));
+                }
+            }
+        }
+        
         // TODO: In future iterations, add:
         // - Move effects
         // - Status applications

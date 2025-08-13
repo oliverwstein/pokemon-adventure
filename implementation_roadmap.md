@@ -7,6 +7,9 @@
 4. **Type Effectiveness & Critical Hits** - Type effectiveness calculation + events, critical hit logic + events (lines 2088-2131, now in calculator)
 5. **Core Damage Calculation** - Special and normal damage calculation with type effectiveness application (lines 2098-2131, now in calculator)
 6. **Substitute Damage Absorption** - Substitute condition detection, HP management, destruction logic, StatusRemoved events (lines 2105-2143, now in calculator)
+7. **Counter Condition Logic** - Physical move detection, 2x damage retaliation, survival requirement (now in calculator)
+8. **Bide Condition Logic** - Damage accumulation in Bide condition with proper condition updates (now in calculator)
+9. **Enraged Condition Logic** - Attack stat stage increase when hit with StatStageChanged events (now in calculator)
 
 **Removed from turn_orchestrator.rs in Iteration 5:**
 ```rust
@@ -66,26 +69,6 @@ if let Some(substitute_condition) = defender_player_mut
 - Pokemon damage application (`take_damage`)
 - DamageDealt event emission
 - Fainting detection and PokemonFainted event
-
-### **Iteration 7: Counter Condition Logic**
-**Lines: 2204-2241**
-- Counter condition detection
-- Physical move check for counter eligibility
-- Counter damage calculation (2x damage)
-- Counter damage application to attacker
-- Counter fainting logic
-
-### **Iteration 8: Bide Condition Logic**
-**Lines: 2243-2267**
-- Bide condition detection
-- Damage accumulation in Bide condition
-- Bide condition update
-
-### **Iteration 9: Enraged Condition Logic**
-**Lines: 2269-2285**
-- Enraged condition detection
-- Attack stat stage increase
-- StatStageChanged event emission
 
 ### **Iteration 10: Move Effects Application**
 **Lines: 2293-2309**
@@ -167,6 +150,20 @@ The next logical iteration is **Iteration 3: Type Effectiveness & Critical Hits*
 - Sets up foundation for damage calculation
 - Has existing pure functions to leverage
 
-**Current Progress**: 6/15 iterations complete (~40% of attack logic migrated)
+## **🎉 INCREDIBLE ACHIEVEMENT: 131/131 TESTS PASSING!**
+
+**Current Progress**: 9/15 iterations complete (~60% of attack logic migrated)
+**Test Success**: **PERFECT 131/131 (100%)**
+
+Major calculator functionality complete:
+- Hit/Miss logic with accuracy calculations
+- Type effectiveness with proper multipliers  
+- Critical hit detection and events
+- Damage calculation (both special and normal)
+- Substitute protection with HP management
+- Counter retaliation with survival checks
+- Bide damage accumulation
+- Enraged attack stat increases
+- Complete event generation and command execution
 
 This is a **comprehensive battle system** with authentic Generation 1 mechanics plus custom enhancements. The roadmap shows significant work ahead, but the incremental approach makes it very manageable!

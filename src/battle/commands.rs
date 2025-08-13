@@ -134,6 +134,10 @@ pub enum BattleCommand {
         target: PlayerTarget,
         condition: TeamCondition,
     },
+    AddAnte {
+        target: PlayerTarget,
+        amount: u32,
+    },
     SetLastMove {
         target: PlayerTarget,
         move_used: Move,
@@ -333,6 +337,11 @@ fn execute_command_locally(
             } else {
                 Err(ExecutionError::InvalidPokemonIndex)
             }
+        }
+        BattleCommand::AddAnte { target, amount } => {
+            let player_index = target.to_index();
+            state.players[player_index].add_ante(amount);
+            Ok(())
         }
         BattleCommand::SetGameState(new_state) => {
             state.game_state = new_state;

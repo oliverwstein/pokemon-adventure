@@ -886,25 +886,6 @@ fn apply_move_effects(
                         println!("{:?} used Mist!", pokemon_species);
                     }
                 }
-                MoveEffect::Ante(chance) => {
-                    if rng.next_outcome() <= *chance {
-                        let attacker_player = &battle_state.players[attacker_index];
-                        if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-                            let pokemon_level = attacker_pokemon.level as u32;
-                            let ante_amount = pokemon_level * 2;
-
-                            let defender_player = &mut battle_state.players[defender_index];
-                            defender_player.add_ante(ante_amount);
-                            let new_ante = defender_player.get_ante();
-
-                            bus.push(BattleEvent::AnteIncreased {
-                                player_index: defender_index,
-                                amount: ante_amount,
-                                new_total: new_ante,
-                            });
-                        }
-                    }
-                }
                 // All other effects are handled by the new system or skipped
                 _ => {}
             }

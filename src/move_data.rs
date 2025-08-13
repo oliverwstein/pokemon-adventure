@@ -207,6 +207,7 @@ impl MoveEffect {
             MoveEffect::Reflect(reflect_type) => {
                 self.apply_reflect_effect(reflect_type, context, state)
             }
+            MoveEffect::Ante(chance) => self.apply_ante_effect(*chance, context, state, rng),
             MoveEffect::Recoil(_) | MoveEffect::Drain(_) => {
                 // Damage-based effects are handled separately in apply_damage_based_effects
                 Vec::new()
@@ -830,6 +831,47 @@ impl MoveEffect {
         commands
     }
 
+    /// Apply ante effect (Pay Day)
+    fn apply_ante_effect(
+        &self,
+        chance: u8,
+        context: &EffectContext,
+        state: &crate::battle::state::BattleState,
+        rng: &mut crate::battle::state::TurnRng,
+    ) -> Vec<crate::battle::commands::BattleCommand> {
+        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::state::BattleEvent;
+        
+        let mut commands = Vec::new();
+
+        if rng.next_outcome() <= chance {
+            let attacker_player = &state.players[context.attacker_index];
+            if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+                let pokemon_level = attacker_pokemon.level as u32;
+                let ante_amount = pokemon_level * 2;
+
+                // We need the defender's current ante to create the event correctly
+                let defender_player = &state.players[context.defender_index];
+                let new_total = defender_player.get_ante() + ante_amount;
+
+                // Command to add the ante
+                commands.push(BattleCommand::AddAnte {
+                    target: PlayerTarget::from_index(context.defender_index),
+                    amount: ante_amount,
+                });
+                
+                // Command to emit the event
+                commands.push(BattleCommand::EmitEvent(BattleEvent::AnteIncreased {
+                    player_index: context.defender_index,
+                    amount: ante_amount,
+                    new_total,
+                }));
+            }
+        }
+        
+        commands
+    }
+    
     /// Apply damage-based effects that require the damage amount
     pub fn apply_damage_based_effects(
         &self,

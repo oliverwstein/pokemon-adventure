@@ -1,3 +1,4 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::move_data::get_move_max_pp;
 use crate::moves::Move;
 use crate::species::Species;
@@ -769,9 +770,9 @@ impl PokemonInst {
         if let Some(p_cond) = player
             .active_pokemon_conditions
             .values()
-            .find(|c| matches!(c, crate::player::PokemonCondition::Converted { .. }))
+            .find(|c| matches!(c, PokemonCondition::Converted { .. }))
         {
-            if let crate::player::PokemonCondition::Converted { pokemon_type } = p_cond {
+            if let PokemonCondition::Converted { pokemon_type } = p_cond {
                 return vec![*pokemon_type];
             }
         }
@@ -779,9 +780,9 @@ impl PokemonInst {
         if let Some(p_cond) = player
             .active_pokemon_conditions
             .values()
-            .find(|c| matches!(c, crate::player::PokemonCondition::Transformed { .. }))
+            .find(|c| matches!(c, PokemonCondition::Transformed { .. }))
         {
-            if let crate::player::PokemonCondition::Transformed { target } = p_cond {
+            if let PokemonCondition::Transformed { target } = p_cond {
                 if let Some(target_species_data) = get_species_data(target.species) {
                     return target_species_data.types.clone();
                 }

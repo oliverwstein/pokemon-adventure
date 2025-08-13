@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
     use crate::battle::turn_orchestrator::{BattleAction, execute_battle_action};
     use crate::move_data::initialize_move_data;
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PokemonCondition};
+    use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, initialize_species_data};
     use crate::species::Species;
     use std::path::Path;

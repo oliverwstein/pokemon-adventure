@@ -1,3 +1,4 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::pokemon::{PokemonInst, PokemonType};
 use serde::{Deserialize, Serialize};
@@ -36,58 +37,6 @@ pub enum StatType {
     Evasion,
     Focus,
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum PokemonCondition {
-    Flinched,
-    Confused {
-        turns_remaining: u8,
-    }, // Counts down each turn
-    Seeded,
-    Underground,
-    InAir,
-    Teleported,
-    Enraged,
-    Exhausted {
-        turns_remaining: u8,
-    }, // Prevents acting for specified turns
-    Trapped {
-        turns_remaining: u8,
-    },
-    Charging,
-    Rampaging {
-        turns_remaining: u8,
-    },
-    Transformed {
-        target: PokemonInst,
-    },
-    Converted {
-        pokemon_type: PokemonType,
-    },
-    Disabled {
-        pokemon_move: Move,
-        turns_remaining: u8,
-    }, // Counts down each turn
-    Substitute {
-        hp: u8,
-    },
-    Biding {
-        turns_remaining: u8,
-        damage: u16,
-    },
-    Countering {
-        damage: u16,
-    },
-}
-
-impl Hash for PokemonCondition {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // Hash only the discriminant (variant), not the data
-        std::mem::discriminant(self).hash(state);
-    }
-}
-
-impl Eq for PokemonCondition {}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BattlePlayer {

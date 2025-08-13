@@ -1,3 +1,4 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::move_data::{MoveCategory, get_move_data};
 use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
@@ -12,7 +13,7 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         match move_data.category {
@@ -67,7 +68,7 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         match move_data.category {
@@ -142,7 +143,7 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         transform_condition.stats.speed
@@ -233,7 +234,7 @@ pub fn move_hits(
     };
 
     // If defender is Teleported, moves with accuracy always miss
-    if defender_player.has_condition(&crate::player::PokemonCondition::Teleported) {
+    if defender_player.has_condition(&PokemonCondition::Teleported) {
         return false;
     }
 

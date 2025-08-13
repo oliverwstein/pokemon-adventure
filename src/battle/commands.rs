@@ -1,7 +1,8 @@
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus};
 use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
 use crate::moves::Move;
-use crate::player::{PokemonCondition, StatType, TeamCondition};
+use crate::player::{StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
 
 /// Player target for commands - provides type safety over raw indices
@@ -31,52 +32,6 @@ impl PlayerTarget {
             0 => PlayerTarget::Player1,
             1 => PlayerTarget::Player2,
             _ => panic!("Invalid player index: {}", index),
-        }
-    }
-}
-
-/// Condition type without data payload for RemoveCondition commands
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum PokemonConditionType {
-    Flinched,
-    Confused,
-    Seeded,
-    Underground,
-    InAir,
-    Teleported,
-    Enraged,
-    Exhausted,
-    Trapped,
-    Charging,
-    Rampaging,
-    Transformed,
-    Converted,
-    Biding,
-    Countering,
-    Substitute,
-    Disabled,
-}
-
-impl PokemonCondition {
-    pub fn get_type(&self) -> PokemonConditionType {
-        match self {
-            PokemonCondition::Flinched => PokemonConditionType::Flinched,
-            PokemonCondition::Confused { .. } => PokemonConditionType::Confused,
-            PokemonCondition::Seeded => PokemonConditionType::Seeded,
-            PokemonCondition::Underground => PokemonConditionType::Underground,
-            PokemonCondition::InAir => PokemonConditionType::InAir,
-            PokemonCondition::Teleported => PokemonConditionType::Teleported,
-            PokemonCondition::Enraged => PokemonConditionType::Enraged,
-            PokemonCondition::Exhausted { .. } => PokemonConditionType::Exhausted,
-            PokemonCondition::Trapped { .. } => PokemonConditionType::Trapped,
-            PokemonCondition::Charging => PokemonConditionType::Charging,
-            PokemonCondition::Rampaging { .. } => PokemonConditionType::Rampaging,
-            PokemonCondition::Transformed { .. } => PokemonConditionType::Transformed,
-            PokemonCondition::Converted { .. } => PokemonConditionType::Converted,
-            PokemonCondition::Biding { .. } => PokemonConditionType::Biding,
-            PokemonCondition::Countering { .. } => PokemonConditionType::Countering,
-            PokemonCondition::Substitute { .. } => PokemonConditionType::Substitute,
-            PokemonCondition::Disabled { .. } => PokemonConditionType::Disabled,
         }
     }
 }

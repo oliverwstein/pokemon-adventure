@@ -1,5 +1,6 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
-use crate::player::{BattlePlayer, PlayerAction, PokemonCondition, StatType};
+use crate::player::{BattlePlayer, PlayerAction, StatType};
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
 

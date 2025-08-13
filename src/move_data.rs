@@ -1,3 +1,4 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
@@ -177,12 +178,7 @@ impl MoveEffect {
         let defender_has_substitute = state.players[context.defender_index]
             .active_pokemon_conditions
             .values()
-            .any(|condition| {
-                matches!(
-                    condition,
-                    crate::player::PokemonCondition::Substitute { .. }
-                )
-            });
+            .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
 
         // 2. If so, ask the effect if it's blocked and return early if it is.
         if defender_has_substitute && self.is_blocked_by_substitute() {
@@ -472,7 +468,7 @@ impl MoveEffect {
         if rng.next_outcome() <= chance {
             let target_player = &state.players[context.defender_index];
             if let Some(target_pokemon) = target_player.active_pokemon() {
-                let condition = crate::player::PokemonCondition::Flinched;
+                let condition = PokemonCondition::Flinched;
 
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
@@ -506,7 +502,7 @@ impl MoveEffect {
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Confuse for 1-4 turns (random)
                 let confuse_turns = (rng.next_outcome() % 4) + 1;
-                let condition = crate::player::PokemonCondition::Confused {
+                let condition = PokemonCondition::Confused {
                     turns_remaining: confuse_turns,
                 };
 
@@ -542,7 +538,7 @@ impl MoveEffect {
             if let Some(target_pokemon) = target_player.active_pokemon() {
                 // Trap for 2-5 turns (random)
                 let trap_turns = (rng.next_outcome() % 4) + 2;
-                let condition = crate::player::PokemonCondition::Trapped {
+                let condition = PokemonCondition::Trapped {
                     turns_remaining: trap_turns,
                 };
 
@@ -576,7 +572,7 @@ impl MoveEffect {
         if rng.next_outcome() <= chance {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-                let condition = crate::player::PokemonCondition::Exhausted {
+                let condition = PokemonCondition::Exhausted {
                     turns_remaining: 2, // Decremented same turn, so start at 2
                 };
 

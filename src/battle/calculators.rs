@@ -1,4 +1,5 @@
 use crate::battle::commands::{BattleCommand, PlayerTarget};
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
 use crate::move_data::get_move_data;
@@ -251,13 +252,13 @@ fn handle_damage_application(
             .active_pokemon_conditions
             .values()
             .find_map(|condition| match condition {
-                crate::player::PokemonCondition::Substitute { hp } => Some(*hp),
+                PokemonCondition::Substitute { hp } => Some(hp),
                 _ => None,
             })
     {
         handle_substitute_damage_absorption(
             damage,
-            substitute_hp,
+            *substitute_hp,
             defender_pokemon,
             defender_index,
             commands,
@@ -286,21 +287,21 @@ fn handle_substitute_damage_absorption(
         // Substitute is destroyed
         commands.push(BattleCommand::RemoveCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition_type: crate::battle::commands::PokemonConditionType::Substitute,
+            condition_type: PokemonConditionType::Substitute,
         });
         commands.push(BattleCommand::EmitEvent(BattleEvent::StatusRemoved {
             target: defender_pokemon.species,
-            status: crate::player::PokemonCondition::Substitute { hp: substitute_hp },
+            status: PokemonCondition::Substitute { hp: substitute_hp },
         }));
     } else {
         // Update substitute HP - remove old and add new
         commands.push(BattleCommand::RemoveCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition_type: crate::battle::commands::PokemonConditionType::Substitute,
+            condition_type: PokemonConditionType::Substitute,
         });
         commands.push(BattleCommand::AddCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition: crate::player::PokemonCondition::Substitute {
+            condition: PokemonCondition::Substitute {
                 hp: remaining_substitute_hp,
             },
         });
@@ -325,16 +326,10 @@ fn handle_damage_triggered_conditions(
     commands: &mut Vec<BattleCommand>,
 ) {
     // Only trigger if damage wasn't absorbed by substitute
-    let damage_absorbed_by_substitute =
-        defender_player
-            .active_pokemon_conditions
-            .values()
-            .any(|condition| {
-                matches!(
-                    condition,
-                    crate::player::PokemonCondition::Substitute { .. }
-                )
-            });
+    let damage_absorbed_by_substitute = defender_player
+        .active_pokemon_conditions
+        .values()
+        .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
 
     if damage_absorbed_by_substitute {
         return;
@@ -371,7 +366,7 @@ fn handle_counter_condition(
     let defender_will_faint = damage >= defender_pokemon.current_hp();
 
     if matches!(move_data.category, crate::move_data::MoveCategory::Physical)
-        && defender_player.has_condition(&crate::player::PokemonCondition::Countering { damage: 0 })
+        && defender_player.has_condition(&PokemonCondition::Countering { damage: 0 })
         && !defender_will_faint
     // Can only counter if defender survives the damage
     {
@@ -394,23 +389,23 @@ fn handle_bide_condition(
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Biding {
+            PokemonCondition::Biding {
                 turns_remaining,
                 damage: stored_damage,
-            } => Some((*turns_remaining, *stored_damage)),
+            } => Some((turns_remaining, stored_damage)),
             _ => None,
         })
     {
         // Remove old condition
         commands.push(BattleCommand::RemoveCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition_type: crate::battle::commands::PokemonConditionType::Biding,
+            condition_type: PokemonConditionType::Biding,
         });
         // Add updated condition with accumulated damage
         commands.push(BattleCommand::AddCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition: crate::player::PokemonCondition::Biding {
-                turns_remaining,
+            condition: PokemonCondition::Biding {
+                turns_remaining: *turns_remaining,
                 damage: stored_damage + damage,
             },
         });
@@ -424,7 +419,7 @@ fn handle_enraged_condition(
     defender_index: usize,
     commands: &mut Vec<BattleCommand>,
 ) {
-    if defender_player.has_condition(&crate::player::PokemonCondition::Enraged) {
+    if defender_player.has_condition(&PokemonCondition::Enraged) {
         let old_stage = defender_player.get_stat_stage(crate::player::StatType::Attack);
         let new_stage = (old_stage + 1).min(6); // Cap at +6
 
@@ -637,7 +632,7 @@ mod tests {
 
         let mut state = create_test_battle_state();
         // Add substitute condition to defender
-        state.players[1].add_condition(crate::player::PokemonCondition::Substitute { hp: 50 });
+        state.players[1].add_condition(PokemonCondition::Substitute { hp: 50 });
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
@@ -681,7 +676,7 @@ mod tests {
 
         let mut state = create_test_battle_state();
         // Add weak substitute that will be destroyed by tackle
-        state.players[1].add_condition(crate::player::PokemonCondition::Substitute { hp: 1 });
+        state.players[1].add_condition(PokemonCondition::Substitute { hp: 1 });
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 

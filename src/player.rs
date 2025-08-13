@@ -347,8 +347,6 @@ impl BattlePlayer {
         expired_conditions
     }
 
-    // === Ante Management ===
-
     /// Get current ante amount
     pub fn get_ante(&self) -> u32 {
         self.ante

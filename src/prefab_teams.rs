@@ -396,7 +396,7 @@ mod tests {
         let test_moves = vec![
             Move::Tackle, Move::Scratch, Move::DoubleEdge, Move::HyperBeam,
             Move::Thunderclap, Move::Lightning, Move::Flamethrower, Move::Surf,
-            Move::Earthquake, Move::Psychic, Move::SleepPowder, Move::PoisonPowder,
+            Move::Earthquake, Move::Perplex, Move::SleepPowder, Move::PoisonPowder,
             Move::Hypnosis, Move::ThunderWave, Move::Toxic, Move::Rest,
             Move::Substitute, Move::Reflect, Move::LightScreen, Move::Haze,
             Move::HighJumpKick, Move::Submission, Move::Counter, Move::Bide,

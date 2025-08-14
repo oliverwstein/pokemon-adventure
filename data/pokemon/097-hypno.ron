@@ -24,7 +24,7 @@ PokemonSpecies(
         signature: Some(Hypnosis),
         can_learn: [
             MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
-            HyperBeam, Submission, Counter, SeismicToss, Rage, Psychic,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Perplex,
             Teleport, Mimic, DoubleTeam, Reflect, Bide, Metronome,
             SkullBash, DreamEater, Rest, TriAttack, Substitute, Flash
         ],

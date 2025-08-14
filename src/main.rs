@@ -3,6 +3,7 @@ mod move_data;
 mod moves;
 mod player;
 mod pokemon;
+mod prefab_teams;
 mod species;
 
 use move_data::initialize_move_data;

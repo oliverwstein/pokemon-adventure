@@ -195,7 +195,6 @@ pub enum Move {
     Reflect,
     Amnesia,
     Kinesis,
-    Psychic,
     Psywave,
     DreamEater,
     LovelyKiss,

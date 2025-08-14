@@ -160,8 +160,8 @@ impl BattleRunner {
 
         // Validate that this player can submit actions in the current game state
         let can_submit = match (player_index, &self.battle_state.game_state) {
-            (0, GameState::WaitingForBothActions) => true,
-            (1, GameState::WaitingForBothActions) => true,
+            (0, GameState::WaitingForActions) => true,
+            (1, GameState::WaitingForActions) => true,
             (0, GameState::WaitingForPlayer1Replacement) => true,
             (1, GameState::WaitingForPlayer2Replacement) => true,
             (0, GameState::WaitingForBothReplacements) => true,
@@ -206,7 +206,7 @@ impl BattleRunner {
     /// Check which players still need to submit actions
     pub fn players_needing_actions(&self) -> Vec<usize> {
         match self.battle_state.game_state {
-            GameState::WaitingForBothActions => {
+            GameState::WaitingForActions => {
                 (0..2).filter(|&i| !self.pending_actions.contains_key(&i)).collect()
             }
             GameState::WaitingForPlayer1Replacement => {
@@ -367,27 +367,6 @@ impl BattleRunner {
                 } else {
                     return Err(BattleRunnerError::InvalidPlayerAction(
                         "No move in that slot".to_string()
-                    ));
-                }
-            }
-            PlayerAction::ForcedMove { pokemon_move } => {
-                // Check if player has an active Pokemon
-                let pokemon = player.active_pokemon().ok_or_else(|| {
-                    BattleRunnerError::InvalidPlayerAction("No active Pokemon".to_string())
-                })?;
-                
-                // Check if Pokemon knows this move and has PP
-                let has_move = pokemon.moves.iter().any(|move_slot| {
-                    if let Some(move_instance) = move_slot {
-                        move_instance.move_ == *pokemon_move && move_instance.pp > 0
-                    } else {
-                        false
-                    }
-                });
-
-                if !has_move {
-                    return Err(BattleRunnerError::InvalidPlayerAction(
-                        format!("Pokemon doesn't know move {:?} or has no PP", pokemon_move)
                     ));
                 }
             }

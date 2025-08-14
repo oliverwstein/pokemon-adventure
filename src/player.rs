@@ -10,9 +10,6 @@ pub enum PlayerAction {
     // The index refers to the move's position (0-3) in the active Pokémon's move list.
     UseMove { move_index: usize },
 
-    // A move that is forced by conditions (charging, rampage, etc.) - bypasses normal move selection
-    ForcedMove { pokemon_move: Move },
-
     // The index refers to the Pokémon's position (0-5) in the player's team.
     SwitchPokemon { team_index: usize },
 

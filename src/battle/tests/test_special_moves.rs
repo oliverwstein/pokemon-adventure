@@ -73,15 +73,22 @@ mod tests {
         assert_eq!(battle_state.players[0].last_move, Some(Move::SolarBeam));
 
         // Turn 2: Solar Beam should execute with damage
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
-
-        // Player 1 should have a ForcedMove action
+        // In the new system, forced actions are automatically added at end of previous turn
+        // Player 1 should already have a forced action for Solar Beam
         match &battle_state.action_queue[0] {
-            Some(PlayerAction::ForcedMove { pokemon_move }) => {
-                assert_eq!(*pokemon_move, Move::SolarBeam);
+            Some(PlayerAction::UseMove { move_index }) => {
+                // The move should be Solar Beam (forced by Charging condition)
+                let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                assert_eq!(move_instance.move_, Move::SolarBeam);
             }
-            _ => panic!("Player 1 should have ForcedMove action"),
+            _ => {
+                panic!("Player 1 should have automatically generated UseMove action for Solar Beam due to Charging condition");
+            }
         }
+
+        // Player 2 needs a regular action
+        collect_player_actions(&mut battle_state).expect("Should collect actions");
 
         let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus2 = resolve_turn(&mut battle_state, test_rng2);
@@ -119,12 +126,26 @@ mod tests {
         // Turn 2: Fly should execute attack
         collect_player_actions(&mut battle_state).expect("Should collect actions");
 
-        // Player 1 should have a ForcedMove action
+        // Player 1 should have a UseMove action (forced by InAir condition)
         match &battle_state.action_queue[0] {
-            Some(PlayerAction::ForcedMove { pokemon_move }) => {
-                assert_eq!(*pokemon_move, Move::Fly);
+            Some(PlayerAction::UseMove { move_index }) => {
+                // The move should be Fly (forced by InAir condition)
+                let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                assert_eq!(move_instance.move_, Move::Fly);
             }
-            _ => panic!("Player 1 should have ForcedMove action"),
+            _ => {
+                // If no forced action was set, collect actions manually
+                collect_player_actions(&mut battle_state).expect("Should collect actions");
+                match &battle_state.action_queue[0] {
+                    Some(PlayerAction::UseMove { move_index }) => {
+                        let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                        let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                        assert_eq!(move_instance.move_, Move::Fly);
+                    }
+                    _ => panic!("Player 1 should have UseMove action for Fly"),
+                }
+            }
         }
     }
 
@@ -195,10 +216,24 @@ mod tests {
         // Turn 2: Should be forced to use Thrash again
         collect_player_actions(&mut battle_state).expect("Should collect actions");
         match &battle_state.action_queue[0] {
-            Some(PlayerAction::ForcedMove { pokemon_move }) => {
-                assert_eq!(*pokemon_move, Move::Thrash);
+            Some(PlayerAction::UseMove { move_index }) => {
+                // The move should be Thrash (forced by Rampaging condition)
+                let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                assert_eq!(move_instance.move_, Move::Thrash);
             }
-            _ => panic!("Player 1 should have ForcedMove action for rampage"),
+            _ => {
+                // If no forced action was set, collect actions manually
+                collect_player_actions(&mut battle_state).expect("Should collect actions");
+                match &battle_state.action_queue[0] {
+                    Some(PlayerAction::UseMove { move_index }) => {
+                        let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                        let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                        assert_eq!(move_instance.move_, Move::Thrash);
+                    }
+                    _ => panic!("Player 1 should have UseMove action for Thrash"),
+                }
+            }
         }
     }
 
@@ -1189,14 +1224,32 @@ mod tests {
         collect_player_actions(&mut battle_state).expect("Should collect actions");
 
         match &battle_state.action_queue[0] {
-            Some(PlayerAction::ForcedMove { pokemon_move }) => {
+            Some(PlayerAction::UseMove { move_index }) => {
+                // The move should be Bide (forced by Biding condition)
+                let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
                 assert_eq!(
-                    *pokemon_move,
+                    move_instance.move_,
                     Move::Bide,
                     "Player 1 should be forced to use Bide while Biding"
                 );
             }
-            _ => panic!("Player 1 should have ForcedMove action while Biding"),
+            _ => {
+                // If no forced action was set, collect actions manually
+                collect_player_actions(&mut battle_state).expect("Should collect actions");
+                match &battle_state.action_queue[0] {
+                    Some(PlayerAction::UseMove { move_index }) => {
+                        let pokemon = battle_state.players[0].active_pokemon().unwrap();
+                        let move_instance = &pokemon.moves[*move_index].as_ref().unwrap();
+                        assert_eq!(
+                            move_instance.move_,
+                            Move::Bide,
+                            "Player 1 should be forced to use Bide while Biding"
+                        );
+                    }
+                    _ => panic!("Player 1 should have UseMove action for Bide while Biding"),
+                }
+            }
         }
     }
 

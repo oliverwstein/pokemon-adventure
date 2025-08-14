@@ -419,7 +419,7 @@ mod tests {
             assert!(
                 matches!(
                     battle_state.game_state,
-                    crate::battle::state::GameState::WaitingForBothActions
+                    crate::battle::state::GameState::WaitingForActions
                 ),
                 "Battle should be back to waiting for both actions"
             );

@@ -120,7 +120,7 @@ mod tests {
         assert_eq!(battle_state.turn_number, 2, "Turn number should increment");
 
         // Check that game state returned to waiting
-        assert_eq!(battle_state.game_state, GameState::WaitingForBothActions);
+        assert_eq!(battle_state.game_state, GameState::WaitingForActions);
 
         // Check that action queue was cleared
         assert!(battle_state.action_queue[0].is_none());

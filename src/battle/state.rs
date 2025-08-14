@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum GameState {
-    WaitingForBothActions,
+    WaitingForActions,
     TurnInProgress,
     WaitingForPlayer1Replacement, // Player 1 needs to send out a new Pokemon after faint
     WaitingForPlayer2Replacement, // Player 2 needs to send out a new Pokemon after faint
@@ -236,7 +236,7 @@ impl BattleState {
             battle_id: id,
             players: [player1, player2],
             turn_number: 1,
-            game_state: GameState::WaitingForBothActions,
+            game_state: GameState::WaitingForActions,
             action_queue: [None, None],
         }
     }

@@ -148,7 +148,7 @@ mod tests {
             "Should be 4 total damage events in the turn"
         );
         assert!(
-            matches!(battle_state.game_state, GameState::WaitingForBothActions),
+            matches!(battle_state.game_state, GameState::WaitingForActions),
             "Game should be ready for the next turn"
         );
     }

@@ -67,11 +67,18 @@ impl ActionStack {
     }
 }
 
-/// Generate a forced action if the player has conditions that require it
-/// Returns Some(PlayerAction::ForcedMove) if action is forced, None if player can choose
-fn check_for_forced_action(
-    player: &crate::player::BattlePlayer,
-) -> Option<crate::player::PlayerAction> {
+/// Check if the player has conditions that force a specific move
+/// Returns Some(Move) if a move is forced, None if player can choose freely
+fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::moves::Move> {
+    // Check for Biding condition - forces Bide action regardless of last move
+    if player
+        .active_pokemon_conditions
+        .values()
+        .any(|condition| matches!(condition, PokemonCondition::Biding { .. }))
+    {
+        return Some(crate::moves::Move::Bide);
+    }
+
     // Check if player has a last move to potentially repeat
     let last_move = player.last_move?;
 
@@ -83,25 +90,11 @@ fn check_for_forced_action(
                 | PokemonCondition::InAir
                 | PokemonCondition::Underground
                 | PokemonCondition::Rampaging { .. }
-                | PokemonCondition::Biding { .. }
         )
     });
 
     if has_forcing_condition {
-        return Some(crate::player::PlayerAction::ForcedMove {
-            pokemon_move: last_move,
-        });
-    }
-
-    // Check for Biding condition - forces Bide action regardless of last move
-    if player
-        .active_pokemon_conditions
-        .values()
-        .any(|condition| matches!(condition, PokemonCondition::Biding { .. }))
-    {
-        return Some(crate::player::PlayerAction::ForcedMove {
-            pokemon_move: crate::moves::Move::Bide,
-        });
+        return Some(last_move);
     }
 
     None
@@ -112,15 +105,17 @@ fn check_for_forced_action(
 /// For now, implements a basic deterministic AI that selects first available move
 pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), String> {
     match battle_state.game_state {
-        GameState::WaitingForBothActions => {
+        GameState::WaitingForActions => {
             // Generate actions for any players that haven't provided one
             for player_index in 0..2 {
                 if battle_state.action_queue[player_index].is_none() {
-                    // First check if the action is forced by conditions
-                    let action = if let Some(forced_action) =
-                        check_for_forced_action(&battle_state.players[player_index])
+                    // First check if a move is forced by conditions
+                    let action = if let Some(forced_move) =
+                        check_for_forced_move(&battle_state.players[player_index])
                     {
-                        forced_action
+                        // Find the move index for this forced move, or use index 0 if not found
+                        // (the conversion logic will handle using the forced move directly)
+                        generate_forced_move_action(&battle_state.players[player_index], forced_move)?
                     } else {
                         // No forced action, generate deterministic action
                         generate_deterministic_action(&battle_state.players[player_index])?
@@ -162,6 +157,39 @@ pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), Stri
     }
 
     Ok(())
+}
+
+/// Generate a forced move action for a player with forcing conditions
+/// Creates a UseMove action that will use the forced move (bypassing normal move selection)
+fn generate_forced_move_action(
+    player: &crate::player::BattlePlayer,
+    forced_move: crate::moves::Move,
+) -> Result<PlayerAction, String> {
+    // Get the active pokemon
+    let active_pokemon = player.team[player.active_pokemon_index]
+        .as_ref()
+        .ok_or("No active pokemon")?;
+
+    // If active Pokemon is fainted, it cannot act
+    if active_pokemon.is_fainted() {
+        return Err("Active Pokemon is fainted and cannot act".to_string());
+    }
+
+    // Find the move index for the forced move, or use 0 as fallback
+    // The conversion logic will handle using the forced move directly
+    let move_index = active_pokemon
+        .moves
+        .iter()
+        .position(|move_opt| {
+            if let Some(move_instance) = move_opt {
+                move_instance.move_ == forced_move
+            } else {
+                false
+            }
+        })
+        .unwrap_or(0);
+
+    Ok(PlayerAction::UseMove { move_index })
 }
 
 /// Generates a deterministic action for a player (basic AI)
@@ -223,13 +251,13 @@ pub fn set_player_action(
     let valid_states = match player_index {
         0 => matches!(
             battle_state.game_state,
-            GameState::WaitingForBothActions
+            GameState::WaitingForActions
                 | GameState::WaitingForPlayer1Replacement
                 | GameState::WaitingForBothReplacements
         ),
         1 => matches!(
             battle_state.game_state,
-            GameState::WaitingForBothActions
+            GameState::WaitingForActions
                 | GameState::WaitingForPlayer2Replacement
                 | GameState::WaitingForBothReplacements
         ),
@@ -272,7 +300,7 @@ pub fn set_player_action(
 /// Check if battle is ready for turn resolution (both players have provided actions)
 pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
     match battle_state.game_state {
-        GameState::WaitingForBothActions => {
+        GameState::WaitingForActions => {
             battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
         }
         GameState::WaitingForPlayer1Replacement => battle_state.action_queue[0].is_some(),
@@ -354,7 +382,7 @@ fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus)
 
     // If battle is still ongoing, transition to waiting for actions
     if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
-        battle_state.game_state = GameState::WaitingForBothActions;
+        battle_state.game_state = GameState::WaitingForActions;
     }
 
     // Clear action queue for next turn
@@ -404,16 +432,25 @@ fn convert_player_action_to_battle_action(
             let active_pokemon = player.team[player.active_pokemon_index]
                 .as_ref()
                 .expect("Active pokemon should exist");
-            let move_instance = &active_pokemon.moves[*move_index]
-                .as_ref()
-                .expect("Move should exist");
-            let final_move = if move_instance.pp > 0 {
-                // The move has PP, use it normally.
-                move_instance.move_
+            
+            // Check if this is a forced move (player has forcing conditions)
+            let final_move = if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
+                // Use the forced move directly, bypassing PP checks and move selection
+                forced_move
             } else {
-                // The move has no PP, substitute Struggle.
-                Move::Struggle
+                // Normal move usage - check PP and use Struggle if necessary
+                let move_instance = &active_pokemon.moves[*move_index]
+                    .as_ref()
+                    .expect("Move should exist");
+                if move_instance.pp > 0 {
+                    // The move has PP, use it normally.
+                    move_instance.move_
+                } else {
+                    // The move has no PP, substitute Struggle.
+                    Move::Struggle
+                }
             };
+            
             // Determine defender
             let defender_index = if player_index == 0 { 1 } else { 0 };
 
@@ -421,20 +458,6 @@ fn convert_player_action_to_battle_action(
                 attacker_index: player_index,
                 defender_index,
                 move_used: final_move,
-                hit_number: 0,
-            }
-        }
-
-        PlayerAction::ForcedMove {
-            pokemon_move: forced_move,
-        } => {
-            // Forced moves bypass PP restrictions and move selection - use the move directly
-            let defender_index = if player_index == 0 { 1 } else { 0 };
-
-            BattleAction::AttackHit {
-                attacker_index: player_index,
-                defender_index,
-                move_used: *forced_move,
                 hit_number: 0,
             }
         }
@@ -984,34 +1007,6 @@ fn calculate_action_priority(
             }
         }
 
-        PlayerAction::ForcedMove {
-            pokemon_move: forced_move,
-        } => {
-            let player = &battle_state.players[player_index];
-            let active_pokemon = &player.team[player.active_pokemon_index]
-                .as_ref()
-                .expect("Active pokemon should exist");
-
-            let move_data = get_move_data(*forced_move).expect("Move data should exist");
-
-            let speed = effective_speed(active_pokemon, player);
-
-            // Extract priority from move effects
-            let move_priority = move_data
-                .effects
-                .iter()
-                .find_map(|effect| match effect {
-                    crate::move_data::MoveEffect::Priority(priority) => Some(*priority),
-                    _ => None,
-                })
-                .unwrap_or(0); // Default priority is 0
-
-            ActionPriority {
-                action_priority: 0, // Forced moves have same priority as regular moves
-                move_priority,
-                speed,
-            }
-        }
     }
 }
 
@@ -1188,14 +1183,27 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
 
     // Set state back to waiting for actions (unless battle ended or replacements needed)
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        battle_state.game_state = GameState::WaitingForBothActions;
+        battle_state.game_state = GameState::WaitingForActions;
     }
 
-    // Now, check if we need to enter a replacement state. This overrides WaitingForBothActions.
+    // Now, check if we need to enter a replacement state. This overrides WaitingForActions.
     check_for_pending_replacements(battle_state);
 
     // Clear action queue for the next turn
     battle_state.action_queue = [None, None];
+
+    // Generate forced actions for players who have forcing conditions
+    // This happens after clearing and state transitions so forced actions are ready for the next turn
+    // Only generate forced actions - don't generate regular NPC actions automatically
+    if matches!(battle_state.game_state, GameState::WaitingForActions) {
+        for player_index in 0..2 {
+            if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
+                if let Ok(forced_action) = generate_forced_move_action(&battle_state.players[player_index], forced_move) {
+                    battle_state.action_queue[player_index] = Some(forced_action);
+                }
+            }
+        }
+    }
 
     bus.push(BattleEvent::TurnEnded);
 }

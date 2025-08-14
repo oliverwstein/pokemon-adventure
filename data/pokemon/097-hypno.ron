@@ -18,7 +18,7 @@ PokemonSpecies(
             24: [Headbutt],
             33: [PoisonGas],
             37: [Meditate],
-            43: [Psychic],
+            43: [Perplex],
             51: [Psywave],
         },
         signature: Some(Hypnosis),

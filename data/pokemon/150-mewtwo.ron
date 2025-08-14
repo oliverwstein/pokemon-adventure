@@ -14,12 +14,12 @@ PokemonSpecies(
         level_up: {
             1: [Confusion, Disable, Perplex, Recover],
             63: [Barrier],
-            66: [Psychic],
+            66: [Perplex],
             70: [Recover],
             75: [Mist],
             81: [Amnesia],
         },
-        signature: Some(Psychic),
+        signature: Some(Perplex),
         can_learn: [
             Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
             Submission, Counter, Bubblebeam, WaterGun, IceBeam,

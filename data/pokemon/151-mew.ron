@@ -16,7 +16,7 @@ PokemonSpecies(
             10: [Transform],
             20: [MegaPunch],
             30: [Metronome],
-            40: [Psychic],
+            40: [Perplex],
         },
         signature: None,
         can_learn: [

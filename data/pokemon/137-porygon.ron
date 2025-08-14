@@ -20,7 +20,7 @@ PokemonSpecies(
         },
         signature: Some(Conversion),
         can_learn: [
-            TakeDown, DoubleEdge, HyperBeam, Toxic, Psychic,
+            TakeDown, DoubleEdge, HyperBeam, Toxic, Perplex,
             Rage, Thunderclap, Teleport, Mimic,
             DoubleTeam, Reflect, Bide, Swift, SkullBash,
             Rest, TriAttack, Substitute, Flash

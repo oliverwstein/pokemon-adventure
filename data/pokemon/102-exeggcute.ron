@@ -22,7 +22,7 @@ PokemonSpecies(
         },
         signature: None,
         can_learn: [
-            Strength, Toxic, TakeDown, DoubleEdge, Psychic,
+            Strength, Toxic, TakeDown, DoubleEdge, Perplex,
             Rage, MegaDrain, Solarbeam, Teleport, Mimic,
             DoubleTeam, Reflect, Bide, SelfDestruct, EggBomb,
             Rest, Explosion, Substitute

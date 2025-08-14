@@ -24,7 +24,7 @@ PokemonSpecies(
         signature: Some(SilverWind),
         can_learn: [
             RazorWind, Whirlwind, Toxic, TakeDown, DoubleEdge,
-            HyperBeam, Rage, MegaDrain, Solarbeam, Psychic,
+            HyperBeam, Rage, MegaDrain, Solarbeam, Perplex,
             Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift,
             Rest, Psywave, Substitute
         ],

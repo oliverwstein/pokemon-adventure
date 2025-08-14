@@ -17,13 +17,13 @@ PokemonSpecies(
             28: [LeechSeed],
             32: [StunSpore],
             37: [PoisonPowder],
-            42: [Solarbeam],
+            42: [SolarBeam],
             48: [SleepPowder],
         },
         signature: None,
         can_learn: [
             Strength, Toxic, TakeDown, DoubleEdge, Perplex,
-            Rage, MegaDrain, Solarbeam, Teleport, Mimic,
+            Rage, MegaDrain, SolarBeam, Teleport, Mimic,
             DoubleTeam, Reflect, Bide, SelfDestruct, EggBomb,
             Rest, Explosion, Substitute
         ],

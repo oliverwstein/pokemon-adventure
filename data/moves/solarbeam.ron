@@ -1,5 +1,5 @@
 MoveData(
-    name: "Solarbeam",
+    name: "Solar Beam",
     move_type: Grass,
     power: Some(180),
     category: Special,

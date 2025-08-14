@@ -98,7 +98,7 @@ This function handles moves that have unique, turn-altering mechanics that often
 
 #### Responsibilities:
 *   **Two-Turn Moves:**
-    *   `InAir` (`Fly`), `ChargeUp` (`Solarbeam`), `Underground` (`Dig`): On the first turn, it applies the condition and returns `true` (skip damage). On the second turn, it removes the condition and returns `false` (proceed to damage).
+    *   `InAir` (`Fly`), `ChargeUp` (`SolarBeam`), `Underground` (`Dig`): On the first turn, it applies the condition and returns `true` (skip damage). On the second turn, it removes the condition and returns `false` (proceed to damage).
 *   **State-Copying Moves:**
     *   `Transform`: Applies the `Transformed` condition to the user.
     *   `Conversion`: Applies the `Converted` condition to the user.

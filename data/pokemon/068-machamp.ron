@@ -24,7 +24,7 @@ PokemonSpecies(
             Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
             Submission, Counter, Toxic, Rage, Earthquake, Fissure,
             Dig, Mimic, DoubleTeam, Bide, FireBlast, SkullBash,
-            Rest, RockSlide, Substitute
+            Rest, RockSlide, Substitute, FirePunch, ThunderPunch, IcePunch
         ],
     ),
     catch_rate: 45,

@@ -13,6 +13,7 @@ PokemonSpecies(
     learnset: (
         level_up: {
             1: [Bite, Roar],
+            11: [QuickAttack]
             18: [Ember],
             23: [Leer],
             30: [TakeDown],

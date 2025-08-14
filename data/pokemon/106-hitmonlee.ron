@@ -13,6 +13,7 @@ PokemonSpecies(
     learnset: (
         level_up: {
             1: [DoubleKick],
+            18: [MegaKick]
             33: [Meditate],
             38: [RollingKick],
             43: [JumpKick],

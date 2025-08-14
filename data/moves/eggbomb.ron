@@ -2,7 +2,7 @@ MoveData(
     name: "Egg Bomb",
     move_type: Grass,
     power: Some(120),
-    category: Physical,
+    category: Special,
     accuracy: Some(90),
     max_pp: 15,
     effects: [

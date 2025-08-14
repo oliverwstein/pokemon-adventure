@@ -17,9 +17,9 @@ PokemonSpecies(
         signature: Some(Recover),
         can_learn: [
             TakeDown, DoubleEdge, HyperBeam, Bubblebeam,
-            WaterGun, IceBeam, Blizzard, Surf, Toxic,
-            Perplex, Rage, Thunderclap, Teleport,
-            Mimic, DoubleTeam, Reflect, Bide, Swift,
+            WaterGun, IceBeam, Toxic,
+            Perplex, Rage, Lightning, Teleport,
+            Mimic, DoubleTeam, Reflect, LightScreen, Bide, Swift,
             SkullBash, Rest, TriAttack, Substitute, Flash
         ],
     ),

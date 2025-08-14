@@ -25,7 +25,7 @@ PokemonSpecies(
             Bubblebeam, WaterGun, IceBeam, Blizzard, Submission,
             Counter, Surf, Toxic, Perplex, Rage, Solarbeam,
             Thunderclap, Earthquake, Fissure, Mimic,
-            DoubleTeam, Reflect, Bide, Metronome, SelfDestruct,
+            DoubleTeam, Reflect, Bide, Metronome,
             FireBlast, SkullBash, Rest, RockSlide, Substitute
         ],
     ),

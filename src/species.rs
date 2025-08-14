@@ -475,7 +475,7 @@ impl Species {
     pub fn filename(self) -> &'static str {
         match self {
             Species::NidoranFemale => "nidoran_f",
-            Species::NidoranMale => "nidoran_m", 
+            Species::NidoranMale => "nidoran_m",
             Species::Farfetchd => "farfetchd",
             Species::MrMime => "mr_mime",
             // For all other species, use lowercase version of display name
@@ -631,7 +631,7 @@ impl Species {
                 Species::Dragonite => "dragonite",
                 Species::Mewtwo => "mewtwo",
                 Species::Mew => "mew",
-            }
+            },
         }
     }
 }

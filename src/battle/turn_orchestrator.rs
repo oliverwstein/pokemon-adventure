@@ -115,7 +115,10 @@ pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), Stri
                     {
                         // Find the move index for this forced move, or use index 0 if not found
                         // (the conversion logic will handle using the forced move directly)
-                        generate_forced_move_action(&battle_state.players[player_index], forced_move)?
+                        generate_forced_move_action(
+                            &battle_state.players[player_index],
+                            forced_move,
+                        )?
                     } else {
                         // No forced action, generate deterministic action
                         generate_deterministic_action(&battle_state.players[player_index])?
@@ -249,13 +252,14 @@ pub fn validate_player_action(
     }
 
     let player = &battle_state.players[player_index];
-    
+
     match action {
         PlayerAction::UseMove { move_index } => {
             // Check if player has an active Pokemon
-            let pokemon = player.active_pokemon()
+            let pokemon = player
+                .active_pokemon()
                 .ok_or_else(|| "No active Pokemon".to_string())?;
-            
+
             // Check if move index is valid
             if *move_index >= pokemon.moves.len() {
                 return Err("Invalid move index".to_string());
@@ -372,8 +376,8 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
     // Check if this is a replacement phase (inter-turn action)
     let is_replacement_phase = matches!(
         battle_state.game_state,
-        GameState::WaitingForPlayer1Replacement 
-            | GameState::WaitingForPlayer2Replacement 
+        GameState::WaitingForPlayer1Replacement
+            | GameState::WaitingForPlayer2Replacement
             | GameState::WaitingForBothReplacements
     );
 
@@ -419,11 +423,20 @@ fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus)
     while let Some(action) = action_stack.pop_front() {
         // Only process switch actions during replacement phase
         if matches!(action, BattleAction::Switch { .. }) {
-            execute_battle_action(action, battle_state, &mut action_stack, bus, &mut TurnRng::new_for_test(vec![]));
+            execute_battle_action(
+                action,
+                battle_state,
+                &mut action_stack,
+                bus,
+                &mut TurnRng::new_for_test(vec![]),
+            );
         }
 
         // Check if battle ended (all Pokemon fainted, etc.)
-        if matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+        if matches!(
+            battle_state.game_state,
+            GameState::Player1Win | GameState::Player2Win | GameState::Draw
+        ) {
             break;
         }
     }
@@ -432,7 +445,10 @@ fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus)
     check_win_conditions(battle_state, bus);
 
     // If battle is still ongoing, transition to waiting for actions
-    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+    if !matches!(
+        battle_state.game_state,
+        GameState::Player1Win | GameState::Player2Win | GameState::Draw
+    ) {
         battle_state.game_state = GameState::WaitingForActions;
     }
 
@@ -483,9 +499,11 @@ fn convert_player_action_to_battle_action(
             let active_pokemon = player.team[player.active_pokemon_index]
                 .as_ref()
                 .expect("Active pokemon should exist");
-            
+
             // Check if this is a forced move (player has forcing conditions)
-            let final_move = if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
+            let final_move = if let Some(forced_move) =
+                check_for_forced_move(&battle_state.players[player_index])
+            {
                 // Use the forced move directly, bypassing PP checks and move selection
                 forced_move
             } else {
@@ -501,7 +519,7 @@ fn convert_player_action_to_battle_action(
                     Move::Struggle
                 }
             };
-            
+
             // Determine defender
             let defender_index = if player_index == 0 { 1 } else { 0 };
 
@@ -1057,7 +1075,6 @@ fn calculate_action_priority(
                 speed,
             }
         }
-
     }
 }
 
@@ -1249,7 +1266,9 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     if matches!(battle_state.game_state, GameState::WaitingForActions) {
         for player_index in 0..2 {
             if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
-                if let Ok(forced_action) = generate_forced_move_action(&battle_state.players[player_index], forced_move) {
+                if let Ok(forced_action) =
+                    generate_forced_move_action(&battle_state.players[player_index], forced_move)
+                {
                     battle_state.action_queue[player_index] = Some(forced_action);
                 }
             }

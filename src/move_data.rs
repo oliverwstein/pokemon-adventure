@@ -8,7 +8,9 @@ use std::collections::HashMap;
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
 /// Initialize the global move data (no-op since data is compiled in)
-pub fn initialize_move_data(_data_path: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn initialize_move_data(
+    _data_path: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Data is now compiled in, so this is a no-op
     Ok(())
 }
@@ -27,7 +29,7 @@ pub fn get_move_data(move_: Move) -> Option<MoveData> {
                 max_pp: 0,      // Not a real move, no PP
                 effects: vec![],
             })
-        },
+        }
         Move::Struggle => {
             Some(MoveData {
                 name: "Struggle".to_string(),
@@ -38,7 +40,7 @@ pub fn get_move_data(move_: Move) -> Option<MoveData> {
                 max_pp: 0,                             // Not a real move, no PP
                 effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
             })
-        },
+        }
         _ => {
             // For regular moves, get from compiled data
             get_compiled_move_data().get(&move_).cloned()
@@ -2067,7 +2069,7 @@ impl MoveData {
         _data_path: &std::path::Path,
     ) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
         let mut move_map = get_compiled_move_data();
-        
+
         // Add hardcoded special moves that aren't in RON files
         let hitting_itself_data = MoveData {
             name: "Hit Itself".to_string(),

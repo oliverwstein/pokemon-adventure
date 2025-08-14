@@ -139,13 +139,16 @@ pub struct TurnResult {
 
 impl TurnResult {
     pub fn new(events: Vec<BattleEvent>, new_state: GameState) -> Self {
-        let battle_ended = matches!(new_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw);
+        let battle_ended = matches!(
+            new_state,
+            GameState::Player1Win | GameState::Player2Win | GameState::Draw
+        );
         let winner = match new_state {
             GameState::Player1Win => Some(0),
             GameState::Player2Win => Some(1),
             _ => None,
         };
-        
+
         Self {
             events,
             new_state,
@@ -167,7 +170,6 @@ pub fn execute_command_batch(
     }
     Ok(())
 }
-
 
 /// Helper function to execute commands that operate on the active Pokemon
 fn execute_pokemon_command<F>(
@@ -387,21 +389,21 @@ mod tests {
 
     fn create_test_battle_state() -> BattleState {
         use crate::pokemon::MoveInstance;
-        
+
         let moves1 = [
             Some(MoveInstance::new(Move::Tackle)),
             Some(MoveInstance::new(Move::Scratch)),
             None,
             None,
         ];
-        
+
         let moves2 = [
             Some(MoveInstance::new(Move::Tackle)),
             Some(MoveInstance::new(Move::Scratch)),
             None,
             None,
         ];
-        
+
         let pokemon1 = PokemonInst::new_for_test(
             Species::Pikachu,
             1,
@@ -600,5 +602,4 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(state.game_state, GameState::TurnInProgress);
     }
-
 }

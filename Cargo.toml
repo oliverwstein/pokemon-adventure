@@ -3,6 +3,14 @@ name = "pokemon-adventure"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "pokemon-adventure"
+path = "src/main.rs"
+
+[lib]
+name = "pokemon_adventure"
+path = "src/lib.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 ron = "0.8"

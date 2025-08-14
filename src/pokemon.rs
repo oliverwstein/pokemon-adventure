@@ -286,11 +286,7 @@ impl PokemonSpecies {
         }
 
         // Find the RON file based on the species enum
-        let species_filename = format!(
-            "{:03}-{}",
-            species.pokedex_number(),
-            species.filename()
-        );
+        let species_filename = format!("{:03}-{}", species.pokedex_number(), species.filename());
         let ron_file = pokemon_dir.join(format!("{}.ron", species_filename));
 
         if !ron_file.exists() {

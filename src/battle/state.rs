@@ -4,7 +4,7 @@ use crate::player::{BattlePlayer, PlayerAction, StatType};
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum GameState {
     WaitingForActions,
     TurnInProgress,

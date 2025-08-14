@@ -83,7 +83,9 @@ mod tests {
                 assert_eq!(move_instance.move_, Move::SolarBeam);
             }
             _ => {
-                panic!("Player 1 should have automatically generated UseMove action for Solar Beam due to Charging condition");
+                panic!(
+                    "Player 1 should have automatically generated UseMove action for Solar Beam due to Charging condition"
+                );
             }
         }
 

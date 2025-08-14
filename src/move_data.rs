@@ -360,7 +360,7 @@ impl MoveEffect {
         hit_number: u8,
     ) -> Option<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::BattleCommand;
-        use crate::battle::turn_orchestrator::BattleAction;
+        use crate::battle::engine::BattleAction;
 
         // This logic only applies if the effect is actually a MultiHit variant.
         if let MoveEffect::MultiHit(guaranteed_hits, continuation_chance) = self {
@@ -1749,7 +1749,7 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::{ActionFailureReason, BattleEvent};
-        use crate::battle::turn_orchestrator::BattleAction;
+        use crate::battle::engine::BattleAction;
 
         let defender_player = &state.players[context.defender_index];
 
@@ -1790,7 +1790,7 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::state::BattleEvent;
-        use crate::battle::turn_orchestrator::BattleAction;
+        use crate::battle::engine::BattleAction;
         use crate::moves::Move;
 
         // Get all possible moves except Metronome itself

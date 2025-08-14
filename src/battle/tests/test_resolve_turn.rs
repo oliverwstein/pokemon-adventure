@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleState, GameState, TurnRng};
-    use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -73,7 +73,7 @@ mod tests {
         assert!(battle_state.action_queue[1].is_some());
 
         // Test action ordering - both are using moves, so order should be determined by speed
-        let action_order = crate::battle::turn_orchestrator::determine_action_order(&battle_state);
+        let action_order = crate::battle::engine::determine_action_order(&battle_state);
         println!("Action order: {:?}", action_order);
 
         // Both Pokemon have same stats in our test, so order could be either way

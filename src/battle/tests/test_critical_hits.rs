@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
-    use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};

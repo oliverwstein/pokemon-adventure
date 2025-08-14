@@ -192,7 +192,7 @@ fn main() {
 
 fn run_npc_battle_demo_without_runner() {
     use battle::state::{BattleState, GameState, TurnRng};
-    use battle::turn_orchestrator::{
+    use battle::engine::{
         collect_player_actions, ready_for_turn_resolution, resolve_turn,
     };
 

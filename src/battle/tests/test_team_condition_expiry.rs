@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::state::EventBus;
     use crate::battle::state::{BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::{execute_end_turn_phase, resolve_turn};
+    use crate::battle::engine::{execute_end_turn_phase, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction, TeamCondition};
     use crate::pokemon::{MoveInstance, PokemonInst};

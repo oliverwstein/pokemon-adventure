@@ -1,6 +1,6 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState};
-use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
+use crate::battle::engine::{ActionStack, BattleAction};
 use crate::moves::Move;
 use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
@@ -381,7 +381,7 @@ fn execute_command(
 mod tests {
     use super::*;
     use crate::battle::state::{BattleState, EventBus, GameState};
-    use crate::battle::turn_orchestrator::ActionStack;
+    use crate::battle::engine::ActionStack;
     use crate::player::BattlePlayer;
     use crate::pokemon::PokemonInst;
     use crate::species::Species;

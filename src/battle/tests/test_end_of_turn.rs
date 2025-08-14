@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState, TurnRng};
-    use crate::battle::turn_orchestrator::execute_end_turn_phase;
+    use crate::battle::engine::execute_end_turn_phase;
     use crate::move_data::initialize_move_data;
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data, initialize_species_data};
@@ -328,7 +328,7 @@ mod tests {
         init_test_data();
 
         // Test successful defrost when Pokemon tries to act
-        use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
+        use crate::battle::engine::{ActionStack, BattleAction};
         use crate::moves::Move;
 
         let mut battle_state = create_test_battle_state();
@@ -342,7 +342,7 @@ mod tests {
 
         // Test defrost by trying to execute an attack (this will call check_action_preventing_conditions)
         let mut action_stack = ActionStack::new();
-        crate::battle::turn_orchestrator::execute_battle_action(
+        crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {
                 attacker_index: 0,
                 defender_index: 1,
@@ -377,7 +377,7 @@ mod tests {
         init_test_data();
 
         // Test failed defrost when Pokemon tries to act
-        use crate::battle::turn_orchestrator::{ActionStack, BattleAction};
+        use crate::battle::engine::{ActionStack, BattleAction};
         use crate::moves::Move;
 
         let mut battle_state = create_test_battle_state();
@@ -391,7 +391,7 @@ mod tests {
 
         // Test freeze check by trying to execute an attack (this will call check_action_preventing_conditions)
         let mut action_stack = ActionStack::new();
-        crate::battle::turn_orchestrator::execute_battle_action(
+        crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {
                 attacker_index: 0,
                 defender_index: 1,

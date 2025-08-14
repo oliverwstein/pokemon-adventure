@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::battle::engine::resolve_turn;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};

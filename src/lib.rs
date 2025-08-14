@@ -14,7 +14,7 @@ pub mod species;
 
 // Re-export commonly used types for convenience
 pub use battle::state::{BattleEvent, BattleState, GameState};
-pub use battle::turn_orchestrator::{
+pub use battle::engine::{
     collect_player_actions, ready_for_turn_resolution, resolve_turn,
 };
 pub use moves::Move;

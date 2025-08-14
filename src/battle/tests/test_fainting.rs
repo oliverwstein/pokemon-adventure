@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst, StatusCondition};
@@ -255,7 +255,7 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Try to collect actions - should fail for the fainted Pokemon
-        let result = crate::battle::turn_orchestrator::collect_player_actions(&mut battle_state);
+        let result = crate::battle::engine::collect_player_actions(&mut battle_state);
 
         // The AI should not be able to generate an action for the fainted Pokemon
         // So collect_player_actions should return a forfeit.
@@ -276,7 +276,7 @@ mod tests {
         let test_rng = crate::battle::state::TurnRng::new_for_test(vec![50, 50, 50]);
 
         // Execute turn
-        let event_bus = crate::battle::turn_orchestrator::resolve_turn(&mut battle_state, test_rng);
+        let event_bus = crate::battle::engine::resolve_turn(&mut battle_state, test_rng);
 
         // Check events
         let events = event_bus.events();
@@ -480,7 +480,7 @@ mod tests {
         ]);
 
         // Execute turn
-        let event_bus = crate::battle::turn_orchestrator::resolve_turn(&mut battle_state, test_rng);
+        let event_bus = crate::battle::engine::resolve_turn(&mut battle_state, test_rng);
 
         // Check events
         let events = event_bus.events();

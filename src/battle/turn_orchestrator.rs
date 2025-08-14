@@ -267,9 +267,15 @@ pub fn validate_player_action(
 
             // Check if move exists and has PP
             if let Some(move_instance) = &pokemon.moves[*move_index] {
-                if move_instance.pp == 0 {
-                    return Err("Move has no PP remaining".to_string());
-                }
+                // Allow moves without pp -- they will just become Struggle.
+                // if move_instance.pp == 0 {
+                //     return Err("Move has no PP remaining".to_string());
+                // }
+                if player.active_pokemon_conditions.values().any(|cond| {
+                        matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == move_instance.move_)
+                    }) {
+                        return Err("Move is disabled".to_string());
+                    }
             } else {
                 return Err("No move in that slot".to_string());
             }
@@ -279,7 +285,9 @@ pub fn validate_player_action(
             if *team_index >= player.team.len() {
                 return Err("Invalid Pokemon index".to_string());
             }
-
+            if player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {  // The number does not matter
+                return Err("The pokemon is trapped!".to_string());
+            }
             // Check if target Pokemon is not fainted and not already active
             if let Some(target_pokemon) = &player.team[*team_index] {
                 if target_pokemon.is_fainted() {
@@ -298,6 +306,90 @@ pub fn validate_player_action(
     }
 
     Ok(())
+}
+
+pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<PlayerAction> {
+    let player = &state.players[player_index];
+    let mut actions = Vec::new();
+
+    // --- Phase 1: Check for Forced Replacement ---
+    // If a player's active Pokémon has fainted, their only valid action is to switch.
+    let is_replacement_phase = match state.game_state {
+        GameState::WaitingForPlayer1Replacement => player_index == 0,
+        GameState::WaitingForPlayer2Replacement => player_index == 1,
+        GameState::WaitingForBothReplacements => true,
+        _ => false,
+    };
+
+    if is_replacement_phase {
+        for (i, pokemon_slot) in player.team.iter().enumerate() {
+            if let Some(pokemon) = pokemon_slot {
+                // The only valid switch targets are non-fainted Pokémon that are not already active.
+                if i != player.active_pokemon_index && !pokemon.is_fainted() {
+                    actions.push(PlayerAction::SwitchPokemon { team_index: i });
+                }
+            }
+        }
+        // During a replacement phase, switching is the ONLY valid action type.
+        // If this list is empty, it means the player has no valid Pokémon to switch to,
+        // and has therefore lost. The main game loop will detect this win condition.
+        return actions;
+    }
+
+    // --- Phase 2: Standard Turn Action Generation ---
+
+    // A. Generate "Use Move" Actions
+    if let Some(active_pokemon) = player.active_pokemon() {
+        // A player cannot use moves if they are recharging (e.g., after Hyper Beam).
+        let can_use_moves = !player.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 });
+
+        if can_use_moves {
+            // First, find all moves that are actually usable (have PP and are not disabled).
+            let usable_moves: Vec<PlayerAction> = active_pokemon.moves.iter().enumerate()
+                .filter_map(|(i, slot)| {
+                    slot.as_ref().and_then(|inst| {
+                        let has_pp = inst.pp > 0;
+                        let is_disabled = player.active_pokemon_conditions.values().any(|cond| {
+                            matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == inst.move_)
+                        });
+
+                        if has_pp && !is_disabled {
+                            Some(PlayerAction::UseMove { move_index: i })
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .collect();
+
+            if !usable_moves.is_empty() {
+                // If there are usable moves, they are the valid options.
+                actions.extend(usable_moves);
+            } else {
+                // If no moves are usable (all are 0 PP or disabled), the player's only
+                // "Fight" option is Struggle. We represent this intent by adding a single,
+                // default move action. The turn orchestrator will interpret this as Struggle.
+                actions.push(PlayerAction::UseMove { move_index: 0 });
+            }
+        }
+    }
+
+    // B. Generate "Switch Pokemon" Actions
+    let is_trapped = player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 });
+    if !is_trapped {
+        for (i, pokemon_slot) in player.team.iter().enumerate() {
+            if let Some(pokemon) = pokemon_slot {
+                if i != player.active_pokemon_index && !pokemon.is_fainted() {
+                    actions.push(PlayerAction::SwitchPokemon { team_index: i });
+                }
+            }
+        }
+    }
+
+    // C. Add "Forfeit" Action
+    actions.push(PlayerAction::Forfeit);
+
+    actions
 }
 
 /// Sets a player's action in the battle state

@@ -451,7 +451,7 @@ impl PokemonSpecies {
         let species_filename = format!(
             "{:03}-{}",
             species.pokedex_number(),
-            species.name().to_lowercase()
+            species.filename()
         );
         let ron_file = pokemon_dir.join(format!("{}.ron", species_filename));
 

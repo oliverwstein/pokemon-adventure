@@ -3,26 +3,47 @@ use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use std::sync::{LazyLock, RwLock};
 
-// Global move data storage - loaded once at startup
-static MOVE_DATA: LazyLock<RwLock<HashMap<Move, MoveData>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
+// Include the compiled move data
+include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
-/// Initialize the global move data by loading from disk
-pub fn initialize_move_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let move_data_map = MoveData::load_all(data_path)?;
-    let mut global_data = MOVE_DATA.write().unwrap();
-    *global_data = move_data_map;
+/// Initialize the global move data (no-op since data is compiled in)
+pub fn initialize_move_data(_data_path: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
+    // Data is now compiled in, so this is a no-op
     Ok(())
 }
 
-/// Get move data for a specific move from the global store
+/// Get move data for a specific move from the compiled data
 pub fn get_move_data(move_: Move) -> Option<MoveData> {
-    let global_data = MOVE_DATA.read().unwrap();
-    global_data.get(&move_).cloned()
+    // Handle special hardcoded moves first
+    match move_ {
+        Move::HittingItself => {
+            Some(MoveData {
+                name: "Hit Itself".to_string(),
+                move_type: PokemonType::Typeless,
+                power: Some(40),
+                category: MoveCategory::Physical,
+                accuracy: None, // Always hits
+                max_pp: 0,      // Not a real move, no PP
+                effects: vec![],
+            })
+        },
+        Move::Struggle => {
+            Some(MoveData {
+                name: "Struggle".to_string(),
+                move_type: PokemonType::Typeless,
+                power: Some(50),
+                category: MoveCategory::Physical,
+                accuracy: Some(90),
+                max_pp: 0,                             // Not a real move, no PP
+                effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
+            })
+        },
+        _ => {
+            // For regular moves, get from compiled data
+            get_compiled_move_data().get(&move_).cloned()
+        }
+    }
 }
 
 /// Get max PP for a specific move
@@ -1840,7 +1861,7 @@ impl MoveEffect {
             Move::KarateChop,
             Move::CometPunch,
             Move::MegaPunch,
-            Move::KoPunch,
+            Move::KOPunch,
             Move::DoubleKick,
             Move::MegaKick,
             Move::JumpKick,
@@ -2041,13 +2062,13 @@ pub struct MoveData {
 }
 
 impl MoveData {
-    /// Load move data from RON files in the data directory
+    /// Get compiled move data (replaces load_all)
     pub fn load_all(
-        data_path: &Path,
+        _data_path: &std::path::Path,
     ) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
-        let moves_dir = data_path.join("moves");
-
-        let mut move_map = HashMap::new();
+        let mut move_map = get_compiled_move_data();
+        
+        // Add hardcoded special moves that aren't in RON files
         let hitting_itself_data = MoveData {
             name: "Hit Itself".to_string(),
             move_type: PokemonType::Typeless,
@@ -2072,29 +2093,6 @@ impl MoveData {
             effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
         };
         move_map.insert(Move::Struggle, struggle_data);
-
-        if !moves_dir.exists() {
-            return Err(format!("Moves data directory not found: {}", moves_dir.display()).into());
-        }
-
-        let entries = fs::read_dir(&moves_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
-                    let content = fs::read_to_string(&path)?;
-                    let move_data: MoveData = ron::from_str(&content)?;
-
-                    // Parse move name from filename to get the Move enum variant
-                    if let Ok(move_enum) = filename.parse::<Move>() {
-                        move_map.insert(move_enum, move_data);
-                    }
-                }
-            }
-        }
 
         Ok(move_map)
     }
@@ -2180,7 +2178,7 @@ impl std::str::FromStr for Move {
             "KARATECHOP" => Ok(Move::KarateChop),
             "COMETPUNCH" => Ok(Move::CometPunch),
             "MEGAPUNCH" => Ok(Move::MegaPunch),
-            "KOPUNCH" => Ok(Move::KoPunch),
+            "KOPUNCH" => Ok(Move::KOPunch),
             "DOUBLEKICK" => Ok(Move::DoubleKick),
             "MEGAKICK" => Ok(Move::MegaKick),
             "JUMPKICK" => Ok(Move::JumpKick),

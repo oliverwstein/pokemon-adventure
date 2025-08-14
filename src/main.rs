@@ -11,19 +11,16 @@ use moves::Move;
 use player::BattlePlayer;
 use pokemon::{PokemonInst, PokemonSpecies, get_species_data, initialize_species_data};
 use species::Species;
-use std::path::Path;
 
 fn main() {
-    let data_path = Path::new("data");
-
-    // Initialize global move data first
-    if let Err(e) = initialize_move_data(data_path) {
+    // Initialize global move data (no-op since data is compiled in)
+    if let Err(e) = initialize_move_data(&std::path::Path::new(".")) {
         println!("Error initializing move data: {}", e);
         return;
     }
 
-    // Initialize global species data
-    if let Err(e) = initialize_species_data(data_path) {
+    // Initialize global species data (no-op since data is compiled in)
+    if let Err(e) = initialize_species_data(&std::path::Path::new(".")) {
         println!("Error initializing species data: {}", e);
         return;
     }
@@ -49,7 +46,7 @@ fn main() {
     println!();
 
     // Example 2: Load all Pokemon and show count
-    match PokemonSpecies::load_all(data_path) {
+    match PokemonSpecies::load_all(&std::path::Path::new(".")) {
         Ok(all_species) => {
             println!("Loaded {} Pokemon species", all_species.len());
 
@@ -65,7 +62,7 @@ fn main() {
     println!();
 
     // Example 3: Create species map for fast lookups
-    match PokemonSpecies::create_species_map(data_path) {
+    match PokemonSpecies::create_species_map(&std::path::Path::new(".")) {
         Ok(species_map) => {
             println!("Created species map with {} entries", species_map.len());
 

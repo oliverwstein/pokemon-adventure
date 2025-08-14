@@ -72,7 +72,7 @@ pub enum Move {
     KarateChop,
     CometPunch,
     MegaPunch,
-    KoPunch,
+    KOPunch,
     DoubleKick,
     MegaKick,
     JumpKick,

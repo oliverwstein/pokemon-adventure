@@ -6,183 +6,21 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::sync::{LazyLock, RwLock};
 
-// Global species data storage - loaded once at startup, indexed by Species enum
-static SPECIES_DATA: LazyLock<RwLock<[Option<PokemonSpecies>; 151]>> =
-    LazyLock::new(|| RwLock::new([const { None }; 151]));
+// Include the compiled species data
+use crate::move_data::get_compiled_species_data;
 
-/// Initialize the global species data by loading from disk
-pub fn initialize_species_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let mut global_data = SPECIES_DATA.write().unwrap();
-
-    for species_variant in [
-        Species::Bulbasaur,
-        Species::Ivysaur,
-        Species::Venusaur,
-        Species::Charmander,
-        Species::Charmeleon,
-        Species::Charizard,
-        Species::Squirtle,
-        Species::Wartortle,
-        Species::Blastoise,
-        Species::Caterpie,
-        Species::Metapod,
-        Species::Butterfree,
-        Species::Weedle,
-        Species::Kakuna,
-        Species::Beedrill,
-        Species::Pidgey,
-        Species::Pidgeotto,
-        Species::Pidgeot,
-        Species::Rattata,
-        Species::Raticate,
-        Species::Spearow,
-        Species::Fearow,
-        Species::Ekans,
-        Species::Arbok,
-        Species::Pikachu,
-        Species::Raichu,
-        Species::Sandshrew,
-        Species::Sandslash,
-        Species::NidoranFemale,
-        Species::Nidorina,
-        Species::Nidoqueen,
-        Species::NidoranMale,
-        Species::Nidorino,
-        Species::Nidoking,
-        Species::Clefairy,
-        Species::Clefable,
-        Species::Vulpix,
-        Species::Ninetales,
-        Species::Jigglypuff,
-        Species::Wigglytuff,
-        Species::Zubat,
-        Species::Golbat,
-        Species::Oddish,
-        Species::Gloom,
-        Species::Vileplume,
-        Species::Paras,
-        Species::Parasect,
-        Species::Venonat,
-        Species::Venomoth,
-        Species::Diglett,
-        Species::Dugtrio,
-        Species::Meowth,
-        Species::Persian,
-        Species::Psyduck,
-        Species::Golduck,
-        Species::Mankey,
-        Species::Primeape,
-        Species::Growlithe,
-        Species::Arcanine,
-        Species::Poliwag,
-        Species::Poliwhirl,
-        Species::Poliwrath,
-        Species::Abra,
-        Species::Kadabra,
-        Species::Alakazam,
-        Species::Machop,
-        Species::Machoke,
-        Species::Machamp,
-        Species::Bellsprout,
-        Species::Weepinbell,
-        Species::Victreebel,
-        Species::Tentacool,
-        Species::Tentacruel,
-        Species::Geodude,
-        Species::Graveler,
-        Species::Golem,
-        Species::Ponyta,
-        Species::Rapidash,
-        Species::Slowpoke,
-        Species::Slowbro,
-        Species::Magnemite,
-        Species::Magneton,
-        Species::Farfetchd,
-        Species::Doduo,
-        Species::Dodrio,
-        Species::Seel,
-        Species::Dewgong,
-        Species::Grimer,
-        Species::Muk,
-        Species::Shellder,
-        Species::Cloyster,
-        Species::Gastly,
-        Species::Haunter,
-        Species::Gengar,
-        Species::Onix,
-        Species::Drowzee,
-        Species::Hypno,
-        Species::Krabby,
-        Species::Kingler,
-        Species::Voltorb,
-        Species::Electrode,
-        Species::Exeggcute,
-        Species::Exeggutor,
-        Species::Cubone,
-        Species::Marowak,
-        Species::Hitmonlee,
-        Species::Hitmonchan,
-        Species::Lickitung,
-        Species::Koffing,
-        Species::Weezing,
-        Species::Rhyhorn,
-        Species::Rhydon,
-        Species::Chansey,
-        Species::Tangela,
-        Species::Kangaskhan,
-        Species::Horsea,
-        Species::Seadra,
-        Species::Goldeen,
-        Species::Seaking,
-        Species::Staryu,
-        Species::Starmie,
-        Species::MrMime,
-        Species::Scyther,
-        Species::Jynx,
-        Species::Electabuzz,
-        Species::Magmar,
-        Species::Pinsir,
-        Species::Tauros,
-        Species::Magikarp,
-        Species::Gyarados,
-        Species::Lapras,
-        Species::Ditto,
-        Species::Eevee,
-        Species::Vaporeon,
-        Species::Jolteon,
-        Species::Flareon,
-        Species::Porygon,
-        Species::Omanyte,
-        Species::Omastar,
-        Species::Kabuto,
-        Species::Kabutops,
-        Species::Aerodactyl,
-        Species::Snorlax,
-        Species::Articuno,
-        Species::Zapdos,
-        Species::Moltres,
-        Species::Dratini,
-        Species::Dragonair,
-        Species::Dragonite,
-        Species::Mewtwo,
-        Species::Mew,
-    ] {
-        if let Ok(species_data) = PokemonSpecies::load_by_species(species_variant, data_path) {
-            let index = species_variant.pokedex_number() as usize - 1; // 0-indexed
-            global_data[index] = Some(species_data);
-        }
-    }
-
+/// Initialize the global species data (no-op since data is compiled in)
+pub fn initialize_species_data(_data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    // Data is now compiled in, so this is a no-op
     Ok(())
 }
 
-/// Get species data for a specific species from the global store
+/// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
-    let global_data = SPECIES_DATA.read().unwrap();
+    let compiled_data = get_compiled_species_data();
     let index = species.pokedex_number() as usize - 1; // 0-indexed
-    global_data[index].clone()
+    compiled_data[index].clone()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

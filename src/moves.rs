@@ -160,7 +160,7 @@ pub enum Move {
     LeechSeed,
     Growth,
     RazorLeaf,
-    Solarbeam,
+    SolarBeam,
     PoisonPowder,
     StunSpore,
     SleepPowder,

@@ -49,7 +49,7 @@ mod tests {
             "Player 1".to_string(),
             vec![create_test_pokemon(
                 Species::Venusaur,
-                vec![Move::Solarbeam],
+                vec![Move::SolarBeam],
             )],
         );
 
@@ -70,7 +70,7 @@ mod tests {
         assert!(battle_state.players[0].has_condition(&PokemonCondition::Charging));
 
         // Player 1's last move should be Solar Beam
-        assert_eq!(battle_state.players[0].last_move, Some(Move::Solarbeam));
+        assert_eq!(battle_state.players[0].last_move, Some(Move::SolarBeam));
 
         // Turn 2: Solar Beam should execute with damage
         collect_player_actions(&mut battle_state).expect("Should collect actions");
@@ -78,7 +78,7 @@ mod tests {
         // Player 1 should have a ForcedMove action
         match &battle_state.action_queue[0] {
             Some(PlayerAction::ForcedMove { pokemon_move }) => {
-                assert_eq!(*pokemon_move, Move::Solarbeam);
+                assert_eq!(*pokemon_move, Move::SolarBeam);
             }
             _ => panic!("Player 1 should have ForcedMove action"),
         }

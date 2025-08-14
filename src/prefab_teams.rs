@@ -32,7 +32,7 @@ pub fn get_prefab_teams() -> Vec<PrefabTeam> {
                 PrefabPokemon {
                     species: Species::Venusaur,
                     level: 60,
-                    moves: vec![Move::SleepPowder, Move::Solarbeam, Move::PetalDance, Move::Earthquake],
+                    moves: vec![Move::SleepPowder, Move::SolarBeam, Move::PetalDance, Move::Earthquake],
                 },
                 PrefabPokemon {
                     species: Species::Arcanine,
@@ -405,7 +405,7 @@ mod tests {
             Move::Recover, Move::SoftBoiled, Move::Whirlwind, Move::Roar,
             Move::Teleport, Move::Fly, Move::Dig, Move::Fissure,
             Move::HornDrill, Move::QuickAttack, Move::RockSlide, Move::IceBeam,
-            Move::Blizzard, Move::Bubblebeam, Move::AuroraBeam, Move::Solarbeam,
+            Move::Blizzard, Move::Bubblebeam, Move::AuroraBeam, Move::SolarBeam,
             Move::MegaDrain, Move::LeechSeed, Move::Growth, Move::RazorLeaf,
             Move::PoisonJab, Move::MegaKick, Move::FocusEnergy, Move::Meditate
         ];
@@ -414,7 +414,7 @@ mod tests {
         
         for test_move in test_moves {
             // Try to get move data - this will use the global move data store
-            let move_data = crate::move_data::get_move_data(&test_move);
+            let move_data = crate::move_data::get_move_data(test_move);
             if move_data.is_none() {
                 failed_moves.push(test_move);
             }

@@ -72,24 +72,6 @@ mod tests {
         assert!(battle_state.action_queue[0].is_some());
         assert!(battle_state.action_queue[1].is_some());
 
-        // Check what moves were chosen (should be first available move for each)
-        match &battle_state.action_queue[0] {
-            Some(PlayerAction::UseMove { move_index }) => {
-                assert_eq!(*move_index, 0, "Pikachu should choose first move (Tackle)");
-            }
-            _ => panic!("Player 0 should have chosen a move"),
-        }
-
-        match &battle_state.action_queue[1] {
-            Some(PlayerAction::UseMove { move_index }) => {
-                assert_eq!(
-                    *move_index, 0,
-                    "Charmander should choose first move (Scratch)"
-                );
-            }
-            _ => panic!("Player 1 should have chosen a move"),
-        }
-
         // Test action ordering - both are using moves, so order should be determined by speed
         let action_order = crate::battle::turn_orchestrator::determine_action_order(&battle_state);
         println!("Action order: {:?}", action_order);

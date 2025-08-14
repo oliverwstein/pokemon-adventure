@@ -2,6 +2,7 @@ use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::pokemon::{PokemonInst, PokemonType};
 use serde::{Deserialize, Serialize};
+use core::fmt;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
@@ -14,6 +15,24 @@ pub enum PlayerAction {
     SwitchPokemon { team_index: usize },
 
     Forfeit,
+}
+impl fmt::Display for PlayerAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // For UseMove, we de-structure to get the move_index.
+            PlayerAction::UseMove { move_index } => {
+                write!(f, "Use Move (index: {})", move_index)
+            }
+            // Same for SwitchPokemon and team_index.
+            PlayerAction::SwitchPokemon { team_index } => {
+                write!(f, "Switch Pokémon (index: {})", team_index)
+            }
+            // Forfeit is a simple, static string.
+            PlayerAction::Forfeit => {
+                write!(f, "Forfeit")
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Copy)]
@@ -33,6 +52,30 @@ pub enum StatType {
     Accuracy,
     Evasion,
     Focus,
+}
+
+impl From<crate::move_data::StatType> for StatType {
+    fn from(stat: crate::move_data::StatType) -> Self {
+        use crate::move_data::StatType as MoveDataStat;
+
+        match stat {
+            MoveDataStat::Atk => Self::Attack,
+            MoveDataStat::Def => Self::Defense,
+            MoveDataStat::SpAtk => Self::SpecialAttack,
+            MoveDataStat::SpDef => Self::SpecialDefense,
+            MoveDataStat::Spe => Self::Speed,
+            MoveDataStat::Acc => Self::Accuracy,
+            MoveDataStat::Eva => Self::Evasion,
+            MoveDataStat::Crit => Self::Focus,
+            // The `Hp` variant in move_data::StatType is not used for stat stages,
+            // so we can ignore it here. The compiler will warn us if we miss any.
+            MoveDataStat::Hp => {
+                // This case should ideally not be hit in stat stage logic.
+                // We'll default to Attack and maybe log a warning in a real app.
+                Self::Attack
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

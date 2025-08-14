@@ -1,3 +1,4 @@
+use crate::battle::ai::ScoringAI;
 use crate::battle::calculators::calculate_attack_outcome;
 use crate::battle::commands::execute_command_batch;
 use crate::battle::conditions::*;
@@ -102,60 +103,57 @@ fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::
 
 /// Prepares a battle state for turn resolution by collecting actions from both players
 /// This function should be called before resolve_turn()
-/// For now, implements a basic deterministic AI that selects first available move
-pub fn collect_player_actions(battle_state: &mut BattleState) -> Result<(), String> {
-    match battle_state.game_state {
-        GameState::WaitingForActions => {
-            // Generate actions for any players that haven't provided one
-            for player_index in 0..2 {
-                if battle_state.action_queue[player_index].is_none() {
-                    // First check if a move is forced by conditions
-                    let action = if let Some(forced_move) =
-                        check_for_forced_move(&battle_state.players[player_index])
-                    {
-                        // Find the move index for this forced move, or use index 0 if not found
-                        // (the conversion logic will handle using the forced move directly)
-                        generate_forced_move_action(
-                            &battle_state.players[player_index],
-                            forced_move,
-                        )?
-                    } else {
-                        // No forced action, generate deterministic action
-                        generate_deterministic_action(&battle_state.players[player_index])?
-                    };
-                    battle_state.action_queue[player_index] = Some(action);
-                }
-            }
+pub fn collect_player_actions(
+    battle_state: &mut BattleState,
+    // In a more advanced setup, you might pass the controllers in.
+    // For now, we'll create a default AI internally.
+) -> Result<(), String> {
+    // Instantiate the AI we want to use.
+    let ai_brain = ScoringAI::new();
+
+    let players_to_act = match battle_state.game_state {
+        GameState::WaitingForActions | GameState::WaitingForBothReplacements => {
+            vec![0, 1]
         }
-        GameState::WaitingForPlayer1Replacement => {
-            // Player 1 needs to send out a replacement Pokemon
-            if battle_state.action_queue[0].is_none() {
-                let action = generate_replacement_action(&battle_state.players[0])?;
-                battle_state.action_queue[0] = Some(action);
+        GameState::WaitingForPlayer1Replacement => vec![0],
+        GameState::WaitingForPlayer2Replacement => vec![1],
+        // If the game is in progress or over, no actions need to be collected.
+        _ => return Ok(()),
+    };
+
+    for player_index in players_to_act {
+        // Only generate an action if one isn't already queued.
+        if battle_state.action_queue[player_index].is_none() {
+            
+            // Check if the player is forced to act. If so, the AI doesn't need to decide.
+            // The turn orchestrator will handle the override. We just queue a placeholder.
+            if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
+                // A move is forced. We need to find its index in the Pokémon's current moveset.
+                let player = &battle_state.players[player_index];
+                
+                // We can safely assume the player has an active Pokémon if they are in a state that forces a move.
+                // If not, this would indicate a bug elsewhere, and panicking is appropriate.
+                let active_pokemon = player.active_pokemon()
+                    .expect("A player cannot be in a forced-move state without an active Pokémon.");
+
+                // Iterate through the Pokémon's moves to find the index that matches the forced move.
+                let move_index = active_pokemon.moves.iter()
+                    .position(|move_slot| {
+                        // A move_slot is an Option<MoveInstance>. We check if it's Some and if its move matches.
+                        move_slot.as_ref().map_or(false, |inst| inst.move_ == forced_move)
+                    })
+                    .unwrap_or(0); // As a robust fallback, default to index 0.
+                                // This handles cases like Bide, where the move might not be in the current set.
+                                // The turn_orchestrator's final override will ensure the correct move is used anyway.
+
+                // Queue the action with the correct move index.
+                battle_state.action_queue[player_index] = Some(PlayerAction::UseMove { move_index });
+            } else {
+                 // The player is free to choose, so consult the AI brain.
+                 let action = crate::battle::ai::Behavior::decide_action(&ai_brain, player_index, battle_state);
+                 println!("Chosen Action: {}", action);
+                 battle_state.action_queue[player_index] = Some(action);
             }
-            // Player 2 already has their action or doesn't need one
-        }
-        GameState::WaitingForPlayer2Replacement => {
-            // Player 2 needs to send out a replacement Pokemon
-            if battle_state.action_queue[1].is_none() {
-                let action = generate_replacement_action(&battle_state.players[1])?;
-                battle_state.action_queue[1] = Some(action);
-            }
-            // Player 1 already has their action or doesn't need one
-        }
-        GameState::WaitingForBothReplacements => {
-            // Both players need to send out replacement Pokemon
-            for player_index in 0..2 {
-                if battle_state.action_queue[player_index].is_none() {
-                    let action = generate_replacement_action(&battle_state.players[player_index])?;
-                    battle_state.action_queue[player_index] = Some(action);
-                }
-            }
-        }
-        _ => {
-            return Err(
-                "Cannot collect actions: battle is not in a state that accepts actions".to_string(),
-            );
         }
     }
 
@@ -193,51 +191,6 @@ fn generate_forced_move_action(
         .unwrap_or(0);
 
     Ok(PlayerAction::UseMove { move_index })
-}
-
-/// Generates a deterministic action for a player (basic AI)
-/// Uses first available move (with PP > 0), or Struggle if no moves have PP
-fn generate_deterministic_action(
-    player: &crate::player::BattlePlayer,
-) -> Result<PlayerAction, String> {
-    // Get the active pokemon
-    let active_pokemon = player.team[player.active_pokemon_index]
-        .as_ref()
-        .ok_or("No active pokemon")?;
-
-    // If active Pokemon is fainted, it cannot act
-    if active_pokemon.is_fainted() {
-        return Err("Active Pokemon is fainted and cannot act".to_string());
-    }
-
-    // Find first move with PP > 0
-    for (move_index, move_opt) in active_pokemon.moves.iter().enumerate() {
-        if let Some(move_instance) = move_opt {
-            if move_instance.pp > 0 {
-                return Ok(PlayerAction::UseMove { move_index });
-            }
-        }
-    }
-
-    // No moves have PP - force Struggle by returning a UseMove action on the first slot.
-    // The orchestrator will convert this to Struggle because its PP is 0.
-    Ok(PlayerAction::UseMove { move_index: 0 })
-}
-
-/// Generates a replacement Pokemon action for a player with a fainted active Pokemon
-fn generate_replacement_action(
-    player: &crate::player::BattlePlayer,
-) -> Result<PlayerAction, String> {
-    // Find first non-fainted Pokemon in team that isn't the current active Pokemon
-    for (team_index, pokemon_opt) in player.team.iter().enumerate() {
-        if let Some(pokemon) = pokemon_opt {
-            if !pokemon.is_fainted() && team_index != player.active_pokemon_index {
-                return Ok(PlayerAction::SwitchPokemon { team_index });
-            }
-        }
-    }
-
-    Err("No non-fainted Pokemon available to switch to".to_string())
 }
 
 /// Validates a player action for detailed correctness
@@ -341,7 +294,7 @@ pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<Player
     // A. Generate "Use Move" Actions
     if let Some(active_pokemon) = player.active_pokemon() {
         // A player cannot use moves if they are recharging (e.g., after Hyper Beam).
-        let can_use_moves = !player.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 });
+        let can_use_moves = !player.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 }) && !active_pokemon.is_fainted();
 
         if can_use_moves {
             // First, find all moves that are actually usable (have PP and are not disabled).

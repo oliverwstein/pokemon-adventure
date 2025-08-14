@@ -258,12 +258,13 @@ mod tests {
         let result = crate::battle::turn_orchestrator::collect_player_actions(&mut battle_state);
 
         // The AI should not be able to generate an action for the fainted Pokemon
-        // So collect_player_actions should either fail or leave the action as None
+        // So collect_player_actions should return a forfeit.
         if result.is_ok() {
             // If it succeeds, the fainted player should have no action
-            assert!(
-                battle_state.action_queue[0].is_none(),
-                "Fainted Pokemon should not have an action"
+            assert_eq!(
+                battle_state.action_queue[0],
+                Some(PlayerAction::Forfeit),
+                "Player 1, with no usable Pokemon, should be forced to forfeit."
             );
         }
 

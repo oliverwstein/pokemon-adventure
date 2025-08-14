@@ -6,7 +6,6 @@ MoveData(
     accuracy: Some(100),
     max_pp: 5,
     effects: [
-        Mist(20),
         Flinch(20)
     ],
 )

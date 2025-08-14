@@ -1,4 +1,4 @@
-The `BattleRunner` as a long-lived struct was a stepping stone, but now we have to refactor it to account for the **stateless request/response model** we have planned. 
+The `BattleRunner` as a long-lived struct was a stepping stone, but now we have to refactor it to account for the **stateless request/response model** we have planned. It is important to realize that the expected user for this is not a person, but an LLM agent--this is meant to test the ability of LLM agents like Claude Code to play pokemon against NPCs and each other. 
 
 ### Desired Architecture Summary
 
@@ -102,3 +102,5 @@ Here is the outline of the API endpoints and flow I have in mind:
         5.  **Perform Authorization:** Check if `loaded_state.players[0].player_id == user_id` OR `loaded_state.players[1].player_id == user_id`.
         6.  If the user is not a participant, return a `403 Forbidden` error. They are authenticated, but not *authorized* to see this specific battle.
         7.  If they are a participant, construct and return the detailed response, showing their own private info (full team) and the opponent's public info.
+
+

@@ -237,6 +237,65 @@ fn generate_replacement_action(
     Err("No non-fainted Pokemon available to switch to".to_string())
 }
 
+/// Validates a player action for detailed correctness
+/// Checks move PP, bounds, switch targets, etc.
+pub fn validate_player_action(
+    battle_state: &BattleState,
+    player_index: usize,
+    action: &PlayerAction,
+) -> Result<(), String> {
+    if player_index >= 2 {
+        return Err("Invalid player index".to_string());
+    }
+
+    let player = &battle_state.players[player_index];
+    
+    match action {
+        PlayerAction::UseMove { move_index } => {
+            // Check if player has an active Pokemon
+            let pokemon = player.active_pokemon()
+                .ok_or_else(|| "No active Pokemon".to_string())?;
+            
+            // Check if move index is valid
+            if *move_index >= pokemon.moves.len() {
+                return Err("Invalid move index".to_string());
+            }
+
+            // Check if move exists and has PP
+            if let Some(move_instance) = &pokemon.moves[*move_index] {
+                if move_instance.pp == 0 {
+                    return Err("Move has no PP remaining".to_string());
+                }
+            } else {
+                return Err("No move in that slot".to_string());
+            }
+        }
+        PlayerAction::SwitchPokemon { team_index } => {
+            // Check if target Pokemon exists
+            if *team_index >= player.team.len() {
+                return Err("Invalid Pokemon index".to_string());
+            }
+
+            // Check if target Pokemon is not fainted and not already active
+            if let Some(target_pokemon) = &player.team[*team_index] {
+                if target_pokemon.is_fainted() {
+                    return Err("Cannot switch to fainted Pokemon".to_string());
+                }
+                if *team_index == player.active_pokemon_index {
+                    return Err("Pokemon is already active".to_string());
+                }
+            } else {
+                return Err("No Pokemon in that team slot".to_string());
+            }
+        }
+        PlayerAction::Forfeit => {
+            // Forfeit is always valid if the game accepts actions
+        }
+    }
+
+    Ok(())
+}
+
 /// Sets a player's action in the battle state
 /// This would typically be called by the API layer when a player submits their action
 pub fn set_player_action(
@@ -277,21 +336,13 @@ pub fn set_player_action(
             | GameState::WaitingForPlayer2Replacement
             | GameState::WaitingForBothReplacements
     ) {
-        if let PlayerAction::SwitchPokemon { team_index } = &action {
-            let player = &battle_state.players[player_index];
-            if let Some(pokemon) = &player.team[*team_index] {
-                if pokemon.is_fainted() {
-                    return Err(
-                        "Cannot switch to fainted Pokemon during forced replacement".to_string()
-                    );
-                }
-            } else {
-                return Err("Cannot switch to empty team slot".to_string());
-            }
-        } else {
+        if !matches!(action, PlayerAction::SwitchPokemon { .. }) {
             return Err("Only switch actions are allowed during forced replacement".to_string());
         }
     }
+
+    // Perform detailed action validation
+    validate_player_action(battle_state, player_index, &action)?;
 
     battle_state.action_queue[player_index] = Some(action);
     Ok(())

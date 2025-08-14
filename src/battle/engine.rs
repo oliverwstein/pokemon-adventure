@@ -144,7 +144,7 @@ pub fn collect_player_actions(
                     })
                     .unwrap_or(0); // As a robust fallback, default to index 0.
                                 // This handles cases like Bide, where the move might not be in the current set.
-                                // The turn_orchestrator's final override will ensure the correct move is used anyway.
+                                // The engine's final override will ensure the correct move is used anyway.
 
                 // Queue the action with the correct move index.
                 battle_state.action_queue[player_index] = Some(PlayerAction::UseMove { move_index });

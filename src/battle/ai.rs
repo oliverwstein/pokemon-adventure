@@ -5,7 +5,7 @@ use rand::seq::IndexedRandom;
 
 use crate::battle::state::BattleState;
 use crate::battle::engine::get_valid_actions;
-use crate::move_data::{get_move_data, MoveCategory};
+use crate::move_data::{MoveCategory, MoveData};
 use crate::player::{PlayerAction};
 
 /// A trait for any system that can decide on a battle action.
@@ -58,7 +58,7 @@ impl ScoringAI {
         };
 
         let move_instance = attacker.moves[move_index].as_ref().unwrap();
-        let move_data = get_move_data(move_instance.move_).unwrap();
+        let move_data = MoveData::get_move_data(move_instance.move_).unwrap();
 
         // --- Step 1: Calculate the Core Damage Score ---
         // This score is based on the move's potential to deal direct damage.

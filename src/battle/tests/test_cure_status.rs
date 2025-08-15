@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_cure_status_user_paralysis() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -120,13 +113,6 @@ mod tests {
 
     #[test]
     fn test_cure_status_target_sleep() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -191,13 +177,6 @@ mod tests {
 
     #[test]
     fn test_cure_status_no_matching_condition() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -271,13 +250,6 @@ mod tests {
 
     #[test]
     fn test_cure_status_no_status_condition() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -345,13 +317,6 @@ mod tests {
 
     #[test]
     fn test_cure_status_poison() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Create a custom test to verify poison curing
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),

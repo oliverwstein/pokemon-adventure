@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_recovers_hp() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -108,13 +101,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_no_overheal() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -194,13 +180,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_does_not_heal_fainted() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),

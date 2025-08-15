@@ -3,23 +3,10 @@ mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
     use crate::battle::engine::{BattleAction, execute_battle_action};
-    use crate::move_data::initialize_move_data;
     use crate::moves::Move;
     use crate::player::BattlePlayer;
-    use crate::pokemon::{PokemonInst, StatusCondition, initialize_species_data};
+    use crate::pokemon::{PokemonInst, StatusCondition};
     use crate::species::Species;
-    use std::path::Path;
-    use std::sync::Once;
-
-    static INIT: Once = Once::new();
-
-    fn init_test_data() {
-        INIT.call_once(|| {
-            let data_path = Path::new("data");
-            initialize_move_data(data_path).expect("Failed to initialize move data");
-            initialize_species_data(data_path).expect("Failed to initialize species data");
-        });
-    }
 
     fn create_test_battle_state(
         attacker_status: Option<StatusCondition>,
@@ -66,7 +53,6 @@ mod tests {
 
     #[test]
     fn test_sleep_prevents_action() {
-        init_test_data();
 
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Sleep(2)), vec![]);
 
@@ -99,8 +85,6 @@ mod tests {
 
     #[test]
     fn test_paralysis_sometimes_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Paralysis), vec![]);
 
         let mut bus = EventBus::new();
@@ -132,8 +116,6 @@ mod tests {
 
     #[test]
     fn test_paralysis_sometimes_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Paralysis), vec![]);
 
         let mut bus = EventBus::new();
@@ -161,8 +143,6 @@ mod tests {
 
     #[test]
     fn test_confusion_sometimes_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Confused { turns_remaining: 2 }],
@@ -248,8 +228,6 @@ mod tests {
 
     #[test]
     fn test_confusion_sometimes_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Confused { turns_remaining: 2 }],
@@ -280,8 +258,6 @@ mod tests {
 
     #[test]
     fn test_exhausted_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Exhausted { turns_remaining: 1 }],
@@ -316,8 +292,6 @@ mod tests {
 
     #[test]
     fn test_multiple_conditions_priority() {
-        init_test_data();
-
         // Test that status conditions (sleep) take priority over active conditions (flinch)
         let mut battle_state = create_test_battle_state(
             Some(StatusCondition::Sleep(2)),
@@ -355,8 +329,6 @@ mod tests {
 
     #[test]
     fn test_disabled_move_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Disabled {
@@ -395,8 +367,6 @@ mod tests {
 
     #[test]
     fn test_disabled_move_allows_different_move() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Disabled {
@@ -436,8 +406,6 @@ mod tests {
 
     #[test]
     fn test_no_preventing_conditions_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(None, vec![]);
 
         let mut bus = EventBus::new();

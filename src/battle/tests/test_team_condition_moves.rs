@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_reflect_move_applies_reflect_condition() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -80,13 +73,6 @@ mod tests {
 
     #[test]
     fn test_light_screen_move_applies_light_screen_condition() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -131,13 +117,6 @@ mod tests {
 
     #[test]
     fn test_mist_move_applies_mist_condition() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -180,13 +159,7 @@ mod tests {
     #[test]
     fn test_team_conditions_work_immediately() {
         // Test that team conditions become active immediately after being applied
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Player 1 sets up Mist, Player 2 tries to use Growl (stat reduction)
+         // Player 1 sets up Mist, Player 2 tries to use Growl (stat reduction)
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -224,13 +197,7 @@ mod tests {
     #[test]
     fn test_using_team_condition_when_already_active() {
         // Test behavior when using a move to set up a condition that's already active
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Alakazam, vec![Move::Reflect])],

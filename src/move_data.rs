@@ -7,52 +7,6 @@ use std::collections::HashMap;
 // Include the compiled move data
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
-/// Initialize the global move data (no-op since data is compiled in)
-pub fn initialize_move_data(
-    _data_path: &std::path::Path,
-) -> Result<(), Box<dyn std::error::Error>> {
-    // Data is now compiled in, so this is a no-op
-    Ok(())
-}
-
-/// Get move data for a specific move from the compiled data
-pub fn get_move_data(move_: Move) -> Option<MoveData> {
-    // Handle special hardcoded moves first
-    match move_ {
-        Move::HittingItself => {
-            Some(MoveData {
-                name: "Hit Itself".to_string(),
-                move_type: PokemonType::Typeless,
-                power: Some(40),
-                category: MoveCategory::Physical,
-                accuracy: None, // Always hits
-                max_pp: 0,      // Not a real move, no PP
-                effects: vec![],
-            })
-        }
-        Move::Struggle => {
-            Some(MoveData {
-                name: "Struggle".to_string(),
-                move_type: PokemonType::Typeless,
-                power: Some(50),
-                category: MoveCategory::Physical,
-                accuracy: Some(90),
-                max_pp: 0,                             // Not a real move, no PP
-                effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
-            })
-        }
-        _ => {
-            // For regular moves, get from compiled data
-            get_compiled_move_data().get(&move_).cloned()
-        }
-    }
-}
-
-/// Get max PP for a specific move
-pub fn get_move_max_pp(move_: Move) -> u8 {
-    get_move_data(move_).map(|data| data.max_pp).unwrap_or(30) // Default fallback
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MoveCategory {
     Physical,
@@ -205,7 +159,6 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
         rng: &mut crate::battle::state::TurnRng,
     ) -> EffectResult {
-        use crate::battle::commands::{BattleCommand, PlayerTarget};
 
         let defender_has_substitute = state.players[context.defender_index]
             .active_pokemon_conditions
@@ -937,7 +890,7 @@ impl MoveEffect {
     fn apply_haze_effect(
         &self,
         chance: u8,
-        context: &EffectContext,
+        _context: &EffectContext,
         state: &crate::battle::state::BattleState,
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
@@ -1100,7 +1053,6 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
-        use crate::battle::commands::{BattleCommand, PlayerTarget};
 
         let mut commands = Vec::new();
 
@@ -1114,7 +1066,6 @@ impl MoveEffect {
                 commands.extend(self.apply_recoil_effect(
                     *percentage,
                     context,
-                    state,
                     damage_dealt,
                 ));
             }
@@ -1134,7 +1085,6 @@ impl MoveEffect {
         &self,
         percentage: u8,
         context: &EffectContext,
-        state: &crate::battle::state::BattleState,
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
@@ -1203,7 +1153,6 @@ impl MoveEffect {
         context: &EffectContext,
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
-        use crate::battle::commands::{BattleCommand, PlayerTarget};
 
         let mut commands = Vec::new();
 
@@ -1657,7 +1606,6 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-            let pokemon_species = attacker_pokemon.species;
             let current_hp = attacker_pokemon.current_hp();
 
             let commands = vec![BattleCommand::DealDamage {
@@ -1806,7 +1754,7 @@ impl MoveEffect {
         context: &EffectContext,
         state: &crate::battle::state::BattleState,
     ) -> EffectResult {
-        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::commands::{BattleCommand};
         use crate::battle::state::{ActionFailureReason, BattleEvent};
         use crate::battle::engine::BattleAction;
 
@@ -1847,7 +1795,7 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
         rng: &mut crate::battle::state::TurnRng,
     ) -> EffectResult {
-        use crate::battle::commands::{BattleCommand, PlayerTarget};
+        use crate::battle::commands::{BattleCommand};
         use crate::battle::state::BattleEvent;
         use crate::battle::engine::BattleAction;
         use crate::moves::Move;
@@ -2123,7 +2071,7 @@ pub struct MoveData {
 }
 
 impl MoveData {
-    /// Get compiled move data (replaces load_all)
+    #[allow(dead_code)]
     pub fn load_all(
         _data_path: &std::path::Path,
     ) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
@@ -2158,10 +2106,42 @@ impl MoveData {
         Ok(move_map)
     }
 
-    /// Get move data for a specific move
-    pub fn get_move_data(move_: Move, move_map: &HashMap<Move, MoveData>) -> Option<&MoveData> {
-        move_map.get(&move_)
+    /// Get move data for a specific move from the compiled data
+    pub fn get_move_data(move_: Move) -> Option<MoveData> {
+        // Handle special hardcoded moves first
+        match move_ {
+            Move::HittingItself => {
+                Some(MoveData {
+                    name: "Hit Itself".to_string(),
+                    move_type: PokemonType::Typeless,
+                    power: Some(40),
+                    category: MoveCategory::Physical,
+                    accuracy: None, // Always hits
+                    max_pp: 0,      // Not a real move, no PP
+                    effects: vec![],
+                })
+            }
+            Move::Struggle => {
+                Some(MoveData {
+                    name: "Struggle".to_string(),
+                    move_type: PokemonType::Typeless,
+                    power: Some(50),
+                    category: MoveCategory::Physical,
+                    accuracy: Some(90),
+                    max_pp: 0,                             // Not a real move, no PP
+                    effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
+                })
+            }
+            _ => {
+                // For regular moves, get from compiled data
+                get_compiled_move_data().get(&move_).cloned()
+            }
+        }
     }
+
+    pub fn get_move_max_pp(move_: Move) -> u8 {
+        Self::get_move_data(move_).map(|data| data.max_pp).unwrap_or(30) // Default fallback
+}
 }
 
 // Helper function to parse Move enum from string

@@ -6,14 +6,6 @@ mod tests {
     use crate::player::{BattlePlayer};
     use crate::pokemon::PokemonInst;
     use crate::species::Species;
-    use std::path::Path;
-
-    fn init_test_data() {
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-    }
 
     fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
         PokemonInst::new_for_test(
@@ -44,8 +36,6 @@ mod tests {
 
     #[test]
     fn test_critical_hit_effect() {
-        init_test_data();
-
         // Create Pokemon with a move that has increased crit ratio
         let attacker = create_test_pokemon_with_hp(Species::Scyther, vec![Move::Slash], 100);
         let defender = create_test_pokemon_with_hp(Species::Pidgey, vec![Move::Tackle], 100);
@@ -96,8 +86,6 @@ mod tests {
 
     #[test]
     fn test_recoil_effect() {
-        init_test_data();
-
         // Create attacker with decent HP and a recoil move
         let attacker = create_test_pokemon_with_hp(Species::Tauros, vec![Move::DoubleEdge], 100);
         let defender = create_test_pokemon_with_hp(Species::Pidgey, vec![Move::Tackle], 50);
@@ -166,8 +154,6 @@ mod tests {
 
     #[test]
     fn test_drain_effect() {
-        init_test_data();
-
         // --- Setup ---
         // Create attacker with reduced HP and a drain move
         let mut attacker =
@@ -250,8 +236,6 @@ mod tests {
 
     #[test]
     fn test_no_effects_without_damage() {
-        init_test_data();
-
         // Test that recoil/drain don't trigger when no damage is dealt (e.g., immune types)
         let attacker = create_test_pokemon_with_hp(Species::Machamp, vec![Move::DoubleEdge], 100);
         let defender = create_test_pokemon_with_hp(Species::Gastly, vec![Move::Tackle], 100); // Ghost immune to Normal

@@ -1,12 +1,12 @@
 use crate::battle::conditions::PokemonCondition;
-use crate::move_data::{MoveCategory, get_move_data};
+use crate::move_data::{MoveCategory, MoveData};
 use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
     let base_attack = if let Some(transform_condition) = player
@@ -61,7 +61,7 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 
 /// Calculate effective defense stat including stat stages, conditions, and other modifiers
 pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
     let base_defense = if let Some(transform_condition) = player
@@ -175,7 +175,7 @@ pub fn move_is_critical_hit(
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> bool {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Status moves cannot be critical hits (with very rare exceptions)
     if matches!(move_data.category, MoveCategory::Status) {
@@ -226,7 +226,7 @@ pub fn move_hits(
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> bool {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // If move has no accuracy value, it never misses (like Swift)
     let Some(base_accuracy) = move_data.accuracy else {
@@ -317,7 +317,7 @@ pub fn calculate_attack_damage(
     rng: &mut crate::battle::state::TurnRng,
 ) -> u16 {
     let move_data =
-        get_move_data(move_used).expect("Move data should exist for damage calculation");
+        MoveData::get_move_data(move_used).expect("Move data should exist for damage calculation");
 
     // 1. Get Power from move data. If no power, no damage.
     let Some(power) = move_data.power else {
@@ -382,7 +382,7 @@ pub fn calculate_special_attack_damage(
     defender: &PokemonInst,
 ) -> Option<u16> {
     let move_data =
-        get_move_data(move_used).expect("Move data must exist for special damage calculation");
+        MoveData::get_move_data(move_used).expect("Move data must exist for special damage calculation");
 
     // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
     // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
@@ -484,9 +484,7 @@ mod tests {
     #[test]
     fn test_effective_attack_burn() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
             0,
@@ -538,9 +536,7 @@ mod tests {
     #[test]
     fn test_critical_hit_calculation() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         let pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
@@ -615,9 +611,7 @@ mod tests {
     #[test]
     fn test_combined_status_effects() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         // Test Pokemon with burn status
         let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(

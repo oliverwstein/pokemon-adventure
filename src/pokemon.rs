@@ -1,5 +1,4 @@
 use crate::battle::conditions::PokemonCondition;
-use crate::move_data::get_move_max_pp;
 use crate::moves::Move;
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
@@ -8,13 +7,7 @@ use std::fs;
 use std::path::Path;
 
 // Include the compiled species data
-use crate::move_data::get_compiled_species_data;
-
-/// Initialize the global species data (no-op since data is compiled in)
-pub fn initialize_species_data(_data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    // Data is now compiled in, so this is a no-op
-    Ok(())
-}
+use crate::move_data::{get_compiled_species_data, MoveData};
 
 /// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
@@ -249,10 +242,12 @@ pub struct PokemonSpecies {
 }
 
 impl Learnset {
+    #[allow(dead_code)]
     pub fn learns_at_level(&self, level: u8) -> Option<&Vec<Move>> {
         self.level_up.get(&level)
     }
 
+    #[allow(dead_code)]
     pub fn can_learn_move(&self, move_: Move) -> bool {
         // Check if move is in signature, level-up, or can_learn lists
         if self.signature == Some(move_) {
@@ -270,76 +265,6 @@ impl Learnset {
 }
 
 impl PokemonSpecies {
-    /// Load a Pokemon species from its RON file by species enum
-    pub fn load_by_species(
-        species: Species,
-        data_path: &Path,
-    ) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        // Find the RON file based on the species enum
-        let species_filename = format!("{:03}-{}", species.pokedex_number(), species.filename());
-        let ron_file = pokemon_dir.join(format!("{}.ron", species_filename));
-
-        if !ron_file.exists() {
-            return Err(format!("Pokemon file not found: {}", ron_file.display()).into());
-        }
-
-        let content = fs::read_to_string(&ron_file)?;
-        let species_data: PokemonSpecies = ron::from_str(&content)?;
-        Ok(species_data)
-    }
-
-    /// Load a Pokemon species from its RON file by name (legacy method)
-    pub fn load_by_name(
-        name: &str,
-        data_path: &Path,
-    ) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
-        // Find the RON file that matches this Pokemon name
-        let pokemon_dir = data_path.join("pokemon");
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        // Read all .ron files in the pokemon directory
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                // Check if this file matches our Pokemon name
-                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Extract name from filename format: "001-bulbasaur.ron" -> "bulbasaur"
-                    if let Some(pokemon_name) = filename.split('-').nth(1) {
-                        if pokemon_name.eq_ignore_ascii_case(name) {
-                            // Found matching file, load it
-                            let content = fs::read_to_string(&path)?;
-                            let species: PokemonSpecies = ron::from_str(&content)?;
-                            return Ok(species);
-                        }
-                    }
-                }
-            }
-        }
-
-        Err(format!("Pokemon '{}' not found in data directory", name).into())
-    }
-
     /// Load all Pokemon species from RON files in the data directory
     pub fn load_all(data_path: &Path) -> Result<Vec<PokemonSpecies>, Box<dyn std::error::Error>> {
         let pokemon_dir = data_path.join("pokemon");
@@ -415,14 +340,14 @@ impl PokemonSpecies {
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
-        let max_pp = get_move_max_pp(move_);
+        let max_pp = MoveData::get_move_max_pp(move_);
 
         MoveInstance { move_, pp: max_pp }
     }
 
     /// Get the max PP for this move
     pub fn max_pp(&self) -> u8 {
-        get_move_max_pp(self.move_)
+        MoveData::get_move_max_pp(self.move_)
     }
 
     /// Use the move (decrease PP)
@@ -436,6 +361,7 @@ impl MoveInstance {
     }
 
     /// Restore PP
+    #[allow(dead_code)]
     pub fn restore_pp(&mut self, amount: u8) {
         let max_pp = self.max_pp();
         self.pp = (self.pp + amount).min(max_pp);
@@ -451,7 +377,7 @@ impl PokemonInst {
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
     ) -> Self {
-        Self::new_with_hp(species, species_data, level, ivs, moves, None)
+        Self::new_with_hp(species, species_data, level, ivs, moves, 999)
     }
 
     /// Create a new Pokemon instance with a specific starting HP.
@@ -461,7 +387,7 @@ impl PokemonInst {
         level: u8,
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
-        curr_hp: Option<u16>,
+        curr_hp:u16,
     ) -> Self {
         // Use default IVs (all 0) if not provided.
         // In a full implementation, you might want random IVs here.
@@ -497,12 +423,13 @@ impl PokemonInst {
         };
 
         // Set HP using the validated setter. If no HP is provided, default to max HP.
-        pokemon.set_hp_to_max();
+        pokemon.set_hp(curr_hp);
         pokemon
     }
 
     /// Create a Pokemon instance for testing, maintaining the old array-based API.
     /// This bypasses stat calculation and allows direct control over all values.
+    #[allow(dead_code)]
     pub fn new_for_test(
         species: Species,
         level: u8,
@@ -650,11 +577,13 @@ impl PokemonInst {
     }
 
     /// Set current HP to its maximum value.
+    #[allow(dead_code)]
     pub fn set_hp_to_max(&mut self) {
         self.curr_hp = self.max_hp();
     }
 
     /// Restore HP to full and remove any status conditions.
+    #[allow(dead_code)]
     pub fn restore_fully(&mut self) {
         self.set_hp_to_max();
         self.status = None;
@@ -682,6 +611,7 @@ impl PokemonInst {
     }
 
     /// Revive a fainted Pokemon with a specified HP amount.
+    #[allow(dead_code)]
     pub fn revive(&mut self, hp_amount: u16) {
         if self.is_fainted() {
             self.status = None; // Remove faint status

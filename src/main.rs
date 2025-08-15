@@ -6,25 +6,12 @@ mod pokemon;
 mod prefab_teams;
 mod species;
 
-use move_data::initialize_move_data;
 use moves::Move;
 use player::BattlePlayer;
-use pokemon::{PokemonInst, PokemonSpecies, get_species_data, initialize_species_data};
+use pokemon::{PokemonInst, PokemonSpecies, get_species_data};
 use species::Species;
 
 fn main() {
-    // Initialize global move data (no-op since data is compiled in)
-    if let Err(e) = initialize_move_data(&std::path::Path::new(".")) {
-        println!("Error initializing move data: {}", e);
-        return;
-    }
-
-    // Initialize global species data (no-op since data is compiled in)
-    if let Err(e) = initialize_species_data(&std::path::Path::new(".")) {
-        println!("Error initializing species data: {}", e);
-        return;
-    }
-
     // Example 1: Load a single Pokemon using Species enum
     if let Some(pikachu) = get_species_data(Species::Pikachu) {
         println!("Loaded Pikachu:");

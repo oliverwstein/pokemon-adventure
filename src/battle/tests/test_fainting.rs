@@ -122,9 +122,7 @@ mod tests {
     #[test]
     fn test_battle_with_fainting() {
         // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         // Create Pokemon with low HP to ensure fainting
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
@@ -184,9 +182,7 @@ mod tests {
     #[test]
     fn test_skip_actions_against_fainted_pokemon() {
         // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         // Create Pokemon where one is already fainted
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
@@ -236,9 +232,7 @@ mod tests {
     #[test]
     fn test_fainted_pokemon_cannot_act() {
         // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         // Create Pokemon where the first one is fainted
         let mut pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20);
@@ -310,12 +304,6 @@ mod tests {
 
     #[test]
     fn test_forced_pokemon_replacement_after_fainting() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
         // Create a player with multiple Pokemon, where active Pokemon will faint
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20); // Will faint
         let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100); // Replacement
@@ -433,13 +421,7 @@ mod tests {
         // not what happens when a pokemon faints.
 
         // Initialize move data and species data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Create player with multiple Pokemon, one fainted
+         // Create player with multiple Pokemon, one fainted
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
         let mut pokemon2 =
             create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 20);

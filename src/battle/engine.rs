@@ -6,7 +6,7 @@ use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
 };
 use crate::battle::stats::effective_speed;
-use crate::move_data::get_move_data;
+use crate::move_data::MoveData;
 use crate::moves::Move;
 use crate::player::PlayerAction;
 use std::collections::VecDeque;
@@ -623,7 +623,7 @@ pub fn execute_battle_action(
             if let Some(defender_pokemon) =
                 defender_player.team[defender_player.active_pokemon_index].as_ref()
             {
-                let move_data = get_move_data(move_used)
+                let move_data = MoveData::get_move_data(move_used)
                     .expect("Move data should exist for the executing move");
 
                 if defender_pokemon.is_fainted() {
@@ -887,7 +887,7 @@ fn check_action_preventing_conditions(
     }
 
     // Check for Nightmare effect - move fails unless target is asleep
-    if let Some(move_data) = crate::move_data::get_move_data(move_used) {
+    if let Some(move_data) = MoveData::get_move_data(move_used) {
         for effect in &move_data.effects {
             if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
                 // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
@@ -1022,7 +1022,7 @@ fn calculate_action_priority(
                 .as_ref()
                 .expect("Move should exist");
 
-            let move_data = get_move_data(move_instance.move_).expect("Move data should exist");
+            let move_data = MoveData::get_move_data(move_instance.move_).expect("Move data should exist");
 
             let speed = effective_speed(active_pokemon, player);
 

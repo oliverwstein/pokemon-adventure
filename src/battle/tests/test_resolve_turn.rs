@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleState, GameState, TurnRng, BattleEvent};
-    use crate::battle::engine::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -48,12 +48,6 @@ mod tests {
 
     #[test]
     fn test_resolve_turn_basic_speed_order() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
         
         // Create a faster Pikachu and a slower Charmander to test speed-based turn order.
         let pikachu = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]); // Faster

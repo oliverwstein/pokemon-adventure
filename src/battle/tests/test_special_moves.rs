@@ -1,13 +1,12 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::conditions::PokemonCondition;
-    use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
+    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
-    use std::collections::HashMap;
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
         let mut pokemon_moves = [const { None }; 4];
@@ -36,13 +35,6 @@ mod tests {
 
     #[test]
     fn test_two_turn_move_charging() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Test ChargeUp moves like Solar Beam
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -242,7 +234,9 @@ mod tests {
         collect_player_actions(&mut battle_state).expect("Should collect actions");
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-
+        for event in event_bus.events() {
+            println!("  {:?}", event);
+        }
         // Player 1 should now have Underground condition
         assert!(battle_state.players[0].has_condition(&PokemonCondition::Underground));
         assert_eq!(battle_state.players[0].last_move, Some(Move::Dig));
@@ -250,13 +244,6 @@ mod tests {
 
     #[test]
     fn test_rampage_move() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Test Rampaging moves like Thrash
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -335,13 +322,6 @@ mod tests {
 
     #[test]
     fn test_rampage_ends_with_confusion() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -417,13 +397,6 @@ mod tests {
 
     #[test]
     fn test_mirror_move_success() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Test Mirror Move copying opponent's last move in a single turn
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -586,15 +559,6 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        let initial_hp_p1 = battle_state.players[0]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
-        let initial_hp_p2 = battle_state.players[1]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
-
         // Player 1 uses Explosion
         collect_player_actions(&mut battle_state).expect("Should collect actions");
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50]);
@@ -608,11 +572,6 @@ mod tests {
                 .is_fainted()
         );
 
-        // Player 2 should have taken damage (if explosion hit)
-        let final_hp_p2 = battle_state.players[1]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
         // Note: Explosion might miss, so we just check that the battle proceeded without error
 
         // Should have PokemonFainted event for Player 1
@@ -640,13 +599,6 @@ mod tests {
 
     #[test]
     fn test_teleported_condition_causes_moves_to_miss() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -698,12 +650,6 @@ mod tests {
             "WaterGun should miss against Teleported Pokemon"
         );
 
-        // Player 2 should not take any damage from WaterGun
-        let initial_hp = battle_state.players[1]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
-
         // Check that no damage was dealt to Abra from WaterGun
         let watergun_damage_events: Vec<_> = event_bus
             .events()
@@ -729,13 +675,6 @@ mod tests {
 
     #[test]
     fn test_transformed_condition_uses_target_stats_and_types() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Ditto vs Charizard - Ditto transforms into Charizard
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -787,13 +726,6 @@ mod tests {
 
     #[test]
     fn test_converted_condition_overrides_transform() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -815,7 +747,7 @@ mod tests {
             pokemon_type: crate::pokemon::PokemonType::Electric,
         });
 
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+        let battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Test that Converted condition overrides Transformed
         let ditto_types = battle_state.players[0]
@@ -836,13 +768,6 @@ mod tests {
 
     #[test]
     fn test_substitute_blocks_damage() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -893,13 +818,6 @@ mod tests {
 
     #[test]
     fn test_substitute_blocks_status_effects() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -950,13 +868,6 @@ mod tests {
 
     #[test]
     fn test_substitute_blocks_stat_decreases() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1003,13 +914,6 @@ mod tests {
 
     #[test]
     fn test_substitute_blocks_active_conditions() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1053,13 +957,6 @@ mod tests {
 
     #[test]
     fn test_countering_condition_immediate_retaliation() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1149,13 +1046,6 @@ mod tests {
 
     #[test]
     fn test_counter_survival_requirement() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1219,13 +1109,6 @@ mod tests {
 
     #[test]
     fn test_enraged_condition_attack_increase() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1291,13 +1174,6 @@ mod tests {
 
     #[test]
     fn test_enraged_condition_removed_when_using_non_rage_moves() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1356,13 +1232,6 @@ mod tests {
 
     #[test]
     fn test_biding_condition_forcing_behavior() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1443,13 +1312,6 @@ mod tests {
 
     #[test]
     fn test_bide_execution_deals_double_stored_damage() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -1469,10 +1331,6 @@ mod tests {
         });
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        let initial_hp_p2 = battle_state.players[1]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
 
         // Player 1 uses Bide (final turn), Player 2 attacks
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Bide

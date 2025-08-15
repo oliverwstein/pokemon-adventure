@@ -58,13 +58,7 @@ mod tests {
     fn test_probabilistic_multi_hit_logic() {
         // SETUP
         // Initialize global data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // We assume Fury Swipes is defined in its .ron file as:
+         // We assume Fury Swipes is defined in its .ron file as:
         // MultiHit(guaranteed_hits: 2, continuation_chance: 50)
         let attacker = create_test_pokemon(Species::Meowth, vec![Move::FurySwipes], 100, 80);
         // Defender needs enough HP to survive a few hits
@@ -159,13 +153,7 @@ mod tests {
         // preventing subsequent guaranteed hits from executing.
 
         // SETUP
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Attacker uses Fury Swipes (assume 2 guaranteed hits).
+         // Attacker uses Fury Swipes (assume 2 guaranteed hits).
         let attacker = create_test_pokemon(Species::Meowth, vec![Move::FurySwipes], 100, 80);
         // Defender has VERY low HP to guarantee it faints on the first hit.
         let defender = create_test_pokemon(Species::Pidgey, vec![Move::Tackle], 10, 80); // <-- CRITICAL CHANGE HERE

@@ -2,22 +2,9 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState, TurnRng};
-    use crate::move_data::initialize_move_data;
     use crate::player::BattlePlayer;
-    use crate::pokemon::{PokemonInst, StatusCondition, get_species_data, initialize_species_data};
+    use crate::pokemon::{PokemonInst, StatusCondition, get_species_data};
     use crate::species::Species;
-    use std::path::Path;
-    use std::sync::Once;
-
-    static INIT: Once = Once::new();
-
-    fn init_test_data() {
-        INIT.call_once(|| {
-            let data_path = Path::new("data");
-            initialize_move_data(data_path).expect("Failed to initialize move data");
-            initialize_species_data(data_path).expect("Failed to initialize species data");
-        });
-    }
 
     fn create_test_battle_state() -> BattleState {
         let pikachu_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");
@@ -41,8 +28,6 @@ mod tests {
 
     #[test]
     fn test_poison_status_damage() {
-        init_test_data();
-
         // Create a test Pokemon with poison status
         let species_data =
             get_species_data(Species::Charmander).expect("Failed to load Charmander data");
@@ -80,8 +65,6 @@ mod tests {
 
     #[test]
     fn test_badly_poisoned_status_damage() {
-        init_test_data();
-
         // --- Setup ---
         let species_data =
             get_species_data(Species::Bulbasaur).expect("Failed to load Bulbasaur data");
@@ -125,8 +108,6 @@ mod tests {
 
     #[test]
     fn test_burn_status_damage() {
-        init_test_data();
-
         // Create a test Pokemon with burn status
         let species_data =
             get_species_data(Species::Charmander).expect("Failed to load Charmander data");
@@ -159,8 +140,6 @@ mod tests {
 
     #[test]
     fn test_sleep_status_countdown() {
-        init_test_data();
-
         // Create a test Pokemon with sleep status
         let species_data = get_species_data(Species::Snorlax).expect("Failed to load Snorlax data");
         let mut pokemon = PokemonInst::new(Species::Snorlax, &species_data, 50, None, None);
@@ -198,8 +177,6 @@ mod tests {
 
     #[test]
     fn test_active_condition_timers() {
-        init_test_data();
-
         let species_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");
         let pokemon = PokemonInst::new(Species::Pikachu, &species_data, 25, None, None);
         let mut player = BattlePlayer::new("test".to_string(), "Test".to_string(), vec![pokemon]);
@@ -292,8 +269,6 @@ mod tests {
 
     #[test]
     fn test_status_damage_causes_fainting() {
-        init_test_data();
-
         // Create a low HP Pokemon
         let species_data =
             get_species_data(Species::Magikarp).expect("Failed to load Magikarp data");
@@ -324,8 +299,6 @@ mod tests {
 
     #[test]
     fn test_frozen_defrost_25_percent_chance() {
-        init_test_data();
-
         // Test successful defrost when Pokemon tries to act
         use crate::battle::engine::{ActionStack, BattleAction};
         use crate::moves::Move;
@@ -373,8 +346,6 @@ mod tests {
 
     #[test]
     fn test_frozen_no_defrost_75_percent_chance() {
-        init_test_data();
-
         // Test failed defrost when Pokemon tries to act
         use crate::battle::engine::{ActionStack, BattleAction};
         use crate::moves::Move;

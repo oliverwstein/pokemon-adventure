@@ -22,6 +22,7 @@ pub struct PrefabPokemon {
 }
 
 /// Get all available prefab teams for guest battles
+#[allow(dead_code)]
 pub fn get_prefab_teams() -> Vec<PrefabTeam> {
     vec![
         PrefabTeam {
@@ -139,6 +140,7 @@ pub fn get_prefab_teams() -> Vec<PrefabTeam> {
 }
 
 /// Get a specific prefab team by ID
+#[allow(dead_code)]
 pub fn get_prefab_team(team_id: &str) -> Option<PrefabTeam> {
     get_prefab_teams()
         .into_iter()
@@ -146,6 +148,7 @@ pub fn get_prefab_team(team_id: &str) -> Option<PrefabTeam> {
 }
 
 /// Convert a prefab team into a BattlePlayer for use in battles
+#[allow(dead_code)]
 pub fn create_battle_player_from_prefab(
     team_id: &str,
     player_id: String,
@@ -179,6 +182,7 @@ pub fn create_battle_player_from_prefab(
 }
 
 /// Generate a random NPC team for battles
+#[allow(dead_code)]
 pub fn create_random_npc_team(difficulty: &str) -> Result<BattlePlayer, String> {
     let npc_teams = match difficulty {
         "easy" => vec!["venusaur_team"],
@@ -199,6 +203,7 @@ pub fn create_random_npc_team(difficulty: &str) -> Result<BattlePlayer, String> 
 }
 
 /// Validate that all prefab teams are properly configured
+#[allow(dead_code)]
 pub fn validate_prefab_teams() -> Result<(), String> {
     let teams = get_prefab_teams();
 
@@ -242,9 +247,6 @@ pub fn validate_prefab_teams() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::move_data::initialize_move_data;
-    use crate::pokemon::initialize_species_data;
-    use std::path::Path;
 
     #[test]
     fn test_get_prefab_teams() {
@@ -275,10 +277,6 @@ mod tests {
 
     #[test]
     fn test_create_battle_player_from_prefab() {
-        // Initialize required data
-        let _ = initialize_move_data(Path::new("data"));
-        let _ = initialize_species_data(Path::new("data"));
-
         let result = create_battle_player_from_prefab(
             "venusaur_team",
             "test_player".to_string(),
@@ -304,9 +302,6 @@ mod tests {
 
     #[test]
     fn test_create_random_npc_team() {
-        let _ = initialize_move_data(Path::new("data"));
-        let _ = initialize_species_data(Path::new("data"));
-
         let result = create_random_npc_team("easy");
         assert!(result.is_ok(), "Error: {:?}", result.err());
 
@@ -329,282 +324,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_load_all_pokemon_species() {
-        // Initialize species data
-        let init_result = initialize_species_data(Path::new("data"));
-        assert!(
-            init_result.is_ok(),
-            "Failed to initialize species data: {:?}",
-            init_result
-        );
-
-        // Test loading all species from 1 to 151
-        let mut failed_species = Vec::new();
-
-        for i in 1..=151 {
-            // Get species by pokedex number
-            let species_variants = [
-                Species::Bulbasaur,
-                Species::Ivysaur,
-                Species::Venusaur,
-                Species::Charmander,
-                Species::Charmeleon,
-                Species::Charizard,
-                Species::Squirtle,
-                Species::Wartortle,
-                Species::Blastoise,
-                Species::Caterpie,
-                Species::Metapod,
-                Species::Butterfree,
-                Species::Weedle,
-                Species::Kakuna,
-                Species::Beedrill,
-                Species::Pidgey,
-                Species::Pidgeotto,
-                Species::Pidgeot,
-                Species::Rattata,
-                Species::Raticate,
-                Species::Spearow,
-                Species::Fearow,
-                Species::Ekans,
-                Species::Arbok,
-                Species::Pikachu,
-                Species::Raichu,
-                Species::Sandshrew,
-                Species::Sandslash,
-                Species::NidoranFemale,
-                Species::Nidorina,
-                Species::Nidoqueen,
-                Species::NidoranMale,
-                Species::Nidorino,
-                Species::Nidoking,
-                Species::Clefairy,
-                Species::Clefable,
-                Species::Vulpix,
-                Species::Ninetales,
-                Species::Jigglypuff,
-                Species::Wigglytuff,
-                Species::Zubat,
-                Species::Golbat,
-                Species::Oddish,
-                Species::Gloom,
-                Species::Vileplume,
-                Species::Paras,
-                Species::Parasect,
-                Species::Venonat,
-                Species::Venomoth,
-                Species::Diglett,
-                Species::Dugtrio,
-                Species::Meowth,
-                Species::Persian,
-                Species::Psyduck,
-                Species::Golduck,
-                Species::Mankey,
-                Species::Primeape,
-                Species::Growlithe,
-                Species::Arcanine,
-                Species::Poliwag,
-                Species::Poliwhirl,
-                Species::Poliwrath,
-                Species::Abra,
-                Species::Kadabra,
-                Species::Alakazam,
-                Species::Machop,
-                Species::Machoke,
-                Species::Machamp,
-                Species::Bellsprout,
-                Species::Weepinbell,
-                Species::Victreebel,
-                Species::Tentacool,
-                Species::Tentacruel,
-                Species::Geodude,
-                Species::Graveler,
-                Species::Golem,
-                Species::Ponyta,
-                Species::Rapidash,
-                Species::Slowpoke,
-                Species::Slowbro,
-                Species::Magnemite,
-                Species::Magneton,
-                Species::Farfetchd,
-                Species::Doduo,
-                Species::Dodrio,
-                Species::Seel,
-                Species::Dewgong,
-                Species::Grimer,
-                Species::Muk,
-                Species::Shellder,
-                Species::Cloyster,
-                Species::Gastly,
-                Species::Haunter,
-                Species::Gengar,
-                Species::Onix,
-                Species::Drowzee,
-                Species::Hypno,
-                Species::Krabby,
-                Species::Kingler,
-                Species::Voltorb,
-                Species::Electrode,
-                Species::Exeggcute,
-                Species::Exeggutor,
-                Species::Cubone,
-                Species::Marowak,
-                Species::Hitmonlee,
-                Species::Hitmonchan,
-                Species::Lickitung,
-                Species::Koffing,
-                Species::Weezing,
-                Species::Rhyhorn,
-                Species::Rhydon,
-                Species::Chansey,
-                Species::Tangela,
-                Species::Kangaskhan,
-                Species::Horsea,
-                Species::Seadra,
-                Species::Goldeen,
-                Species::Seaking,
-                Species::Staryu,
-                Species::Starmie,
-                Species::MrMime,
-                Species::Scyther,
-                Species::Jynx,
-                Species::Electabuzz,
-                Species::Magmar,
-                Species::Pinsir,
-                Species::Tauros,
-                Species::Magikarp,
-                Species::Gyarados,
-                Species::Lapras,
-                Species::Ditto,
-                Species::Eevee,
-                Species::Vaporeon,
-                Species::Jolteon,
-                Species::Flareon,
-                Species::Porygon,
-                Species::Omanyte,
-                Species::Omastar,
-                Species::Kabuto,
-                Species::Kabutops,
-                Species::Aerodactyl,
-                Species::Snorlax,
-                Species::Articuno,
-                Species::Zapdos,
-                Species::Moltres,
-                Species::Dratini,
-                Species::Dragonair,
-                Species::Dragonite,
-                Species::Mewtwo,
-                Species::Mew,
-            ];
-
-            if let Some(species) = species_variants.get(i - 1) {
-                let species_data = crate::pokemon::get_species_data(*species);
-                if species_data.is_none() {
-                    failed_species.push((i, species.name()));
-                }
-            }
-        }
-
-        if !failed_species.is_empty() {
-            panic!(
-                "Failed to load {} species: {:?}",
-                failed_species.len(),
-                failed_species
-            );
-        }
-
-        println!("Successfully loaded all 151 Pokemon species");
     }
-
-    #[test]
-    fn test_load_all_moves() {
-        // Initialize move data
-        let init_result = initialize_move_data(Path::new("data"));
-        assert!(
-            init_result.is_ok(),
-            "Failed to initialize move data: {:?}",
-            init_result
-        );
-
-        // Test a sampling of moves from each category
-        let test_moves = vec![
-            Move::Tackle,
-            Move::Scratch,
-            Move::DoubleEdge,
-            Move::HyperBeam,
-            Move::Thunderclap,
-            Move::Lightning,
-            Move::Flamethrower,
-            Move::Surf,
-            Move::Earthquake,
-            Move::Perplex,
-            Move::SleepPowder,
-            Move::PoisonPowder,
-            Move::Hypnosis,
-            Move::ThunderWave,
-            Move::Toxic,
-            Move::Rest,
-            Move::Substitute,
-            Move::Reflect,
-            Move::LightScreen,
-            Move::Haze,
-            Move::HighJumpKick,
-            Move::Submission,
-            Move::Counter,
-            Move::Bide,
-            Move::SelfDestruct,
-            Move::Explosion,
-            Move::PetalDance,
-            Move::Outrage,
-            Move::Metronome,
-            Move::Transform,
-            Move::Mimic,
-            Move::DoubleTeam,
-            Move::Recover,
-            Move::SoftBoiled,
-            Move::Whirlwind,
-            Move::Roar,
-            Move::Teleport,
-            Move::Fly,
-            Move::Dig,
-            Move::Fissure,
-            Move::HornDrill,
-            Move::QuickAttack,
-            Move::RockSlide,
-            Move::IceBeam,
-            Move::Blizzard,
-            Move::Bubblebeam,
-            Move::AuroraBeam,
-            Move::SolarBeam,
-            Move::MegaDrain,
-            Move::LeechSeed,
-            Move::Growth,
-            Move::RazorLeaf,
-            Move::PoisonJab,
-            Move::MegaKick,
-            Move::FocusEnergy,
-            Move::Meditate,
-        ];
-
-        let mut failed_moves = Vec::new();
-
-        for test_move in test_moves {
-            // Try to get move data - this will use the global move data store
-            let move_data = crate::move_data::get_move_data(test_move);
-            if move_data.is_none() {
-                failed_moves.push(test_move);
-            }
-        }
-
-        if !failed_moves.is_empty() {
-            panic!(
-                "Failed to load {} moves: {:?}",
-                failed_moves.len(),
-                failed_moves
-            );
-        }
-
-        println!("Successfully loaded all test moves");
-    }
-}

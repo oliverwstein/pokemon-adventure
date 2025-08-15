@@ -36,13 +36,6 @@ mod tests {
 
     #[test]
     fn test_ante_effect_increases_opponent_ante() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -128,13 +121,7 @@ mod tests {
     #[test]
     fn test_ante_effect_with_different_levels() {
         // Test that different Pokemon levels produce different ante amounts
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Test with level 10 Pokemon
+         // Test with level 10 Pokemon
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -175,13 +162,7 @@ mod tests {
     #[test]
     fn test_ante_effect_chance_based() {
         // Test that Ante effect only triggers based on chance
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon_with_level(
@@ -231,13 +212,7 @@ mod tests {
     #[test]
     fn test_ante_accumulation() {
         // Test that ante accumulates across multiple uses
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon_with_level(

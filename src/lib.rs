@@ -19,5 +19,5 @@ pub use battle::engine::{
 };
 pub use moves::Move;
 pub use player::{BattlePlayer, PlayerAction, StatType};
-pub use pokemon::{PokemonInst, get_species_data, initialize_species_data};
+pub use pokemon::{PokemonInst, get_species_data};
 pub use species::Species;

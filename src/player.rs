@@ -1,10 +1,10 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
-use crate::pokemon::{PokemonInst, PokemonType};
+use crate::pokemon::{PokemonInst};
 use serde::{Deserialize, Serialize};
 use core::fmt;
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::hash::{Hash};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PlayerAction {
@@ -135,6 +135,7 @@ impl BattlePlayer {
     }
 
     /// Get the currently active Pokemon mutably
+    #[cfg(test)]
     pub fn active_pokemon_mut(&mut self) -> Option<&mut PokemonInst> {
         self.team
             .get_mut(self.active_pokemon_index)
@@ -152,36 +153,10 @@ impl BattlePlayer {
             .insert(condition.clone(), condition);
     }
 
-    /// Remove a condition from the active Pokemon
-    pub fn remove_condition(&mut self, condition: &PokemonCondition) -> Option<PokemonCondition> {
-        self.active_pokemon_conditions.remove(condition)
-    }
-
     /// Get a condition for reading
+    #[cfg(test)]
     pub fn get_condition(&self, condition: &PokemonCondition) -> Option<&PokemonCondition> {
         self.active_pokemon_conditions.get(condition)
-    }
-
-    /// Get a condition for modification
-    pub fn get_condition_mut(
-        &mut self,
-        condition: &PokemonCondition,
-    ) -> Option<&mut PokemonCondition> {
-        self.active_pokemon_conditions.get_mut(condition)
-    }
-
-    /// Switch the active Pokemon
-    pub fn switch_pokemon(&mut self, new_index: usize) -> Result<(), String> {
-        if new_index >= 6 || self.team[new_index].is_none() {
-            return Err("Invalid Pokemon index or empty slot".to_string());
-        }
-
-        // Clear active Pokemon conditions, stat stages, and last move when switching
-        self.clear_active_pokemon_state();
-
-        self.active_pokemon_index = new_index;
-
-        Ok(())
     }
 
     /// Check if the team has a specific condition
@@ -200,6 +175,7 @@ impl BattlePlayer {
     }
 
     /// Get turns remaining for a team condition
+    #[cfg(test)]
     pub fn get_team_condition_turns(&self, condition: &TeamCondition) -> Option<u8> {
         self.team_conditions.get(condition).copied()
     }
@@ -229,29 +205,10 @@ impl BattlePlayer {
         }
     }
 
-    /// Modify the stage for a stat type by a delta (clamped to -6 to +6)
-    pub fn modify_stat_stage(&mut self, stat: StatType, delta: i8) {
-        let current = self.get_stat_stage(stat);
-        self.set_stat_stage(stat, current + delta);
-    }
-
-    /// Check if a stat has any stage modification
-    pub fn has_stat_stage(&self, stat: StatType) -> bool {
-        self.stat_stages.contains_key(&stat)
-    }
-
-    /// Remove all stat stage modifications
-    pub fn clear_stat_stages(&mut self) {
-        self.stat_stages.clear();
-    }
     pub fn clear_active_pokemon_state(&mut self) {
         self.active_pokemon_conditions.clear();
         self.stat_stages.clear();
         self.last_move = None;
-    }
-    /// Get all current stat stages (for debugging/display)
-    pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
-        &self.stat_stages
     }
 
     /// Update active Pokemon condition timers and return which conditions should be removed

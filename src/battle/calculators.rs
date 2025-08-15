@@ -2,7 +2,7 @@ use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
-use crate::move_data::get_move_data;
+use crate::move_data::MoveData;
 use crate::moves::Move;
 
 /// Calculate the outcome of an attack attempt
@@ -36,7 +36,7 @@ pub fn calculate_attack_outcome(
         }));
     }
 
-    let move_data = get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
 
     // --- NEW LOGIC START ---
     // First, check for any special move effects that might skip the normal attack sequence.
@@ -168,7 +168,7 @@ fn handle_successful_hit(
     }));
 
     // Calculate type effectiveness and damage
-    let move_data = get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
     let type_adv_multiplier = calculate_and_emit_type_effectiveness(
         &move_data,
         defender_pokemon,
@@ -379,7 +379,7 @@ fn handle_damage_triggered_conditions(
         return;
     }
 
-    let move_data = get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
     let attacker_target = PlayerTarget::from_index(attacker_index);
     let defender_target = PlayerTarget::from_index(defender_index);
 
@@ -476,14 +476,6 @@ mod tests {
 
     #[test]
     fn test_calculate_attack_outcome_hit() {
-        // Initialize move data for tests
-        use std::path::Path;
-        let data_path = Path::new("data");
-        if crate::move_data::initialize_move_data(data_path).is_err() {
-            // Skip if move data isn't available
-            return;
-        }
-
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
@@ -513,14 +505,6 @@ mod tests {
 
     #[test]
     fn test_calculate_attack_outcome_miss() {
-        // Initialize move data for tests
-        use std::path::Path;
-        let data_path = Path::new("data");
-        if crate::move_data::initialize_move_data(data_path).is_err() {
-            // Skip if move data isn't available
-            return;
-        }
-
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![100]); // High value should force miss
 
@@ -581,14 +565,6 @@ mod tests {
 
     #[test]
     fn test_calculate_attack_outcome_with_substitute() {
-        // Initialize move data for tests
-        use std::path::Path;
-        let data_path = Path::new("data");
-        if crate::move_data::initialize_move_data(data_path).is_err() {
-            // Skip if move data isn't available
-            return;
-        }
-
         let mut state = create_test_battle_state();
         // Add substitute condition to defender
         state.players[1].add_condition(PokemonCondition::Substitute { hp: 50 });
@@ -625,14 +601,6 @@ mod tests {
 
     #[test]
     fn test_calculate_attack_outcome_substitute_destroyed() {
-        // Initialize move data for tests
-        use std::path::Path;
-        let data_path = Path::new("data");
-        if crate::move_data::initialize_move_data(data_path).is_err() {
-            // Skip if move data isn't available
-            return;
-        }
-
         let mut state = create_test_battle_state();
         // Add weak substitute that will be destroyed by tackle
         state.players[1].add_condition(PokemonCondition::Substitute { hp: 1 });

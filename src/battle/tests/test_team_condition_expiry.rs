@@ -1,8 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::EventBus;
     use crate::battle::state::{BattleState, TurnRng};
-    use crate::battle::engine::{execute_end_turn_phase, resolve_turn};
+    use crate::battle::engine::{resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction, TeamCondition};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -33,14 +32,7 @@ mod tests {
 
     #[test]
     fn test_reflect_expires_after_turns() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+        let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Machamp, vec![Move::Tackle])],
@@ -104,14 +96,7 @@ mod tests {
 
     #[test]
     fn test_light_screen_expires_after_turns() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+        let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(
@@ -165,14 +150,7 @@ mod tests {
 
     #[test]
     fn test_multiple_team_conditions_expire_independently() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+        let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(
@@ -218,13 +196,6 @@ mod tests {
 
     #[test]
     fn test_team_condition_effectiveness_changes_on_expiry() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),

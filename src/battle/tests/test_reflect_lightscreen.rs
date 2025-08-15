@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_reflect_reduces_physical_damage() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Test 1: Without Reflect (baseline)
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -145,13 +138,6 @@ mod tests {
 
     #[test]
     fn test_light_screen_reduces_special_damage() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         // Test 1: Without Light Screen (baseline)
         let player1 = BattlePlayer::new(
             "player1".to_string(),
@@ -266,13 +252,7 @@ mod tests {
     #[test]
     fn test_reflect_does_not_reduce_special_damage() {
         // Test that Reflect has no effect on special moves - damage should be the same with or without Reflect
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Test 1: Without Reflect
+         // Test 1: Without Reflect
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -354,13 +334,7 @@ mod tests {
     #[test]
     fn test_light_screen_does_not_reduce_physical_damage() {
         // Test that Light Screen has no effect on physical moves - damage should be the same with or without Light Screen
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Test 1: Without Light Screen
+         // Test 1: Without Light Screen
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),

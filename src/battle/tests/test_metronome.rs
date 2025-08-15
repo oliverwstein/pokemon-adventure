@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_metronome_selects_random_move() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -136,13 +129,7 @@ mod tests {
     #[test]
     fn test_metronome_can_select_different_moves() {
         // Test that Metronome can select different moves with different RNG values
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut selected_moves = std::collections::HashSet::new();
+         let mut selected_moves = std::collections::HashSet::new();
 
         // Run Metronome multiple times with different RNG values to see different moves
         for rng_value in [10, 25, 50, 75, 90] {
@@ -215,13 +202,7 @@ mod tests {
     #[test]
     fn test_metronome_executes_selected_move_fully() {
         // Test that Metronome fully executes the selected move (e.g., damage moves deal damage)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(
@@ -321,13 +302,7 @@ mod tests {
     #[test]
     fn test_metronome_with_status_moves() {
         // Test that Metronome can select and execute status moves properly
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(

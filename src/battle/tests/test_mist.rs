@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_mist_prevents_enemy_stat_reduction() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -112,13 +105,7 @@ mod tests {
     fn test_mist_allows_self_targeting_moves() {
         // Test that moves don't get blocked even if the user has Mist
         // (Mist only protects against enemy stat reductions, not moves in general)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(
@@ -198,13 +185,7 @@ mod tests {
         // This test verifies that Mist only blocks negative stat changes, not positive ones
         // Note: This would require a move that increases enemy stats, which is rare in Pokemon
         // For now, we'll test that Mist doesn't block moves that don't reduce stats
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Alakazam, vec![Move::Tackle])], // Tackle doesn't affect stats
@@ -259,13 +240,7 @@ mod tests {
 
     #[test]
     fn test_mist_blocks_multiple_stat_reductions() {
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Alakazam, vec![Move::Screech])], // Screech reduces Defense by 2 stages
@@ -311,13 +286,7 @@ mod tests {
 
     #[test]
     fn test_mist_expires_normally() {
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
+         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Alakazam, vec![Move::Growl])],
@@ -342,7 +311,9 @@ mod tests {
 
         let test_rng1 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus1 = resolve_turn(&mut battle_state, test_rng1);
-
+        for event in event_bus1.events() {
+            println!("  {:?}", event);
+        }
         // Mist should have expired
         assert!(
             !battle_state.players[1].has_team_condition(&TeamCondition::Mist),
@@ -357,7 +328,9 @@ mod tests {
 
         let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus2 = resolve_turn(&mut battle_state, test_rng2);
-
+        for event in event_bus2.events() {
+            println!("  {:?}", event);
+        }
         // Attack should now be reduced
         let final_attack_stage = battle_state.players[1].get_stat_stage(StatType::Attack);
         assert!(

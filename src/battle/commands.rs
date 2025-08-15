@@ -102,6 +102,9 @@ pub enum BattleCommand {
         target: PlayerTarget,
         new_pokemon_index: usize,
     },
+    ClearPlayerState {
+        target: PlayerTarget,
+    },
 
     // Battle flow
     EmitEvent(BattleEvent),
@@ -223,7 +226,7 @@ fn execute_deal_damage_command(
     }
 }
 
-fn execute_command(
+pub fn execute_command(
     command: BattleCommand,
     state: &mut BattleState,
     bus: &mut EventBus,
@@ -372,6 +375,12 @@ fn execute_command(
         }
         BattleCommand::PushAction(action) => {
             action_stack.push_front(action);
+            Ok(())
+        }
+        BattleCommand::ClearPlayerState { target } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.clear_active_pokemon_state();
             Ok(())
         }
     }

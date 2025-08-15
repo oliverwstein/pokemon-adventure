@@ -22,14 +22,13 @@ pub fn calculate_attack_outcome(
     let attacker_player = &state.players[attacker_index];
     let defender_player = &state.players[defender_index];
 
-    // Validate Pokemon participation
     let (attacker_pokemon, defender_pokemon) =
         match validate_pokemon_participation(attacker_player, defender_player) {
             Ok(pokemon) => pokemon,
             Err(error_command) => return vec![error_command],
         };
 
-    // Emit MoveUsed event for first hit
+    // Emit MoveUsed event for the first hit of any move attempt.
     if hit_number == 0 {
         commands.push(BattleCommand::EmitEvent(BattleEvent::MoveUsed {
             player_index: attacker_index,
@@ -37,8 +36,33 @@ pub fn calculate_attack_outcome(
             move_used,
         }));
     }
+
     let move_data = get_move_data(move_used).expect("Move data must exist");
-    // Check if the move hits
+
+    // --- NEW LOGIC START ---
+    // First, check for any special move effects that might skip the normal attack sequence.
+    let context = crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
+    let mut regular_effect_commands = Vec::new();
+
+    for effect in &move_data.effects {
+        let effect_result = effect.apply(&context, state, rng);
+        match effect_result {
+            crate::move_data::EffectResult::Skip(special_commands) => {
+                // This is a special move like ChargeUp, Fly, Rest, etc.
+                // We return ONLY its commands and stop all further processing.
+                commands.extend(special_commands);
+                return commands;
+            }
+            crate::move_data::EffectResult::Continue(effect_commands) => {
+                // This is a regular secondary effect (like Burn or StatChange).
+                // We'll store its commands to be added later if the move hits.
+                regular_effect_commands.extend(effect_commands);
+            }
+        }
+    }
+    // --- NEW LOGIC END ---
+
+    // If we've reached this point, no effect returned 'Skip', so we proceed with a normal attack.
     let hit_result = move_hits(
         attacker_pokemon,
         defender_pokemon,
@@ -49,7 +73,6 @@ pub fn calculate_attack_outcome(
     );
 
     if hit_result {
-        // Handle successful hit
         let hit_commands = handle_successful_hit(
             attacker_pokemon,
             defender_pokemon,
@@ -62,7 +85,9 @@ pub fn calculate_attack_outcome(
         );
         commands.extend(hit_commands.clone());
 
-        // Extract damage from the hit commands to determine if we should apply effects
+        // Add the regular effect commands that we collected earlier.
+        commands.extend(regular_effect_commands);
+
         let damage = hit_commands
             .iter()
             .find_map(|cmd| match cmd {
@@ -71,94 +96,30 @@ pub fn calculate_attack_outcome(
             })
             .unwrap_or(0);
 
-        // Check if damage was absorbed by substitute by looking for 0-damage DamageDealt event
-        let damage_absorbed_by_substitute = hit_commands.iter().any(|cmd| {
-            matches!(
-                cmd,
-                BattleCommand::EmitEvent(BattleEvent::DamageDealt { damage: 0, .. })
-            )
-        });
-
-        // Apply move effects after damage is dealt (for damage moves) or on hit (for Other/Status category moves)
-        if damage > 0
-            || matches!(
-                move_data.category,
-                crate::move_data::MoveCategory::Other | crate::move_data::MoveCategory::Status
-            )
-        {
-            let context =
-                crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
-            for effect in &move_data.effects {
-                let effect_result = effect.apply(&context, state, rng);
-                match effect_result {
-                    crate::move_data::EffectResult::Continue(effect_commands) => {
-                        commands.extend(effect_commands);
-                    }
-                    crate::move_data::EffectResult::Skip(effect_commands) => {
-                        commands.extend(effect_commands);
-                        // Note: Skip behavior would need to be handled at a higher level
-                        // For now, we just apply the commands and continue normally
-                    }
-                }
-            }
-        }
-
-        // Apply damage-based effects (recoil, drain) when damage was dealt
         if damage > 0 {
-            let context =
-                crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
             let damage_commands = move_data.apply_damage_based_effects(&context, state, damage);
             commands.extend(damage_commands);
         }
     } else {
-        // Handle miss
         commands.push(BattleCommand::EmitEvent(BattleEvent::MoveMissed {
             attacker: attacker_pokemon.species,
             defender: defender_pokemon.species,
             move_used,
         }));
 
-        // Handle miss-based effects (like Reckless)
-        let context =
-            crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
         let miss_commands = move_data.apply_miss_based_effects(&context, state);
         commands.extend(miss_commands);
     }
-    // Handle Multi-hit logic
-    let context = crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
 
+    // Handle Multi-hit logic (this remains the same).
     for effect in &move_data.effects {
         if let Some(command) = effect.apply_multi_hit_continuation(&context, rng, hit_number) {
             commands.push(command);
-            // We found the multi-hit effect, so we don't need to check other effects for this.
             break;
         }
     }
+
     commands
-}
-
-/// Check if any move effects should skip normal attack execution
-pub fn should_skip_attack_execution(
-    state: &BattleState,
-    attacker_index: usize,
-    defender_index: usize,
-    move_used: Move,
-    rng: &mut TurnRng,
-) -> Option<Vec<crate::battle::commands::BattleCommand>> {
-    use crate::move_data::{EffectContext, get_move_data};
-
-    let move_data = get_move_data(move_used).expect("Move data must exist");
-    let context = EffectContext::new(attacker_index, defender_index, move_used);
-
-    // Check each effect to see if any want to skip attack execution
-    for effect in &move_data.effects {
-        let effect_result = effect.apply(&context, state, rng);
-        if let crate::move_data::EffectResult::Skip(commands) = effect_result {
-            return Some(commands);
-        }
-    }
-
-    None // No effects want to skip attack execution
 }
 
 /// Validate that both Pokemon can participate in the attack

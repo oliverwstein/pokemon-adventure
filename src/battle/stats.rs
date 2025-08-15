@@ -233,8 +233,10 @@ pub fn move_hits(
         return true;
     };
 
-    // If defender is Teleported, moves with accuracy always miss
-    if defender_player.has_condition(&PokemonCondition::Teleported) {
+    // If defender is Teleported, InAir, or Underground, moves with accuracy always miss
+    if defender_player.has_condition(&PokemonCondition::Teleported) 
+        || defender_player.has_condition(&PokemonCondition::InAir)
+        || defender_player.has_condition(&PokemonCondition::Underground) {
         return false;
     }
 

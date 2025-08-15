@@ -34,12 +34,6 @@ pub enum Target {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum RampageEndCondition {
-    Confuse,
-    Exhaust,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum StatusType {
     Sleep,
     Poison,
@@ -98,7 +92,7 @@ pub enum MoveEffect {
     Rest(u8),                     // sleep for X turns, full heal
     Bide(u8),                     // store damage for X turns
     Rage(u8),                     // chance % to enter rage mode
-    Rampage(RampageEndCondition), // rampage with end condition
+    Rampage, // rampage
 
     // Field effects
     Haze(u8), // remove all stat changes, chance %
@@ -186,7 +180,7 @@ impl MoveEffect {
             MoveEffect::Metronome => self.apply_metronome_special(context, state, rng),
 
             // Special moves that continue with attack execution
-            MoveEffect::Rampage(_) => self.apply_rampage_special(context, state, rng),
+            MoveEffect::Rampage => self.apply_rampage_special(context, state, rng),
             MoveEffect::Rage(_) => self.apply_rage_special(context, state),
             MoveEffect::Explode => self.apply_explode_special(context, state),
 

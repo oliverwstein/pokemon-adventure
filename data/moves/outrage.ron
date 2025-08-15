@@ -6,6 +6,6 @@ MoveData(
     accuracy: Some(100),
     max_pp: 20,
     effects: [
-        Rampage(Confuse),
+        Rampage,
     ],
 )

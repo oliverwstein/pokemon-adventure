@@ -6,6 +6,7 @@ edition = "2024"
 [[bin]]
 name = "pokemon-adventure"
 path = "src/main.rs"
+test = false
 
 [lib]
 name = "pokemon_adventure"

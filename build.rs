@@ -128,6 +128,7 @@ fn generate_species_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[allow(dead_code)]
 fn generate_prefab_teams_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Error>> {
     let data_path = Path::new("data/prefab_teams");
     let mut teams = Vec::new();
@@ -155,7 +156,7 @@ fn generate_prefab_teams_data(f: &mut fs::File) -> Result<(), Box<dyn std::error
         f,
         "pub fn get_compiled_prefab_teams() -> std::collections::HashMap<&'static str, &'static str> {{"
     )?;
-    writeln!(f, "    let mut map = std::collections::HashMap::new();")?;
+    writeln!(f, "    let map = std::collections::HashMap::new();")?;
 
     for (team_name, ron_content) in teams {
         writeln!(

@@ -281,58 +281,6 @@ pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<Player
     actions
 }
 
-/// Sets a player's action in the battle state
-/// This would typically be called by the API layer when a player submits their action
-pub fn set_player_action(
-    battle_state: &mut BattleState,
-    player_index: usize,
-    action: PlayerAction,
-) -> Result<(), String> {
-    if player_index >= 2 {
-        return Err("Invalid player index".to_string());
-    }
-
-    let valid_states = match player_index {
-        0 => matches!(
-            battle_state.game_state,
-            GameState::WaitingForActions
-                | GameState::WaitingForPlayer1Replacement
-                | GameState::WaitingForBothReplacements
-        ),
-        1 => matches!(
-            battle_state.game_state,
-            GameState::WaitingForActions
-                | GameState::WaitingForPlayer2Replacement
-                | GameState::WaitingForBothReplacements
-        ),
-        _ => false,
-    };
-
-    if !valid_states {
-        return Err(
-            "Cannot set action: battle is not waiting for this player's action".to_string(),
-        );
-    }
-
-    // Validate that replacement actions are switches to non-fainted Pokemon
-    if matches!(
-        battle_state.game_state,
-        GameState::WaitingForPlayer1Replacement
-            | GameState::WaitingForPlayer2Replacement
-            | GameState::WaitingForBothReplacements
-    ) {
-        if !matches!(action, PlayerAction::SwitchPokemon { .. }) {
-            return Err("Only switch actions are allowed during forced replacement".to_string());
-        }
-    }
-
-    // Perform detailed action validation
-    validate_player_action(battle_state, player_index, &action)?;
-
-    battle_state.action_queue[player_index] = Some(action);
-    Ok(())
-}
-
 /// Check if battle is ready for turn resolution (both players have provided actions)
 pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
     match battle_state.game_state {

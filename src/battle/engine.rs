@@ -56,10 +56,6 @@ impl ActionStack {
     pub fn pop_front(&mut self) -> Option<BattleAction> {
         self.actions.pop_front()
     }
-
-    fn is_empty(&self) -> bool {
-        self.actions.is_empty()
-    }
 }
 
 /// Check if the player has conditions that force a specific move
@@ -131,6 +127,7 @@ pub fn collect_player_actions(
 
 /// Validates a player action for detailed correctness
 /// Checks move PP, bounds, switch targets, etc.
+#[allow(dead_code)]
 pub fn validate_player_action(
     battle_state: &BattleState,
     player_index: usize,
@@ -1111,7 +1108,7 @@ fn apply_condition_damage(battle_state: &mut BattleState, bus: &mut EventBus) {
 pub fn execute_end_turn_phase(
     battle_state: &mut BattleState,
     bus: &mut EventBus,
-    rng: &mut TurnRng,
+    _rng: &mut TurnRng,
 ) {
     for player_index in 0..2 {
         let player = &mut battle_state.players[player_index];
@@ -1122,7 +1119,7 @@ pub fn execute_end_turn_phase(
             }
 
             // 1. Process Pokemon status damage (Poison, Burn)
-            let (status_damage, status_changed) = pokemon.deal_status_damage();
+            let (status_damage, _) = pokemon.deal_status_damage();
 
             if status_damage > 0 {
                 // Generate status damage event

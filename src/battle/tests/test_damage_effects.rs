@@ -3,7 +3,7 @@ mod tests {
     use crate::battle::state::{BattleEvent, BattleState, EventBus, TurnRng};
     use crate::battle::engine::{ActionStack, execute_attack_hit};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, StatType};
+    use crate::player::{BattlePlayer};
     use crate::pokemon::PokemonInst;
     use crate::species::Species;
     use std::path::Path;
@@ -175,7 +175,7 @@ mod tests {
         let defender = create_test_pokemon_with_hp(Species::Bulbasaur, vec![Move::Tackle], 100);
         attacker.set_hp(30);
         // Record initial HP states for both Pokémon *before* they are moved
-        let initial_attacker_hp = attacker.current_hp();
+        let _initial_attacker_hp = attacker.current_hp();
         let initial_defender_hp = defender.current_hp();
 
         let player1 = create_test_player(attacker);
@@ -205,12 +205,12 @@ mod tests {
         let attacker_in_battle = battle_state.players[0].team[0].as_ref().unwrap();
         let defender_in_battle = battle_state.players[1].team[0].as_ref().unwrap();
 
-        let final_attacker_hp = attacker_in_battle.current_hp();
+        let _final_attacker_hp = attacker_in_battle.current_hp();
         let final_defender_hp = defender_in_battle.current_hp();
 
         // Calculate how much damage was dealt to determine expected healing
         let damage_dealt = initial_defender_hp.saturating_sub(final_defender_hp);
-        let expected_healing = damage_dealt / 2; // Mega Drain has 50% drain
+        let _expected_healing = damage_dealt / 2; // Mega Drain has 50% drain
 
         let events = bus.events();
         println!("Mega Drain healing test events:");

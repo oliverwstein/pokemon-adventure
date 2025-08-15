@@ -170,10 +170,6 @@ impl EventBus {
     pub fn events(&self) -> &[BattleEvent] {
         &self.events
     }
-
-    pub fn clear(&mut self) {
-        self.events.clear();
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -213,12 +209,6 @@ impl TurnRng {
         outcome
     }
 
-    pub fn peek_outcome(&self) -> u8 {
-        if self.index >= self.outcomes.len() {
-            panic!("TurnRng exhausted! Need more random values for this turn.");
-        }
-        self.outcomes[self.index]
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

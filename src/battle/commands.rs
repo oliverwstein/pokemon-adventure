@@ -20,6 +20,7 @@ impl PlayerTarget {
         }
     }
 
+    #[allow(dead_code)]
     pub fn opponent(self) -> PlayerTarget {
         match self {
             PlayerTarget::Player1 => PlayerTarget::Player2,

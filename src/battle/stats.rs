@@ -170,7 +170,7 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
 /// Calculate if a move is a critical hit based on critical hit ratio and focus energy
 /// Returns true if the move is a critical hit
 pub fn move_is_critical_hit(
-    attacker: &PokemonInst,
+    _attacker: &PokemonInst,
     attacker_player: &BattlePlayer,
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
@@ -219,8 +219,8 @@ pub fn move_is_critical_hit(
 /// Calculate if a move hits based on accuracy, evasion, and move accuracy
 /// Returns true if the move hits, false if it misses
 pub fn move_hits(
-    attacker: &PokemonInst,
-    defender: &PokemonInst,
+    _attacker: &PokemonInst,
+    _defender: &PokemonInst,
     attacker_player: &BattlePlayer,
     defender_player: &BattlePlayer,
     move_: Move,
@@ -378,7 +378,7 @@ pub fn calculate_attack_damage(
 
 pub fn calculate_special_attack_damage(
     move_used: Move,
-    attacker: &PokemonInst,
+    _attacker: &PokemonInst,
     defender: &PokemonInst,
 ) -> Option<u16> {
     let move_data =

@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
+    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction};
+    use crate::player::{BattlePlayer};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
     use std::collections::HashMap;

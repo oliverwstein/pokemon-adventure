@@ -636,7 +636,7 @@ mod tests {
         // Damage player2 by only 1 HP (so healing will be capped)
         player2.active_pokemon_mut().unwrap().take_damage(1);
 
-        let initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
+        let _initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
         let max_p2_hp = player2.active_pokemon().unwrap().max_hp();
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);

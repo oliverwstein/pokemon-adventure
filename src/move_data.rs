@@ -1530,6 +1530,35 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            // Check if Pokemon is already rampaging
+            if let Some(current_rampage) = attacker_player.active_pokemon_conditions.values()
+                .find(|c| matches!(c, PokemonCondition::Rampaging { .. })) {
+                
+                if let PokemonCondition::Rampaging { turns_remaining } = current_rampage {
+                    if *turns_remaining > 0 {
+                        // Still rampaging, don't apply rampage again, just continue with attack
+                        return EffectResult::Continue(Vec::new());
+                    } else {
+                        // Rampage ending (turns_remaining == 0), apply confusion instead
+                        let confusion_condition = PokemonCondition::Confused {
+                            turns_remaining: 2,
+                        };
+                        let commands = vec![
+                            BattleCommand::AddCondition {
+                                target: attacker_target,
+                                condition: confusion_condition.clone(),
+                            },
+                            BattleCommand::EmitEvent(BattleEvent::StatusApplied {
+                                target: pokemon_species,
+                                status: confusion_condition,
+                            }),
+                        ];
+                        return EffectResult::Continue(commands);
+                    }
+                }
+            }
+            
+            // Not rampaging yet, apply rampage normally
             // Rampage lasts 2-3 turns (50/50 chance)
             let turns = if rng.next_outcome("Generate Rampage Duration") <= 50 {
                 2

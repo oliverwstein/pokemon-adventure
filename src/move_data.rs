@@ -406,9 +406,15 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome("Apply Burn Check") <= chance {
-            let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+        let target_player = &state.players[context.defender_index];
+        if let Some(target_pokemon) = target_player.active_pokemon() {
+            // Fire-type Pokemon are immune to burn
+            let target_types = target_pokemon.get_current_types(target_player);
+            if target_types.contains(&crate::pokemon::PokemonType::Fire) {
+                return commands; // No RNG check, no burn application
+            }
+
+            if rng.next_outcome("Apply Burn Check") <= chance {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
@@ -441,9 +447,15 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome("Apply Paralysis Check") <= chance {
-            let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+        let target_player = &state.players[context.defender_index];
+        if let Some(target_pokemon) = target_player.active_pokemon() {
+            // Electric-type Pokemon are immune to paralysis
+            let target_types = target_pokemon.get_current_types(target_player);
+            if target_types.contains(&crate::pokemon::PokemonType::Electric) {
+                return commands; // No RNG check, no paralysis application
+            }
+
+            if rng.next_outcome("Apply Paralysis Check") <= chance {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
@@ -476,9 +488,15 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome("Apply Freeze Check") <= chance {
-            let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+        let target_player = &state.players[context.defender_index];
+        if let Some(target_pokemon) = target_player.active_pokemon() {
+            // Ice-type Pokemon are immune to freeze
+            let target_types = target_pokemon.get_current_types(target_player);
+            if target_types.contains(&crate::pokemon::PokemonType::Ice) {
+                return commands; // No RNG check, no freeze application
+            }
+
+            if rng.next_outcome("Apply Freeze Check") <= chance {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
@@ -511,9 +529,15 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome("Apply Poison Check") <= chance {
-            let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+        let target_player = &state.players[context.defender_index];
+        if let Some(target_pokemon) = target_player.active_pokemon() {
+            // Poison-type Pokemon are immune to poison
+            let target_types = target_pokemon.get_current_types(target_player);
+            if target_types.contains(&crate::pokemon::PokemonType::Poison) {
+                return commands; // No RNG check, no poison application
+            }
+
+            if rng.next_outcome("Apply Poison Check") <= chance {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
@@ -546,9 +570,15 @@ impl MoveEffect {
 
         let mut commands = Vec::new();
 
-        if rng.next_outcome("Apply Sedate Check") <= chance {
-            let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+        let target_player = &state.players[context.defender_index];
+        if let Some(target_pokemon) = target_player.active_pokemon() {
+            // Ghost-type Pokemon are immune to sleep
+            let target_types = target_pokemon.get_current_types(target_player);
+            if target_types.contains(&crate::pokemon::PokemonType::Ghost) {
+                return commands; // No RNG check, no sleep application
+            }
+
+            if rng.next_outcome("Apply Sedate Check") <= chance {
                 // Only apply if Pokemon has no status
                 if target_pokemon.status.is_none() {
                     // Sleep for 1-3 turns (random)

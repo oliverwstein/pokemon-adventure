@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleState, GameState, TurnRng};
+    use crate::battle::state::{BattleState, GameState, TurnRng, BattleEvent};
     use crate::battle::engine::{collect_player_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
@@ -47,70 +47,61 @@ mod tests {
     }
 
     #[test]
-    fn test_resolve_turn_basic() {
-        // Initialize move data (required for get_move_data to work)
+    fn test_resolve_turn_basic_speed_order() {
+        // Initialize move data
         use std::path::Path;
         let data_path = Path::new("data");
         crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
         crate::pokemon::initialize_species_data(data_path)
             .expect("Failed to initialize species data");
-        // Create two test Pokemon with basic moves
-        let pokemon1 =
-            create_test_pokemon(Species::Pikachu, vec![Move::Tackle, Move::ThunderPunch]);
-        let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch, Move::Ember]);
+        
+        // Create a faster Pikachu and a slower Charmander to test speed-based turn order.
+        let pikachu = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]); // Faster
+        let charmander = create_test_pokemon(Species::Charmander, vec![Move::Scratch]); // Slower
 
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
+        let player1 = create_test_player(pikachu);
+        let player2 = create_test_player(charmander);
+        
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Collect AI actions
-        collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
+        // Manually set actions to ensure predictability
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pikachu uses Tackle
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Charmander uses Scratch
 
         // Verify actions were collected
         assert!(battle_state.action_queue[0].is_some());
         assert!(battle_state.action_queue[1].is_some());
 
-        // Test action ordering - both are using moves, so order should be determined by speed
-        let action_order = crate::battle::engine::determine_action_order(&battle_state);
-        println!("Action order: {:?}", action_order);
-
-        // Both Pokemon have same stats in our test, so order could be either way
-        // But the order should be consistent and have both players
-        assert_eq!(
-            action_order.len(),
-            2,
-            "Should have both players in action order"
-        );
-        assert!(action_order.contains(&0), "Should contain player 0");
-        assert!(action_order.contains(&1), "Should contain player 1");
-
-        // Create deterministic RNG for testing
         let test_rng = TurnRng::new_for_test(vec![
-            95, 95, 95, 95, 50, 50, 50, 50, 50, 50, // Various rolls for the turn
+            50, 90, 90, // RNG for Pikachu's Tackle (hit, no crit, damage)
+            50, 90, 90, // RNG for Charmander's Scratch (hit, no crit, damage)
+            50, 50, 50, 50, // Extra values for any other checks
         ]);
 
-        // Execute turn
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Check that events were generated
         let events = event_bus.events();
+        
+        // --- Verify Turn Order from Events ---
+        let move_used_events: Vec<_> = events.iter().filter_map(|e| match e {
+            BattleEvent::MoveUsed { player_index, .. } => Some(player_index),
+            _ => None
+        }).collect();
+
+        // The first MoveUsed event should be from player 0 (the faster Pikachu)
+        assert_eq!(move_used_events.get(0), Some(&&0), "Faster Pokémon should act first.");
+        // The second MoveUsed event should be from player 1 (the slower Charmander)
+        assert_eq!(move_used_events.get(1), Some(&&1), "Slower Pokémon should act second.");
+
+        // --- Verify Final State ---
         assert!(!events.is_empty(), "Turn should generate events");
-
-        // Check that turn number incremented
         assert_eq!(battle_state.turn_number, 2, "Turn number should increment");
-
-        // Check that game state returned to waiting
         assert_eq!(battle_state.game_state, GameState::WaitingForActions);
-
-        // Check that action queue was cleared
-        assert!(battle_state.action_queue[0].is_none());
-        assert!(battle_state.action_queue[1].is_none());
+        assert!(battle_state.action_queue[0].is_none() && battle_state.action_queue[1].is_none(), "Action queue should be cleared");
 
         println!("Generated {} events:", events.len());
         for event in events {
             println!("  {:?}", event);
         }
     }
+
 }

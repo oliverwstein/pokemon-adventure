@@ -1,4 +1,4 @@
-use crate::battle::ai::ScoringAI;
+use crate::battle::ai::{Behavior, ScoringAI};
 use crate::battle::calculators::calculate_attack_outcome;
 use crate::battle::commands::execute_command_batch;
 use crate::battle::conditions::*;
@@ -105,55 +105,30 @@ fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::
 /// This function should be called before resolve_turn()
 pub fn collect_player_actions(
     battle_state: &mut BattleState,
-    // In a more advanced setup, you might pass the controllers in.
-    // For now, we'll create a default AI internally.
 ) -> Result<(), String> {
-    // Instantiate the AI we want to use.
     let ai_brain = ScoringAI::new();
 
     let players_to_act = match battle_state.game_state {
-        GameState::WaitingForActions | GameState::WaitingForBothReplacements => {
-            vec![0, 1]
-        }
+        GameState::WaitingForActions | GameState::WaitingForBothReplacements => vec![0, 1],
         GameState::WaitingForPlayer1Replacement => vec![0],
         GameState::WaitingForPlayer2Replacement => vec![1],
-        // If the game is in progress or over, no actions need to be collected.
         _ => return Ok(()),
     };
 
     for player_index in players_to_act {
-        // Only generate an action if one isn't already queued.
-        if battle_state.action_queue[player_index].is_none() {
+        // --- LOGIC ---
+        // 1. Check if an action is already queued for this player.
+        // 2. Check if this player has a forced move.
+        // If either is true, we do nothing and let the engine handle it later.
+        if battle_state.action_queue[player_index].is_none() 
+            && check_for_forced_move(&battle_state.players[player_index]).is_none() {
             
-            // Check if the player is forced to act. If so, the AI doesn't need to decide.
-            // The turn orchestrator will handle the override. We just queue a placeholder.
-            if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
-                // A move is forced. We need to find its index in the Pokémon's current moveset.
-                let player = &battle_state.players[player_index];
-                
-                // We can safely assume the player has an active Pokémon if they are in a state that forces a move.
-                // If not, this would indicate a bug elsewhere, and panicking is appropriate.
-                let active_pokemon = player.active_pokemon()
-                    .expect("A player cannot be in a forced-move state without an active Pokémon.");
-
-                // Iterate through the Pokémon's moves to find the index that matches the forced move.
-                let move_index = active_pokemon.moves.iter()
-                    .position(|move_slot| {
-                        // A move_slot is an Option<MoveInstance>. We check if it's Some and if its move matches.
-                        move_slot.as_ref().map_or(false, |inst| inst.move_ == forced_move)
-                    })
-                    .unwrap_or(0); // As a robust fallback, default to index 0.
-                                // This handles cases like Bide, where the move might not be in the current set.
-                                // The engine's final override will ensure the correct move is used anyway.
-
-                // Queue the action with the correct move index.
-                battle_state.action_queue[player_index] = Some(PlayerAction::UseMove { move_index });
-            } else {
-                 // The player is free to choose, so consult the AI brain.
-                 let action = crate::battle::ai::Behavior::decide_action(&ai_brain, player_index, battle_state);
-                 println!("Chosen Action: {}", action);
-                 battle_state.action_queue[player_index] = Some(action);
-            }
+            // This player is free to choose an action.
+            // For now, we only have an AI to make this choice. In a real game,
+            // this is where you'd wait for human input for player 0.
+            let action = ai_brain.decide_action(player_index, battle_state);
+            println!("Chosen Action for player {}: {}", player_index, action);
+            battle_state.action_queue[player_index] = Some(action);
         }
     }
 
@@ -511,15 +486,35 @@ fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
 /// Build initial action stack from player actions in priority order
 fn build_initial_action_stack(battle_state: &BattleState) -> ActionStack {
     let mut stack = ActionStack::new();
-    let action_order = determine_action_order(battle_state);
+    
+    // --- START NEW LOGIC FOR ACTION QUEUEING ---
+    let mut actions_to_prioritize: Vec<(usize, PlayerAction)> = Vec::new();
 
-    // Convert PlayerActions to BattleActions and add to stack in priority order
-    for &player_index in action_order.iter() {
-        if let Some(player_action) = &battle_state.action_queue[player_index] {
-            let battle_action =
-                convert_player_action_to_battle_action(player_action, player_index, battle_state);
-            stack.push_back(battle_action);
+    for player_index in 0..2 {
+        // Check if the player is forced to make a move. This takes highest priority.
+        if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
+            // The player is forced. We generate the action for them.
+            // We find the move_index, defaulting to 0 as a safe fallback.
+            let move_index = battle_state.players[player_index].active_pokemon()
+                .and_then(|p| p.moves.iter().position(|m| m.as_ref().map_or(false, |inst| inst.move_ == forced_move)))
+                .unwrap_or(0);
+            
+            actions_to_prioritize.push((player_index, PlayerAction::UseMove { move_index }));
+
+        } else if let Some(action) = &battle_state.action_queue[player_index] {
+            // The player is not forced, so we use their chosen action from the queue.
+            actions_to_prioritize.push((player_index, action.clone()));
         }
+    }
+    // --- END NEW LOGIC ---
+
+    // Now, determine the order of the collected actions based on priority and speed.
+    let action_order = determine_action_order(battle_state, &actions_to_prioritize);
+
+    for (player_index, player_action) in action_order {
+        let battle_action =
+            convert_player_action_to_battle_action(&player_action, player_index, battle_state);
+        stack.push_back(battle_action);
     }
 
     stack
@@ -541,36 +536,23 @@ fn convert_player_action_to_battle_action(
 
         PlayerAction::UseMove { move_index } => {
             let player = &battle_state.players[player_index];
-            let active_pokemon = player.team[player.active_pokemon_index]
+            let active_pokemon = player.active_pokemon().expect("Active pokemon should exist");
+            
+            // Simplified logic: The correct move_index is now guaranteed.
+            let final_move = active_pokemon.moves[*move_index]
                 .as_ref()
-                .expect("Active pokemon should exist");
-
-            // Check if this is a forced move (player has forcing conditions)
-            let final_move = if let Some(forced_move) =
-                check_for_forced_move(&battle_state.players[player_index])
-            {
-                // Use the forced move directly, bypassing PP checks and move selection
-                forced_move
-            } else {
-                // Normal move usage - check PP and use Struggle if necessary
-                let move_instance = &active_pokemon.moves[*move_index]
-                    .as_ref()
-                    .expect("Move should exist");
-                if move_instance.pp > 0 {
-                    // The move has PP, use it normally.
-                    move_instance.move_
-                } else {
-                    // The move has no PP, substitute Struggle.
-                    Move::Struggle
-                }
-            };
-
-            // Determine defender
-            let defender_index = if player_index == 0 { 1 } else { 0 };
+                .map(|inst| {
+                    if inst.pp > 0 {
+                        inst.move_
+                    } else {
+                        Move::Struggle
+                    }
+                })
+                .unwrap_or(Move::Struggle); // Use struggle if the move slot is empty
 
             BattleAction::AttackHit {
                 attacker_index: player_index,
-                defender_index,
+                defender_index: 1 - player_index,
                 move_used: final_move,
                 hit_number: 0,
             }
@@ -1027,39 +1009,37 @@ pub fn execute_attack_hit(
     }
 }
 
-pub fn determine_action_order(battle_state: &BattleState) -> Vec<usize> {
+pub fn determine_action_order<'a>(
+    battle_state: &'a BattleState,
+    actions: &'a [(usize, PlayerAction)],
+) -> Vec<(usize, PlayerAction)> {
     let mut player_priorities = Vec::new();
 
-    // Calculate priority for each player's action
-    for (player_index, action_opt) in battle_state.action_queue.iter().enumerate() {
-        if let Some(action) = action_opt {
-            let priority = calculate_action_priority(player_index, action, battle_state);
-            player_priorities.push((player_index, priority));
-        }
+    // Calculate priority for each player's action from the provided list.
+    for (player_index, action) in actions {
+        let priority = calculate_action_priority(*player_index, action, battle_state);
+        player_priorities.push((*player_index, action.clone(), priority));
     }
 
     // Sort by priority (higher priority first), then by speed (higher speed first)
     player_priorities.sort_by(|a, b| {
-        // First sort by action priority (higher first)
-        let priority_cmp = b.1.action_priority.cmp(&a.1.action_priority);
+        let priority_cmp = b.2.action_priority.cmp(&a.2.action_priority);
         if priority_cmp != std::cmp::Ordering::Equal {
             return priority_cmp;
         }
 
-        // Then by move priority if both are moves (higher first)
-        let move_priority_cmp = b.1.move_priority.cmp(&a.1.move_priority);
+        let move_priority_cmp = b.2.move_priority.cmp(&a.2.move_priority);
         if move_priority_cmp != std::cmp::Ordering::Equal {
             return move_priority_cmp;
         }
 
-        // Finally by speed (higher first)
-        b.1.speed.cmp(&a.1.speed)
+        b.2.speed.cmp(&a.2.speed)
     });
 
-    // Return the sorted player indices
+    // Return the sorted (player_index, PlayerAction) tuples.
     player_priorities
         .into_iter()
-        .map(|(player_index, _)| player_index)
+        .map(|(player_index, action, _)| (player_index, action))
         .collect()
 }
 
@@ -1255,7 +1235,7 @@ pub fn execute_end_turn_phase(
         // 2. Process active Pokemon conditions (outside of pokemon borrow to avoid conflicts)
         let player = &mut battle_state.players[player_index];
         let expired_conditions = player.tick_active_conditions();
-
+        
         // Generate events for expired conditions
         if let Some(pokemon) = player.active_pokemon() {
             for condition in expired_conditions {
@@ -1266,7 +1246,7 @@ pub fn execute_end_turn_phase(
             }
         }
     }
-
+    
     // 3. Process condition-based damage effects (Trapped, Seeded)
     apply_condition_damage(battle_state, bus);
 
@@ -1278,6 +1258,7 @@ pub fn execute_end_turn_phase(
 }
 
 fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
+    // 1. Clear state for any fainted Pokémon
     for player_index in 0..2 {
         if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
             if pokemon.is_fainted() {
@@ -1285,41 +1266,27 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
             }
         }
     }
-    // Check for win conditions first, as they override the need for replacements.
+    
+    // 2. Check for win conditions, which override everything else
     check_win_conditions(battle_state, bus);
 
-    // Only increment turn number for actual battle turns, not replacement phases
-    let was_battle_turn = matches!(battle_state.game_state, GameState::TurnInProgress);
-    if was_battle_turn {
+    // 3. Increment turn number if it was a real battle turn
+    if matches!(battle_state.game_state, GameState::TurnInProgress) {
         battle_state.turn_number += 1;
     }
 
-    // Set state back to waiting for actions (unless battle ended or replacements needed)
+    // 4. Set the default next state if the battle is ongoing
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
         battle_state.game_state = GameState::WaitingForActions;
     }
 
-    // Now, check if we need to enter a replacement state. This overrides WaitingForActions.
+    // 5. Check if the default state needs to be overridden by a replacement phase
     check_for_pending_replacements(battle_state);
 
-    // Clear action queue for the next turn
+    // 6. Clear the action queue from the turn that just ended
     battle_state.action_queue = [None, None];
 
-    // Generate forced actions for players who have forcing conditions
-    // This happens after clearing and state transitions so forced actions are ready for the next turn
-    // Only generate forced actions - don't generate regular NPC actions automatically
-    if matches!(battle_state.game_state, GameState::WaitingForActions) {
-        for player_index in 0..2 {
-            if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
-                if let Ok(forced_action) =
-                    generate_forced_move_action(&battle_state.players[player_index], forced_move)
-                {
-                    battle_state.action_queue[player_index] = Some(forced_action);
-                }
-            }
-        }
-    }
-
+    // 7. Announce the end of the turn
     bus.push(BattleEvent::TurnEnded);
 }
 

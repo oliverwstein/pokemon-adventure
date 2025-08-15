@@ -156,7 +156,7 @@ mod tests {
         assert!(final_hp <= max_hp, "HP should not exceed max HP");
 
         // Should NOT have heal event since already at full HP
-        let heal_events: Vec<_> = event_bus
+        let _: Vec<_> = event_bus
             .events()
             .iter()
             .filter(|event| {

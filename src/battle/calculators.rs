@@ -2,7 +2,6 @@ use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
-use crate::battle::engine::BattleAction;
 use crate::move_data::get_move_data;
 use crate::moves::Move;
 

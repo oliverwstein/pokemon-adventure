@@ -320,7 +320,7 @@ mod tests {
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20); // Will faint
         let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100); // Replacement
 
-        let mut player1 = BattlePlayer {
+        let player1 = BattlePlayer {
             player_id: "test_player1".to_string(),
             player_name: "TestPlayer1".to_string(),
             team: [Some(pokemon1), Some(pokemon2), None, None, None, None],
@@ -448,7 +448,7 @@ mod tests {
         pokemon2.take_damage(50);
         assert!(pokemon2.is_fainted());
 
-        let mut player1 = BattlePlayer {
+        let player1 = BattlePlayer {
             player_id: "test_player".to_string(),
             player_name: "TestPlayer".to_string(),
             team: [Some(pokemon1), Some(pokemon2), None, None, None, None], // Two Pokemon

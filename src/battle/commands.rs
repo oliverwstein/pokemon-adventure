@@ -2,9 +2,8 @@ use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState};
 use crate::battle::engine::{ActionStack, BattleAction};
 use crate::moves::Move;
-use crate::player::{PlayerAction, StatType, TeamCondition};
+use crate::player::{StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
-use std::collections::HashMap;
 
 /// Player target for commands - provides type safety over raw indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

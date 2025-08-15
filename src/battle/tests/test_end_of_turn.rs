@@ -2,7 +2,6 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState, TurnRng};
-    use crate::battle::engine::execute_end_turn_phase;
     use crate::move_data::initialize_move_data;
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data, initialize_species_data};
@@ -140,7 +139,7 @@ mod tests {
         pokemon.status = Some(StatusCondition::Burn);
 
         // Deal status damage - should deal 1/8 of max HP damage
-        let (damage, status_changed) = pokemon.deal_status_damage();
+        let (damage, _) = pokemon.deal_status_damage();
 
         assert_eq!(
             damage,

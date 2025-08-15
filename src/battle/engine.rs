@@ -24,12 +24,6 @@ pub enum BattleAction {
         target_pokemon_index: usize,
     },
 
-    /// Player uses an item (not yet implemented)
-    UseItem {
-        player_index: usize,
-        item_id: String,
-    },
-
     /// Execute a single hit of a move (for multi-hit moves, multiple actions are pushed)
     AttackHit {
         attacker_index: usize,
@@ -599,10 +593,6 @@ pub fn execute_battle_action(
             }
 
             execute_switch(player_index, target_pokemon_index, battle_state, bus);
-        }
-
-        BattleAction::UseItem { .. } => {
-            // TODO: Implement item usage
         }
 
         BattleAction::AttackHit {

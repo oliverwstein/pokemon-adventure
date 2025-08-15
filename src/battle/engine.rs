@@ -129,39 +129,6 @@ pub fn collect_player_actions(
     Ok(())
 }
 
-/// Generate a forced move action for a player with forcing conditions
-/// Creates a UseMove action that will use the forced move (bypassing normal move selection)
-fn generate_forced_move_action(
-    player: &crate::player::BattlePlayer,
-    forced_move: crate::moves::Move,
-) -> Result<PlayerAction, String> {
-    // Get the active pokemon
-    let active_pokemon = player.team[player.active_pokemon_index]
-        .as_ref()
-        .ok_or("No active pokemon")?;
-
-    // If active Pokemon is fainted, it cannot act
-    if active_pokemon.is_fainted() {
-        return Err("Active Pokemon is fainted and cannot act".to_string());
-    }
-
-    // Find the move index for the forced move, or use 0 as fallback
-    // The conversion logic will handle using the forced move directly
-    let move_index = active_pokemon
-        .moves
-        .iter()
-        .position(|move_opt| {
-            if let Some(move_instance) = move_opt {
-                move_instance.move_ == forced_move
-            } else {
-                false
-            }
-        })
-        .unwrap_or(0);
-
-    Ok(PlayerAction::UseMove { move_index })
-}
-
 /// Validates a player action for detailed correctness
 /// Checks move PP, bounds, switch targets, etc.
 pub fn validate_player_action(

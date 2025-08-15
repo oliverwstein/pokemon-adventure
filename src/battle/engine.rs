@@ -1,6 +1,6 @@
 use crate::battle::ai::{Behavior, ScoringAI};
 use crate::battle::calculators::calculate_attack_outcome;
-use crate::battle::commands::execute_command_batch;
+use crate::battle::commands::{execute_command_batch, BattleCommand};
 use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
@@ -375,15 +375,18 @@ fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus)
         battle_state.game_state,
         GameState::Player1Win | GameState::Player2Win | GameState::Draw
     ) {
-        battle_state.game_state = GameState::WaitingForActions;
+        let commands = vec![BattleCommand::SetGameState(GameState::WaitingForActions)];
+        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
     }
 
     // Clear action queue for next turn
-    battle_state.action_queue = [None, None];
+    let commands = vec![BattleCommand::ClearActionQueue];
+    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
 }
 
 fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
-    battle_state.game_state = GameState::TurnInProgress;
+    let commands = vec![BattleCommand::SetGameState(GameState::TurnInProgress)];
+    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
     bus.push(BattleEvent::TurnStarted {
         turn_number: battle_state.turn_number,
     });
@@ -660,11 +663,13 @@ pub fn execute_battle_action(
 /// Execute forfeit action - player loses immediately
 fn execute_forfeit(player_index: usize, battle_state: &mut BattleState, bus: &mut EventBus) {
     // Set game state to opponent wins
-    battle_state.game_state = if player_index == 0 {
+    let new_state = if player_index == 0 {
         GameState::Player2Win
     } else {
         GameState::Player1Win
     };
+    let commands = vec![BattleCommand::SetGameState(new_state)];
+    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
 
     bus.push(BattleEvent::PlayerDefeated { player_index });
     bus.push(BattleEvent::BattleEnded {
@@ -1174,26 +1179,29 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
 
     // 3. Increment turn number if it was a real battle turn
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        battle_state.turn_number += 1;
+        let commands = vec![BattleCommand::IncrementTurnNumber];
+        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
     }
 
     // 4. Set the default next state if the battle is ongoing
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        battle_state.game_state = GameState::WaitingForActions;
+        let commands = vec![BattleCommand::SetGameState(GameState::WaitingForActions)];
+        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
     }
 
     // 5. Check if the default state needs to be overridden by a replacement phase
-    check_for_pending_replacements(battle_state);
+    check_for_pending_replacements(battle_state, bus);
 
     // 6. Clear the action queue from the turn that just ended
-    battle_state.action_queue = [None, None];
+    let commands = vec![BattleCommand::ClearActionQueue];
+    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
 
     // 7. Announce the end of the turn
     bus.push(BattleEvent::TurnEnded);
 }
 
 /// At the end of the turn, checks if any active Pokemon have fainted and if replacements are needed.
-fn check_for_pending_replacements(battle_state: &mut BattleState) {
+fn check_for_pending_replacements(battle_state: &mut BattleState, bus: &mut EventBus) {
     // This should only trigger if the battle is still technically ongoing.
     if !matches!(
         battle_state.game_state,
@@ -1220,7 +1228,8 @@ fn check_for_pending_replacements(battle_state: &mut BattleState) {
         };
 
         if let Some(state) = new_game_state {
-            battle_state.game_state = state;
+            let commands = vec![BattleCommand::SetGameState(state)];
+            let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
         }
     }
 }
@@ -1244,18 +1253,21 @@ fn check_win_conditions(battle_state: &mut BattleState, bus: &mut EventBus) {
     match (player1_has_pokemon, player2_has_pokemon) {
         (false, false) => {
             // Both players out of Pokemon - draw
-            battle_state.game_state = GameState::Draw;
+            let commands = vec![BattleCommand::SetGameState(GameState::Draw)];
+            let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
             bus.push(BattleEvent::BattleEnded { winner: None });
         }
         (false, true) => {
             // Player 1 out of Pokemon - Player 2 wins
-            battle_state.game_state = GameState::Player2Win;
+            let commands = vec![BattleCommand::SetGameState(GameState::Player2Win)];
+            let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
             bus.push(BattleEvent::PlayerDefeated { player_index: 0 });
             bus.push(BattleEvent::BattleEnded { winner: Some(1) });
         }
         (true, false) => {
             // Player 2 out of Pokemon - Player 1 wins
-            battle_state.game_state = GameState::Player1Win;
+            let commands = vec![BattleCommand::SetGameState(GameState::Player1Win)];
+            let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
             bus.push(BattleEvent::PlayerDefeated { player_index: 1 });
             bus.push(BattleEvent::BattleEnded { winner: Some(0) });
         }

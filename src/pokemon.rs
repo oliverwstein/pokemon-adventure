@@ -3,8 +3,6 @@ use crate::moves::Move;
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 
 // Include the compiled species data
 use crate::move_data::{get_compiled_species_data, MoveData};
@@ -264,78 +262,6 @@ impl Learnset {
     }
 }
 
-impl PokemonSpecies {
-    /// Load all Pokemon species from RON files in the data directory
-    pub fn load_all(data_path: &Path) -> Result<Vec<PokemonSpecies>, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-        let mut species = Vec::new();
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                let content = fs::read_to_string(&path)?;
-                let pokemon: PokemonSpecies = ron::from_str(&content)?;
-                species.push(pokemon);
-            }
-        }
-
-        // Sort by pokedex number
-        species.sort_by(|a, b| a.pokedex_number.cmp(&b.pokedex_number));
-
-        Ok(species)
-    }
-
-    /// Create a HashMap for fast name-based lookups using RON filename-based keys
-    pub fn create_species_map(
-        data_path: &Path,
-    ) -> Result<HashMap<String, PokemonSpecies>, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-        let mut map = HashMap::new();
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Extract name from filename format: "001-bulbasaur.ron" -> "bulbasaur"
-                    if let Some(pokemon_name) = filename.split('-').nth(1) {
-                        let content = fs::read_to_string(&path)?;
-                        let species: PokemonSpecies = ron::from_str(&content)?;
-
-                        // Use the filename-based name as the key (uppercase for consistency)
-                        let key = pokemon_name.to_uppercase();
-                        map.insert(key, species);
-                    }
-                }
-            }
-        }
-
-        Ok(map)
-    }
-}
 
 impl MoveInstance {
     /// Create a new move instance with max PP

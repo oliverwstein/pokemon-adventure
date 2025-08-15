@@ -1,5 +1,5 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
-use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState};
+use crate::battle::state::{BattleEvent, BattleState, EventBus};
 use crate::battle::engine::{ActionStack, BattleAction};
 use crate::moves::Move;
 use crate::player::{StatType, TeamCondition};
@@ -58,15 +58,6 @@ pub enum BattleCommand {
         target: PlayerTarget,
         status: Option<StatusCondition>,
     },
-    FaintPokemon {
-        target: PlayerTarget,
-    },
-    RestorePP {
-        target: PlayerTarget,
-        move_slot: usize,
-        amount: u8,
-    },
-
     // Player state changes
     ChangeStatStage {
         target: PlayerTarget,
@@ -115,50 +106,7 @@ pub enum BattleCommand {
 #[derive(Debug, PartialEq)]
 pub enum ExecutionError {
     NoPokemon,
-    InvalidPlayerIndex,
     InvalidPokemonIndex,
-    InvalidMove,
-    StateValidationError(String),
-}
-
-/// Error types for battle execution
-#[derive(Debug, PartialEq)]
-pub enum BattleExecutionError {
-    InvalidPlayerAction(String),
-    GameNotWaitingForActions,
-    PlayerAlreadySubmitted(String),
-    InvalidGameState,
-    CommandExecutionFailed(ExecutionError),
-}
-
-/// Result of turn execution containing state changes and events
-#[derive(Debug, Clone)]
-pub struct TurnResult {
-    pub events: Vec<BattleEvent>,
-    pub new_state: GameState,
-    pub battle_ended: bool,
-    pub winner: Option<usize>,
-}
-
-impl TurnResult {
-    pub fn new(events: Vec<BattleEvent>, new_state: GameState) -> Self {
-        let battle_ended = matches!(
-            new_state,
-            GameState::Player1Win | GameState::Player2Win | GameState::Draw
-        );
-        let winner = match new_state {
-            GameState::Player1Win => Some(0),
-            GameState::Player2Win => Some(1),
-            _ => None,
-        };
-
-        Self {
-            events,
-            new_state,
-            battle_ended,
-            winner,
-        }
-    }
 }
 
 /// Execute a batch of commands atomically
@@ -249,13 +197,6 @@ pub fn execute_command(
         BattleCommand::SetPokemonStatus { target, status } => {
             execute_pokemon_command(target, state, |pokemon, _| {
                 pokemon.status = status;
-                Ok(())
-            })
-        }
-        BattleCommand::FaintPokemon { target } => {
-            execute_pokemon_command(target, state, |pokemon, _| {
-                // Set HP to 0, which will trigger fainting in take_damage
-                pokemon.take_damage(pokemon.current_hp());
                 Ok(())
             })
         }
@@ -352,26 +293,6 @@ pub fn execute_command(
         BattleCommand::ClearActionQueue => {
             state.action_queue = [None, None];
             Ok(())
-        }
-        BattleCommand::RestorePP {
-            target,
-            move_slot,
-            amount,
-        } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-                if move_slot < pokemon.moves.len() && pokemon.moves[move_slot].is_some() {
-                    if let Some(move_data) = &mut pokemon.moves[move_slot] {
-                        move_data.pp = (move_data.pp + amount).min(move_data.max_pp());
-                    }
-                    Ok(())
-                } else {
-                    Err(ExecutionError::InvalidMove)
-                }
-            } else {
-                Err(ExecutionError::NoPokemon)
-            }
         }
         BattleCommand::PushAction(action) => {
             action_stack.push_front(action);

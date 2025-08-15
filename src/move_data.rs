@@ -2,7 +2,6 @@ use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 // Include the compiled move data
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
@@ -2071,41 +2070,6 @@ pub struct MoveData {
 }
 
 impl MoveData {
-    #[allow(dead_code)]
-    pub fn load_all(
-        _data_path: &std::path::Path,
-    ) -> Result<HashMap<Move, MoveData>, Box<dyn std::error::Error>> {
-        let mut move_map = get_compiled_move_data();
-
-        // Add hardcoded special moves that aren't in RON files
-        let hitting_itself_data = MoveData {
-            name: "Hit Itself".to_string(),
-            move_type: PokemonType::Typeless,
-            power: Some(40),
-            category: MoveCategory::Physical,
-            accuracy: None, // Always hits
-            max_pp: 0,      // Not a real move, no PP
-            effects: vec![],
-        };
-        move_map.insert(Move::HittingItself, hitting_itself_data);
-
-        // Add Struggle.
-        // It has fixed data and recoil. Recoil is 25% of damage dealt here.
-        // Note: In some game generations, recoil is 1/4 of the user's max HP.
-        let struggle_data = MoveData {
-            name: "Struggle".to_string(),
-            move_type: PokemonType::Typeless,
-            power: Some(50),
-            category: MoveCategory::Physical,
-            accuracy: Some(90),
-            max_pp: 0,                             // Not a real move, no PP
-            effects: vec![MoveEffect::Recoil(25)], // 25% recoil of damage dealt
-        };
-        move_map.insert(Move::Struggle, struggle_data);
-
-        Ok(move_map)
-    }
-
     /// Get move data for a specific move from the compiled data
     pub fn get_move_data(move_: Move) -> Option<MoveData> {
         // Handle special hardcoded moves first

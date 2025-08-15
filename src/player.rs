@@ -181,11 +181,18 @@ impl BattlePlayer {
     }
 
     /// Decrement all team condition turns and remove expired ones
-    pub fn tick_team_conditions(&mut self) {
-        self.team_conditions.retain(|_, turns| {
+    pub fn tick_team_conditions(&mut self) -> Vec<TeamCondition> {
+        let mut expired = Vec::new();
+        self.team_conditions.retain(|condition, turns| {
             *turns = turns.saturating_sub(1);
-            *turns > 0
+            if *turns == 0 {
+                expired.push(*condition);
+                false // Remove from map
+            } else {
+                true // Keep in map
+            }
         });
+        expired
     }
 
     // === Stat Stage Management ===

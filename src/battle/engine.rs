@@ -507,7 +507,8 @@ pub fn execute_battle_action(
                 }
             }
 
-            execute_switch(player_index, target_pokemon_index, battle_state, bus);
+            let commands = execute_switch(player_index, target_pokemon_index, battle_state);
+            let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
         }
 
         BattleAction::AttackHit {
@@ -705,31 +706,29 @@ fn execute_forfeit(player_index: usize, battle_state: &mut BattleState, bus: &mu
 fn execute_switch(
     player_index: usize,
     target_pokemon_index: usize,
-    battle_state: &mut BattleState,
-    bus: &mut EventBus,
-) {
-    let player = &mut battle_state.players[player_index];
-    let old_pokemon = player.team[player.active_pokemon_index]
-        .as_ref()
-        .expect("Current active Pokemon should exist")
-        .species;
-    let new_pokemon = player.team[target_pokemon_index]
-        .as_ref()
-        .expect("Target Pokemon should exist")
-        .species;
+    battle_state: &BattleState,
+) -> Vec<BattleCommand> {
+    let player = &battle_state.players[player_index];
+    let old_pokemon = player.active_pokemon().unwrap().species;
+    let new_pokemon = player.team[target_pokemon_index].as_ref().unwrap().species;
+    let target = PlayerTarget::from_index(player_index);
 
-    player.clear_active_pokemon_state();
-
-    // Change active Pokemon
-    player.active_pokemon_index = target_pokemon_index;
-
-    bus.push(BattleEvent::PokemonSwitched {
-        player_index,
-        old_pokemon,
-        new_pokemon,
-    });
+    vec![
+        // 1. Command to clear the old state.
+        BattleCommand::ClearPlayerState { target },
+        // 2. Command to perform the switch.
+        BattleCommand::SwitchPokemon {
+            target,
+            new_pokemon_index: target_pokemon_index,
+        },
+        // 3. Command to emit the event.
+        BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
+            player_index,
+            old_pokemon,
+            new_pokemon,
+        }),
+    ]
 }
-
 /// Check all conditions that can prevent a Pokemon from taking action
 /// Returns Some(ActionFailureReason) if action should be prevented, None if action can proceed
 fn check_action_preventing_conditions(
@@ -947,7 +946,6 @@ pub fn execute_attack_hit(
     //    This step applies all the calculated state changes and emits all events.
     if let Err(e) = execute_command_batch(commands, battle_state, bus, action_stack) {
         eprintln!("Error executing attack commands: {:?}", e);
-        // In a real application, this might warrant more robust error handling.
     }
 }
 
@@ -1194,8 +1192,21 @@ pub fn execute_end_turn_phase(
 
     // 4. Tick team conditions (Reflect, Light Screen, Mist)
     for player_index in 0..2 {
-        let player = &mut battle_state.players[player_index];
-        player.tick_team_conditions();
+        let expired_conditions = battle_state.players[player_index].tick_team_conditions();
+        let mut commands = Vec::new();
+        for condition in expired_conditions {
+            // We can now generate events for this!
+            commands.push(BattleCommand::RemoveTeamCondition {
+                target: PlayerTarget::from_index(player_index),
+                condition,
+            });
+            commands.push(BattleCommand::EmitEvent(BattleEvent::TeamConditionExpired {
+                    player_index,
+                    condition,
+                }));
+        }
+        // Execute the generated commands
+        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
     }
 }
 

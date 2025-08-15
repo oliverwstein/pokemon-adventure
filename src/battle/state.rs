@@ -1,6 +1,6 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
-use crate::player::{BattlePlayer, PlayerAction, StatType};
+use crate::player::{BattlePlayer, PlayerAction, StatType, TeamCondition};
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
 
@@ -102,6 +102,10 @@ pub enum BattleEvent {
     ConditionExpired {
         target: Species,
         condition: PokemonCondition,
+    },
+    TeamConditionExpired {
+        player_index: usize,
+        condition: TeamCondition,
     },
 
     // Stat Changes

@@ -6,7 +6,6 @@ mod tests {
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
-    use std::collections::HashMap;
 
     // Helper function to create a Pokemon with specific stats and moves
     fn create_test_pokemon(
@@ -41,17 +40,19 @@ mod tests {
 
     // Helper function to create a player
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        BattlePlayer {
-            player_id: "test_player".to_string(),
-            player_name: "TestPlayer".to_string(),
-            team: [Some(pokemon), None, None, None, None, None],
-            active_pokemon_index: 0,
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        }
+        let player_team = vec![pokemon];
+
+        // Step 2: Use the constructor to create the player.
+        // This will create a default player with ante = 0. We declare it `mut` to change it.
+        let mut player = BattlePlayer::new(
+            "test_player".to_string(),
+            "TestPlayer".to_string(),
+            player_team,
+        );
+
+        // Step 3: Modify any fields that differ from the default constructor values.
+        player.ante = 200;
+        player
     }
 
     #[test]

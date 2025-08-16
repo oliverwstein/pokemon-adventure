@@ -91,39 +91,37 @@ fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::
     None
 }
 
-/// Prepares a battle state for turn resolution by collecting actions from both players
-/// This function should be called before resolve_turn()
-pub fn collect_player_actions(
-    battle_state: &mut BattleState,
-) -> Result<(), String> {
+pub fn collect_npc_actions(
+    battle_state: &BattleState, // Takes an immutable reference
+) -> Vec<(usize, PlayerAction)> { // Returns a list of (player_index, action)
     let ai_brain = ScoringAI::new();
+    let mut npc_actions = Vec::new();
 
+    // Determine which players *could* act
     let players_to_act = match battle_state.game_state {
         GameState::WaitingForActions | GameState::WaitingForBothReplacements => vec![0, 1],
         GameState::WaitingForPlayer1Replacement => vec![0],
         GameState::WaitingForPlayer2Replacement => vec![1],
-        _ => return Ok(()),
+        _ => return npc_actions,
     };
 
     for player_index in players_to_act {
-        // --- LOGIC ---
-        // 1. Check if an action is already queued for this player.
-        // 2. Check if this player has a forced move.
-        // If either is true, we do nothing and let the engine handle it later.
-        if battle_state.action_queue[player_index].is_none() 
-            && check_for_forced_move(&battle_state.players[player_index]).is_none() {
+        let player = &battle_state.players[player_index];
+        
+        // The new, crucial logic:
+        // ONLY act if the player is an NPC AND their action is missing.
+        if player.player_type == crate::player::PlayerType::NPC 
+            && battle_state.action_queue[player_index].is_none()
+            && check_for_forced_move(player).is_none() {
             
-            // This player is free to choose an action.
-            // For now, we only have an AI to make this choice. In a real game,
-            // this is where you'd wait for human input for player 0.
             let action = ai_brain.decide_action(player_index, battle_state);
-            println!("Chosen Action for player {}: {}", player_index, action);
-            battle_state.action_queue[player_index] = Some(action);
+            npc_actions.push((player_index, action));
         }
     }
-
-    Ok(())
+    
+    npc_actions
 }
+
 
 /// Validates a player action for detailed correctness
 /// Checks move PP, bounds, switch targets, etc.

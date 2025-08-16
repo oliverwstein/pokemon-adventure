@@ -93,13 +93,19 @@ impl From<crate::move_data::StatType> for StatType {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlayerType {
+    Human,
+    NPC,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BattlePlayer {
     // A unique identifier. For a human, this could be their UserID.
     // For an NPC, this could be "AI_YoungsterJoey".
     pub player_id: String,
     pub player_name: String,
-
+    pub player_type: PlayerType,
     // The player's full team of up to 6 Pokémon instances.
     pub team: [Option<PokemonInst>; 6],
 
@@ -124,6 +130,15 @@ pub struct BattlePlayer {
 impl BattlePlayer {
     /// Create a new BattlePlayer
     pub fn new(player_id: String, player_name: String, team: Vec<PokemonInst>) -> Self {
+        // Call the new, more explicit constructor with the default value.
+        Self::new_with_player_type(player_id, player_name, team, PlayerType::NPC)
+    }
+    pub fn new_with_player_type(
+        player_id: String,
+        player_name: String,
+        team: Vec<PokemonInst>,
+        player_type: PlayerType, // <-- The new parameter
+    ) -> Self {
         let mut team_array = [const { None }; 6];
         for (i, pokemon) in team.into_iter().take(6).enumerate() {
             team_array[i] = Some(pokemon);
@@ -132,6 +147,7 @@ impl BattlePlayer {
         BattlePlayer {
             player_id,
             player_name,
+            player_type, // <-- Use the provided player type
             team: team_array,
             active_pokemon_index: 0,
             team_conditions: HashMap::new(),
@@ -141,7 +157,6 @@ impl BattlePlayer {
             last_move: None,
         }
     }
-
     /// Get the currently active Pokemon
     pub fn active_pokemon(&self) -> Option<&PokemonInst> {
         self.team

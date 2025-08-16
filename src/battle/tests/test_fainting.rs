@@ -1,12 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::engine::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst, StatusCondition};
     use crate::species::Species;
-    use std::collections::HashMap;
 
     fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
         let mut pokemon_moves = [const { None }; 4];
@@ -33,17 +32,19 @@ mod tests {
     }
 
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        BattlePlayer {
-            player_id: "test_player".to_string(),
-            player_name: "TestPlayer".to_string(),
-            team: [Some(pokemon), None, None, None, None, None],
-            active_pokemon_index: 0,
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        }
+        let player_team = vec![pokemon];
+
+        // Step 2: Use the constructor to create the player.
+        // This will create a default player with ante = 0. We declare it `mut` to change it.
+        let mut player = BattlePlayer::new(
+            "test_player".to_string(),
+            "TestPlayer".to_string(),
+            player_team,
+        );
+
+        // Step 3: Modify any fields that differ from the default constructor values.
+        player.ante = 200;
+        player
     }
 
     #[test]
@@ -135,8 +136,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
-        collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
-
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         // Create RNG that ensures hits
         let test_rng = TurnRng::new_for_test(vec![
             50, 50, 50, 50, 50, 50, // Mid values for hits but no crits
@@ -248,19 +251,19 @@ mod tests {
         // Create battle state
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Try to collect actions - should fail for the fainted Pokemon
-        let result = crate::battle::engine::collect_player_actions(&mut battle_state);
+        let npc_actions = crate::battle::engine::collect_npc_actions(&battle_state);
 
-        // The AI should not be able to generate an action for the fainted Pokemon
-        // So collect_player_actions should return a forfeit.
-        if result.is_ok() {
-            // If it succeeds, the fainted player should have no action
-            assert_eq!(
-                battle_state.action_queue[0],
-                Some(PlayerAction::Forfeit),
-                "Player 1, with no usable Pokemon, should be forced to forfeit."
-            );
+        // Apply the decided actions to the battle state's action queue.
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
         }
+
+        // Now, verify that the correct action was queued for the fainted player.
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::Forfeit),
+            "Player 1, with no usable Pokemon, should be forced to forfeit."
+        );
 
         // Manually try to set an action for the fainted Pokemon and see if it gets blocked
         battle_state.action_queue[0] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
@@ -307,18 +310,10 @@ mod tests {
         // Create a player with multiple Pokemon, where active Pokemon will faint
         let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20); // Will faint
         let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100); // Replacement
-
-        let player1 = BattlePlayer {
-            player_id: "test_player1".to_string(),
-            player_name: "TestPlayer1".to_string(),
-            team: [Some(pokemon1), Some(pokemon2), None, None, None, None],
-            active_pokemon_index: 0, // Pikachu is active and will faint
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        };
+        
+        let mut player1 = create_test_player(pokemon1);
+        player1.team[1] = Some(pokemon2);
+        
 
         let player2 = create_test_player(create_test_pokemon_with_hp(
             Species::Squirtle,
@@ -330,8 +325,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect initial actions
-        collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
-
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         // Create RNG that ensures a hit that will cause fainting
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
 
@@ -364,11 +361,10 @@ mod tests {
             );
 
             // Now test that the system can handle the replacement
-            let result = collect_player_actions(&mut battle_state);
-            assert!(
-                result.is_ok(),
-                "Should be able to collect replacement action"
-            );
+            let replacement_npc_actions = collect_npc_actions(&battle_state);
+            for (player_index, action) in replacement_npc_actions {
+                battle_state.action_queue[player_index] = Some(action);
+            }
 
             // Player 1 should have a switch action
             assert!(
@@ -430,17 +426,18 @@ mod tests {
         pokemon2.take_damage(50);
         assert!(pokemon2.is_fainted());
 
-        let player1 = BattlePlayer {
-            player_id: "test_player".to_string(),
-            player_name: "TestPlayer".to_string(),
-            team: [Some(pokemon1), Some(pokemon2), None, None, None, None], // Two Pokemon
-            active_pokemon_index: 0, // First Pokemon is active
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        };
+        let player_team = vec![pokemon1, pokemon2];
+
+        // Step 2: Use the constructor to create the player.
+        // This will create a default player with ante = 0. We declare it `mut` to change it.
+        let mut player1 = BattlePlayer::new(
+            "test_player".to_string(),
+            "TestPlayer".to_string(),
+            player_team,
+        );
+
+        // Step 3: Modify any fields that differ from the default constructor values.
+        player1.ante = 200;
 
         let player2 = create_test_player(create_test_pokemon_with_hp(
             Species::Squirtle,

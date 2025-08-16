@@ -464,6 +464,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -500,6 +501,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -553,6 +555,7 @@ mod tests {
         let mut player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -642,6 +645,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),

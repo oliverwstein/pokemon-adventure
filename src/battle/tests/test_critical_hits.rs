@@ -1,12 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::engine::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
-    use std::collections::HashMap;
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
         let mut pokemon_moves = [const { None }; 4];
@@ -34,17 +33,19 @@ mod tests {
     }
 
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        BattlePlayer {
-            player_id: "test_player".to_string(),
-            player_name: "TestPlayer".to_string(),
-            team: [Some(pokemon), None, None, None, None, None],
-            active_pokemon_index: 0,
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        }
+        let player_team = vec![pokemon];
+
+        // Step 2: Use the constructor to create the player.
+        // This will create a default player with ante = 0. We declare it `mut` to change it.
+        let mut player = BattlePlayer::new(
+            "test_player".to_string(),
+            "TestPlayer".to_string(),
+            player_team,
+        );
+
+        // Step 3: Modify any fields that differ from the default constructor values.
+        player.ante = 200;
+        player
     }
 
     #[test]
@@ -60,7 +61,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
-        collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
 
         // Create RNG with values that will guarantee critical hits
         let test_rng = TurnRng::new_for_test(vec![
@@ -102,8 +106,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Collect AI actions
-        collect_player_actions(&mut battle_state).expect("Should collect actions successfully");
-
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         // Create RNG with high values that will miss all attacks
         let test_rng = TurnRng::new_for_test(vec![
             99, 99, 99, 99, 99, 99, // High values to ensure misses

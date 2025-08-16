@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::engine::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -54,7 +54,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Turn 1: Solar Beam should charge
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
         // Print all events for clarity
@@ -75,8 +78,10 @@ mod tests {
         // Turn 2: Trigger the next turn. The engine should now force Solar Beam to execute.
 
         // Collect actions for players who can act (i.e., the AI). Player 0 will be skipped.
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
-        
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         // Assert that Player 0's action queue is empty because their move is forced.
         assert!(
             battle_state.action_queue[0].is_none(),
@@ -142,7 +147,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Turn 1: Fly should go in air
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
@@ -164,7 +172,10 @@ mod tests {
 
         // --- START REVISED TEST LOGIC FOR TURN 2 ---
         // Turn 2: Fly should execute attack
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
 
         // Assert that the action queue for the forced player is empty before turn resolution.
         assert!(
@@ -231,7 +242,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Turn 1: Dig should go underground
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
         for event in event_bus.events() {
@@ -260,7 +274,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Turn 1: Thrash should apply Rampaging condition
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
         
@@ -286,7 +303,10 @@ mod tests {
 
         // --- START REVISED TEST LOGIC FOR TURN 2 ---
         // Turn 2: Should be forced to use Thrash again
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
 
         // Assert that Player 0's action queue is empty because their move is forced.
         assert!(
@@ -341,7 +361,10 @@ mod tests {
         // The first roll is for Rampage duration (<= 50 means 2 turns).
         let turn_1_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         
-        collect_player_actions(&mut battle_state).expect("Should collect actions for turn 1");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let event_bus_1 = resolve_turn(&mut battle_state, turn_1_rng);
         for event in event_bus_1.events() {
             println!("  {:?}", event);
@@ -352,7 +375,10 @@ mod tests {
         
         // --- Turn 2: Continue Rampaging ---
         // The move is forced, so we only need to collect the AI's action.
-        collect_player_actions(&mut battle_state).expect("Should collect actions for turn 2");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let turn_2_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus_2 = resolve_turn(&mut battle_state, turn_2_rng);
 
@@ -365,7 +391,10 @@ mod tests {
         assert!(is_rampage_ending, "Rampage should be ending after Turn 2");
 
         // --- Turn 3: Rampage Ends, Confusion Begins ---
-        collect_player_actions(&mut battle_state).expect("Should collect actions for turn 3");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let turn_3_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]); // RNG for confusion check
         let event_bus_3 = resolve_turn(&mut battle_state, turn_3_rng);
         
@@ -560,7 +589,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Player 1 uses Explosion
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
@@ -1247,7 +1279,10 @@ mod tests {
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
         // Turn 1: Player 1 uses Bide - should apply Biding condition
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
@@ -1272,7 +1307,10 @@ mod tests {
         
         // We only need to collect actions for the AI, since Player 0's move is forced and will be
         // auto-generated by `build_initial_action_stack`. The action queue for player 0 will be empty.
-        collect_player_actions(&mut battle_state).expect("Should collect actions");
+        let npc_actions = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
 
         // The action queue for player 0 should be empty because their move is forced.
         assert!(

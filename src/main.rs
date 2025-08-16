@@ -127,7 +127,7 @@ fn main() {
 fn run_npc_battle_demo_without_runner() {
     use battle::state::{BattleState, GameState, TurnRng};
     use battle::engine::{
-        collect_player_actions, ready_for_turn_resolution, resolve_turn,
+        collect_npc_actions, ready_for_turn_resolution, resolve_turn,
     };
 
     // Create two trainers with multiple Pokemon each
@@ -193,10 +193,14 @@ fn run_npc_battle_demo_without_runner() {
         }
         println!();
 
-        // Auto-generate NPC actions
-        if let Err(e) = collect_player_actions(&mut battle_state) {
-            println!("Error generating actions: {}", e);
-            break;
+        // Step 1: Call the pure function to get a list of decided actions.
+        // It takes an immutable reference because it doesn't change the state itself.
+        let npc_actions = collect_npc_actions(&battle_state);
+
+        // Step 2: Explicitly apply the decided actions to the battle state's action queue.
+        // This makes it clear that we are modifying the state here.
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
         }
 
         // Execute the game tick loop - keep resolving turns until waiting for input

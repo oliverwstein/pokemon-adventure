@@ -361,6 +361,7 @@ mod tests {
         let player1 = BattlePlayer {
             player_id: "test1".to_string(),
             player_name: "Player 1".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [
                 Some(pokemon1),
                 const { None },
@@ -380,6 +381,7 @@ mod tests {
         let player2 = BattlePlayer {
             player_id: "test2".to_string(),
             player_name: "Player 2".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [
                 Some(pokemon2),
                 const { None },

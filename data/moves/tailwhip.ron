@@ -6,6 +6,6 @@ MoveData(
     accuracy: Some(100),
     max_pp: 30,
     effects: [
-        StatChange(Target, Atk, -1, 100),
+        StatChange(Target, Def, -1, 100),
     ],
 )

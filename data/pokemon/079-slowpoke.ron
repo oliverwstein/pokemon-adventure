@@ -17,7 +17,7 @@ PokemonSpecies(
             22: [Growl],
             27: [WaterGun],
             33: [Amnesia],
-            40: [Psychic],
+            40: [Perplex],
             48: [Psywave],
         },
         signature: Some(Amnesia),

@@ -1,187 +1,17 @@
-use crate::move_data::get_move_max_pp;
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use std::sync::{LazyLock, RwLock};
 
-// Global species data storage - loaded once at startup, indexed by Species enum
-static SPECIES_DATA: LazyLock<RwLock<[Option<PokemonSpecies>; 151]>> =
-    LazyLock::new(|| RwLock::new([const { None }; 151]));
+// Include the compiled species data
+use crate::move_data::{get_compiled_species_data, MoveData};
 
-/// Initialize the global species data by loading from disk
-pub fn initialize_species_data(data_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let mut global_data = SPECIES_DATA.write().unwrap();
-
-    for species_variant in [
-        Species::Bulbasaur,
-        Species::Ivysaur,
-        Species::Venusaur,
-        Species::Charmander,
-        Species::Charmeleon,
-        Species::Charizard,
-        Species::Squirtle,
-        Species::Wartortle,
-        Species::Blastoise,
-        Species::Caterpie,
-        Species::Metapod,
-        Species::Butterfree,
-        Species::Weedle,
-        Species::Kakuna,
-        Species::Beedrill,
-        Species::Pidgey,
-        Species::Pidgeotto,
-        Species::Pidgeot,
-        Species::Rattata,
-        Species::Raticate,
-        Species::Spearow,
-        Species::Fearow,
-        Species::Ekans,
-        Species::Arbok,
-        Species::Pikachu,
-        Species::Raichu,
-        Species::Sandshrew,
-        Species::Sandslash,
-        Species::NidoranFemale,
-        Species::Nidorina,
-        Species::Nidoqueen,
-        Species::NidoranMale,
-        Species::Nidorino,
-        Species::Nidoking,
-        Species::Clefairy,
-        Species::Clefable,
-        Species::Vulpix,
-        Species::Ninetales,
-        Species::Jigglypuff,
-        Species::Wigglytuff,
-        Species::Zubat,
-        Species::Golbat,
-        Species::Oddish,
-        Species::Gloom,
-        Species::Vileplume,
-        Species::Paras,
-        Species::Parasect,
-        Species::Venonat,
-        Species::Venomoth,
-        Species::Diglett,
-        Species::Dugtrio,
-        Species::Meowth,
-        Species::Persian,
-        Species::Psyduck,
-        Species::Golduck,
-        Species::Mankey,
-        Species::Primeape,
-        Species::Growlithe,
-        Species::Arcanine,
-        Species::Poliwag,
-        Species::Poliwhirl,
-        Species::Poliwrath,
-        Species::Abra,
-        Species::Kadabra,
-        Species::Alakazam,
-        Species::Machop,
-        Species::Machoke,
-        Species::Machamp,
-        Species::Bellsprout,
-        Species::Weepinbell,
-        Species::Victreebel,
-        Species::Tentacool,
-        Species::Tentacruel,
-        Species::Geodude,
-        Species::Graveler,
-        Species::Golem,
-        Species::Ponyta,
-        Species::Rapidash,
-        Species::Slowpoke,
-        Species::Slowbro,
-        Species::Magnemite,
-        Species::Magneton,
-        Species::Farfetchd,
-        Species::Doduo,
-        Species::Dodrio,
-        Species::Seel,
-        Species::Dewgong,
-        Species::Grimer,
-        Species::Muk,
-        Species::Shellder,
-        Species::Cloyster,
-        Species::Gastly,
-        Species::Haunter,
-        Species::Gengar,
-        Species::Onix,
-        Species::Drowzee,
-        Species::Hypno,
-        Species::Krabby,
-        Species::Kingler,
-        Species::Voltorb,
-        Species::Electrode,
-        Species::Exeggcute,
-        Species::Exeggutor,
-        Species::Cubone,
-        Species::Marowak,
-        Species::Hitmonlee,
-        Species::Hitmonchan,
-        Species::Lickitung,
-        Species::Koffing,
-        Species::Weezing,
-        Species::Rhyhorn,
-        Species::Rhydon,
-        Species::Chansey,
-        Species::Tangela,
-        Species::Kangaskhan,
-        Species::Horsea,
-        Species::Seadra,
-        Species::Goldeen,
-        Species::Seaking,
-        Species::Staryu,
-        Species::Starmie,
-        Species::MrMime,
-        Species::Scyther,
-        Species::Jynx,
-        Species::Electabuzz,
-        Species::Magmar,
-        Species::Pinsir,
-        Species::Tauros,
-        Species::Magikarp,
-        Species::Gyarados,
-        Species::Lapras,
-        Species::Ditto,
-        Species::Eevee,
-        Species::Vaporeon,
-        Species::Jolteon,
-        Species::Flareon,
-        Species::Porygon,
-        Species::Omanyte,
-        Species::Omastar,
-        Species::Kabuto,
-        Species::Kabutops,
-        Species::Aerodactyl,
-        Species::Snorlax,
-        Species::Articuno,
-        Species::Zapdos,
-        Species::Moltres,
-        Species::Dratini,
-        Species::Dragonair,
-        Species::Dragonite,
-        Species::Mewtwo,
-        Species::Mew,
-    ] {
-        if let Ok(species_data) = PokemonSpecies::load_by_species(species_variant, data_path) {
-            let index = species_variant.pokedex_number() as usize - 1; // 0-indexed
-            global_data[index] = Some(species_data);
-        }
-    }
-
-    Ok(())
-}
-
-/// Get species data for a specific species from the global store
+/// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
-    let global_data = SPECIES_DATA.read().unwrap();
+    let compiled_data = get_compiled_species_data();
     let index = species.pokedex_number() as usize - 1; // 0-indexed
-    global_data[index].clone()
+    compiled_data[index].clone()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -410,10 +240,12 @@ pub struct PokemonSpecies {
 }
 
 impl Learnset {
+    #[allow(dead_code)]
     pub fn learns_at_level(&self, level: u8) -> Option<&Vec<Move>> {
         self.level_up.get(&level)
     }
 
+    #[allow(dead_code)]
     pub fn can_learn_move(&self, move_: Move) -> bool {
         // Check if move is in signature, level-up, or can_learn lists
         if self.signature == Some(move_) {
@@ -430,164 +262,18 @@ impl Learnset {
     }
 }
 
-impl PokemonSpecies {
-    /// Load a Pokemon species from its RON file by species enum
-    pub fn load_by_species(
-        species: Species,
-        data_path: &Path,
-    ) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        // Find the RON file based on the species enum
-        let species_filename = format!(
-            "{:03}-{}",
-            species.pokedex_number(),
-            species.name().to_lowercase()
-        );
-        let ron_file = pokemon_dir.join(format!("{}.ron", species_filename));
-
-        if !ron_file.exists() {
-            return Err(format!("Pokemon file not found: {}", ron_file.display()).into());
-        }
-
-        let content = fs::read_to_string(&ron_file)?;
-        let species_data: PokemonSpecies = ron::from_str(&content)?;
-        Ok(species_data)
-    }
-
-    /// Load a Pokemon species from its RON file by name (legacy method)
-    pub fn load_by_name(
-        name: &str,
-        data_path: &Path,
-    ) -> Result<PokemonSpecies, Box<dyn std::error::Error>> {
-        // Find the RON file that matches this Pokemon name
-        let pokemon_dir = data_path.join("pokemon");
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        // Read all .ron files in the pokemon directory
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                // Check if this file matches our Pokemon name
-                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Extract name from filename format: "001-bulbasaur.ron" -> "bulbasaur"
-                    if let Some(pokemon_name) = filename.split('-').nth(1) {
-                        if pokemon_name.eq_ignore_ascii_case(name) {
-                            // Found matching file, load it
-                            let content = fs::read_to_string(&path)?;
-                            let species: PokemonSpecies = ron::from_str(&content)?;
-                            return Ok(species);
-                        }
-                    }
-                }
-            }
-        }
-
-        Err(format!("Pokemon '{}' not found in data directory", name).into())
-    }
-
-    /// Load all Pokemon species from RON files in the data directory
-    pub fn load_all(data_path: &Path) -> Result<Vec<PokemonSpecies>, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-        let mut species = Vec::new();
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                let content = fs::read_to_string(&path)?;
-                let pokemon: PokemonSpecies = ron::from_str(&content)?;
-                species.push(pokemon);
-            }
-        }
-
-        // Sort by pokedex number
-        species.sort_by(|a, b| a.pokedex_number.cmp(&b.pokedex_number));
-
-        Ok(species)
-    }
-
-    /// Create a HashMap for fast name-based lookups using RON filename-based keys
-    pub fn create_species_map(
-        data_path: &Path,
-    ) -> Result<HashMap<String, PokemonSpecies>, Box<dyn std::error::Error>> {
-        let pokemon_dir = data_path.join("pokemon");
-        let mut map = HashMap::new();
-
-        if !pokemon_dir.exists() {
-            return Err(format!(
-                "Pokemon data directory not found: {}",
-                pokemon_dir.display()
-            )
-            .into());
-        }
-
-        let entries = fs::read_dir(&pokemon_dir)?;
-
-        for entry in entries {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                if let Some(filename) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Extract name from filename format: "001-bulbasaur.ron" -> "bulbasaur"
-                    if let Some(pokemon_name) = filename.split('-').nth(1) {
-                        let content = fs::read_to_string(&path)?;
-                        let species: PokemonSpecies = ron::from_str(&content)?;
-
-                        // Use the filename-based name as the key (uppercase for consistency)
-                        let key = pokemon_name.to_uppercase();
-                        map.insert(key, species);
-                    }
-                }
-            }
-        }
-
-        Ok(map)
-    }
-}
 
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
-        let max_pp = get_move_max_pp(move_);
+        let max_pp = MoveData::get_move_max_pp(move_);
 
         MoveInstance { move_, pp: max_pp }
     }
 
     /// Get the max PP for this move
     pub fn max_pp(&self) -> u8 {
-        get_move_max_pp(self.move_)
+        MoveData::get_move_max_pp(self.move_)
     }
 
     /// Use the move (decrease PP)
@@ -601,6 +287,7 @@ impl MoveInstance {
     }
 
     /// Restore PP
+    #[allow(dead_code)]
     pub fn restore_pp(&mut self, amount: u8) {
         let max_pp = self.max_pp();
         self.pp = (self.pp + amount).min(max_pp);
@@ -616,7 +303,7 @@ impl PokemonInst {
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
     ) -> Self {
-        Self::new_with_hp(species, species_data, level, ivs, moves, None)
+        Self::new_with_hp(species, species_data, level, ivs, moves, 999)
     }
 
     /// Create a new Pokemon instance with a specific starting HP.
@@ -626,7 +313,7 @@ impl PokemonInst {
         level: u8,
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
-        curr_hp: Option<u16>,
+        curr_hp:u16,
     ) -> Self {
         // Use default IVs (all 0) if not provided.
         // In a full implementation, you might want random IVs here.
@@ -662,12 +349,13 @@ impl PokemonInst {
         };
 
         // Set HP using the validated setter. If no HP is provided, default to max HP.
-        pokemon.set_hp_to_max();
+        pokemon.set_hp(curr_hp);
         pokemon
     }
 
     /// Create a Pokemon instance for testing, maintaining the old array-based API.
     /// This bypasses stat calculation and allows direct control over all values.
+    #[allow(dead_code)]
     pub fn new_for_test(
         species: Species,
         level: u8,
@@ -769,9 +457,9 @@ impl PokemonInst {
         if let Some(p_cond) = player
             .active_pokemon_conditions
             .values()
-            .find(|c| matches!(c, crate::player::PokemonCondition::Converted { .. }))
+            .find(|c| matches!(c, PokemonCondition::Converted { .. }))
         {
-            if let crate::player::PokemonCondition::Converted { pokemon_type } = p_cond {
+            if let PokemonCondition::Converted { pokemon_type } = p_cond {
                 return vec![*pokemon_type];
             }
         }
@@ -779,9 +467,9 @@ impl PokemonInst {
         if let Some(p_cond) = player
             .active_pokemon_conditions
             .values()
-            .find(|c| matches!(c, crate::player::PokemonCondition::Transformed { .. }))
+            .find(|c| matches!(c, PokemonCondition::Transformed { .. }))
         {
-            if let crate::player::PokemonCondition::Transformed { target } = p_cond {
+            if let PokemonCondition::Transformed { target } = p_cond {
                 if let Some(target_species_data) = get_species_data(target.species) {
                     return target_species_data.types.clone();
                 }
@@ -815,11 +503,13 @@ impl PokemonInst {
     }
 
     /// Set current HP to its maximum value.
+    #[allow(dead_code)]
     pub fn set_hp_to_max(&mut self) {
         self.curr_hp = self.max_hp();
     }
 
     /// Restore HP to full and remove any status conditions.
+    #[allow(dead_code)]
     pub fn restore_fully(&mut self) {
         self.set_hp_to_max();
         self.status = None;
@@ -847,6 +537,7 @@ impl PokemonInst {
     }
 
     /// Revive a fainted Pokemon with a specified HP amount.
+    #[allow(dead_code)]
     pub fn revive(&mut self, hp_amount: u16) {
         if self.is_fainted() {
             self.status = None; // Remove faint status

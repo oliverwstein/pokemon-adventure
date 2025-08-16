@@ -23,7 +23,7 @@ PokemonSpecies(
         signature: Some(VineWhip),
         can_learn: [
             SwordsDance, BodySlam, TakeDown, DoubleEdge, HyperBeam,
-            Toxic, Rage, MegaDrain, Solarbeam, Mimic,
+            Toxic, Rage, MegaDrain, SolarBeam, Mimic,
             DoubleTeam, Bide, SkullBash, Rest, Substitute
         ],
     ),

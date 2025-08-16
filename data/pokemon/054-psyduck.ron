@@ -16,7 +16,7 @@ PokemonSpecies(
             28: [TailWhip],
             31: [Disable],
             36: [ConfuseRay],
-            43: [Psychic],
+            43: [Perplex],
         },
         signature: None,
         can_learn: [

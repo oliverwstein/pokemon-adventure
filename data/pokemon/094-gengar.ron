@@ -20,9 +20,9 @@ PokemonSpecies(
         signature: Some(ShadowBall),
         can_learn: [
             MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
-            HyperBeam, Submission, Counter, SeismicToss, Rage, Psychic,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Perplex,
             Mimic, DoubleTeam, Bide, Metronome, SelfDestruct, DreamEater,
-            Rest, Substitute, Explosion, Strength
+            Rest, Substitute, Explosion, Strength, PoisonGas
         ],
     ),
     catch_rate: 45,

@@ -1,28 +1,60 @@
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
-use crate::pokemon::{PokemonInst, PokemonType};
+use crate::pokemon::{PokemonInst};
 use serde::{Deserialize, Serialize};
+use core::fmt;
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::hash::{Hash};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PlayerAction {
     // The index refers to the move's position (0-3) in the active Pokémon's move list.
     UseMove { move_index: usize },
 
-    // A move that is forced by conditions (charging, rampage, etc.) - bypasses normal move selection
-    ForcedMove { pokemon_move: Move },
-
     // The index refers to the Pokémon's position (0-5) in the player's team.
     SwitchPokemon { team_index: usize },
 
     Forfeit,
 }
+impl fmt::Display for PlayerAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // For UseMove, we de-structure to get the move_index.
+            PlayerAction::UseMove { move_index } => {
+                write!(f, "Use Move (index: {})", move_index)
+            }
+            // Same for SwitchPokemon and team_index.
+            PlayerAction::SwitchPokemon { team_index } => {
+                write!(f, "Switch Pokémon (index: {})", team_index)
+            }
+            // Forfeit is a simple, static string.
+            PlayerAction::Forfeit => {
+                write!(f, "Forfeit")
+            }
+        }
+    }
+}
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum TeamCondition {
     Reflect,
     LightScreen,
     Mist,
+}
+
+impl fmt::Display for TeamCondition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // We match on `self` to get the specific variant and write its
+        // human-readable name to the formatter.
+        let display_name = match self {
+            TeamCondition::Reflect => "Reflect",
+            TeamCondition::LightScreen => "Light Screen", // Use a space for better readability
+            TeamCondition::Mist => "Mist",
+        };
+        
+        // The write! macro handles writing the string to the output.
+        write!(f, "{}", display_name)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -37,57 +69,35 @@ pub enum StatType {
     Focus,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum PokemonCondition {
-    Flinched,
-    Confused {
-        turns_remaining: u8,
-    }, // Counts down each turn
-    Seeded,
-    Underground,
-    InAir,
-    Teleported,
-    Enraged,
-    Exhausted {
-        turns_remaining: u8,
-    }, // Prevents acting for specified turns
-    Trapped {
-        turns_remaining: u8,
-    },
-    Charging,
-    Rampaging {
-        turns_remaining: u8,
-    },
-    Transformed {
-        target: PokemonInst,
-    },
-    Converted {
-        pokemon_type: PokemonType,
-    },
-    Disabled {
-        pokemon_move: Move,
-        turns_remaining: u8,
-    }, // Counts down each turn
-    Substitute {
-        hp: u8,
-    },
-    Biding {
-        turns_remaining: u8,
-        damage: u16,
-    },
-    Countering {
-        damage: u16,
-    },
-}
+impl From<crate::move_data::StatType> for StatType {
+    fn from(stat: crate::move_data::StatType) -> Self {
+        use crate::move_data::StatType as MoveDataStat;
 
-impl Hash for PokemonCondition {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // Hash only the discriminant (variant), not the data
-        std::mem::discriminant(self).hash(state);
+        match stat {
+            MoveDataStat::Atk => Self::Attack,
+            MoveDataStat::Def => Self::Defense,
+            MoveDataStat::SpAtk => Self::SpecialAttack,
+            MoveDataStat::SpDef => Self::SpecialDefense,
+            MoveDataStat::Spe => Self::Speed,
+            MoveDataStat::Acc => Self::Accuracy,
+            MoveDataStat::Eva => Self::Evasion,
+            MoveDataStat::Crit => Self::Focus,
+            // The `Hp` variant in move_data::StatType is not used for stat stages,
+            // so we can ignore it here. The compiler will warn us if we miss any.
+            MoveDataStat::Hp => {
+                // This case should ideally not be hit in stat stage logic.
+                // We'll default to Attack and maybe log a warning in a real app.
+                Self::Attack
+            }
+        }
     }
 }
 
-impl Eq for PokemonCondition {}
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlayerType {
+    Human,
+    NPC,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BattlePlayer {
@@ -95,7 +105,7 @@ pub struct BattlePlayer {
     // For an NPC, this could be "AI_YoungsterJoey".
     pub player_id: String,
     pub player_name: String,
-
+    pub player_type: PlayerType,
     // The player's full team of up to 6 Pokémon instances.
     pub team: [Option<PokemonInst>; 6],
 
@@ -120,6 +130,15 @@ pub struct BattlePlayer {
 impl BattlePlayer {
     /// Create a new BattlePlayer
     pub fn new(player_id: String, player_name: String, team: Vec<PokemonInst>) -> Self {
+        // Call the new, more explicit constructor with the default value.
+        Self::new_with_player_type(player_id, player_name, team, PlayerType::NPC)
+    }
+    pub fn new_with_player_type(
+        player_id: String,
+        player_name: String,
+        team: Vec<PokemonInst>,
+        player_type: PlayerType, // <-- The new parameter
+    ) -> Self {
         let mut team_array = [const { None }; 6];
         for (i, pokemon) in team.into_iter().take(6).enumerate() {
             team_array[i] = Some(pokemon);
@@ -128,6 +147,7 @@ impl BattlePlayer {
         BattlePlayer {
             player_id,
             player_name,
+            player_type, // <-- Use the provided player type
             team: team_array,
             active_pokemon_index: 0,
             team_conditions: HashMap::new(),
@@ -137,7 +157,6 @@ impl BattlePlayer {
             last_move: None,
         }
     }
-
     /// Get the currently active Pokemon
     pub fn active_pokemon(&self) -> Option<&PokemonInst> {
         self.team
@@ -146,6 +165,7 @@ impl BattlePlayer {
     }
 
     /// Get the currently active Pokemon mutably
+    #[cfg(test)]
     pub fn active_pokemon_mut(&mut self) -> Option<&mut PokemonInst> {
         self.team
             .get_mut(self.active_pokemon_index)
@@ -163,36 +183,10 @@ impl BattlePlayer {
             .insert(condition.clone(), condition);
     }
 
-    /// Remove a condition from the active Pokemon
-    pub fn remove_condition(&mut self, condition: &PokemonCondition) -> Option<PokemonCondition> {
-        self.active_pokemon_conditions.remove(condition)
-    }
-
     /// Get a condition for reading
+    #[cfg(test)]
     pub fn get_condition(&self, condition: &PokemonCondition) -> Option<&PokemonCondition> {
         self.active_pokemon_conditions.get(condition)
-    }
-
-    /// Get a condition for modification
-    pub fn get_condition_mut(
-        &mut self,
-        condition: &PokemonCondition,
-    ) -> Option<&mut PokemonCondition> {
-        self.active_pokemon_conditions.get_mut(condition)
-    }
-
-    /// Switch the active Pokemon
-    pub fn switch_pokemon(&mut self, new_index: usize) -> Result<(), String> {
-        if new_index >= 6 || self.team[new_index].is_none() {
-            return Err("Invalid Pokemon index or empty slot".to_string());
-        }
-
-        // Clear active Pokemon conditions, stat stages, and last move when switching
-        self.clear_active_pokemon_state();
-
-        self.active_pokemon_index = new_index;
-
-        Ok(())
     }
 
     /// Check if the team has a specific condition
@@ -211,16 +205,24 @@ impl BattlePlayer {
     }
 
     /// Get turns remaining for a team condition
+    #[cfg(test)]
     pub fn get_team_condition_turns(&self, condition: &TeamCondition) -> Option<u8> {
         self.team_conditions.get(condition).copied()
     }
 
     /// Decrement all team condition turns and remove expired ones
-    pub fn tick_team_conditions(&mut self) {
-        self.team_conditions.retain(|_, turns| {
+    pub fn tick_team_conditions(&mut self) -> Vec<TeamCondition> {
+        let mut expired = Vec::new();
+        self.team_conditions.retain(|condition, turns| {
             *turns = turns.saturating_sub(1);
-            *turns > 0
+            if *turns == 0 {
+                expired.push(*condition);
+                false // Remove from map
+            } else {
+                true // Keep in map
+            }
         });
+        expired
     }
 
     // === Stat Stage Management ===
@@ -240,29 +242,10 @@ impl BattlePlayer {
         }
     }
 
-    /// Modify the stage for a stat type by a delta (clamped to -6 to +6)
-    pub fn modify_stat_stage(&mut self, stat: StatType, delta: i8) {
-        let current = self.get_stat_stage(stat);
-        self.set_stat_stage(stat, current + delta);
-    }
-
-    /// Check if a stat has any stage modification
-    pub fn has_stat_stage(&self, stat: StatType) -> bool {
-        self.stat_stages.contains_key(&stat)
-    }
-
-    /// Remove all stat stage modifications
-    pub fn clear_stat_stages(&mut self) {
-        self.stat_stages.clear();
-    }
     pub fn clear_active_pokemon_state(&mut self) {
         self.active_pokemon_conditions.clear();
         self.stat_stages.clear();
         self.last_move = None;
-    }
-    /// Get all current stat stages (for debugging/display)
-    pub fn get_all_stat_stages(&self) -> &HashMap<StatType, i8> {
-        &self.stat_stages
     }
 
     /// Update active Pokemon condition timers and return which conditions should be removed
@@ -397,8 +380,6 @@ impl BattlePlayer {
 
         expired_conditions
     }
-
-    // === Ante Management ===
 
     /// Get current ante amount
     pub fn get_ante(&self) -> u32 {

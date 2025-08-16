@@ -18,8 +18,8 @@ PokemonSpecies(
         signature: Some(EggBomb),
         can_learn: [
             Strength, BodySlam, TakeDown, DoubleEdge, HyperBeam,
-            Toxic, Perplex, Rage, MegaDrain, Solarbeam, Teleport,
-            Mimic, DoubleTeam, Reflect, Bide, SelfDestruct,
+            Toxic, Perplex, Rage, MegaDrain, GigaDrain, SolarBeam, Teleport,
+            Mimic, DoubleTeam, Reflect, Bide, SelfDestruct, 
             EggBomb, Rest, Explosion, Substitute
         ],
     ),

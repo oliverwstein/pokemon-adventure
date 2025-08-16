@@ -1,18 +1,19 @@
-use crate::move_data::{MoveCategory, get_move_data};
+use crate::battle::conditions::PokemonCondition;
+use crate::move_data::{MoveCategory, MoveData};
 use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
     let base_attack = if let Some(transform_condition) = player
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         match move_data.category {
@@ -60,14 +61,14 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 
 /// Calculate effective defense stat including stat stages, conditions, and other modifiers
 pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Check if transformed - use target Pokemon's base stats
     let base_defense = if let Some(transform_condition) = player
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         match move_data.category {
@@ -142,7 +143,7 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
         .active_pokemon_conditions
         .values()
         .find_map(|condition| match condition {
-            crate::player::PokemonCondition::Transformed { target } => Some(target),
+            PokemonCondition::Transformed { target } => Some(target),
             _ => None,
         }) {
         transform_condition.stats.speed
@@ -169,12 +170,12 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
 /// Calculate if a move is a critical hit based on critical hit ratio and focus energy
 /// Returns true if the move is a critical hit
 pub fn move_is_critical_hit(
-    attacker: &PokemonInst,
+    _attacker: &PokemonInst,
     attacker_player: &BattlePlayer,
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> bool {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // Status moves cannot be critical hits (with very rare exceptions)
     if matches!(move_data.category, MoveCategory::Status) {
@@ -211,29 +212,31 @@ pub fn move_is_critical_hit(
     };
 
     // Roll for critical hit
-    let roll = rng.next_outcome();
+    let roll = rng.next_outcome("Critical Hit Check");
     roll <= crit_threshold
 }
 
 /// Calculate if a move hits based on accuracy, evasion, and move accuracy
 /// Returns true if the move hits, false if it misses
 pub fn move_hits(
-    attacker: &PokemonInst,
-    defender: &PokemonInst,
+    _attacker: &PokemonInst,
+    _defender: &PokemonInst,
     attacker_player: &BattlePlayer,
     defender_player: &BattlePlayer,
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> bool {
-    let move_data = get_move_data(move_).expect("Move data should exist");
+    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
 
     // If move has no accuracy value, it never misses (like Swift)
     let Some(base_accuracy) = move_data.accuracy else {
         return true;
     };
 
-    // If defender is Teleported, moves with accuracy always miss
-    if defender_player.has_condition(&crate::player::PokemonCondition::Teleported) {
+    // If defender is Teleported, InAir, or Underground, moves with accuracy always miss
+    if defender_player.has_condition(&PokemonCondition::Teleported) 
+        || defender_player.has_condition(&PokemonCondition::InAir)
+        || defender_player.has_condition(&PokemonCondition::Underground) {
         return false;
     }
 
@@ -250,7 +253,7 @@ pub fn move_hits(
     let clamped_accuracy = modified_accuracy.clamp(1, 100);
 
     // Roll for hit/miss
-    let roll = rng.next_outcome();
+    let roll = rng.next_outcome("Hit/Miss Check");
     roll <= clamped_accuracy
 }
 
@@ -314,7 +317,7 @@ pub fn calculate_attack_damage(
     rng: &mut crate::battle::state::TurnRng,
 ) -> u16 {
     let move_data =
-        get_move_data(move_used).expect("Move data should exist for damage calculation");
+        MoveData::get_move_data(move_used).expect("Move data should exist for damage calculation");
 
     // 1. Get Power from move data. If no power, no damage.
     let Some(power) = move_data.power else {
@@ -357,7 +360,8 @@ pub fn calculate_attack_damage(
     let defender_types = defender.get_current_types(defender_player);
     let type_adv_multiplier = get_type_effectiveness(move_data.move_type, &defender_types);
     // Random Variance: A random multiplier between 0.85 and 1.00
-    let random_multiplier = (85.0 + (rng.next_outcome() % 16) as f64) / 100.0;
+    let random_multiplier =
+        (85.0 + (rng.next_outcome("Random Damage Multiplier Roll") % 16) as f64) / 100.0;
 
     // Other modifiers (e.g., from items, abilities). Placeholder for now.
     let other_modifiers = 1.0;
@@ -374,11 +378,11 @@ pub fn calculate_attack_damage(
 
 pub fn calculate_special_attack_damage(
     move_used: Move,
-    attacker: &PokemonInst,
+    _attacker: &PokemonInst,
     defender: &PokemonInst,
 ) -> Option<u16> {
     let move_data =
-        get_move_data(move_used).expect("Move data must exist for special damage calculation");
+        MoveData::get_move_data(move_used).expect("Move data must exist for special damage calculation");
 
     // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
     // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
@@ -460,6 +464,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -480,9 +485,7 @@ mod tests {
     #[test]
     fn test_effective_attack_burn() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
             0,
@@ -498,6 +501,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -534,9 +538,7 @@ mod tests {
     #[test]
     fn test_critical_hit_calculation() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         let pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
@@ -553,6 +555,7 @@ mod tests {
         let mut player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),
@@ -611,9 +614,7 @@ mod tests {
     #[test]
     fn test_combined_status_effects() {
         // Initialize move data (required for get_move_data to work)
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
+        
 
         // Test Pokemon with burn status
         let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(
@@ -644,6 +645,7 @@ mod tests {
         let player = crate::player::BattlePlayer {
             player_id: "test".to_string(),
             player_name: "Test".to_string(),
+            player_type: crate::player::PlayerType::NPC,
             team: [const { None }; 6],
             active_pokemon_index: 0,
             stat_stages: HashMap::new(),

@@ -37,7 +37,7 @@
  * TAKE DOWN (Normal, 100, PHYS, 100, 20)
     * Recoil(10)
  * THRASH (Normal,120, PHYS, 100, 20)
-    * Rampage(Confuse)
+    * Rampage
  * DOUBLE EDGE (Normal, 140, PHYS, 100, 15)
     * Recoil(20)
  * TAIL WHIP (Normal, --, STATUS, 100, 30)
@@ -318,7 +318,7 @@
  * SLEEP POWDER (Grass, --, STATUS, 90, 20)
     * Sedate(100)
  * PETAL DANCE (Grass, 100, SPEC, 100, 10)
-    * Rampage(Confuse)
+    * Rampage
  * SPORE (Grass, --, STATUS, 80, 10)
     * Sedate(100)
     * Seed(20)
@@ -393,7 +393,7 @@
     * StatChange(Target, SpecDef, -1, 30)
 
  * OUTRAGE (Dragon, 120, PHYS, 100, 20)
-    * Rampage(Confuse)
+    * Rampage
  * DRAGON RAGE (Dragon, --, OTHER, 100, 10)
     * SetDamage(40)
 

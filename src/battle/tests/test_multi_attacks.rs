@@ -1,12 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
-    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::battle::engine::resolve_turn;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
-    use std::collections::HashMap;
 
     // Helper function to create a Pokemon with specific stats and moves
     fn create_test_pokemon(
@@ -41,30 +40,26 @@ mod tests {
 
     // Helper function to create a player
     fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        BattlePlayer {
-            player_id: "test_player".to_string(),
-            player_name: "TestPlayer".to_string(),
-            team: [Some(pokemon), None, None, None, None, None],
-            active_pokemon_index: 0,
-            stat_stages: HashMap::new(),
-            team_conditions: HashMap::new(),
-            active_pokemon_conditions: HashMap::new(),
-            last_move: None,
-            ante: 200,
-        }
+        let player_team = vec![pokemon];
+
+        // Step 2: Use the constructor to create the player.
+        // This will create a default player with ante = 0. We declare it `mut` to change it.
+        let mut player = BattlePlayer::new(
+            "test_player".to_string(),
+            "TestPlayer".to_string(),
+            player_team,
+        );
+
+        // Step 3: Modify any fields that differ from the default constructor values.
+        player.ante = 200;
+        player
     }
 
     #[test]
     fn test_probabilistic_multi_hit_logic() {
         // SETUP
         // Initialize global data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // We assume Fury Swipes is defined in its .ron file as:
+         // We assume Fury Swipes is defined in its .ron file as:
         // MultiHit(guaranteed_hits: 2, continuation_chance: 50)
         let attacker = create_test_pokemon(Species::Meowth, vec![Move::FurySwipes], 100, 80);
         // Defender needs enough HP to survive a few hits
@@ -99,7 +94,7 @@ mod tests {
             90, // Crit roll (no crit)
             90, // Damage variance roll
             // Continuation roll for Hit 4 (needs <= 50):
-            60, // FAIL! Stop the sequence.
+            90, // FAIL! Stop the sequence.
             // Defender's turn (Pidgey) - needs rolls even if we don't care about the outcome
             50, 90, 90, 75, 80, 85, 55, 60, 70, 45,
         ]);
@@ -148,7 +143,7 @@ mod tests {
             "Should be 4 total damage events in the turn"
         );
         assert!(
-            matches!(battle_state.game_state, GameState::WaitingForBothActions),
+            matches!(battle_state.game_state, GameState::WaitingForActions),
             "Game should be ready for the next turn"
         );
     }
@@ -159,13 +154,7 @@ mod tests {
         // preventing subsequent guaranteed hits from executing.
 
         // SETUP
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        // Attacker uses Fury Swipes (assume 2 guaranteed hits).
+         // Attacker uses Fury Swipes (assume 2 guaranteed hits).
         let attacker = create_test_pokemon(Species::Meowth, vec![Move::FurySwipes], 100, 80);
         // Defender has VERY low HP to guarantee it faints on the first hit.
         let defender = create_test_pokemon(Species::Pidgey, vec![Move::Tackle], 10, 80); // <-- CRITICAL CHANGE HERE

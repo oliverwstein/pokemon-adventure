@@ -2,7 +2,7 @@
 * BULBASAUR
 * IVYSAUR
 * VENUSAUR
-    * Solarbeam
+    * SolarBeam
 
 * CHARMANDER
 * CHARMELEON

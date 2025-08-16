@@ -1,24 +1,12 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::{BattleAction, execute_battle_action};
-    use crate::move_data::initialize_move_data;
+    use crate::battle::engine::{BattleAction, execute_battle_action};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PokemonCondition};
-    use crate::pokemon::{PokemonInst, StatusCondition, initialize_species_data};
+    use crate::player::BattlePlayer;
+    use crate::pokemon::{PokemonInst, StatusCondition};
     use crate::species::Species;
-    use std::path::Path;
-    use std::sync::Once;
-
-    static INIT: Once = Once::new();
-
-    fn init_test_data() {
-        INIT.call_once(|| {
-            let data_path = Path::new("data");
-            initialize_move_data(data_path).expect("Failed to initialize move data");
-            initialize_species_data(data_path).expect("Failed to initialize species data");
-        });
-    }
 
     fn create_test_battle_state(
         attacker_status: Option<StatusCondition>,
@@ -65,13 +53,12 @@ mod tests {
 
     #[test]
     fn test_sleep_prevents_action() {
-        init_test_data();
 
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Sleep(2)), vec![]);
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![128]);
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -98,13 +85,11 @@ mod tests {
 
     #[test]
     fn test_paralysis_sometimes_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Paralysis), vec![]);
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![24]); // 24 < 25, so paralyzed (25% chance)
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -131,13 +116,11 @@ mod tests {
 
     #[test]
     fn test_paralysis_sometimes_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(Some(StatusCondition::Paralysis), vec![]);
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![25, 75, 60, 80, 90, 85]); // 25 >= 25, so not paralyzed + extra values
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -160,8 +143,6 @@ mod tests {
 
     #[test]
     fn test_confusion_sometimes_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Confused { turns_remaining: 2 }],
@@ -169,7 +150,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80, 85, 70, 65, 95, 88, 92]); // 49 < 50, so confused (50% chance) + many extra values
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -188,7 +169,7 @@ mod tests {
         // We need to process that action to see the self-damage
         if let Some(next_action) = action_stack.pop_front() {
             match next_action {
-                crate::battle::turn_orchestrator::BattleAction::AttackHit {
+                crate::battle::engine::BattleAction::AttackHit {
                     attacker_index,
                     defender_index,
                     move_used,
@@ -247,8 +228,6 @@ mod tests {
 
     #[test]
     fn test_confusion_sometimes_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Confused { turns_remaining: 2 }],
@@ -256,7 +235,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![50, 75, 60, 80, 90, 85]); // 50 >= 50, so not confused this turn + extra values
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -279,8 +258,6 @@ mod tests {
 
     #[test]
     fn test_exhausted_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Exhausted { turns_remaining: 1 }],
@@ -288,7 +265,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -315,8 +292,6 @@ mod tests {
 
     #[test]
     fn test_multiple_conditions_priority() {
-        init_test_data();
-
         // Test that status conditions (sleep) take priority over active conditions (flinch)
         let mut battle_state = create_test_battle_state(
             Some(StatusCondition::Sleep(2)),
@@ -325,7 +300,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75]);
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -354,8 +329,6 @@ mod tests {
 
     #[test]
     fn test_disabled_move_prevents_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Disabled {
@@ -366,7 +339,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -394,8 +367,6 @@ mod tests {
 
     #[test]
     fn test_disabled_move_allows_different_move() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(
             None,
             vec![PokemonCondition::Disabled {
@@ -406,7 +377,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]);
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -435,13 +406,11 @@ mod tests {
 
     #[test]
     fn test_no_preventing_conditions_allows_action() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state(None, vec![]);
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]); // Good rolls for accuracy, etc.
-        let mut action_stack = crate::battle::turn_orchestrator::ActionStack::new();
+        let mut action_stack = crate::battle::engine::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {

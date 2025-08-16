@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::{collect_player_actions, resolve_turn};
+    use crate::battle::engine::{resolve_turn};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst, StatusCondition};
@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_nightmare_effect_works_on_sleeping_target() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -110,13 +103,6 @@ mod tests {
 
     #[test]
     fn test_nightmare_effect_fails_on_awake_target() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -195,13 +181,6 @@ mod tests {
 
     #[test]
     fn test_nightmare_effect_with_other_statuses() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),

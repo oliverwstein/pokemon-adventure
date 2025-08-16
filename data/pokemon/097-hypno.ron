@@ -18,13 +18,13 @@ PokemonSpecies(
             24: [Headbutt],
             33: [PoisonGas],
             37: [Meditate],
-            43: [Psychic],
+            43: [Perplex],
             51: [Psywave],
         },
         signature: Some(Hypnosis),
         can_learn: [
             MegaPunch, MegaKick, Toxic, BodySlam, TakeDown, DoubleEdge,
-            HyperBeam, Submission, Counter, SeismicToss, Rage, Psychic,
+            HyperBeam, Submission, Counter, SeismicToss, Rage, Perplex,
             Teleport, Mimic, DoubleTeam, Reflect, Bide, Metronome,
             SkullBash, DreamEater, Rest, TriAttack, Substitute, Flash
         ],

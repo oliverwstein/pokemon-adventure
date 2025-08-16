@@ -19,7 +19,7 @@ PokemonSpecies(
             BodySlam, TakeDown, DoubleEdge, HyperBeam, Toxic,
             Rage, Dig, Mimic, DoubleTeam, Reflect, Bide,
             FireBlast, Swift, SkullBash, Rest, RockSlide,
-            Substitute
+            Substitute, Flamethrower, Bite
         ],
     ),
     catch_rate: 75,

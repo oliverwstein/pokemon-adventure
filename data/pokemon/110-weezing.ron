@@ -24,7 +24,7 @@ PokemonSpecies(
             TakeDown, DoubleEdge, HyperBeam, Toxic, Rage,
             Thunderclap, Mimic, DoubleTeam, Bide,
             SelfDestruct, FireBlast, Rest, Explosion,
-            Substitute, Flash
+            Substitute, Flash, PoisonGas
         ],
     ),
     catch_rate: 60,

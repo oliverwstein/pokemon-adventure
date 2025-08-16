@@ -1,20 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::{ActionStack, execute_attack_hit};
+    use crate::battle::engine::{ActionStack, execute_attack_hit};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, StatType};
     use crate::pokemon::PokemonInst;
     use crate::species::Species;
-    use std::collections::HashMap;
-    use std::path::Path;
-
-    fn init_test_data() {
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-    }
 
     fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
         PokemonInst::new_for_test(
@@ -55,8 +46,6 @@ mod tests {
 
     #[test]
     fn test_status_move_swords_dance() {
-        init_test_data();
-
         let mut battle_state = create_test_battle_state();
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![50, 60, 70]); // Good accuracy roll
@@ -118,9 +107,7 @@ mod tests {
 
     #[test]
     fn test_status_move_harden() {
-        init_test_data();
-
-        let mut pokemon1 = create_test_pokemon(Species::Metapod, vec![Move::Harden, Move::Tackle]);
+        let pokemon1 = create_test_pokemon(Species::Metapod, vec![Move::Harden, Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Pidgey, vec![Move::Tackle]);
 
         let player1 = create_test_player(pokemon1);
@@ -187,8 +174,6 @@ mod tests {
 
     #[test]
     fn test_other_category_status_move_thunder_wave() {
-        init_test_data();
-
         let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::ThunderWave, Move::Tackle]);
         let pokemon2 = create_test_pokemon(Species::Pidgey, vec![Move::Tackle]);
 

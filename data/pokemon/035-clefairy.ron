@@ -24,7 +24,7 @@ PokemonSpecies(
         can_learn: [
             BodySlam, TakeDown, DoubleEdge, Bubblebeam, WaterGun,
             IceBeam, Blizzard, Submission, Counter, Toxic,
-            Perplex, Rage, Solarbeam, Thunderclap,
+            Perplex, Rage, SolarBeam, Thunderclap,
             Mimic, DoubleTeam, Reflect, Bide, Metronome,
             FireBlast, SkullBash, Rest, TriAttack, Substitute,
             Flash

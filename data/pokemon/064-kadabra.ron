@@ -18,7 +18,7 @@ PokemonSpecies(
             27: [Disable],
             31: [Psybeam],
             38: [Recover],
-            42: [Psychic],
+            42: [Perplex],
         },
         signature: None,
         can_learn: [

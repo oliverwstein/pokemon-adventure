@@ -3,30 +3,15 @@ mod move_data;
 mod moves;
 mod player;
 mod pokemon;
+mod prefab_teams;
 mod species;
 
-use move_data::initialize_move_data;
 use moves::Move;
-use player::{BattlePlayer, StatType};
-use pokemon::{PokemonInst, PokemonSpecies, get_species_data, initialize_species_data};
+use player::BattlePlayer;
+use pokemon::{PokemonInst, get_species_data};
 use species::Species;
-use std::path::Path;
 
 fn main() {
-    let data_path = Path::new("data");
-
-    // Initialize global move data first
-    if let Err(e) = initialize_move_data(data_path) {
-        println!("Error initializing move data: {}", e);
-        return;
-    }
-
-    // Initialize global species data
-    if let Err(e) = initialize_species_data(data_path) {
-        println!("Error initializing species data: {}", e);
-        return;
-    }
-
     // Example 1: Load a single Pokemon using Species enum
     if let Some(pikachu) = get_species_data(Species::Pikachu) {
         println!("Loaded Pikachu:");
@@ -47,59 +32,6 @@ fn main() {
 
     println!();
 
-    // Example 2: Load all Pokemon and show count
-    match PokemonSpecies::load_all(data_path) {
-        Ok(all_species) => {
-            println!("Loaded {} Pokemon species", all_species.len());
-
-            // Show first and last
-            if let (Some(first), Some(last)) = (all_species.first(), all_species.last()) {
-                println!("  First: #{:03} {}", first.pokedex_number, first.name);
-                println!("  Last:  #{:03} {}", last.pokedex_number, last.name);
-            }
-        }
-        Err(e) => println!("Error loading all Pokemon: {}", e),
-    }
-
-    println!();
-
-    // Example 3: Create species map for fast lookups
-    match PokemonSpecies::create_species_map(data_path) {
-        Ok(species_map) => {
-            println!("Created species map with {} entries", species_map.len());
-
-            // Test filename-based lookup
-            let charizard_found = if let Some(charizard) = species_map.get("CHARIZARD") {
-                println!(
-                    "  Found Charizard via filename lookup: #{}",
-                    charizard.pokedex_number
-                );
-                true
-            } else {
-                false
-            };
-
-            let mr_mime_found = if let Some(mr_mime) = species_map.get("MR_MIME") {
-                println!("  Found Mr. Mime: #{}", mr_mime.pokedex_number);
-                true
-            } else {
-                false
-            };
-
-            // If either lookup failed, print all available species names
-            if !charizard_found || !mr_mime_found {
-                println!("  Available species names in map:");
-                let mut names: Vec<_> = species_map.keys().collect();
-                names.sort();
-                for name in names {
-                    println!("    {}", name);
-                }
-            }
-        }
-        Err(e) => println!("Error creating species map: {}", e),
-    }
-
-    println!();
 
     // Example 4: Create a Pokemon instance using Species enum
     if let Some(pikachu_species) = get_species_data(Species::Pikachu) {
@@ -187,50 +119,179 @@ fn main() {
 
     println!();
 
-    // Example 5: Demonstrate stat stage management
-    if let Some(charizard_species) = get_species_data(Species::Charizard) {
-        let charizard = PokemonInst::new(Species::Charizard, &charizard_species, 50, None, None);
-        let mut player = BattlePlayer::new(
-            "trainer_red".to_string(),
-            "Red".to_string(),
-            vec![charizard],
-        );
+    // Example 5: NPC vs NPC Multi-Pokemon Battle Demo
+    println!("=== NPC vs NPC Battle Demo ===");
+    run_npc_battle_demo_without_runner();
+}
 
-        println!("Stat Stage Management Example:");
-        println!(
-            "  Initial Attack stage: {}",
-            player.get_stat_stage(StatType::Attack)
-        );
+fn run_npc_battle_demo_without_runner() {
+    use battle::state::{BattleState, GameState, TurnRng};
+    use battle::engine::{
+        collect_npc_actions, ready_for_turn_resolution, resolve_turn,
+    };
 
-        // Swords Dance (+2 Attack)
-        player.modify_stat_stage(StatType::Attack, 2);
-        println!(
-            "  After Swords Dance: {}",
-            player.get_stat_stage(StatType::Attack)
-        );
+    // Create two trainers with multiple Pokemon each
+    let trainer1_team = vec![
+        create_demo_pokemon(Species::Pikachu, 25),
+        create_demo_pokemon(Species::Charmander, 20),
+        create_demo_pokemon(Species::Squirtle, 22),
+    ];
 
-        // Another Attack boost
-        player.modify_stat_stage(StatType::Attack, 1);
-        println!(
-            "  After another boost: {}",
-            player.get_stat_stage(StatType::Attack)
-        );
+    let trainer2_team = vec![
+        create_demo_pokemon(Species::Bulbasaur, 23),
+        create_demo_pokemon(Species::Rattata, 18),
+        create_demo_pokemon(Species::Pidgey, 21),
+    ];
 
-        // Speed reduction
-        player.set_stat_stage(StatType::Speed, -1);
-        println!("  Speed stage: {}", player.get_stat_stage(StatType::Speed));
+    let player1 = BattlePlayer::new(
+        "npc_trainer_1".to_string(),
+        "AI Trainer Red".to_string(),
+        trainer1_team,
+    );
 
-        println!("  All current stages: {:?}", player.get_all_stat_stages());
+    let player2 = BattlePlayer::new(
+        "npc_trainer_2".to_string(),
+        "AI Trainer Blue".to_string(),
+        trainer2_team,
+    );
 
-        // Switching clears stat stages
-        if player.team[1].is_some() {
-            let _ = player.switch_pokemon(1);
-        } else {
-            player.clear_stat_stages();
+    let mut battle_state = BattleState::new("npc_vs_npc_demo".to_string(), player1, player2);
+
+    println!("🔥 Battle begins!");
+    println!(
+        "  {} sends out {}!",
+        battle_state.players[0].player_name,
+        battle_state.players[0].active_pokemon().unwrap().name
+    );
+    println!(
+        "  {} sends out {}!",
+        battle_state.players[1].player_name,
+        battle_state.players[1].active_pokemon().unwrap().name
+    );
+    println!();
+
+    let mut execution_count = 0;
+
+    // Battle loop - continue until one trainer has no Pokemon left
+    while !matches!(
+        battle_state.game_state,
+        GameState::Player1Win | GameState::Player2Win | GameState::Draw
+    ) {
+        println!("--- Turn {} ---", battle_state.turn_number);
+
+        // Print current Pokemon status
+        for player in &battle_state.players {
+            if let Some(pokemon) = player.active_pokemon() {
+                println!(
+                    "  {}: {} (HP: {}/{})",
+                    player.player_name,
+                    pokemon.name,
+                    pokemon.current_hp(),
+                    pokemon.max_hp()
+                );
+            }
         }
-        println!(
-            "  After switch/clear - Attack stage: {}",
-            player.get_stat_stage(StatType::Attack)
-        );
+        println!();
+
+        // Step 1: Call the pure function to get a list of decided actions.
+        // It takes an immutable reference because it doesn't change the state itself.
+        let npc_actions = collect_npc_actions(&battle_state);
+
+        // Step 2: Explicitly apply the decided actions to the battle state's action queue.
+        // This makes it clear that we are modifying the state here.
+        for (player_index, action) in npc_actions {
+            battle_state.action_queue[player_index] = Some(action);
+        }
+
+        // Execute the game tick loop - keep resolving turns until waiting for input
+        while ready_for_turn_resolution(&battle_state) {
+            let rng = TurnRng::new_random();
+            let event_bus = resolve_turn(&mut battle_state, rng);
+            let events = event_bus.events();
+
+            // Show what actions were chosen based on events
+            for event in events {
+                match event {
+                    battle::state::BattleEvent::MoveUsed {
+                        player_index,
+                        pokemon: _,
+                        move_used,
+                    } => {
+                        println!(
+                            "  {} chooses {:?}!",
+                            battle_state.players[*player_index].player_name, move_used
+                        );
+                    }
+                    battle::state::BattleEvent::PokemonSwitched {
+                        player_index,
+                        new_pokemon,
+                        ..
+                    } => {
+                        println!(
+                            "  {} switches to {:?}!",
+                            battle_state.players[*player_index].player_name, new_pokemon
+                        );
+                    }
+                    _ => {} // Don't print other events here
+                }
+            }
+
+            // Print ALL events like the tests do
+            if !events.is_empty() {
+                println!("  Events generated this turn:");
+                for (i, event) in events.iter().enumerate() {
+                    println!("    {}: {:?}", i + 1, event);
+                }
+                println!();
+            }
+
+            execution_count += 1;
+
+            // Safety check to prevent infinite loops
+            if execution_count > 50 {
+                println!("Battle reached execution limit - ending demo");
+                return;
+            }
+
+            // Check if battle ended
+            if matches!(
+                battle_state.game_state,
+                GameState::Player1Win | GameState::Player2Win | GameState::Draw
+            ) {
+                break;
+            }
+        }
     }
+
+    // Announce the winner
+    match battle_state.game_state {
+        GameState::Player1Win => {
+            println!(
+                "🏆 {} wins the battle!",
+                battle_state.players[0].player_name
+            );
+        }
+        GameState::Player2Win => {
+            println!(
+                "🏆 {} wins the battle!",
+                battle_state.players[1].player_name
+            );
+        }
+        GameState::Draw => {
+            println!("🤝 The battle ended in a draw!");
+        }
+        _ => {
+            println!("🔚 Battle ended (Execution limit reached)");
+        }
+    }
+
+    println!(
+        "Battle completed after {} turn(s).",
+        battle_state.turn_number
+    );
+}
+
+fn create_demo_pokemon(species: Species, level: u8) -> PokemonInst {
+    let species_data = get_species_data(species).expect("Species data should exist");
+    PokemonInst::new(species, &species_data, level, None, None)
 }

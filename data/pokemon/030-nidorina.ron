@@ -12,17 +12,17 @@ PokemonSpecies(
     ),
     learnset: (
         level_up: {
-            1: [Growl, Tackle, Scratch],
+            1: [Growl, Tackle],
             8: [Scratch],
             14: [PoisonSting],
-            23: [TailWhip],
+            23: [PoisonJab],
             32: [Bite],
             41: [FurySwipes],
             50: [DoubleKick],
         },
         signature: None,
         can_learn: [
-            BodySlam, TakeDown, DoubleEdge, Blizzard, IceBeam,
+            BodySlam, TakeDown, DoubleEdge, Blizzard, IceBeam, PoisonJab,
             Bubblebeam, WaterGun, Toxic, Rage, Thunderclap, Mimic, DoubleTeam, Reflect, Bide,
             SkullBash, Rest, Substitute
         ],

@@ -22,7 +22,7 @@ PokemonSpecies(
         signature: Some(Spore),
         can_learn: [
             Cut, Strength, BodySlam, TakeDown, DoubleEdge,
-            HyperBeam, Toxic, Rage, MegaDrain, Solarbeam,
+            HyperBeam, Toxic, Rage, MegaDrain, SolarBeam,
             Dig, Mimic, DoubleTeam, Reflect, Bide, SkullBash,
             Rest, RockSlide, Substitute
         ],

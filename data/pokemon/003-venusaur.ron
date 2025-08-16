@@ -21,10 +21,10 @@ PokemonSpecies(
             36: [Growth],
             43: [SleepPowder],
         },
-        signature: Some(Solarbeam),
+        signature: Some(SolarBeam),
         can_learn: [
             SwordsDance, Toxic, BodySlam, TakeDown, DoubleEdge,
-            Rage, Absorb, RazorLeaf, GigaDrain, Solarbeam, Mimic, DoubleTeam,
+            Rage, Absorb, RazorLeaf, GigaDrain, SolarBeam, Mimic, DoubleTeam,
             Reflect, Bide, Rest, Substitute, Cut, Bind, Headbutt,
             Stomp, Roar, Bite, AncientPower, Earthquake, PoisonGas, 
             PetalDance, Spore

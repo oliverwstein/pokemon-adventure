@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::battle::engine::resolve_turn;
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction, PokemonCondition};
+    use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
     use crate::species::Species;
 
@@ -32,13 +33,6 @@ mod tests {
 
     #[test]
     fn test_leech_seed_damage_and_healing() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -152,13 +146,6 @@ mod tests {
 
     #[test]
     fn test_trapped_damage() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -239,13 +226,7 @@ mod tests {
     #[test]
     fn test_both_seeded_and_trapped_damage() {
         // Test that both conditions apply damage in the same turn
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Geodude, vec![Move::Splash])],
@@ -340,13 +321,7 @@ mod tests {
     #[test]
     fn test_leech_seed_causes_fainting() {
         // Test that Leech Seed can cause a Pokemon to faint
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Caterpie, vec![Move::Splash])],
@@ -421,13 +396,7 @@ mod tests {
     #[test]
     fn test_trapped_causes_fainting() {
         // Test that Trapped condition can cause a Pokemon to faint
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Magikarp, vec![Move::Splash])],
@@ -502,13 +471,7 @@ mod tests {
     #[test]
     fn test_leech_seed_no_healing_if_opponent_fainted() {
         // Test that if the opponent is fainted, no healing occurs from Leech Seed
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Weedle, vec![Move::Splash])],
@@ -611,13 +574,7 @@ mod tests {
     #[test]
     fn test_leech_seed_healing_caps_at_max_hp() {
         // Test that healing from Leech Seed doesn't exceed max HP
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
+         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
             vec![create_test_pokemon(Species::Bellsprout, vec![Move::Splash])],
@@ -635,7 +592,7 @@ mod tests {
         // Damage player2 by only 1 HP (so healing will be capped)
         player2.active_pokemon_mut().unwrap().take_damage(1);
 
-        let initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
+        let _initial_p2_hp = player2.active_pokemon().unwrap().current_hp();
         let max_p2_hp = player2.active_pokemon().unwrap().max_hp();
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);

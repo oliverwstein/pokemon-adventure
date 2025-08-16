@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::battle::engine::resolve_turn;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_reckless_effect_on_miss() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -115,13 +108,6 @@ mod tests {
 
     #[test]
     fn test_reckless_effect_on_hit_no_recoil() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -155,7 +141,7 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0]
+        let _final_hp = battle_state.players[0]
             .active_pokemon()
             .unwrap()
             .current_hp();
@@ -229,13 +215,6 @@ mod tests {
 
     #[test]
     fn test_reckless_different_percentages() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -301,13 +280,6 @@ mod tests {
 
     #[test]
     fn test_reckless_can_cause_fainting() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -400,13 +372,6 @@ mod tests {
 
     #[test]
     fn test_non_reckless_move_no_recoil_on_miss() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -438,7 +403,7 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        let final_hp = battle_state.players[0]
+        let _final_hp = battle_state.players[0]
             .active_pokemon()
             .unwrap()
             .current_hp();

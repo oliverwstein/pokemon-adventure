@@ -24,7 +24,7 @@ PokemonSpecies(
         can_learn: [
             Toxic, TakeDown, DoubleEdge, HyperBeam, Rage, Thunderclap,
             Discharge, Teleport, Mimic, DoubleTeam, Reflect, Bide, Swift,
-            Rest, ThunderWave, Substitute, Flash
+            Rest, ThunderWave, Substitute, Flash, TriAttack
         ],
     ),
     catch_rate: 60,

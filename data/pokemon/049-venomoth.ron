@@ -18,12 +18,12 @@ PokemonSpecies(
             30: [StunSpore],
             38: [Psybeam],
             43: [SleepPowder],
-            50: [Psychic],
+            50: [Perplex],
         },
         signature: Some(Haze),
         can_learn: [
             RazorWind, Whirlwind, TakeDown, DoubleEdge, HyperBeam,
-            Toxic, Rage, MegaDrain, Solarbeam, Perplex, Mimic,
+            Toxic, Rage, MegaDrain, SolarBeam, Perplex, Mimic,
             DoubleTeam, Reflect, Bide, Rest, Substitute
         ],
     ),

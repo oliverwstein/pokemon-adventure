@@ -6,6 +6,6 @@ MoveData(
     accuracy: None,
     max_pp: 20,
     effects: [
-        Mist,
+        SetTeamCondition(Mist, 5)
     ],
 )

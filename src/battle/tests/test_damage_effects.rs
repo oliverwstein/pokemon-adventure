@@ -1,19 +1,11 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::turn_orchestrator::{ActionStack, execute_attack_hit};
+    use crate::battle::engine::{ActionStack, execute_attack_hit};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, StatType};
+    use crate::player::{BattlePlayer};
     use crate::pokemon::PokemonInst;
     use crate::species::Species;
-    use std::path::Path;
-
-    fn init_test_data() {
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-    }
 
     fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
         PokemonInst::new_for_test(
@@ -44,8 +36,6 @@ mod tests {
 
     #[test]
     fn test_critical_hit_effect() {
-        init_test_data();
-
         // Create Pokemon with a move that has increased crit ratio
         let attacker = create_test_pokemon_with_hp(Species::Scyther, vec![Move::Slash], 100);
         let defender = create_test_pokemon_with_hp(Species::Pidgey, vec![Move::Tackle], 100);
@@ -96,8 +86,6 @@ mod tests {
 
     #[test]
     fn test_recoil_effect() {
-        init_test_data();
-
         // Create attacker with decent HP and a recoil move
         let attacker = create_test_pokemon_with_hp(Species::Tauros, vec![Move::DoubleEdge], 100);
         let defender = create_test_pokemon_with_hp(Species::Pidgey, vec![Move::Tackle], 50);
@@ -166,8 +154,6 @@ mod tests {
 
     #[test]
     fn test_drain_effect() {
-        init_test_data();
-
         // --- Setup ---
         // Create attacker with reduced HP and a drain move
         let mut attacker =
@@ -175,7 +161,7 @@ mod tests {
         let defender = create_test_pokemon_with_hp(Species::Bulbasaur, vec![Move::Tackle], 100);
         attacker.set_hp(30);
         // Record initial HP states for both Pokémon *before* they are moved
-        let initial_attacker_hp = attacker.current_hp();
+        let _initial_attacker_hp = attacker.current_hp();
         let initial_defender_hp = defender.current_hp();
 
         let player1 = create_test_player(attacker);
@@ -205,12 +191,12 @@ mod tests {
         let attacker_in_battle = battle_state.players[0].team[0].as_ref().unwrap();
         let defender_in_battle = battle_state.players[1].team[0].as_ref().unwrap();
 
-        let final_attacker_hp = attacker_in_battle.current_hp();
+        let _final_attacker_hp = attacker_in_battle.current_hp();
         let final_defender_hp = defender_in_battle.current_hp();
 
         // Calculate how much damage was dealt to determine expected healing
         let damage_dealt = initial_defender_hp.saturating_sub(final_defender_hp);
-        let expected_healing = damage_dealt / 2; // Mega Drain has 50% drain
+        let _expected_healing = damage_dealt / 2; // Mega Drain has 50% drain
 
         let events = bus.events();
         println!("Mega Drain healing test events:");
@@ -250,8 +236,6 @@ mod tests {
 
     #[test]
     fn test_no_effects_without_damage() {
-        init_test_data();
-
         // Test that recoil/drain don't trigger when no damage is dealt (e.g., immune types)
         let attacker = create_test_pokemon_with_hp(Species::Machamp, vec![Move::DoubleEdge], 100);
         let defender = create_test_pokemon_with_hp(Species::Gastly, vec![Move::Tackle], 100); // Ghost immune to Normal

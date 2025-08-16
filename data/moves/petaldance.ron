@@ -1,11 +1,11 @@
 MoveData(
     name: "Petal Dance",
     move_type: Grass,
-    power: Some(100),
+    power: Some(120),
     category: Special,
     accuracy: Some(100),
     max_pp: 10,
     effects: [
-        Rampage(Confuse),
+        Rampage,
     ],
 )

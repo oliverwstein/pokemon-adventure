@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::turn_orchestrator::resolve_turn;
+    use crate::battle::engine::resolve_turn;
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -32,13 +32,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_recovers_hp() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -108,13 +101,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_no_overheal() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
@@ -156,7 +142,7 @@ mod tests {
         assert!(final_hp <= max_hp, "HP should not exceed max HP");
 
         // Should NOT have heal event since already at full HP
-        let heal_events: Vec<_> = event_bus
+        let _: Vec<_> = event_bus
             .events()
             .iter()
             .filter(|event| {
@@ -194,13 +180,6 @@ mod tests {
 
     #[test]
     fn test_heal_effect_does_not_heal_fainted() {
-        // Initialize move data
-        use std::path::Path;
-        let data_path = Path::new("data");
-        crate::move_data::initialize_move_data(data_path).expect("Failed to initialize move data");
-        crate::pokemon::initialize_species_data(data_path)
-            .expect("Failed to initialize species data");
-
         let mut player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),

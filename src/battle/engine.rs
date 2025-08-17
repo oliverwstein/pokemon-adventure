@@ -280,7 +280,12 @@ pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<Player
 pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
     match battle_state.game_state {
         GameState::WaitingForActions => {
-            battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
+            // Check if each player has either provided an action OR has a forced move
+            let player0_ready = battle_state.action_queue[0].is_some() 
+                || check_for_forced_move(&battle_state.players[0]).is_some();
+            let player1_ready = battle_state.action_queue[1].is_some() 
+                || check_for_forced_move(&battle_state.players[1]).is_some();
+            player0_ready && player1_ready
         }
         GameState::WaitingForPlayer1Replacement => battle_state.action_queue[0].is_some(),
         GameState::WaitingForPlayer2Replacement => battle_state.action_queue[1].is_some(),

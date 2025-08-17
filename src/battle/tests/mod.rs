@@ -15,6 +15,7 @@ mod test_nightmare;
 mod test_reckless;
 mod test_reflect_lightscreen;
 mod test_resolve_turn;
+mod test_simultaneous_multiturn_bug;
 mod test_special_moves;
 mod test_status_moves;
 mod test_team_condition_expiry;

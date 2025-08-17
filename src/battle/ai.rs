@@ -1,10 +1,6 @@
 //! A module for defining AI behaviors for battle opponents.
 
-use ordered_float::OrderedFloat;
-use rand::seq::IndexedRandom;
-
 use crate::battle::state::BattleState;
-use crate::battle::engine::get_valid_actions;
 use crate::move_data::{MoveCategory, MoveData};
 use crate::player::{PlayerAction};
 
@@ -173,49 +169,76 @@ impl ScoringAI {
 
 impl Behavior for ScoringAI {
     fn decide_action(&self, player_index: usize, battle_state: &BattleState) -> PlayerAction {
-        // 1. Get the pre-validated list of all possible actions.
-        // This call is now simpler as it doesn't return a Result.
-        let valid_actions = get_valid_actions(battle_state, player_index);
-        // Failsafe: If the list is empty, it means the player has lost (e.g., must switch
-        // but has no valid Pokémon). The only logical action is to do nothing, which the
-        // engine will interpret correctly. Forfeiting is a good, explicit choice here.
-        if valid_actions.is_empty() {
-            return PlayerAction::Forfeit;
+        let player = &battle_state.players[player_index];
+
+        // --- Phase 1: Handle Forced Replacements ---
+        // If the game state requires a replacement, the only valid actions are switches.
+        // The AI must choose the best Pokémon to send in.
+        let is_replacement_phase = match battle_state.game_state {
+            crate::battle::state::GameState::WaitingForPlayer1Replacement => player_index == 0,
+            crate::battle::state::GameState::WaitingForPlayer2Replacement => player_index == 1,
+            crate::battle::state::GameState::WaitingForBothReplacements => true,
+            _ => false,
+        };
+
+        if is_replacement_phase {
+            let valid_switches = player.get_valid_switches();
+            
+            // If there are no valid switches, the player has lost. Forfeit is the only option.
+            if valid_switches.is_empty() {
+                return PlayerAction::Forfeit;
+            }
+
+            // Score only the switch actions and pick the best one.
+            return valid_switches.into_iter()
+                .max_by_key(|action| {
+                    let score = self.score_action(action, player_index, battle_state);
+                    ordered_float::OrderedFloat(score)
+                })
+                .unwrap_or(PlayerAction::Forfeit); // Failsafe
         }
 
-        // If there's only one choice, just take it.
-        if valid_actions.len() == 1 {
-            // .clone() is necessary because `valid_actions` owns the data.
-            return valid_actions[0].clone();
-        }
+        // --- Phase 2: Standard Turn Strategic Decision ---
+        // The AI must now decide between attacking and switching.
 
-        // 2. Score each action.
-        let scored_actions: Vec<(PlayerAction, f32)> = valid_actions
-            .into_iter()
+        // 2a. Get and score all possible moves.
+        let valid_moves = player.get_valid_moves();
+        let best_move = valid_moves.into_iter()
             .map(|action| {
                 let score = self.score_action(&action, player_index, battle_state);
                 (action, score)
             })
-            .collect();
+            .max_by_key(|(_, score)| ordered_float::OrderedFloat(*score));
 
-        // 3. Find the maximum score among all actions.
-        let max_score = scored_actions
-            .iter()
-            .map(|(_, score)| OrderedFloat(*score))
-            .max()
-            .unwrap() // Safe because we checked for an empty list.
-            .0;
+        // 2b. Get and score all possible switches.
+        let valid_switches = player.get_valid_switches();
+        let best_switch = valid_switches.into_iter()
+            .map(|action| {
+                let score = self.score_action(&action, player_index, battle_state);
+                (action, score)
+            })
+            .max_by_key(|(_, score)| ordered_float::OrderedFloat(*score));
 
-        // 4. Filter for all actions that have a score close to the maximum.
-        let best_actions: Vec<PlayerAction> = scored_actions
-            .into_iter()
-            .filter(|(_, score)| (*score - max_score).abs() < 0.01) // Check for floating point equality
-            .map(|(action, _)| action)
-            .collect();
-
-        // 5. Choose one of the best actions randomly to prevent predictability.
-        let mut rng = rand::rng();
-        best_actions.choose(&mut rng).unwrap().clone()
+        // 2c. Compare the best options.
+        match (best_move, best_switch) {
+            // If both attacking and switching are possible...
+            (Some((move_action, move_score)), Some((switch_action, switch_score))) => {
+                // ...compare their scores to make the strategic choice.
+                // You could add a bias here, e.g., `if switch_score > move_score + 10.0`,
+                // to make the AI less likely to switch frivolously.
+                if switch_score > move_score {
+                    switch_action
+                } else {
+                    move_action
+                }
+            },
+            // If only attacking is possible...
+            (Some((move_action, _)), None) => move_action,
+            // If only switching is possible...
+            (None, Some((switch_action, _))) => switch_action,
+            // If no moves or switches are valid, the only option is to forfeit.
+            (None, None) => PlayerAction::Forfeit,
+        }
     }
 
 }

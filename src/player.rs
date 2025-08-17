@@ -164,6 +164,138 @@ impl BattlePlayer {
             .and_then(|slot| slot.as_ref())
     }
 
+    /// Check if a player has any non-fainted Pokemon in their team
+    pub fn can_still_battle(&self) -> bool {
+        self.team.iter().any(|pokemon_opt| {
+            pokemon_opt.as_ref().map_or(false, |pokemon| !pokemon.is_fainted())
+        })
+    }
+
+    #[allow(dead_code)]
+    pub fn validate_action(&self, action: &PlayerAction) -> Result<(), String> {
+        match action {
+            PlayerAction::UseMove { move_index } => {
+                let pokemon = self.active_pokemon().ok_or("No active Pokemon to use a move.")?;
+
+                if *move_index >= pokemon.moves.len() {
+                    return Err("Invalid move index.".to_string());
+                }
+
+                if let Some(move_instance) = &pokemon.moves[*move_index] {
+                    // It's valid to select a move with 0 PP; the engine will convert it to Struggle.
+                    // We only need to check for explicitly disabled moves.
+                    if self.active_pokemon_conditions.values().any(|cond| {
+                        matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == move_instance.move_)
+                    }) {
+                        return Err("This move is currently disabled.".to_string());
+                    }
+                } else {
+                    return Err("There is no move in that slot.".to_string());
+                }
+            }
+            PlayerAction::SwitchPokemon { team_index } => {
+                if self.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {
+                    return Err("The Pokémon is trapped and cannot switch out!".to_string());
+                }
+
+                if *team_index >= self.team.len() {
+                    return Err("Invalid team index for switching.".to_string());
+                }
+                
+                if let Some(target_pokemon) = &self.team[*team_index] {
+                    if target_pokemon.is_fainted() {
+                        return Err("Cannot switch to a fainted Pokémon.".to_string());
+                    }
+                    if *team_index == self.active_pokemon_index {
+                        return Err("This Pokémon is already in battle.".to_string());
+                    }
+                } else {
+                    return Err("No Pokémon in that team slot.".to_string());
+                }
+            }
+            PlayerAction::Forfeit => {
+                // Forfeiting is always a valid action.
+            }
+        }
+
+        Ok(())
+    }
+
+    /// This checks for conditions like being fainted, exhausted, or having moves
+    /// that are disabled or out of PP. It will return a `Struggle` action if no
+    /// other moves are available.
+    pub fn get_valid_moves(&self) -> Vec<PlayerAction> {
+        let mut moves = Vec::new();
+        if let Some(active_pokemon) = self.active_pokemon() {
+            // Check if the Pokémon can even attempt to use a move.
+            let can_use_moves = !self.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 }) 
+                                && !active_pokemon.is_fainted();
+
+            if can_use_moves {
+                let usable_moves: Vec<_> = active_pokemon.moves.iter().enumerate()
+                    .filter_map(|(i, slot)| {
+                        slot.as_ref().and_then(|inst| {
+                            let is_disabled = self.active_pokemon_conditions.values().any(|cond| {
+                                matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == inst.move_)
+                            });
+                            // We allow selecting a move with 0 PP; the engine will turn it into Struggle.
+                            if !is_disabled { Some(PlayerAction::UseMove { move_index: i }) } else { None }
+                        })
+                    })
+                    .collect();
+
+                if !usable_moves.is_empty() {
+                    moves.extend(usable_moves);
+                } else {
+                    // If no moves are usable (all disabled), the only option is Struggle.
+                    moves.push(PlayerAction::UseMove { move_index: 0 });
+                }
+            }
+        }
+        moves
+    }
+
+    /// Generates a list of valid Pokémon to switch to from the team.
+    /// This checks for conditions like `Trapped` and ensures that switch targets
+    /// are not fainted or already active.
+    pub fn get_valid_switches(&self) -> Vec<PlayerAction> {
+        let mut switches = Vec::new();
+        
+        // If trapped, no switches are possible.
+        if self.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {
+            return switches;
+        }
+
+        for (i, pokemon_slot) in self.team.iter().enumerate() {
+            if let Some(pokemon) = pokemon_slot {
+                if i != self.active_pokemon_index && !pokemon.is_fainted() {
+                    switches.push(PlayerAction::SwitchPokemon { team_index: i });
+                }
+            }
+        }
+        switches
+    }
+
+    pub fn forced_move(&self) -> Option<Move> {
+        // Check for Biding condition, which forces the Bide move.
+        if self.active_pokemon_conditions.values().any(|c| matches!(c, PokemonCondition::Biding { .. })) {
+            return Some(Move::Bide);
+        }
+
+        // Check for conditions that force a repeat of the last move.
+        if let Some(last_move) = self.last_move {
+            let is_locked_into_repeating = self.active_pokemon_conditions.values().any(|c| {
+                matches!(c, PokemonCondition::Charging | PokemonCondition::InAir | PokemonCondition::Underground | PokemonCondition::Rampaging { .. })
+            });
+
+            if is_locked_into_repeating {
+                return Some(last_move);
+            }
+        }
+
+        None
+    }
+
     /// Get the currently active Pokemon mutably
     #[cfg(test)]
     pub fn active_pokemon_mut(&mut self) -> Option<&mut PokemonInst> {

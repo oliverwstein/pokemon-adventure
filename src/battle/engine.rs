@@ -13,27 +13,6 @@ use crate::move_data::MoveData;
 use crate::moves::Move;
 use crate::player::PlayerAction;
 
-// REMOVED: No longer need VecDeque directly as it's encapsulated in ActionStack.
-
-/// Check if the player has conditions that force a specific move.
-/// This function is still needed for the new logic in `finalize_turn`.
-pub fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::moves::Move> {
-    if player.active_pokemon_conditions.values().any(|c| matches!(c, PokemonCondition::Biding { .. })) {
-        return Some(crate::moves::Move::Bide);
-    }
-
-    let last_move = player.last_move?;
-    let has_forcing_condition = player.active_pokemon_conditions.values().any(|c| {
-        matches!(c, PokemonCondition::Charging | PokemonCondition::InAir | PokemonCondition::Underground | PokemonCondition::Rampaging { .. })
-    });
-
-    if has_forcing_condition {
-        return Some(last_move);
-    }
-
-    None
-}
-
 // CHANGED: Logic is now simpler. It no longer needs to know about forced moves.
 pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerAction)> {
     let ai_brain = ScoringAI::new();
@@ -58,159 +37,6 @@ pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerActi
     }
     
     npc_actions
-}
-
-/// Validates a player action for detailed correctness
-/// Checks move PP, bounds, switch targets, etc.
-#[allow(dead_code)]
-pub fn validate_player_action(
-    battle_state: &BattleState,
-    player_index: usize,
-    action: &PlayerAction,
-) -> Result<(), String> {
-    if player_index >= 2 {
-        return Err("Invalid player index".to_string());
-    }
-
-    let player = &battle_state.players[player_index];
-
-    match action {
-        PlayerAction::UseMove { move_index } => {
-            // Check if player has an active Pokemon
-            let pokemon = player
-                .active_pokemon()
-                .ok_or_else(|| "No active Pokemon".to_string())?;
-
-            // Check if move index is valid
-            if *move_index >= pokemon.moves.len() {
-                return Err("Invalid move index".to_string());
-            }
-
-            // Check if move exists and has PP
-            if let Some(move_instance) = &pokemon.moves[*move_index] {
-                // Allow moves without pp -- they will just become Struggle.
-                // if move_instance.pp == 0 {
-                //     return Err("Move has no PP remaining".to_string());
-                // }
-                if player.active_pokemon_conditions.values().any(|cond| {
-                        matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == move_instance.move_)
-                    }) {
-                        return Err("Move is disabled".to_string());
-                    }
-            } else {
-                return Err("No move in that slot".to_string());
-            }
-        }
-        PlayerAction::SwitchPokemon { team_index } => {
-            // Check if target Pokemon exists
-            if *team_index >= player.team.len() {
-                return Err("Invalid Pokemon index".to_string());
-            }
-            if player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {  // The number does not matter
-                return Err("The pokemon is trapped!".to_string());
-            }
-            // Check if target Pokemon is not fainted and not already active
-            if let Some(target_pokemon) = &player.team[*team_index] {
-                if target_pokemon.is_fainted() {
-                    return Err("Cannot switch to fainted Pokemon".to_string());
-                }
-                if *team_index == player.active_pokemon_index {
-                    return Err("Pokemon is already active".to_string());
-                }
-            } else {
-                return Err("No Pokemon in that team slot".to_string());
-            }
-        }
-        PlayerAction::Forfeit => {
-            // Forfeit is always valid if the game accepts actions
-        }
-    }
-
-    Ok(())
-}
-
-pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<PlayerAction> {
-    let player = &state.players[player_index];
-    let mut actions = Vec::new();
-
-    // --- Phase 1: Check for Forced Replacement ---
-    // If a player's active Pokémon has fainted, their only valid action is to switch.
-    let is_replacement_phase = match state.game_state {
-        GameState::WaitingForPlayer1Replacement => player_index == 0,
-        GameState::WaitingForPlayer2Replacement => player_index == 1,
-        GameState::WaitingForBothReplacements => true,
-        _ => false,
-    };
-
-    if is_replacement_phase {
-        for (i, pokemon_slot) in player.team.iter().enumerate() {
-            if let Some(pokemon) = pokemon_slot {
-                // The only valid switch targets are non-fainted Pokémon that are not already active.
-                if i != player.active_pokemon_index && !pokemon.is_fainted() {
-                    actions.push(PlayerAction::SwitchPokemon { team_index: i });
-                }
-            }
-        }
-        // During a replacement phase, switching is the ONLY valid action type.
-        // If this list is empty, it means the player has no valid Pokémon to switch to,
-        // and has therefore lost. The main game loop will detect this win condition.
-        return actions;
-    }
-
-    // --- Phase 2: Standard Turn Action Generation ---
-
-    // A. Generate "Use Move" Actions
-    if let Some(active_pokemon) = player.active_pokemon() {
-        // A player cannot use moves if they are recharging (e.g., after Hyper Beam).
-        let can_use_moves = !player.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 }) && !active_pokemon.is_fainted();
-
-        if can_use_moves {
-            // First, find all moves that are actually usable (have PP and are not disabled).
-            let usable_moves: Vec<PlayerAction> = active_pokemon.moves.iter().enumerate()
-                .filter_map(|(i, slot)| {
-                    slot.as_ref().and_then(|inst| {
-                        let has_pp = inst.pp > 0;
-                        let is_disabled = player.active_pokemon_conditions.values().any(|cond| {
-                            matches!(cond, PokemonCondition::Disabled { pokemon_move, .. } if *pokemon_move == inst.move_)
-                        });
-
-                        if has_pp && !is_disabled {
-                            Some(PlayerAction::UseMove { move_index: i })
-                        } else {
-                            None
-                        }
-                    })
-                })
-                .collect();
-
-            if !usable_moves.is_empty() {
-                // If there are usable moves, they are the valid options.
-                actions.extend(usable_moves);
-            } else {
-                // If no moves are usable (all are 0 PP or disabled), the player's only
-                // "Fight" option is Struggle. We represent this intent by adding a single,
-                // default move action. The turn orchestrator will interpret this as Struggle.
-                actions.push(PlayerAction::UseMove { move_index: 0 });
-            }
-        }
-    }
-
-    // B. Generate "Switch Pokemon" Actions
-    let is_trapped = player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 });
-    if !is_trapped {
-        for (i, pokemon_slot) in player.team.iter().enumerate() {
-            if let Some(pokemon) = pokemon_slot {
-                if i != player.active_pokemon_index && !pokemon.is_fainted() {
-                    actions.push(PlayerAction::SwitchPokemon { team_index: i });
-                }
-            }
-        }
-    }
-
-    // C. Add "Forfeit" Action
-    actions.push(PlayerAction::Forfeit);
-
-    actions
 }
 
 /// Check if the battle is ready for turn resolution.
@@ -998,11 +824,12 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus, action_stac
     // Step 8: Announce the end of the turn.
     bus.push(BattleEvent::TurnEnded);
 }
+
 fn prepare_next_turn_queue(battle_state: &mut BattleState) {
     for player_index in 0..2 {
         let player = &battle_state.players[player_index];
 
-        if let Some(forced_move) = check_for_forced_move(player) {
+        if let Some(forced_move) = player.forced_move() {
             if let Some(active_pokemon) = player.active_pokemon() {
                 if let Some(index) = active_pokemon.moves.iter().position(|m| {
                     m.as_ref().map_or(false, |inst| inst.move_ == forced_move)
@@ -1024,12 +851,12 @@ fn check_for_pending_replacements(battle_state: &mut BattleState, bus: &mut Even
         let p1_fainted = battle_state.players[0].team[battle_state.players[0].active_pokemon_index]
             .as_ref()
             .map_or(false, |p| p.is_fainted());
-        let p1_has_replacement = has_non_fainted_pokemon(&battle_state.players[0]);
+        let p1_has_replacement = battle_state.players[0].can_still_battle();
 
         let p2_fainted = battle_state.players[1].team[battle_state.players[1].active_pokemon_index]
             .as_ref()
             .map_or(false, |p| p.is_fainted());
-        let p2_has_replacement = has_non_fainted_pokemon(&battle_state.players[1]);
+        let p2_has_replacement = battle_state.players[1].can_still_battle();
 
         let p1_needs_replacement = p1_fainted && p1_has_replacement;
         let p2_needs_replacement = p2_fainted && p2_has_replacement;
@@ -1048,21 +875,10 @@ fn check_for_pending_replacements(battle_state: &mut BattleState, bus: &mut Even
     }
 }
 
-/// Check if a player has any non-fainted Pokemon in their team
-fn has_non_fainted_pokemon(player: &crate::player::BattlePlayer) -> bool {
-    player.team.iter().any(|pokemon_opt| {
-        if let Some(pokemon) = pokemon_opt {
-            !pokemon.is_fainted()
-        } else {
-            false
-        }
-    })
-}
-
 /// Check win conditions and update battle state accordingly
 fn check_win_conditions(battle_state: &mut BattleState, bus: &mut EventBus) {
-    let player1_has_pokemon = has_non_fainted_pokemon(&battle_state.players[0]);
-    let player2_has_pokemon = has_non_fainted_pokemon(&battle_state.players[1]);
+    let player1_has_pokemon = battle_state.players[0].can_still_battle();
+    let player2_has_pokemon = battle_state.players[1].can_still_battle();
 
     match (player1_has_pokemon, player2_has_pokemon) {
         (false, false) => {

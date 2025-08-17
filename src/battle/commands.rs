@@ -4,7 +4,6 @@ use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::moves::Move;
 use crate::player::{StatType, TeamCondition, PlayerAction};
 use crate::pokemon::StatusCondition;
-use crate::species::Species;
 
 /// Player target for commands - provides type safety over raw indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -421,40 +420,6 @@ where
     let player = &mut state.players[player_index];
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
         operation(pokemon, player_index)
-    } else {
-        Err(ExecutionError::NoPokemon)
-    }
-}
-
-/// Helper function specifically for DealDamage command with event emission (legacy)
-fn execute_deal_damage_command(
-    target: PlayerTarget,
-    amount: u16,
-    state: &mut BattleState,
-    bus: &mut EventBus,
-) -> Result<(), ExecutionError> {
-    let player_index = target.to_index();
-    let player = &mut state.players[player_index];
-    if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-        let did_faint = pokemon.take_damage(amount);
-        let remaining_hp = pokemon.current_hp();
-
-        // Emit DamageDealt event
-        bus.push(crate::battle::state::BattleEvent::DamageDealt {
-            target: pokemon.species,
-            damage: amount,
-            remaining_hp,
-        });
-
-        // Emit PokemonFainted event if needed
-        if did_faint {
-            bus.push(crate::battle::state::BattleEvent::PokemonFainted {
-                player_index,
-                pokemon: pokemon.species,
-            });
-        }
-
-        Ok(())
     } else {
         Err(ExecutionError::NoPokemon)
     }

@@ -342,7 +342,7 @@ impl BattleCommand {
                     vec![]
                 }
             },
-            BattleCommand::UpdateStatusProgress { target } => {
+            BattleCommand::UpdateStatusProgress { target: _ } => {
                 // This command can potentially cure a status, so we need to check if we should emit a removed event
                 // However, the actual determination happens during state change, so we return empty here
                 // The state change function will emit the appropriate event if needed

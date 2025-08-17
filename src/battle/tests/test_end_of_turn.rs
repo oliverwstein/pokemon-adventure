@@ -312,7 +312,7 @@ mod tests {
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![24, 100, 100, 100]); // Below 25% threshold - should defrost, plus extra values for other RNG calls
 
-        // Test defrost by trying to execute an attack (this will call check_action_preventing_conditions)
+        // Test defrost by trying to execute an attack
         let mut action_stack = ActionStack::new();
         crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {
@@ -359,7 +359,7 @@ mod tests {
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![25, 100, 100, 100]); // At 25% threshold - should remain frozen, plus extra values
 
-        // Test freeze check by trying to execute an attack (this will call check_action_preventing_conditions)
+        // Test freeze check by trying to execute an attack
         let mut action_stack = ActionStack::new();
         crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {

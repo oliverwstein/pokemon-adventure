@@ -2,7 +2,7 @@
 
 use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::ai::{Behavior, ScoringAI};
-use crate::battle::calculators::{calculate_attack_outcome, calculate_end_turn_commands, calculate_forced_action_commands};
+use crate::battle::calculators::{calculate_action_prevention, calculate_attack_outcome, calculate_end_turn_commands, calculate_forced_action_commands, calculate_forfeit_commands, calculate_switch_commands};
 use crate::battle::commands::{execute_command_batch, execute_command, BattleCommand, PlayerTarget};
 use crate::battle::conditions::*;
 use crate::battle::state::{
@@ -148,7 +148,8 @@ pub fn execute_battle_action(
 ) {
     match action {
         BattleAction::Forfeit { player_index } => {
-            execute_forfeit(player_index, battle_state, bus);
+            let commands = calculate_forfeit_commands(player_index);
+            let _ = execute_command_batch(commands, battle_state, bus, action_stack);
         }
 
         BattleAction::Switch {
@@ -175,7 +176,7 @@ pub fn execute_battle_action(
                 }
             }
 
-            let commands = execute_switch(player_index, target_pokemon_index, battle_state);
+            let commands = calculate_switch_commands(player_index, target_pokemon_index, battle_state);
             let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
         }
 
@@ -202,14 +203,17 @@ pub fn execute_battle_action(
 
             // Check all action-preventing conditions (sleep, freeze, paralysis, confusion, etc.)
             // This needs to happen BEFORE any move processing (including special moves)
-            if let Some(failure_reason) = check_action_preventing_conditions(
+            let (failure_reason, prevention_commands) = calculate_action_prevention(
                 attacker_index,
                 battle_state,
                 rng,
                 move_used,
-                bus,
-                action_stack,
-            ) {
+            );
+            
+            // Execute any commands from the prevention check (status updates, etc.)
+            let _ = execute_command_batch(prevention_commands, battle_state, bus, action_stack);
+            
+            if let Some(failure_reason) = failure_reason {
                 // Always generate ActionFailed event first
                 bus.push(BattleEvent::ActionFailed {
                     reason: failure_reason.clone(),
@@ -348,220 +352,6 @@ pub fn execute_battle_action(
             );
         }
     }
-}
-
-/// Execute forfeit action - player loses immediately
-fn execute_forfeit(player_index: usize, battle_state: &mut BattleState, bus: &mut EventBus) {
-    // Set game state to opponent wins
-    let new_state = if player_index == 0 {
-        GameState::Player2Win
-    } else {
-        GameState::Player1Win
-    };
-    let commands = vec![BattleCommand::SetGameState(new_state)];
-    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
-
-    bus.push(BattleEvent::PlayerDefeated { player_index });
-    bus.push(BattleEvent::BattleEnded {
-        winner: Some(if player_index == 0 { 1 } else { 0 }),
-    });
-}
-
-/// Execute switch action - change active Pokemon
-fn execute_switch(
-    player_index: usize,
-    target_pokemon_index: usize,
-    battle_state: &BattleState,
-) -> Vec<BattleCommand> {
-    let player = &battle_state.players[player_index];
-    let old_pokemon = player.active_pokemon().unwrap().species;
-    let new_pokemon = player.team[target_pokemon_index].as_ref().unwrap().species;
-    let target = PlayerTarget::from_index(player_index);
-
-    vec![
-        // 1. Command to clear the old state.
-        BattleCommand::ClearPlayerState { target },
-        // 2. Command to perform the switch.
-        BattleCommand::SwitchPokemon {
-            target,
-            new_pokemon_index: target_pokemon_index,
-        },
-        // 3. Command to emit the event.
-        BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
-            player_index,
-            old_pokemon,
-            new_pokemon,
-        }),
-    ]
-}
-
-/// Check all conditions that can prevent a Pokemon from taking action
-/// Returns Some(ActionFailureReason) if action should be prevented, None if action can proceed
-fn check_action_preventing_conditions(
-    player_index: usize,
-    battle_state: &mut BattleState,
-    rng: &mut TurnRng,
-    move_used: Move,
-    bus: &mut EventBus,
-    action_stack: &mut ActionStack,
-) -> Option<ActionFailureReason> {
-    // Check Pokemon status conditions BEFORE updating counters
-    let pokemon_status = battle_state.players[player_index].team
-        [battle_state.players[player_index].active_pokemon_index]
-        .as_ref()?
-        .status;
-
-    // First check if Pokemon should fail to act (including Sleep > 0)
-    if let Some(status) = pokemon_status {
-        match status {
-            crate::pokemon::StatusCondition::Sleep(turns) => {
-                if turns > 0 {
-                    // Pokemon is still asleep, update counters after determining failure
-                    let _ = execute_command(
-                        BattleCommand::UpdateStatusProgress {
-                            target: PlayerTarget::from_index(player_index),
-                        },
-                        battle_state,
-                        bus,
-                        action_stack,
-                    );
-                    return Some(ActionFailureReason::IsAsleep);
-                }
-            }
-            crate::pokemon::StatusCondition::Freeze => {
-                // 25% chance to thaw out when trying to act
-                let roll = rng.next_outcome("Defrost Check"); // 0-100
-                if roll < 25 {
-                    // Pokemon thaws out
-                    if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
-                        execute_command(
-                            BattleCommand::EmitEvent(BattleEvent::PokemonStatusRemoved {
-                                target: pokemon.species,
-                                status: crate::pokemon::StatusCondition::Freeze,
-                            }),
-                            battle_state,
-                            bus,
-                            action_stack,
-                        )
-                        .expect("EmitEvent command should always succeed");
-                    }
-                    execute_command(
-                        BattleCommand::SetPokemonStatus {
-                            target: PlayerTarget::from_index(player_index),
-                            status: None,
-                        },
-                        battle_state,
-                        bus,
-                        action_stack,
-                    )
-                    .expect("SetPokemonStatus command should always succeed");
-                    // Pokemon can act this turn after thawing
-                } else {
-                    return Some(ActionFailureReason::IsFrozen);
-                }
-            }
-            _ => {} // Other status conditions don't prevent actions
-        }
-    }
-
-    // Update status counters for Pokemon that are not asleep with turns > 0 (they were handled above)
-    let current_status = battle_state.players[player_index].team
-        [battle_state.players[player_index].active_pokemon_index]
-        .as_ref()?
-        .status;
-
-    // Only update counters if Pokemon doesn't have sleep with turns > 0 (those were already updated above)
-    let should_update_counters = match current_status {
-        Some(crate::pokemon::StatusCondition::Sleep(turns)) => turns == 0,
-        _ => true,
-    };
-
-    if should_update_counters {
-        let _ = execute_command(
-            BattleCommand::UpdateStatusProgress {
-                target: PlayerTarget::from_index(player_index),
-            },
-            battle_state,
-            bus,
-            action_stack,
-        );
-    }
-
-    let player = &battle_state.players[player_index];
-
-    // Check active Pokemon conditions
-    if player.has_condition_type(PokemonConditionType::Flinched) {
-        return Some(ActionFailureReason::IsFlinching);
-    }
-
-    // Check for exhausted condition (any turns_remaining > 0 means still exhausted)
-    for condition in player.active_pokemon_conditions.values() {
-        if let PokemonCondition::Exhausted { turns_remaining } = condition {
-            if *turns_remaining > 0 {
-                return Some(ActionFailureReason::IsExhausted);
-            }
-        }
-    }
-
-    // Check paralysis - 25% chance to be fully paralyzed
-    if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon_status {
-        let roll = rng.next_outcome("Immobilized by Paralysis Check"); // 0-100
-        if roll < 25 {
-            return Some(ActionFailureReason::IsParalyzed);
-        }
-    }
-
-    // Check confusion - 50% chance to hit self instead
-    for condition in player.active_pokemon_conditions.values() {
-        if let PokemonCondition::Confused { turns_remaining } = condition {
-            if *turns_remaining > 0 {
-                let roll = rng.next_outcome("Hit Itself in Confusion Check"); // 1-100
-                if roll < 50 {
-                    return Some(ActionFailureReason::IsConfused);
-                }
-                // If not confused this turn, action proceeds normally
-                break; // Only check once
-            }
-        }
-    }
-
-    // Check for disabled moves
-    for condition in player.active_pokemon_conditions.values() {
-        if let PokemonCondition::Disabled {
-            pokemon_move,
-            turns_remaining,
-        } = condition
-        {
-            if *turns_remaining > 0 && *pokemon_move == move_used {
-                return Some(ActionFailureReason::MoveFailedToExecute);
-            }
-        }
-    }
-
-    // Check for Nightmare effect - move fails unless target is asleep
-    if let Some(move_data) = MoveData::get_move_data(move_used) {
-        for effect in &move_data.effects {
-            if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
-                // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
-                let target_index = if player_index == 0 { 1 } else { 0 };
-                let target_player = &battle_state.players[target_index];
-
-                if let Some(target_pokemon) = target_player.active_pokemon() {
-                    // Check if target is asleep
-                    let is_asleep = matches!(
-                        target_pokemon.status,
-                        Some(crate::pokemon::StatusCondition::Sleep(_))
-                    );
-
-                    if !is_asleep {
-                        return Some(ActionFailureReason::MoveFailedToExecute);
-                    }
-                }
-            }
-        }
-    }
-
-    None // No conditions prevent action
 }
 
 /// Execute a single hit of an attack

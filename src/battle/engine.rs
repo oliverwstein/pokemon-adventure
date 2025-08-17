@@ -1,3 +1,7 @@
+// in src/battle/engine.rs
+
+// CHANGED: Use statements are updated.
+use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::ai::{Behavior, ScoringAI};
 use crate::battle::calculators::calculate_attack_outcome;
 use crate::battle::commands::{execute_command_batch, execute_command, BattleCommand, PlayerTarget};
@@ -5,83 +9,22 @@ use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
 };
-use crate::battle::stats::effective_speed;
 use crate::move_data::MoveData;
 use crate::moves::Move;
 use crate::player::PlayerAction;
-use std::collections::VecDeque;
 
-/// Internal action types for the action stack
-/// These represent atomic actions that can be executed during battle resolution
-#[derive(Debug, Clone)]
-pub enum BattleAction {
-    /// Player forfeits the battle
-    Forfeit { player_index: usize },
+// REMOVED: No longer need VecDeque directly as it's encapsulated in ActionStack.
 
-    /// Player switches to a different Pokemon
-    Switch {
-        player_index: usize,
-        target_pokemon_index: usize,
-    },
-
-    /// Execute a single hit of a move (for multi-hit moves, multiple actions are pushed)
-    AttackHit {
-        attacker_index: usize,
-        defender_index: usize,
-        move_used: Move,
-        hit_number: u8, // 0 for single hit, 0,1,2... for multi-hit
-    },
-}
-
-/// Action stack for managing battle action execution
-pub struct ActionStack {
-    actions: VecDeque<BattleAction>,
-}
-
-impl ActionStack {
-    pub fn new() -> Self {
-        Self {
-            actions: VecDeque::new(),
-        }
-    }
-
-    pub fn push_back(&mut self, action: BattleAction) {
-        self.actions.push_back(action);
-    }
-
-    pub fn push_front(&mut self, action: BattleAction) {
-        self.actions.push_front(action);
-    }
-
-    pub fn pop_front(&mut self) -> Option<BattleAction> {
-        self.actions.pop_front()
-    }
-}
-
-/// Check if the player has conditions that force a specific move
-/// Returns Some(Move) if a move is forced, None if player can choose freely
+/// Check if the player has conditions that force a specific move.
+/// This function is still needed for the new logic in `finalize_turn`.
 pub fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::moves::Move> {
-    // Check for Biding condition - forces Bide action regardless of last move
-    if player
-        .active_pokemon_conditions
-        .values()
-        .any(|condition| matches!(condition, PokemonCondition::Biding { .. }))
-    {
+    if player.active_pokemon_conditions.values().any(|c| matches!(c, PokemonCondition::Biding { .. })) {
         return Some(crate::moves::Move::Bide);
     }
 
-    // Check if player has a last move to potentially repeat
     let last_move = player.last_move?;
-
-    // Check for forcing conditions that repeat last move
-    let has_forcing_condition = player.active_pokemon_conditions.values().any(|condition| {
-        matches!(
-            condition,
-            PokemonCondition::Charging
-                | PokemonCondition::InAir
-                | PokemonCondition::Underground
-                | PokemonCondition::Rampaging { .. }
-        )
+    let has_forcing_condition = player.active_pokemon_conditions.values().any(|c| {
+        matches!(c, PokemonCondition::Charging | PokemonCondition::InAir | PokemonCondition::Underground | PokemonCondition::Rampaging { .. })
     });
 
     if has_forcing_condition {
@@ -91,13 +34,11 @@ pub fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<cra
     None
 }
 
-pub fn collect_npc_actions(
-    battle_state: &BattleState, // Takes an immutable reference
-) -> Vec<(usize, PlayerAction)> { // Returns a list of (player_index, action)
+// CHANGED: Logic is now simpler. It no longer needs to know about forced moves.
+pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerAction)> {
     let ai_brain = ScoringAI::new();
     let mut npc_actions = Vec::new();
 
-    // Determine which players *could* act
     let players_to_act = match battle_state.game_state {
         GameState::WaitingForActions | GameState::WaitingForBothReplacements => vec![0, 1],
         GameState::WaitingForPlayer1Replacement => vec![0],
@@ -108,12 +49,9 @@ pub fn collect_npc_actions(
     for player_index in players_to_act {
         let player = &battle_state.players[player_index];
         
-        // The new, crucial logic:
-        // ONLY act if the player is an NPC AND their action is missing.
+        // The logic is now much cleaner: if the player is an NPC and their action slot is empty, fill it.
         if player.player_type == crate::player::PlayerType::NPC 
-            && battle_state.action_queue[player_index].is_none()
-            && check_for_forced_move(player).is_none() {
-            
+            && battle_state.action_queue[player_index].is_none() {
             let action = ai_brain.decide_action(player_index, battle_state);
             npc_actions.push((player_index, action));
         }
@@ -121,7 +59,6 @@ pub fn collect_npc_actions(
     
     npc_actions
 }
-
 
 /// Validates a player action for detailed correctness
 /// Checks move PP, bounds, switch targets, etc.
@@ -276,23 +213,19 @@ pub fn get_valid_actions(state: &BattleState, player_index: usize) -> Vec<Player
     actions
 }
 
-/// Check if battle is ready for turn resolution (both players have provided actions)
+/// Check if the battle is ready for turn resolution.
 pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
     match battle_state.game_state {
         GameState::WaitingForActions => {
-            // Check if each player has either provided an action OR has a forced move
-            let player0_ready = battle_state.action_queue[0].is_some() 
-                || check_for_forced_move(&battle_state.players[0]).is_some();
-            let player1_ready = battle_state.action_queue[1].is_some() 
-                || check_for_forced_move(&battle_state.players[1]).is_some();
-            player0_ready && player1_ready
+            // The turn can start if and only if both players have a queued action.
+            battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
         }
         GameState::WaitingForPlayer1Replacement => battle_state.action_queue[0].is_some(),
         GameState::WaitingForPlayer2Replacement => battle_state.action_queue[1].is_some(),
         GameState::WaitingForBothReplacements => {
             battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some()
         }
-        _ => false, // Other states are not ready for turn resolution
+        _ => false, // Other states are not ready for turn resolution.
     }
 }
 
@@ -301,8 +234,11 @@ pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
 /// Returns EventBus containing all events that occurred during the turn
 pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBus {
     let mut bus = EventBus::new();
+    
+    // We only need one action_stack for the entire resolution process.
+    // It is temporary to this function call.
+    let mut action_stack = ActionStack::new();
 
-    // Check if this is a replacement phase (inter-turn action)
     let is_replacement_phase = matches!(
         battle_state.game_state,
         GameState::WaitingForPlayer1Replacement
@@ -311,32 +247,28 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
     );
 
     if is_replacement_phase {
-        // Handle forced replacements without turn progression
-        resolve_replacement_phase(battle_state, &mut bus);
+        // Pass the single action_stack here as well.
+        resolve_replacement_phase(battle_state, &mut bus, &mut action_stack);
     } else {
-        // Normal battle turn processing
-        // 1. Initialization
         initialize_turn(battle_state, &mut bus);
 
-        // 2. Build initial action stack from player actions
-        let mut action_stack = build_initial_action_stack(battle_state);
+        // Build the initial actions into our single, unified stack.
+        let mut action_stack = ActionStack::build_initial(battle_state);
 
-        // 3. Execute actions from stack until empty
+        // The while loop and the execution function now operate on the SAME stack.
         while let Some(action) = action_stack.pop_front() {
             execute_battle_action(action, battle_state, &mut action_stack, &mut bus, &mut rng);
 
-            // Check if battle ended (forfeit, all Pokemon fainted, etc.)
             if battle_state.game_state != GameState::TurnInProgress {
                 break;
             }
         }
 
-        // 4. End-of-Turn Phase (only if battle is still ongoing)
         if battle_state.game_state == GameState::TurnInProgress {
             execute_end_turn_phase(battle_state, &mut bus, &mut rng);
         }
 
-        // 5. Cleanup & Finalization
+        // Pass the now-empty stack to finalize_turn.
         finalize_turn(battle_state, &mut bus, &mut action_stack);
     }
 
@@ -344,47 +276,33 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
 }
 
 /// Handle forced replacement phase without turn progression
-fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus) {
-    // Build action stack for replacement actions only
-    let mut action_stack = build_initial_action_stack(battle_state);
+fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus, action_stack: &mut ActionStack) {
+    let mut turn_action_stack = ActionStack::build_initial(battle_state);
 
-    // Execute replacement actions
-    while let Some(action) = action_stack.pop_front() {
-        // Only process switch actions during replacement phase
+    while let Some(action) = turn_action_stack.pop_front() {
         if matches!(action, BattleAction::Switch { .. }) {
             execute_battle_action(
                 action,
                 battle_state,
-                &mut action_stack,
+                action_stack, // Pass the main stack
                 bus,
                 &mut TurnRng::new_for_test(vec![]),
             );
         }
-
-        // Check if battle ended (all Pokemon fainted, etc.)
-        if matches!(
-            battle_state.game_state,
-            GameState::Player1Win | GameState::Player2Win | GameState::Draw
-        ) {
+        if matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
             break;
         }
     }
 
-    // After replacements, check win conditions and set next state
     check_win_conditions(battle_state, bus);
 
-    // If battle is still ongoing, transition to waiting for actions
-    if !matches!(
-        battle_state.game_state,
-        GameState::Player1Win | GameState::Player2Win | GameState::Draw
-    ) {
+    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
         let commands = vec![BattleCommand::SetGameState(GameState::WaitingForActions)];
-        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
+        let _ = execute_command_batch(commands, battle_state, bus, action_stack);
     }
 
-    // Clear action queue for next turn
     let commands = vec![BattleCommand::ClearActionQueue];
-    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
+    let _ = execute_command_batch(commands, battle_state, bus, action_stack);
 }
 
 fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
@@ -393,83 +311,6 @@ fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {
     bus.push(BattleEvent::TurnStarted {
         turn_number: battle_state.turn_number,
     });
-}
-
-/// Build initial action stack from player actions in priority order
-fn build_initial_action_stack(battle_state: &BattleState) -> ActionStack {
-    let mut stack = ActionStack::new();
-    
-    // --- START NEW LOGIC FOR ACTION QUEUEING ---
-    let mut actions_to_prioritize: Vec<(usize, PlayerAction)> = Vec::new();
-
-    for player_index in 0..2 {
-        // Check if the player is forced to make a move. This takes highest priority.
-        if let Some(forced_move) = check_for_forced_move(&battle_state.players[player_index]) {
-            // The player is forced. We generate the action for them.
-            // We find the move_index, defaulting to 0 as a safe fallback.
-            let move_index = battle_state.players[player_index].active_pokemon()
-                .and_then(|p| p.moves.iter().position(|m| m.as_ref().map_or(false, |inst| inst.move_ == forced_move)))
-                .unwrap_or(0);
-            
-            actions_to_prioritize.push((player_index, PlayerAction::UseMove { move_index }));
-
-        } else if let Some(action) = &battle_state.action_queue[player_index] {
-            // The player is not forced, so we use their chosen action from the queue.
-            actions_to_prioritize.push((player_index, action.clone()));
-        }
-    }
-    // --- END NEW LOGIC ---
-
-    // Now, determine the order of the collected actions based on priority and speed.
-    let action_order = determine_action_order(battle_state, &actions_to_prioritize);
-
-    for (player_index, player_action) in action_order {
-        let battle_action =
-            convert_player_action_to_battle_action(&player_action, player_index, battle_state);
-        stack.push_back(battle_action);
-    }
-
-    stack
-}
-
-/// Convert a PlayerAction to one or more BattleActions
-fn convert_player_action_to_battle_action(
-    player_action: &PlayerAction,
-    player_index: usize,
-    battle_state: &BattleState,
-) -> BattleAction {
-    match player_action {
-        PlayerAction::Forfeit => BattleAction::Forfeit { player_index },
-
-        PlayerAction::SwitchPokemon { team_index } => BattleAction::Switch {
-            player_index,
-            target_pokemon_index: *team_index,
-        },
-
-        PlayerAction::UseMove { move_index } => {
-            let player = &battle_state.players[player_index];
-            let active_pokemon = player.active_pokemon().expect("Active pokemon should exist");
-            
-            // Simplified logic: The correct move_index is now guaranteed.
-            let final_move = active_pokemon.moves[*move_index]
-                .as_ref()
-                .map(|inst| {
-                    if inst.pp > 0 {
-                        inst.move_
-                    } else {
-                        Move::Struggle
-                    }
-                })
-                .unwrap_or(Move::Struggle); // Use struggle if the move slot is empty
-
-            BattleAction::AttackHit {
-                attacker_index: player_index,
-                defender_index: 1 - player_index,
-                move_used: final_move,
-                hit_number: 0,
-            }
-        }
-    }
 }
 
 /// Execute a single battle action, potentially adding more actions to the stack
@@ -952,100 +793,6 @@ pub fn execute_attack_hit(
     }
 }
 
-pub fn determine_action_order<'a>(
-    battle_state: &'a BattleState,
-    actions: &'a [(usize, PlayerAction)],
-) -> Vec<(usize, PlayerAction)> {
-    let mut player_priorities = Vec::new();
-
-    // Calculate priority for each player's action from the provided list.
-    for (player_index, action) in actions {
-        let priority = calculate_action_priority(*player_index, action, battle_state);
-        player_priorities.push((*player_index, action.clone(), priority));
-    }
-
-    // Sort by priority (higher priority first), then by speed (higher speed first)
-    player_priorities.sort_by(|a, b| {
-        let priority_cmp = b.2.action_priority.cmp(&a.2.action_priority);
-        if priority_cmp != std::cmp::Ordering::Equal {
-            return priority_cmp;
-        }
-
-        let move_priority_cmp = b.2.move_priority.cmp(&a.2.move_priority);
-        if move_priority_cmp != std::cmp::Ordering::Equal {
-            return move_priority_cmp;
-        }
-
-        b.2.speed.cmp(&a.2.speed)
-    });
-
-    // Return the sorted (player_index, PlayerAction) tuples.
-    player_priorities
-        .into_iter()
-        .map(|(player_index, action, _)| (player_index, action))
-        .collect()
-}
-
-#[derive(Debug, Clone)]
-struct ActionPriority {
-    action_priority: i8, // Forfeit: 10, Switch: 6, Move: varies
-    move_priority: i8,   // Only relevant for moves
-    speed: u16,          // Effective speed for tiebreaking
-}
-
-fn calculate_action_priority(
-    player_index: usize,
-    action: &PlayerAction,
-    battle_state: &BattleState,
-) -> ActionPriority {
-    match action {
-        PlayerAction::SwitchPokemon { .. } => {
-            ActionPriority {
-                action_priority: 6,         // Switches go first
-                move_priority: 0,           // N/A for switches
-                speed: player_index as u16, // Just always have player 0 switch first if they both switch.
-            }
-        }
-        PlayerAction::Forfeit => {
-            ActionPriority {
-                action_priority: 10, // Forfeit goes first, before everything else
-                move_priority: 0,    // N/A for forfeit
-                speed: 0,
-            }
-        }
-        PlayerAction::UseMove { move_index } => {
-            let player = &battle_state.players[player_index];
-            let active_pokemon = &player.team[player.active_pokemon_index]
-                .as_ref()
-                .expect("Active pokemon should exist");
-
-            let move_instance = &active_pokemon.moves[*move_index]
-                .as_ref()
-                .expect("Move should exist");
-
-            let move_data = MoveData::get_move_data(move_instance.move_).expect("Move data should exist");
-
-            let speed = effective_speed(active_pokemon, player);
-
-            // Extract priority from move effects
-            let move_priority = move_data
-                .effects
-                .iter()
-                .find_map(|effect| match effect {
-                    crate::move_data::MoveEffect::Priority(priority) => Some(*priority),
-                    _ => None,
-                })
-                .unwrap_or(0); // Default priority is 0
-
-            ActionPriority {
-                action_priority: 0, // Moves go last
-                move_priority,
-                speed,
-            }
-        }
-    }
-}
-
 /// Apply damage/healing effects from active Pokemon conditions (Trapped, Seeded)
 fn apply_condition_damage(battle_state: &mut BattleState, bus: &mut EventBus) {
     // Process each player's active Pokemon for condition effects
@@ -1214,47 +961,57 @@ pub fn execute_end_turn_phase(
 }
 
 fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus, action_stack: &mut ActionStack) {
-    // 1. Clear state for any fainted Pokémon
+    // Step 1: Clear state for fainted Pokémon.
     for player_index in 0..2 {
         if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
             if pokemon.is_fainted() {
-                execute_command(
-                    BattleCommand::ClearPlayerState {
-                        target: PlayerTarget::from_index(player_index),
-                    },
-                    battle_state,
-                    bus,
-                    action_stack,
-                )
-                .expect("ClearPlayerState command should always succeed");
+                let _ = execute_command(
+                    BattleCommand::ClearPlayerState { target: PlayerTarget::from_index(player_index) },
+                    battle_state, bus, action_stack,
+                );
             }
         }
     }
     
-    // 2. Check for win conditions, which override everything else
+    // Step 2: Check for win/loss conditions.
     check_win_conditions(battle_state, bus);
 
-    // 3. Increment turn number if it was a real battle turn
+    // Step 3: Increment turn number if the battle is ongoing.
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        let commands = vec![BattleCommand::IncrementTurnNumber];
-        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
+        let _ = execute_command(BattleCommand::IncrementTurnNumber, battle_state, bus, action_stack);
+    }
+    
+    // Step 4: Clear the action queue from the completed turn.
+    let _ = execute_command(BattleCommand::ClearActionQueue, battle_state, bus, action_stack);
+
+    // Step 5: If the battle hasn't ended, set the state to wait for the next set of actions.
+    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+        let _ = execute_command(BattleCommand::SetGameState(GameState::WaitingForActions), battle_state, bus, action_stack);
     }
 
-    // 4. Set the default next state if the battle is ongoing
-    if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        let commands = vec![BattleCommand::SetGameState(GameState::WaitingForActions)];
-        let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
-    }
-
-    // 5. Check if the default state needs to be overridden by a replacement phase
+    // Step 6: Check if any Pokémon fainted and require replacements, overriding the previous state if so.
     check_for_pending_replacements(battle_state, bus);
 
-    // 6. Clear the action queue from the turn that just ended
-    let commands = vec![BattleCommand::ClearActionQueue];
-    let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
+    // Step 7: NEW! Prepare the (now empty) action queue for the *next* turn by injecting forced moves.
+    prepare_next_turn_queue(battle_state);
 
-    // 7. Announce the end of the turn
+    // Step 8: Announce the end of the turn.
     bus.push(BattleEvent::TurnEnded);
+}
+fn prepare_next_turn_queue(battle_state: &mut BattleState) {
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+
+        if let Some(forced_move) = check_for_forced_move(player) {
+            if let Some(active_pokemon) = player.active_pokemon() {
+                if let Some(index) = active_pokemon.moves.iter().position(|m| {
+                    m.as_ref().map_or(false, |inst| inst.move_ == forced_move)
+                }) {
+                    battle_state.action_queue[player_index] = Some(PlayerAction::UseMove { move_index: index });
+                }
+            }
+        }
+    }
 }
 
 /// At the end of the turn, checks if any active Pokemon have fainted and if replacements are needed.

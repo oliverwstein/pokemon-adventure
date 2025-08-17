@@ -91,7 +91,8 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
         }
 
         if battle_state.game_state == GameState::TurnInProgress {
-            execute_end_turn_phase(battle_state, &mut bus, &mut rng);
+            let end_turn_commands = calculate_end_turn_commands(battle_state, &mut rng);
+            let _ = execute_command_batch(end_turn_commands, battle_state, &mut bus, &mut ActionStack::new());
         }
 
         // Pass the now-empty stack to finalize_turn.
@@ -619,7 +620,75 @@ pub fn execute_attack_hit(
     }
 }
 
+/// Calculate damage/healing effects from active Pokemon conditions (Trapped, Seeded)
+/// Returns commands to execute the condition damage without directly mutating state
+fn calculate_condition_damage_commands(battle_state: &BattleState) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+
+    // Process each player's active Pokemon for condition effects
+    for player_index in 0..2 {
+        let opponent_index = 1 - player_index;
+
+        // Check if this player has an active, non-fainted Pokemon
+        let player = &battle_state.players[player_index];
+        if let Some(pokemon) = player.active_pokemon() {
+            if pokemon.is_fainted() {
+                continue;
+            }
+
+            let max_hp = pokemon.max_hp();
+            let has_trapped = player
+                .active_pokemon_conditions
+                .values()
+                .any(|condition| matches!(condition, PokemonCondition::Trapped { .. }));
+            let has_seeded = player.has_condition(&PokemonCondition::Seeded);
+
+            // Handle Trapped condition (1/16 max HP damage per turn)
+            if has_trapped {
+                let condition_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
+                commands.push(BattleCommand::DealConditionDamage {
+                    target: PlayerTarget::from_index(player_index),
+                    condition: PokemonCondition::Trapped { turns_remaining: 1 }, 
+                    amount: condition_damage,
+                });
+            }
+
+            // Handle Seeded condition (1/8 max HP drained per turn, heals opponent)
+            if has_seeded {
+                let current_hp = pokemon.current_hp();
+                let actual_damage = (max_hp / 8).max(1).min(current_hp);
+                
+                commands.push(BattleCommand::DealConditionDamage {
+                    target: PlayerTarget::from_index(player_index),
+                    condition: PokemonCondition::Seeded,
+                    amount: actual_damage,
+                });
+
+                // Heal the opponent if they have an active Pokemon
+                let opponent_player = &battle_state.players[opponent_index];
+                if let Some(opponent_pokemon) = opponent_player.active_pokemon() {
+                    if !opponent_pokemon.is_fainted() {
+                        let opponent_current_hp = opponent_pokemon.current_hp();
+                        let opponent_max_hp = opponent_pokemon.max_hp();
+                        let actual_heal = actual_damage.min(opponent_max_hp.saturating_sub(opponent_current_hp));
+
+                        if actual_heal > 0 {
+                            commands.push(BattleCommand::HealPokemon {
+                                target: PlayerTarget::from_index(opponent_index),
+                                amount: actual_heal,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    commands
+}
+
 /// Apply damage/healing effects from active Pokemon conditions (Trapped, Seeded)
+/// LEGACY FUNCTION - Will be removed when refactoring is complete
 fn apply_condition_damage(battle_state: &mut BattleState, bus: &mut EventBus) {
     // Process each player's active Pokemon for condition effects
     for player_index in 0..2 {
@@ -719,6 +788,100 @@ fn apply_condition_damage(battle_state: &mut BattleState, bus: &mut EventBus) {
     }
 }
 
+/// Calculate all end-of-turn effects and return commands to execute them
+/// Returns commands for status damage, condition expiry, and team condition ticking
+fn calculate_end_turn_commands(battle_state: &BattleState, _rng: &mut TurnRng) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+    
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+        if let Some(pokemon) = player.active_pokemon() {
+            // Fainted Pokemon do not take end-of-turn damage or effects.
+            if pokemon.is_fainted() {
+                continue;
+            }
+
+            // 1. Process Pokemon status damage (Poison, Burn) - we need to calculate this ourselves
+            if let Some(status) = pokemon.status {
+                let status_damage = match status {
+                    crate::pokemon::StatusCondition::Poison(_) => pokemon.max_hp() / 8,
+                    crate::pokemon::StatusCondition::Burn => pokemon.max_hp() / 16,
+                    _ => 0,
+                };
+                
+                if status_damage > 0 {
+                    commands.push(BattleCommand::DealStatusDamage {
+                        target: PlayerTarget::from_index(player_index),
+                        status,
+                        amount: status_damage,
+                    });
+                }
+            }
+
+            // 2. Process active Pokemon conditions - emit atomic commands for each condition
+            let target = PlayerTarget::from_index(player_index);
+            for (_condition_type, condition) in &player.active_pokemon_conditions {
+                // Tick the condition
+                commands.push(BattleCommand::TickPokemonCondition {
+                    target,
+                    condition: condition.clone(),
+                });
+                
+                // Check if the condition should expire after ticking
+                let should_expire = match condition {
+                    PokemonCondition::Confused { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Exhausted { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Trapped { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Rampaging { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Disabled { turns_remaining, .. } => *turns_remaining <= 0,
+                    PokemonCondition::Biding { turns_remaining, .. } => *turns_remaining <= 0,
+                    PokemonCondition::Flinched => true, // Flinch always expires at end of turn
+                    PokemonCondition::Teleported => true, // Teleported expires at end of turn
+                    PokemonCondition::Countering { .. } => true, // Counter expires at end of turn
+                    // Charging does NOT expire at end of turn - it expires when the move executes
+                    _ => false, // Other conditions don't expire automatically
+                };
+                
+                if should_expire {
+                    commands.push(BattleCommand::ExpirePokemonCondition {
+                        target,
+                        condition: condition.clone(),
+                    });
+                }
+            }
+        }
+    }
+    
+    // 3. Process condition-based damage effects (Trapped, Seeded)
+    let condition_damage_commands = calculate_condition_damage_commands(battle_state);
+    commands.extend(condition_damage_commands);
+
+    // 4. Tick team conditions (Reflect, Light Screen, Mist) - emit atomic commands for each
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+        let target = PlayerTarget::from_index(player_index);
+        
+        for (condition, turns) in &player.team_conditions {
+            // Tick the team condition
+            commands.push(BattleCommand::TickTeamCondition {
+                target,
+                condition: *condition,
+            });
+            
+            // Check if it should expire after ticking
+            if *turns <= 1 {
+                commands.push(BattleCommand::ExpireTeamCondition {
+                    target,
+                    condition: *condition,
+                });
+            }
+        }
+    }
+    
+    commands
+}
+
+/// LEGACY FUNCTION - Will be removed when refactoring is complete
 pub fn execute_end_turn_phase(
     battle_state: &mut BattleState,
     bus: &mut EventBus,
@@ -764,7 +927,8 @@ pub fn execute_end_turn_phase(
     }
     
     // 3. Process condition-based damage effects (Trapped, Seeded)
-    apply_condition_damage(battle_state, bus);
+    let condition_damage_commands = calculate_condition_damage_commands(battle_state);
+    let _ = execute_command_batch(condition_damage_commands, battle_state, bus, &mut ActionStack::new());
 
     // 4. Tick team conditions (Reflect, Light Screen, Mist)
     for player_index in 0..2 {
@@ -819,12 +983,38 @@ fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus, action_stac
     check_for_pending_replacements(battle_state, bus);
 
     // Step 7: NEW! Prepare the (now empty) action queue for the *next* turn by injecting forced moves.
-    prepare_next_turn_queue(battle_state);
+    let forced_action_commands = calculate_forced_action_commands(battle_state);
+    let _ = execute_command_batch(forced_action_commands, battle_state, bus, action_stack);
 
     // Step 8: Announce the end of the turn.
     bus.push(BattleEvent::TurnEnded);
 }
 
+/// Calculate commands to queue forced actions for the next turn
+fn calculate_forced_action_commands(battle_state: &BattleState) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+    
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+
+        if let Some(forced_move) = player.forced_move() {
+            if let Some(active_pokemon) = player.active_pokemon() {
+                if let Some(index) = active_pokemon.moves.iter().position(|m| {
+                    m.as_ref().map_or(false, |inst| inst.move_ == forced_move)
+                }) {
+                    commands.push(BattleCommand::QueueForcedAction {
+                        target: PlayerTarget::from_index(player_index),
+                        action: PlayerAction::UseMove { move_index: index },
+                    });
+                }
+            }
+        }
+    }
+    
+    commands
+}
+
+/// LEGACY FUNCTION - Will be removed when refactoring is complete
 fn prepare_next_turn_queue(battle_state: &mut BattleState) {
     for player_index in 0..2 {
         let player = &battle_state.players[player_index];

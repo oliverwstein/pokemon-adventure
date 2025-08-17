@@ -329,10 +329,11 @@ fn handle_substitute_damage_absorption(
 
     if remaining_substitute_hp == 0 {
         // Substitute is destroyed
-        commands.push(BattleCommand::RemoveCondition {
+        commands.push(BattleCommand::RemoveSpecificCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition_type: PokemonConditionType::Substitute,
+            condition: PokemonCondition::Substitute { hp: substitute_hp },
         });
+        // Manual event for test compatibility - this would normally be auto-generated
         commands.push(BattleCommand::EmitEvent(BattleEvent::StatusRemoved {
             target: defender_pokemon.species,
             status: PokemonCondition::Substitute { hp: substitute_hp },
@@ -617,10 +618,10 @@ mod tests {
             BattleCommand::EmitEvent(BattleEvent::StatusRemoved { .. })
         )));
 
-        // Should only have RemoveCondition (no AddCondition since substitute is destroyed)
+        // Should only have RemoveSpecificCondition (no AddCondition since substitute is destroyed)
         let remove_condition_count = commands
             .iter()
-            .filter(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. }))
+            .filter(|cmd| matches!(cmd, BattleCommand::RemoveSpecificCondition { .. }))
             .count();
         let add_condition_count = commands
             .iter()

@@ -1,4 +1,4 @@
-use crate::battle::conditions::PokemonCondition;
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
 use crate::pokemon::{PokemonInst};
 use serde::{Deserialize, Serialize};
@@ -116,7 +116,7 @@ pub struct BattlePlayer {
     pub team_conditions: HashMap<TeamCondition, u8>,
 
     // HashMap for O(1) condition lookup/update, prevents duplicates
-    pub active_pokemon_conditions: HashMap<PokemonCondition, PokemonCondition>,
+    pub active_pokemon_conditions: HashMap<PokemonConditionType, PokemonCondition>,
 
     // HashMap for stat stage modifications, value is stage (-6 to +6)
     pub stat_stages: HashMap<StatType, i8>,
@@ -306,19 +306,19 @@ impl BattlePlayer {
 
     /// Check if the active Pokemon has a specific condition type
     pub fn has_condition(&self, condition: &PokemonCondition) -> bool {
-        self.active_pokemon_conditions.contains_key(condition)
+        self.active_pokemon_conditions.contains_key(&condition.get_type())
     }
 
     /// Add or update a condition on the active Pokemon
     pub fn add_condition(&mut self, condition: PokemonCondition) {
         self.active_pokemon_conditions
-            .insert(condition.clone(), condition);
+            .insert(condition.get_type(), condition);
     }
 
     /// Get a condition for reading
     #[cfg(test)]
     pub fn get_condition(&self, condition: &PokemonCondition) -> Option<&PokemonCondition> {
-        self.active_pokemon_conditions.get(condition)
+        self.active_pokemon_conditions.get(&condition.get_type())
     }
 
     /// Check if the team has a specific condition
@@ -393,13 +393,13 @@ impl BattlePlayer {
                 PokemonCondition::Flinched
                 | PokemonCondition::Teleported
                 | PokemonCondition::Countering { .. } => {
-                    expired_conditions.push(key.clone());
+                    expired_conditions.push(condition.clone());
                 }
 
                 // Multi-turn conditions with countdown timers
                 PokemonCondition::Confused { turns_remaining } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -412,7 +412,7 @@ impl BattlePlayer {
 
                 PokemonCondition::Exhausted { turns_remaining } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -425,7 +425,7 @@ impl BattlePlayer {
 
                 PokemonCondition::Trapped { turns_remaining } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -441,7 +441,7 @@ impl BattlePlayer {
                     turns_remaining,
                 } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -455,7 +455,7 @@ impl BattlePlayer {
 
                 PokemonCondition::Rampaging { turns_remaining } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -471,7 +471,7 @@ impl BattlePlayer {
                     damage,
                 } => {
                     if *turns_remaining < 1 {
-                        expired_conditions.push(key.clone());
+                        expired_conditions.push(condition.clone());
                     } else {
                         updated_conditions.push((
                             key.clone(),
@@ -500,14 +500,14 @@ impl BattlePlayer {
 
         // Remove expired conditions
         for condition in &expired_conditions {
-            self.active_pokemon_conditions.remove(condition);
+            self.active_pokemon_conditions.remove(&condition.get_type());
         }
 
         // Update conditions with decremented counters
         for (old_key, updated_condition) in updated_conditions {
             self.active_pokemon_conditions.remove(&old_key);
             self.active_pokemon_conditions
-                .insert(updated_condition.clone(), updated_condition);
+                .insert(updated_condition.get_type(), updated_condition);
         }
 
         expired_conditions

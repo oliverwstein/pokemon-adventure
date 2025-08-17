@@ -61,7 +61,7 @@ impl Hash for PokemonCondition {
 impl Eq for PokemonCondition {}
 
 /// Condition type without data payload for RemoveCondition commands
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PokemonConditionType {
     Flinched,
     Confused,

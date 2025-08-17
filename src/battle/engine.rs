@@ -60,7 +60,7 @@ impl ActionStack {
 
 /// Check if the player has conditions that force a specific move
 /// Returns Some(Move) if a move is forced, None if player can choose freely
-fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::moves::Move> {
+pub fn check_for_forced_move(player: &crate::player::BattlePlayer) -> Option<crate::moves::Move> {
     // Check for Biding condition - forces Bide action regardless of last move
     if player
         .active_pokemon_conditions

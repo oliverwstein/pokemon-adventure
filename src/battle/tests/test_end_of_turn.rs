@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::conditions::PokemonCondition;
+    use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
     use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState, TurnRng};
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data};
@@ -192,7 +192,7 @@ mod tests {
         assert!(expired.contains(&PokemonCondition::Flinched));
 
         // Check remaining conditions with actual values
-        assert!(!player.has_condition(&PokemonCondition::Flinched));
+        assert!(!player.has_condition_type(PokemonConditionType::Flinched));
 
         // Check confused condition has 2 turns remaining
         let confused_key = PokemonCondition::Confused { turns_remaining: 2 };

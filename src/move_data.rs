@@ -1,4 +1,4 @@
-use crate::battle::conditions::PokemonCondition;
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
@@ -1162,10 +1162,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already in air, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::InAir) {
+        if attacker_player.has_condition_type(PokemonConditionType::InAir) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::InAir,
+                condition_type: PokemonConditionType::InAir,
             }];
             return EffectResult::Continue(commands);
         }
@@ -1234,10 +1234,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already charging, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::Charging) {
+        if attacker_player.has_condition_type(PokemonConditionType::Charging) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::Charging,
+                condition_type: PokemonConditionType::Charging,
             }];
             return EffectResult::Continue(commands);
         }
@@ -1275,10 +1275,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already underground, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::Underground) {
+        if attacker_player.has_condition_type(PokemonConditionType::Underground) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::Underground,
+                condition_type: PokemonConditionType::Underground,
             }];
             return EffectResult::Continue(commands);
         }

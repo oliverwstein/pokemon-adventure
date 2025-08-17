@@ -268,9 +268,12 @@ impl BattleCommand {
                     vec![]
                 }
             },
-            BattleCommand::AddTeamCondition { .. } => {
-                // TODO: Add TeamConditionApplied event to BattleEvent enum
-                vec![]
+            BattleCommand::AddTeamCondition { target, condition, .. } => {
+                let player_index = target.to_index();
+                vec![BattleEvent::TeamConditionApplied {
+                    player_index,
+                    condition: *condition,
+                }]
             },
             BattleCommand::RemoveTeamCondition { target, condition } => {
                 let player_index = target.to_index();

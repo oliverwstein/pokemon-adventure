@@ -103,6 +103,10 @@ pub enum BattleEvent {
         target: Species,
         condition: PokemonCondition,
     },
+    TeamConditionApplied {
+        player_index: usize,
+        condition: TeamCondition,
+    },
     TeamConditionExpired {
         player_index: usize,
         condition: TeamCondition,
@@ -225,6 +229,10 @@ impl BattleEvent {
                 let target_name = self.format_species_name(*target);
                 let condition_name = self.format_condition(condition);
                 format!("{}'s {} wore off.", target_name, condition_name)
+            }
+            BattleEvent::TeamConditionApplied { player_index, condition } => {
+                let player_name = &battle_state.players[*player_index].player_name;
+                format!("{}'s {} is now in effect!", player_name, condition)
             }
             BattleEvent::TeamConditionExpired { player_index, condition } => {
                 let player_name = &battle_state.players[*player_index].player_name;

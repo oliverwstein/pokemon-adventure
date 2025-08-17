@@ -194,7 +194,7 @@ impl BattlePlayer {
                 }
             }
             PlayerAction::SwitchPokemon { team_index } => {
-                if self.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {
+                if self.has_condition_type(PokemonConditionType::Trapped) {
                     return Err("The Pokémon is trapped and cannot switch out!".to_string());
                 }
 
@@ -228,7 +228,7 @@ impl BattlePlayer {
         let mut moves = Vec::new();
         if let Some(active_pokemon) = self.active_pokemon() {
             // Check if the Pokémon can even attempt to use a move.
-            let can_use_moves = !self.has_condition(&PokemonCondition::Exhausted { turns_remaining: 0 }) 
+            let can_use_moves = !self.has_condition_type(PokemonConditionType::Exhausted) 
                                 && !active_pokemon.is_fainted();
 
             if can_use_moves {
@@ -262,7 +262,7 @@ impl BattlePlayer {
         let mut switches = Vec::new();
         
         // If trapped, no switches are possible.
-        if self.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {
+        if self.has_condition_type(PokemonConditionType::Trapped) {
             return switches;
         }
 
@@ -304,9 +304,18 @@ impl BattlePlayer {
             .and_then(|slot| slot.as_mut())
     }
 
-    /// Check if the active Pokemon has a specific condition type
+    /// Check if the active Pokemon has a condition of the specified type
+    pub fn has_condition_type(&self, condition_type: PokemonConditionType) -> bool {
+        self.active_pokemon_conditions.contains_key(&condition_type)
+    }
+    
+    /// Check if the active Pokemon has this exact condition (type AND data must match)
     pub fn has_condition(&self, condition: &PokemonCondition) -> bool {
-        self.active_pokemon_conditions.contains_key(&condition.get_type())
+        if let Some(existing_condition) = self.active_pokemon_conditions.get(&condition.get_type()) {
+            existing_condition == condition
+        } else {
+            false
+        }
     }
 
     /// Add or update a condition on the active Pokemon

@@ -334,11 +334,6 @@ fn handle_substitute_damage_absorption(
             target: PlayerTarget::from_index(defender_index),
             condition: PokemonCondition::Substitute { hp: substitute_hp },
         });
-        // Manual event for test compatibility - this would normally be auto-generated
-        commands.push(BattleCommand::EmitEvent(BattleEvent::StatusRemoved {
-            target: defender_pokemon.species,
-            status: PokemonCondition::Substitute { hp: substitute_hp },
-        }));
     } else {
         // Update substitute HP - remove old and add new
         commands.push(BattleCommand::RemoveCondition {
@@ -423,7 +418,7 @@ pub fn calculate_condition_damage_commands(battle_state: &BattleState) -> Vec<Ba
                 .active_pokemon_conditions
                 .values()
                 .any(|condition| matches!(condition, PokemonCondition::Trapped { .. }));
-            let has_seeded = player.has_condition(&PokemonCondition::Seeded);
+            let has_seeded = player.has_condition_type(PokemonConditionType::Seeded);
 
             // Handle Trapped condition (1/16 max HP damage per turn)
             if has_trapped {
@@ -799,10 +794,10 @@ mod tests {
 
         let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
 
-        // Should have substitute destruction event
+        // Should have substitute removal command (which auto-generates the StatusRemoved event)
         assert!(commands.iter().any(|cmd| matches!(
             cmd,
-            BattleCommand::EmitEvent(BattleEvent::StatusRemoved { .. })
+            BattleCommand::RemoveSpecificCondition { .. }
         )));
 
         // Should only have RemoveSpecificCondition (no AddCondition since substitute is destroyed)

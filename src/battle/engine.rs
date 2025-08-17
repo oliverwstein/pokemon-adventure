@@ -1,6 +1,5 @@
 // in src/battle/engine.rs
 
-// CHANGED: Use statements are updated.
 use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::ai::{Behavior, ScoringAI};
 use crate::battle::calculators::{calculate_attack_outcome, calculate_end_turn_commands, calculate_forced_action_commands};
@@ -13,7 +12,6 @@ use crate::move_data::MoveData;
 use crate::moves::Move;
 use crate::player::PlayerAction;
 
-// CHANGED: Logic is now simpler. It no longer needs to know about forced moves.
 pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerAction)> {
     let ai_brain = ScoringAI::new();
     let mut npc_actions = Vec::new();
@@ -161,8 +159,7 @@ pub fn execute_battle_action(
             // But switching TO a fainted Pokemon should not be allowed
             let target_pokemon = &battle_state.players[player_index].team[target_pokemon_index];
             let player = &battle_state.players[player_index];
-            if player.has_condition(&PokemonCondition::Trapped { turns_remaining: 0 }) {
-                // IMPORTANT: has_condition just checks if we have the condition, so the value of turns_remaining DOES NOT MATTER
+            if player.has_condition_type(PokemonConditionType::Trapped) {
                 bus.push(BattleEvent::ActionFailed {
                     reason: crate::battle::state::ActionFailureReason::IsTrapped,
                 });
@@ -263,7 +260,7 @@ pub fn execute_battle_action(
                 .expect("SetLastMove command should always succeed");
 
                 // Check if Enraged Pokemon used a move other than Rage - if so, remove Enraged condition
-                if battle_state.players[attacker_index].has_condition(&PokemonCondition::Enraged)
+                if battle_state.players[attacker_index].has_condition_type(PokemonConditionType::Enraged)
                     && move_used != crate::moves::Move::Rage
                 {
                     if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
@@ -509,7 +506,7 @@ fn check_action_preventing_conditions(
     let player = &battle_state.players[player_index];
 
     // Check active Pokemon conditions
-    if player.has_condition(&PokemonCondition::Flinched) {
+    if player.has_condition_type(PokemonConditionType::Flinched) {
         return Some(ActionFailureReason::IsFlinching);
     }
 

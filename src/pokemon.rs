@@ -14,7 +14,7 @@ pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
     compiled_data[index].clone()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PokemonType {
     Normal,
     Fighting,
@@ -138,7 +138,7 @@ pub enum Item {
     // Add more items as needed
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub enum StatusCondition {
     Sleep(u8),
     Poison(u8),
@@ -148,7 +148,7 @@ pub enum StatusCondition {
     Faint, // Pokemon has 0 HP, can replace any other status
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub struct MoveInstance {
     pub move_: Move,
     pub pp: u8,
@@ -160,7 +160,7 @@ pub enum UseMoveError {
     MoveNotKnown,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub struct PokemonInst {
     pub name: String,     // Species name if no nickname
     pub species: Species, // Species enum for type-safe lookup
@@ -184,7 +184,7 @@ pub struct BaseStats {
     pub speed: u8,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct CurrentStats {
     pub hp: u16,
     pub attack: u16,

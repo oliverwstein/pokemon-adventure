@@ -1,4 +1,4 @@
-use crate::battle::conditions::PokemonCondition;
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::move_data::{MoveCategory, MoveData};
 use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
@@ -234,9 +234,9 @@ pub fn move_hits(
     };
 
     // If defender is Teleported, InAir, or Underground, moves with accuracy always miss
-    if defender_player.has_condition(&PokemonCondition::Teleported) 
-        || defender_player.has_condition(&PokemonCondition::InAir)
-        || defender_player.has_condition(&PokemonCondition::Underground) {
+    if defender_player.has_condition_type(PokemonConditionType::Teleported) 
+        || defender_player.has_condition_type(PokemonConditionType::InAir)
+        || defender_player.has_condition_type(PokemonConditionType::Underground) {
         return false;
     }
 

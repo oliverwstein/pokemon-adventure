@@ -367,12 +367,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Burn),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Burn,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -408,12 +403,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Paralysis),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Paralysis,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -449,12 +439,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Freeze),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Freeze,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -490,12 +475,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Poison(0)),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Poison(0),
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -535,12 +515,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(sleep_status),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: sleep_status,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -773,12 +748,7 @@ impl MoveEffect {
                             stat: player_stat,
                             delta: new_stage - old_stage,
                         });
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                            target: target_pokemon.species,
-                            stat: player_stat,
-                            old_stage,
-                            new_stage,
-                        }));
+                        // Event will be automatically emitted by the command system
                     }
                 }
             }
@@ -821,12 +791,7 @@ impl MoveEffect {
                             stat: *stat,
                             delta: 1,
                         });
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                            target: attacker_pokemon.species,
-                            stat: *stat,
-                            old_stage,
-                            new_stage,
-                        }));
+                        // Event will be automatically emitted by the command system
                     }
                 }
             }
@@ -916,14 +881,7 @@ impl MoveEffect {
                                 stat: *stat,
                                 delta: -current_stage, // Reset to 0
                             });
-                            commands.push(BattleCommand::EmitEvent(
-                                BattleEvent::StatStageChanged {
-                                    target: pokemon.species,
-                                    stat: *stat,
-                                    old_stage: current_stage,
-                                    new_stage: 0,
-                                },
-                            ));
+                            // Event will be automatically emitted by the command system
                         }
                     }
 
@@ -1716,12 +1674,7 @@ impl MoveEffect {
                 target: attacker_target,
                 status: Some(crate::pokemon::StatusCondition::Sleep(sleep_turns)),
             });
-            commands.push(BattleCommand::EmitEvent(
-                BattleEvent::PokemonStatusApplied {
-                    target: pokemon_species,
-                    status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
-                },
-            ));
+            // Event will be automatically emitted by the command system
 
             // Clear all active Pokemon conditions
             for condition in attacker_player.active_pokemon_conditions.values() {

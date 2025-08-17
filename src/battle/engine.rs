@@ -228,22 +228,19 @@ pub fn execute_battle_action(
                 return; // Attack is prevented
             }
             if hit_number == 0 {
-                let attacker_pokemon = battle_state.players[attacker_index].team
-                    [battle_state.players[attacker_index].active_pokemon_index]
-                    .as_mut()
-                    .expect("Attacker Pokemon must exist to use a move");
-
-                // Directly use the Move from the AttackHit action.
-                if let Err(e) = attacker_pokemon.use_move(move_used) {
-                    let reason = match e {
-                        crate::pokemon::UseMoveError::NoPPRemaining => {
-                            crate::battle::state::ActionFailureReason::NoPPRemaining
-                        }
-                        crate::pokemon::UseMoveError::MoveNotKnown => {
-                            crate::battle::state::ActionFailureReason::NoPPRemaining
-                        }
-                    };
-                    bus.push(BattleEvent::ActionFailed { reason });
+                // Use PP for the move via command
+                if let Err(_) = execute_command(
+                    BattleCommand::UsePP {
+                        target: PlayerTarget::from_index(attacker_index),
+                        move_used,
+                    },
+                    battle_state,
+                    bus,
+                    action_stack,
+                ) {
+                    bus.push(BattleEvent::ActionFailed {
+                        reason: crate::battle::state::ActionFailureReason::NoPPRemaining,
+                    });
                     return;
                 }
 
@@ -420,21 +417,14 @@ fn check_action_preventing_conditions(
             crate::pokemon::StatusCondition::Sleep(turns) => {
                 if turns > 0 {
                     // Pokemon is still asleep, update counters after determining failure
-                    if let Some(pokemon) = battle_state.players[player_index].team
-                        [battle_state.players[player_index].active_pokemon_index]
-                        .as_mut()
-                    {
-                        let (should_cure, status_changed) = pokemon.update_status_progress();
-
-                        if should_cure && status_changed {
-                            let old_status = pokemon.status; // Save before clearing
-                            bus.push(BattleEvent::PokemonStatusRemoved {
-                                target: pokemon.species,
-                                status: old_status
-                                    .unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
-                            });
-                        }
-                    }
+                    let _ = execute_command(
+                        BattleCommand::UpdateStatusProgress {
+                            target: PlayerTarget::from_index(player_index),
+                        },
+                        battle_state,
+                        bus,
+                        action_stack,
+                    );
                     return Some(ActionFailureReason::IsAsleep);
                 }
             }
@@ -487,20 +477,14 @@ fn check_action_preventing_conditions(
     };
 
     if should_update_counters {
-        if let Some(pokemon) = battle_state.players[player_index].team
-            [battle_state.players[player_index].active_pokemon_index]
-            .as_mut()
-        {
-            let (should_cure, status_changed) = pokemon.update_status_progress();
-
-            if should_cure && status_changed {
-                let old_status = pokemon.status; // Save before clearing
-                bus.push(BattleEvent::PokemonStatusRemoved {
-                    target: pokemon.species,
-                    status: old_status.unwrap_or(crate::pokemon::StatusCondition::Sleep(0)),
-                });
-            }
-        }
+        let _ = execute_command(
+            BattleCommand::UpdateStatusProgress {
+                target: PlayerTarget::from_index(player_index),
+            },
+            battle_state,
+            bus,
+            action_stack,
+        );
     }
 
     let player = &battle_state.players[player_index];

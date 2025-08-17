@@ -58,6 +58,10 @@ pub enum BattleCommand {
         target: PlayerTarget,
         status: Option<StatusCondition>,
     },
+    UsePP {
+        target: PlayerTarget,
+        move_used: Move,
+    },
     // Player state changes
     ChangeStatStage {
         target: PlayerTarget,
@@ -211,6 +215,10 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
+            },
+            BattleCommand::UsePP { .. } => {
+                // PP usage is silent - no events emitted
+                vec![]
             },
             BattleCommand::ChangeStatStage { target, stat, delta } => {
                 let player_index = target.to_index();
@@ -493,6 +501,11 @@ fn execute_state_change(
             execute_pokemon_command(*target, state, |pokemon, _| {
                 pokemon.status = *status;
                 Ok(())
+            })
+        }
+        BattleCommand::UsePP { target, move_used } => {
+            execute_pokemon_command(*target, state, |pokemon, _| {
+                pokemon.use_move(*move_used).map_err(|_| ExecutionError::NoPokemon)
             })
         }
         BattleCommand::ChangeStatStage {

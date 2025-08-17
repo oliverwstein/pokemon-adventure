@@ -85,10 +85,6 @@ pub enum BattleCommand {
         condition: TeamCondition,
         turns: u8,
     },
-    RemoveTeamCondition {
-        target: PlayerTarget,
-        condition: TeamCondition,
-    },
     AddAnte {
         target: PlayerTarget,
         amount: u32,
@@ -283,13 +279,6 @@ impl BattleCommand {
                     condition: *condition,
                 }]
             },
-            BattleCommand::RemoveTeamCondition { target, condition } => {
-                let player_index = target.to_index();
-                vec![BattleEvent::TeamConditionExpired {
-                    player_index,
-                    condition: *condition,
-                }]
-            },
             BattleCommand::SwitchPokemon { target, new_pokemon_index } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -373,8 +362,8 @@ impl BattleCommand {
                     vec![]
                 }
             },
-            BattleCommand::TickTeamCondition { target, condition } => {
-                let player_index = target.to_index();
+            BattleCommand::TickTeamCondition { target: _, condition: _ } => {
+                // let player_index = target.to_index();
                 // Team conditions don't usually emit tick events, but this is where we'd add them
                 vec![]
             },
@@ -549,12 +538,6 @@ fn execute_state_change(
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.add_team_condition(*condition, *turns);
-            Ok(())
-        }
-        BattleCommand::RemoveTeamCondition { target, condition } => {
-            let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            player.remove_team_condition(condition);
             Ok(())
         }
         BattleCommand::SetLastMove { target, move_used } => {

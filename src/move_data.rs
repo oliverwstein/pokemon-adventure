@@ -348,7 +348,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -384,7 +383,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -420,7 +418,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -456,7 +453,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -492,7 +488,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -766,13 +761,12 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
         if rng.next_outcome("Apply Raise All Stats Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
-            if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            if let Some(_attacker_pokemon) = attacker_player.active_pokemon() {
                 let stats_to_raise = [
                     crate::player::StatType::Attack,
                     crate::player::StatType::Defense,
@@ -853,7 +847,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -861,7 +854,7 @@ impl MoveEffect {
             // Clear stat stages for both players
             for player_index in 0..2 {
                 let player = &state.players[player_index];
-                if let Some(pokemon) = player.active_pokemon() {
+                if let Some(_pokemon) = player.active_pokemon() {
                     let all_stats = [
                         crate::player::StatType::Attack,
                         crate::player::StatType::Defense,

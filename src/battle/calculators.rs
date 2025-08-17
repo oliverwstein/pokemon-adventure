@@ -477,13 +477,9 @@ pub fn calculate_end_turn_commands(battle_state: &BattleState, _rng: &mut TurnRn
                 continue;
             }
 
-            // 1. Process Pokemon status damage (Poison, Burn) - we need to calculate this ourselves
+            // 1. Process Pokemon status damage (Poison, Burn) - use Pokemon's own calculation logic
             if let Some(status) = pokemon.status {
-                let status_damage = match status {
-                    crate::pokemon::StatusCondition::Poison(_) => pokemon.max_hp() / 8,
-                    crate::pokemon::StatusCondition::Burn => pokemon.max_hp() / 16,
-                    _ => 0,
-                };
+                let status_damage = pokemon.calculate_status_damage();
                 
                 if status_damage > 0 {
                     commands.push(BattleCommand::DealStatusDamage {

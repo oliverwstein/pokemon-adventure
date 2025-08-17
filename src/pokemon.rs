@@ -578,14 +578,12 @@ impl PokemonInst {
         (should_cure, self.status != original_status)
     }
 
-    /// Apply status damage without changing counters.
-    /// Should be called at end of turn.
-    /// Returns (status_damage, status_changed).
-    pub fn deal_status_damage(&mut self) -> (u16, bool) {
+    /// Calculate status damage without mutating state.
+    /// Returns the amount of damage that would be dealt by status conditions.
+    pub fn calculate_status_damage(&self) -> u16 {
         let max_hp = self.max_hp();
-        let original_status = self.status;
 
-        let damage = match &self.status {
+        match &self.status {
             Some(StatusCondition::Poison(severity)) => {
                 if *severity == 0 {
                     (max_hp / 16).max(1) // Regular poison: 1/16 max HP
@@ -595,12 +593,6 @@ impl PokemonInst {
             }
             Some(StatusCondition::Burn) => (max_hp / 8).max(1), // Burn: 1/8 max HP
             _ => 0,
-        };
-
-        if damage > 0 {
-            self.take_damage(damage);
         }
-
-        (damage, self.status != original_status)
     }
 }

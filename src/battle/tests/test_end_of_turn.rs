@@ -300,7 +300,7 @@ mod tests {
     #[test]
     fn test_frozen_defrost_25_percent_chance() {
         // Test successful defrost when Pokemon tries to act
-        use crate::battle::engine::{ActionStack, BattleAction};
+        use crate::battle::action_stack::{ActionStack, BattleAction};
         use crate::moves::Move;
 
         let mut battle_state = create_test_battle_state();
@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn test_frozen_no_defrost_75_percent_chance() {
         // Test failed defrost when Pokemon tries to act
-        use crate::battle::engine::{ActionStack, BattleAction};
+        use crate::battle::action_stack::{ActionStack, BattleAction};
         use crate::moves::Move;
 
         let mut battle_state = create_test_battle_state();

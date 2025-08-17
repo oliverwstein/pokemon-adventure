@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::action_stack::BattleAction;
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::engine::{BattleAction, execute_battle_action};
+    use crate::battle::engine::{execute_battle_action};
     use crate::moves::Move;
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition};
@@ -58,7 +59,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![128]);
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -89,7 +90,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![24]); // 24 < 25, so paralyzed (25% chance)
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -120,7 +121,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![25, 75, 60, 80, 90, 85]); // 25 >= 25, so not paralyzed + extra values
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -150,7 +151,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![49, 75, 90, 80, 85, 70, 65, 95, 88, 92]); // 49 < 50, so confused (50% chance) + many extra values
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -169,7 +170,7 @@ mod tests {
         // We need to process that action to see the self-damage
         if let Some(next_action) = action_stack.pop_front() {
             match next_action {
-                crate::battle::engine::BattleAction::AttackHit {
+                crate::battle::action_stack::BattleAction::AttackHit {
                     attacker_index,
                     defender_index,
                     move_used,
@@ -235,7 +236,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![50, 75, 60, 80, 90, 85]); // 50 >= 50, so not confused this turn + extra values
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -265,7 +266,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -300,7 +301,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75]);
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -339,7 +340,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 85, 60]);
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -377,7 +378,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]);
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {
@@ -410,7 +411,7 @@ mod tests {
 
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![75, 60, 80, 50, 40, 30, 20, 10]); // Good rolls for accuracy, etc.
-        let mut action_stack = crate::battle::engine::ActionStack::new();
+        let mut action_stack = crate::battle::action_stack::ActionStack::new();
 
         execute_battle_action(
             BattleAction::AttackHit {

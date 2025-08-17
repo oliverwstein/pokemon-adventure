@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
+    use crate::battle::action_stack::ActionStack;
     use crate::battle::state::{BattleEvent, BattleState, EventBus, TurnRng};
-    use crate::battle::engine::{ActionStack, execute_attack_hit};
+    use crate::battle::engine::{execute_attack_hit};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, StatType};
     use crate::pokemon::PokemonInst;

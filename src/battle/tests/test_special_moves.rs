@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::state::{BattleEvent, BattleState, TurnRng};
-    use crate::battle::engine::{collect_npc_actions, resolve_turn};
+    use crate::battle::engine::{collect_npc_actions, resolve_turn, ready_for_turn_resolution};
     use crate::moves::Move;
     use crate::player::{BattlePlayer, PlayerAction};
     use crate::pokemon::{MoveInstance, PokemonInst};
@@ -41,7 +41,7 @@ mod tests {
             "Player 1".to_string(),
             vec![create_test_pokemon(
                 Species::Venusaur,
-                vec![Move::SolarBeam],
+                vec![Move::SolarBeam], // move_index: 0
             )],
         );
 
@@ -53,49 +53,66 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Turn 1: Solar Beam should charge
+        // --- TURN 1: Initiate Solar Beam ---
+        // Player 1 uses Solar Beam, which should apply the Charging condition.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
+
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
-        // Print all events for clarity
+        
         println!("Charging condition forcing behavior test events (turn 1):");
         for event in event_bus.events() {
             println!("  {:?}", event);
         }
-        // Assert that the charging condition was applied
+
+        // Assert that the Charging condition was applied after Turn 1.
         assert!(
             battle_state.players[0].has_condition(&PokemonCondition::Charging),
             "Player should be in a Charging state after the first turn."
         );
 
-        // Assert that the last move was correctly recorded
+        // Assert that the last move was correctly recorded.
         assert_eq!(battle_state.players[0].last_move, Some(Move::SolarBeam));
 
-        // --- START TEST LOGIC FOR TURN 2 ---
-        // Turn 2: Trigger the next turn. The engine should now force Solar Beam to execute.
+        // --- REVISED TEST LOGIC FOR TURN 2 ---
+        // With the new "End-of-Turn Injection" model, finalize_turn from Turn 1
+        // should have already populated the action_queue for Turn 2.
 
-        // Collect actions for players who can act (i.e., the AI). Player 0 will be skipped.
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-        // Assert that Player 0's action queue is empty because their move is forced.
+        // NEW ASSERTION: The action queue for Player 0 should now be pre-filled with the forced move.
         assert!(
-            battle_state.action_queue[0].is_none(),
-            "Player 0's action queue should be empty due to a forced move."
+            battle_state.action_queue[0].is_some(),
+            "Player 0's action queue should be PRE-FILLED with the forced SolarBeam action."
+        );
+        // NEW ASSERTION: Verify it's the correct action.
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::UseMove { move_index: 0 }),
+            "The queued action for Player 0 should be SolarBeam."
         );
 
-        // Resolve the turn
+        // Collect actions for players who can still act (the opponent).
+        let npc_actions_turn2 = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions_turn2 {
+            battle_state.action_queue[player_index] = Some(action);
+        }
+        
+        // The battle should now be ready for resolution as both queues are full.
+        assert!(ready_for_turn_resolution(&battle_state), "Battle should be ready for Turn 2 resolution.");
+
+        // Resolve Turn 2
         let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus2 = resolve_turn(&mut battle_state, test_rng2);
-        // Print all events for clarity
+        
         println!("Charging condition forcing behavior test events (turn 2):");
         for event in event_bus2.events() {
             println!("  {:?}", event);
         }
+
         // Verify from the events that Solar Beam was used and dealt damage.
         let player_0_used_solar_beam = event_bus2.events().iter().any(|event| {
             matches!(
@@ -126,16 +143,15 @@ mod tests {
             !battle_state.players[0].has_condition(&PokemonCondition::Charging),
             "Charging condition should be cleared after the move executes."
         );
-        
     }
     
-    #[test]
+     #[test]
     fn test_two_turn_move_fly() {
         // Test InAir moves like Fly
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Pidgeot, vec![Move::Fly])],
+            vec![create_test_pokemon(Species::Pidgeot, vec![Move::Fly])], // move_index: 0
         );
 
         let player2 = BattlePlayer::new(
@@ -146,12 +162,14 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Turn 1: Fly should go in air
+        // --- TURN 1: Initiate Fly ---
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         println!("Fly test events (Turn 1):");
@@ -159,7 +177,7 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        // Player 1 should now have InAir condition
+        // Assert that the InAir condition was applied after Turn 1.
         assert!(
             battle_state.players[0].has_condition(&PokemonCondition::InAir),
             "Player should be InAir after first turn of Fly."
@@ -170,21 +188,27 @@ mod tests {
             "Last move should be recorded as Fly."
         );
 
-        // --- START REVISED TEST LOGIC FOR TURN 2 ---
-        // Turn 2: Fly should execute attack
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-
-        // Assert that the action queue for the forced player is empty before turn resolution.
+        // --- REVISED TEST LOGIC FOR TURN 2 ---
+        // Assert that the action queue for Player 0 is now pre-filled with the forced move.
         assert!(
-            battle_state.action_queue[0].is_none(),
-            "Player 0's action should be empty as the move is forced."
+            battle_state.action_queue[0].is_some(),
+            "Player 0's action queue should be PRE-FILLED with the forced Fly action."
+        );
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::UseMove { move_index: 0 })
         );
         
-        // Resolve the turn
-        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        // Collect actions for the opponent.
+        let npc_actions_2 = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions_2 {
+            battle_state.action_queue[player_index] = Some(action);
+        }
+        
+        assert!(ready_for_turn_resolution(&battle_state));
+        
+        // Resolve Turn 2
+        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus_2 = resolve_turn(&mut battle_state, test_rng_2);
         
         println!("\nFly test events (Turn 2):");
@@ -194,24 +218,10 @@ mod tests {
 
         // Verify from the events that Fly was used and dealt damage.
         let player_0_used_fly = event_bus_2.events().iter().any(|event| {
-            matches!(
-                event,
-                BattleEvent::MoveUsed {
-                    player_index: 0,
-                    move_used: Move::Fly,
-                    ..
-                }
-            )
+            matches!(event, BattleEvent::MoveUsed { player_index: 0, move_used: Move::Fly, .. })
         });
-
         let opponent_took_damage = event_bus_2.events().iter().any(|event| {
-            matches!(
-                event,
-                BattleEvent::DamageDealt {
-                    target: Species::Rattata,
-                    ..
-                }
-            )
+            matches!(event, BattleEvent::DamageDealt { target: Species::Rattata, .. })
         });
 
         assert!(player_0_used_fly, "Player 0 should have been forced to use Fly on Turn 2.");
@@ -230,7 +240,7 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Sandslash, vec![Move::Dig])],
+            vec![create_test_pokemon(Species::Sandslash, vec![Move::Dig])], // move_index: 0
         );
 
         let player2 = BattlePlayer::new(
@@ -241,19 +251,69 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Turn 1: Dig should go underground
+        // --- TURN 1: Initiate Dig ---
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
+        
+        println!("Dig test events (Turn 1):");
         for event in event_bus.events() {
             println!("  {:?}", event);
         }
-        // Player 1 should now have Underground condition
+
+        // Assert that the Underground condition was applied after Turn 1.
         assert!(battle_state.players[0].has_condition(&PokemonCondition::Underground));
         assert_eq!(battle_state.players[0].last_move, Some(Move::Dig));
+
+        // --- TEST LOGIC FOR TURN 2 ---
+        // Assert that the action queue for Player 0 is now pre-filled with the forced move.
+        assert!(
+            battle_state.action_queue[0].is_some(),
+            "Player 0's action queue should be PRE-FILLED with the forced Dig action."
+        );
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::UseMove { move_index: 0 })
+        );
+
+        // Collect actions for the opponent.
+        let npc_actions_2 = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions_2 {
+            battle_state.action_queue[player_index] = Some(action);
+        }
+        
+        assert!(ready_for_turn_resolution(&battle_state));
+        
+        // Resolve Turn 2
+        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
+        let event_bus_2 = resolve_turn(&mut battle_state, test_rng_2);
+
+        println!("\nDig test events (Turn 2):");
+        for event in event_bus_2.events() {
+            println!("  {:?}", event);
+        }
+        
+        // Verify from the events that Dig was used and dealt damage.
+        let player_0_used_dig = event_bus_2.events().iter().any(|event| {
+            matches!(event, BattleEvent::MoveUsed { player_index: 0, move_used: Move::Dig, .. })
+        });
+        let opponent_took_damage = event_bus_2.events().iter().any(|event| {
+            matches!(event, BattleEvent::DamageDealt { target: Species::Geodude, .. })
+        });
+        
+        assert!(player_0_used_dig, "Player 0 should have been forced to use Dig on Turn 2.");
+        assert!(opponent_took_damage, "Dig should have dealt damage on Turn 2.");
+
+        // Assert that the Underground condition was cleared.
+        assert!(
+            !battle_state.players[0].has_condition(&PokemonCondition::Underground),
+            "Underground condition should be cleared after Dig executes."
+        );
     }
 
     #[test]
@@ -262,7 +322,7 @@ mod tests {
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Tauros, vec![Move::Thrash])],
+            vec![create_test_pokemon(Species::Tauros, vec![Move::Thrash])], // move_index: 0
         );
 
         let player2 = BattlePlayer::new(
@@ -273,12 +333,17 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Turn 1: Thrash should apply Rampaging condition
+        // --- TURN 1: Initiate Thrash ---
+        // Player 1 uses Thrash, which should apply the Rampaging condition.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        
+        // The first RNG value determines rampage duration. <= 50 means 2 turns.
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
         
         println!("Rampage test events (Turn 1):");
@@ -286,7 +351,7 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        // Player 1 should now have Rampaging condition
+        // Assert that the Rampaging condition was applied after Turn 1.
         let has_rampage = battle_state.players[0]
             .active_pokemon_conditions
             .values()
@@ -301,20 +366,30 @@ mod tests {
             "Last move should be recorded as Thrash."
         );
 
-        // --- START REVISED TEST LOGIC FOR TURN 2 ---
-        // Turn 2: Should be forced to use Thrash again
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
+        // --- REVISED TEST LOGIC FOR TURN 2 ---
+        // With the new model, finalize_turn from Turn 1 should have pre-filled the action queue.
+
+        // NEW ASSERTION: The action queue for Player 0 should be pre-filled with the forced Thrash.
+        assert!(
+            battle_state.action_queue[0].is_some(),
+            "Player 0's action queue should be PRE-FILLED with the forced Thrash action."
+        );
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::UseMove { move_index: 0 })
+        );
+        
+        // Collect actions for the opponent.
+        let npc_actions_turn2 = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions_turn2 {
             battle_state.action_queue[player_index] = Some(action);
         }
+        
+        // The battle should now be ready for resolution.
+        assert!(ready_for_turn_resolution(&battle_state));
 
-        // Assert that Player 0's action queue is empty because their move is forced.
-        assert!(
-            battle_state.action_queue[0].is_none(),
-            "Player 0's action should be empty as the move is forced."
-        );
-
-        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        // Resolve Turn 2
+        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus_2 = resolve_turn(&mut battle_state, test_rng_2);
         
         println!("\nRampage test events (Turn 2):");
@@ -1264,10 +1339,11 @@ mod tests {
 
     #[test]
     fn test_biding_condition_forcing_behavior() {
+        // Test that Bide forces the user to continue biding on subsequent turns.
         let player1 = BattlePlayer::new(
             "player1".to_string(),
             "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Bide])],
+            vec![create_test_pokemon(Species::Snorlax, vec![Move::Bide])], // move_index: 0
         );
 
         let player2 = BattlePlayer::new(
@@ -1278,21 +1354,23 @@ mod tests {
 
         let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
 
-        // Turn 1: Player 1 uses Bide - should apply Biding condition
+        // --- TURN 1: Initiate Bide ---
+        // Player 1 uses Bide, which should apply the Biding condition and start storing energy.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
+        
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
-        // Print all events for clarity
         println!("Biding condition forcing behavior test events (turn 1):");
         for event in event_bus.events() {
             println!("  {:?}", event);
         }
 
-        // Player 1 should now have Biding condition
+        // Assert that the Biding condition was applied after Turn 1.
         let has_biding = battle_state.players[0]
             .active_pokemon_conditions
             .values()
@@ -1302,28 +1380,32 @@ mod tests {
             "Player 1 should have Biding condition after using Bide"
         );
 
-        // --- START TEST LOGIC FOR TURN 2 ---
-        // Turn 2: Trigger the next turn. The engine should force Snorlax to Bide.
+        // --- REVISED TEST LOGIC FOR TURN 2 ---
+        // With the new model, finalize_turn from Turn 1 should have pre-filled the action queue.
+
+        // NEW ASSERTION: The action queue for Player 0 should be pre-filled with the forced Bide.
+        assert!(
+            battle_state.action_queue[0].is_some(),
+            "Player 0's action queue should be PRE-FILLED with the forced Bide action."
+        );
+        assert_eq!(
+            battle_state.action_queue[0],
+            Some(PlayerAction::UseMove { move_index: 0 })
+        );
         
-        // We only need to collect actions for the AI, since Player 0's move is forced and will be
-        // auto-generated by `build_initial_action_stack`. The action queue for player 0 will be empty.
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
+        // Collect actions for the opponent. Player 0 is already locked in.
+        let npc_actions_2 = collect_npc_actions(&battle_state);
+        for (player_index, action) in npc_actions_2 {
             battle_state.action_queue[player_index] = Some(action);
         }
-
-        // The action queue for player 0 should be empty because their move is forced.
-        assert!(
-            battle_state.action_queue[0].is_none(),
-            "Player 0's action queue should be empty as their move is forced."
-        );
-        // The AI (player 1) should have a queued action.
+        
         assert!(
             battle_state.action_queue[1].is_some(),
-            "Player 1 (AI) should have a chosen action."
+            "Player 2 (AI) should have a chosen action."
         );
+        assert!(ready_for_turn_resolution(&battle_state));
 
-        // Execute the turn.
+        // Execute Turn 2.
         let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus_2 = resolve_turn(&mut battle_state, test_rng_2);
         
@@ -1332,8 +1414,8 @@ mod tests {
             println!("  {:?}", event);
         }
 
-        // Verify from the events that Bide was used by Player 0.
-        // This confirms that the engine's internal logic correctly injected the forced move.
+        // Verify from the events that Bide was used by Player 0 again.
+        // This confirms that the engine's internal logic correctly executed the pre-filled forced move.
         let player_0_used_bide = event_bus_2.events().iter().any(|event| {
             matches!(
                 event,
@@ -1347,7 +1429,6 @@ mod tests {
 
         assert!(player_0_used_bide, "Player 0 should have been forced to use Bide on Turn 2");
     }
-
     #[test]
     fn test_bide_execution_deals_double_stored_damage() {
         let mut player1 = BattlePlayer::new(

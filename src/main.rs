@@ -121,10 +121,10 @@ fn main() {
 
     // Example 5: NPC vs NPC Multi-Pokemon Battle Demo
     println!("=== NPC vs NPC Battle Demo ===");
-    run_npc_battle_demo_without_runner();
+    run_npc_battle_demo();
 }
 
-fn run_npc_battle_demo_without_runner() {
+fn run_npc_battle_demo() {
     use battle::state::{BattleState, GameState, TurnRng};
     use battle::engine::{
         collect_npc_actions, ready_for_turn_resolution, resolve_turn,

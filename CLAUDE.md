@@ -109,6 +109,34 @@ The system uses RON (Rusty Object Notation) for human-readable data files with c
 - **Event Validation**: Comprehensive event generation testing for battle logging
 - **Performance Benchmarks**: Execution time validation for critical battle paths
 
+### Test Structure and Organization
+The testing framework uses modern Rust testing practices for maintainability and clarity:
+
+- **RSTest Framework**: Leverages `rstest` crate for parametric testing with `#[case]` attributes
+  - Enables comprehensive scenario testing with descriptive case names
+  - Reduces code duplication through parameterized test functions
+  - Example: `test_two_turn_moves` covers SolarBeam, Fly, and Dig with single test function
+- **Common Test Utilities** (`src/battle/tests/common.rs`):
+  - **TestPokemonBuilder**: Fluent builder pattern for creating test Pokemon instances
+    - `.new(Species::Pikachu, 25)` - species and level
+    - `.with_moves(vec![Move::Tackle])` - custom movesets
+    - `.with_status(StatusCondition::Burn)` - status conditions
+    - `.with_hp(50)` - specific HP values (capped to max HP)
+  - **Battle Creation**: `create_test_battle()` for standard 1v1 scenarios
+  - **Predictable RNG**: `predictable_rng()` provides consistent random values for deterministic testing
+- **Test Organization by Feature**: Tests grouped by battle mechanics in separate files
+  - `test_fainting.rs` - Pokemon fainting mechanics and revival
+  - `test_special_moves.rs` - Multi-turn moves, Mirror Move, Transform
+  - `test_condition_damage.rs` - Status damage, Leech Seed, binding moves
+  - `test_action_prevention.rs` - Sleep, paralysis, confusion mechanics
+  - Each file contains both unit tests (individual Pokemon methods) and integration tests (full battles)
+- **Event-Driven Assertions**: Tests validate battle outcomes through event inspection
+  - `event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonFainted { .. }))` 
+  - Comprehensive event logging ensures all battle actions are properly recorded
+- **Debug Output Integration**: `event_bus.print_debug_with_message()` for test debugging
+  - Provides detailed event traces for complex battle scenarios
+  - Facilitates rapid diagnosis of test failures and battle flow issues
+
 ## Battle Flow
 
 ### Turn-Based Combat Cycle

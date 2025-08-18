@@ -197,6 +197,7 @@ impl BattleEvent {
 
             // === Damage and Healing Events ===
             BattleEvent::DamageDealt { target, damage, .. } => {
+                // We may need to add a "source" to this event
                 let target_name = Self::format_species_name(*target);
                 Some(format!("{} took {} damage!", target_name, damage))
             }
@@ -230,6 +231,8 @@ impl BattleEvent {
             // === Condition Events ===
             BattleEvent::StatusApplied { target, status } => {
                 let target_name = Self::format_species_name(*target);
+                // TODO: "was affected by" is generic; the preamble should vary by condition,
+                // with a string for applying, removing, etc.
                 Some(format!("{} was affected by {}!", 
                     target_name, Self::format_condition(status)
                 ))
@@ -299,7 +302,9 @@ impl BattleEvent {
 
             // === Action Failure Events ===
             BattleEvent::ActionFailed { reason } => {
-                Some(Self::format_action_failure_reason(reason))
+                // Todo: this needs to note the pokemon that is the subject of the failed action
+                // Who used the move, who was confused, etc.
+                Self::format_action_failure_reason(reason) // Some failures should be silent
             }
 
             // === Battle Economy Events ===
@@ -419,16 +424,19 @@ impl BattleEvent {
         }
     }
     
-    fn format_action_failure_reason(reason: &ActionFailureReason) -> String {
+    fn format_action_failure_reason(reason: &ActionFailureReason) -> Option<String> {
         match reason {
-            ActionFailureReason::IsAsleep => "is fast asleep.".to_string(),
-            ActionFailureReason::IsFrozen => "is frozen solid!".to_string(),
-            ActionFailureReason::IsExhausted => "must recharge!".to_string(),
-            ActionFailureReason::IsParalyzed => "is fully paralyzed!".to_string(),
-            ActionFailureReason::IsFlinching => "flinched and couldn't move!".to_string(),
-            ActionFailureReason::IsConfused => "is confused!".to_string(),
-            ActionFailureReason::IsTrapped => "can't escape!".to_string(),
-            _ => "But it failed!".to_string(),
+            ActionFailureReason::IsAsleep => Some("is fast asleep.".to_string()),
+            ActionFailureReason::IsFrozen => Some("is frozen solid!".to_string()),
+            ActionFailureReason::IsExhausted => Some("must recharge!".to_string()),
+            ActionFailureReason::IsParalyzed => Some("is fully paralyzed!".to_string()),
+            ActionFailureReason::IsFlinching => Some("flinched and couldn't move!".to_string()),
+            ActionFailureReason::IsConfused => Some("is confused!".to_string()),
+            ActionFailureReason::IsTrapped => Some("can't escape!".to_string()),
+            // Silent failures - these happen naturally and don't need messages
+            ActionFailureReason::PokemonFainted => None, // Pokemon faints before moving
+            ActionFailureReason::NoEnemyPresent => None, // No target for move
+            _ => Some("But it failed!".to_string()),
         }
     }
 }

@@ -188,10 +188,15 @@ impl BattleCommand {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    vec![BattleEvent::PokemonStatusApplied {
-                        target: pokemon.species,
-                        status: *status,
-                    }]
+                    // Don't emit status application events for fainted Pokemon
+                    if pokemon.is_fainted() {
+                        vec![]
+                    } else {
+                        vec![BattleEvent::PokemonStatusApplied {
+                            target: pokemon.species,
+                            status: *status,
+                        }]
+                    }
                 } else {
                     vec![]
                 }
@@ -231,10 +236,15 @@ impl BattleCommand {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    vec![BattleEvent::StatusApplied {
-                        target: pokemon.species,
-                        status: condition.clone(),
-                    }]
+                    // Don't emit condition application events for fainted Pokemon
+                    if pokemon.is_fainted() {
+                        vec![]
+                    } else {
+                        vec![BattleEvent::StatusApplied {
+                            target: pokemon.species,
+                            status: condition.clone(),
+                        }]
+                    }
                 } else {
                     vec![]
                 }
@@ -486,8 +496,13 @@ fn execute_state_change(
         }
         BattleCommand::SetPokemonStatus { target, status } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
-                pokemon.status = Some(*status);
-                Ok(())
+                // Don't apply status to fainted Pokemon
+                if pokemon.is_fainted() {
+                    Ok(())
+                } else {
+                    pokemon.status = Some(*status);
+                    Ok(())
+                }
             })
         }
         BattleCommand::CurePokemonStatus { target, status: _ } => {
@@ -516,7 +531,12 @@ fn execute_state_change(
         BattleCommand::AddCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
-            player.add_condition(condition.clone());
+            // Don't apply conditions to fainted Pokemon
+            if let Some(pokemon) = player.active_pokemon() {
+                if !pokemon.is_fainted() {
+                    player.add_condition(condition.clone());
+                }
+            }
             Ok(())
         }
         BattleCommand::RemoveCondition {

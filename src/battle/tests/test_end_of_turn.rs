@@ -120,7 +120,9 @@ mod tests {
         let confusion = battle_state.players[0].active_pokemon_conditions.get(&PokemonConditionType::Confused);
         let trapped = battle_state.players[0].active_pokemon_conditions.get(&PokemonConditionType::Trapped);
         
+        // Confusion should have decremented at end of turn
         assert!(matches!(confusion, Some(PokemonCondition::Confused { turns_remaining: 2 })));
+        // Trapped should have decremented at end of turn
         assert!(matches!(trapped, Some(PokemonCondition::Trapped { turns_remaining: 1 })));
     }
 

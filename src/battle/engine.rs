@@ -203,12 +203,17 @@ pub fn execute_battle_action(
 
             // Check all action-preventing conditions (sleep, freeze, paralysis, confusion, etc.)
             // This needs to happen BEFORE any move processing (including special moves)
-            let (failure_reason, prevention_commands) = calculate_action_prevention(
-                attacker_index,
-                battle_state,
-                rng,
-                move_used,
-            );
+            // Only check prevention on the first hit (hit_number 0) of a move
+            let (failure_reason, prevention_commands) = if hit_number == 0 {
+                calculate_action_prevention(
+                    attacker_index,
+                    battle_state,
+                    rng,
+                    move_used,
+                )
+            } else {
+                (None, Vec::new()) // No prevention for subsequent hits
+            };
             
             // Execute any commands from the prevention check (status updates, etc.)
             let _ = execute_command_batch(prevention_commands, battle_state, bus, action_stack);

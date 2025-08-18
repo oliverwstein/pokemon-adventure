@@ -8,11 +8,13 @@ This is a comprehensive Rust implementation of a Pokemon text adventure battle s
 
 ### Core Components
 
-- **Battle System** (`src/battle/`): Turn-based battle orchestration, action resolution, and event management
+- **Battle System** (`src/battle/`): Pure Command-Execution architecture with complete separation of calculation and mutation
   - `state.rs`: Battle state management, event system, and game state tracking with `BattleState` core struct
-  - `engine.rs` (formerly `turn_orchestrator.rs`): Action execution, priority resolution, and turn flow control
+  - `engine.rs`: Action execution orchestration, priority resolution, and turn flow control (execution layer)
+  - `calculators.rs`: Pure battle logic calculations that return command lists (calculation layer)
+  - `commands.rs`: Command definitions and execution logic with automatic event generation
   - `stats.rs`: Damage calculations, critical hits, stat modifications, and type effectiveness
-  - `calculators.rs`: Complex damage formulas, multi-hit mechanics, and battle math
+  - `conditions.rs`: Pokemon and team condition definitions with pure calculation methods
 - **Pokemon System** (`src/pokemon.rs`): Pokemon instances, species data, HP/status management, and move learning
 - **Move System** (`src/moves.rs`, `src/move_data.rs`): 150+ move definitions with complex effect implementations
   - Category system: Physical, Special, Status moves with authentic Gen 1 mechanics
@@ -25,18 +27,21 @@ This is a comprehensive Rust implementation of a Pokemon text adventure battle s
 - **Species System** (`src/species.rs`): Complete Gen 1 Pokemon roster with 151 species enumeration
 - **Prefab Teams** (`src/prefab_teams.rs`): Balanced team compositions for API integration
   - 3 starter teams: Venusaur, Blastoise, Charizard with strategic movesets
-  - NPC opponent generation with difficulty-based team selection
 
 ### Key Design Patterns
 
+- **Command-Execution Architecture**: Complete separation between calculation (`calculators.rs`) and execution (`engine.rs`)
+  - **Pure Calculation Functions**: All game logic functions return `Vec<BattleCommand>` without mutating state
+  - **Centralized Execution**: Only `resolve_turn()` and command executors mutate `BattleState`
+  - **Automatic Event Generation**: Commands emit their own events, eliminating manual event management
 - **Event-Driven Architecture**: All battle actions generate events through `EventBus` for comprehensive logging and replay capability
 - **Action Stack Pattern**: Dynamic action injection using `VecDeque` for multi-hit moves and complex sequences
 - **Deterministic RNG**: `TurnRng` oracle pattern for reproducible battle outcomes and comprehensive testing
 - **Global Data Stores**: Thread-safe lazy-loaded Pokemon species and move data using `LazyLock<RwLock<>>` with compile-time optimization
 - **Type Safety**: Heavy use of enums (`Species`, `Move`, `PokemonType`, `StatusCondition`) for compile-time correctness
-- **Pure Functions**: Engine functions are stateless and side-effect free, enabling easy testing and API integration
+- **Atomic Commands**: Single-responsibility commands for status changes, damage, healing, and condition management
 - **Compile-Time Data**: `build.rs` script processes RON data files into Rust code for zero-runtime overhead
-- **Command Pattern**: Battle actions represented as data structures that can be queued, validated, and executed
+- **HashMap Optimization**: Type-safe condition keys with proper `Hash`/`Eq` implementations for O(1) lookups
 
 ## Data Format & Content
 
@@ -117,15 +122,16 @@ The system uses RON (Rusty Object Notation) for human-readable data files with c
    - Speed tiebreakers for moves with identical priority values
    - Switch actions always have highest priority for immediate execution
 
-3. **Action Execution**: Process moves through dynamic action stack
-   - Individual action processing with state mutation
+3. **Action Execution**: Process moves through pure command generation
+   - **Calculate Phase**: Pure functions generate command lists without state mutation
+   - **Execute Phase**: Commands applied to state with automatic event emission
    - Multi-hit moves spawn additional actions in sequence
    - Action stack allows complex move combinations and interruptions
 
-4. **Effect Resolution**: Apply damage, status, and secondary effects
-   - Primary effects: Damage calculation with type effectiveness
-   - Secondary effects: Status conditions, stat changes, healing
-   - Target validation and effect application with failure conditions
+4. **Effect Resolution**: Apply calculated commands to battle state
+   - **Command Processing**: Atomic commands execute state changes
+   - **Automatic Events**: Commands generate appropriate battle events
+   - **Status Effects**: Pure calculation of damage, healing, and condition changes
 
 5. **End-of-Turn Processing**: Status damage, condition updates, replacement checks
    - Status damage application (burn, poison) with turn counting
@@ -138,11 +144,13 @@ The system uses RON (Rusty Object Notation) for human-readable data files with c
    - Game state updates and turn counter increment
    - Action queue reset and preparation for next turn cycle
 
-### Action Stack Architecture
-- **Dynamic Injection**: Complex moves can inject additional actions mid-execution
-- **State Preservation**: Battle state remains consistent throughout action processing
-- **Interruption Handling**: Fainting and forced switches handled gracefully
-- **Event Generation**: Every action generates corresponding battle events for logging
+### Command-Execution Architecture
+- **Pure Calculation Layer**: Functions in `calculators.rs` return command lists without state mutation
+- **Centralized Execution**: Only command executors in `engine.rs` and `commands.rs` modify state
+- **Automatic Event Generation**: Commands emit events via `BattleCommand::emit_events()`
+- **Atomic Operations**: Single-responsibility commands for damage, healing, status changes
+- **Dynamic Action Injection**: Complex moves inject additional actions mid-execution through command lists
+- **State Consistency**: Battle state mutations centralized in command execution layer
 
 ## Battle Mechanics Implementation
 
@@ -253,13 +261,28 @@ The system uses RON (Rusty Object Notation) for human-readable data files with c
 - **Teleported Condition**: Custom semi-invulnerable state for moves like Teleport
 - **Enhanced Multi-Hit**: Probabilistic continuation beyond guaranteed hits for moves like Pin Missile
 - **Comprehensive Event Logging**: Detailed battle event tracking through EventBus system
-- **Action Stack Architecture**: Dynamic action injection for complex move sequences and effects
+- **Command-Based Architecture**: Elegant separation of calculation and execution for maintainable code
 
 ## Development & Testing
 
-- **119 Comprehensive Tests**: Full coverage of battle mechanics, edge cases, and interactions
+- **138 Comprehensive Tests**: Full coverage including new command-based architecture validation
+- **Pure Function Testing**: Calculator functions tested independently of state mutation
+- **Command Execution Testing**: Atomic command testing with automatic event validation
 - **Integration Test Examples**: Complete battle scenarios demonstrating system capabilities
 - **Deterministic RNG**: Predictable random outcomes for reliable testing
-- **Modular Architecture**: Clean separation of concerns enabling easy maintenance and extension
+- **Modular Architecture**: Perfect separation between calculation (`calculators.rs`) and execution (`engine.rs`)
+- **Type-Safe Conditions**: HashMap-based condition system with proper `Hash`/`Eq` implementations
 
-This system provides a robust, well-tested foundation for Pokemon battle mechanics with authentic Gen 1 accuracy and room for expansion into advanced features like abilities, held items, and additional generations.
+## Technical Highlights
+
+- **Memory Safety**: Full Rust ownership model with zero unsafe code
+- **Command-Execution Pattern**: Pure functional calculations with centralized state mutation
+- **Automatic Event Generation**: Commands self-emit events, eliminating manual event management
+- **Status Damage Consistency**: Pokemon's own calculation logic used throughout battle system
+- **Concurrency Ready**: Thread-safe global data stores with proper synchronization
+- **Extensible Design**: Easy addition of new moves, species, and effects through pure command generation
+- **Performance Focused**: Minimal allocations during battle resolution, efficient data structures
+- **Type-Safe**: Compile-time prevention of invalid Pokemon/move combinations
+- **Deterministic Testing**: Reproducible battle outcomes for comprehensive test coverage
+
+This system provides a robust, well-tested foundation for Pokemon battle mechanics with authentic Gen 1 accuracy, elegant Command-Execution architecture, and room for expansion into advanced features like abilities, held items, and additional generations.

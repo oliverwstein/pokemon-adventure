@@ -56,7 +56,11 @@ pub enum BattleCommand {
     },
     SetPokemonStatus {
         target: PlayerTarget,
-        status: Option<StatusCondition>,
+        status: StatusCondition,
+    },
+    CurePokemonStatus {
+        target: PlayerTarget,
+        status: StatusCondition,
     },
     UsePP {
         target: PlayerTarget,
@@ -196,23 +200,22 @@ impl BattleCommand {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    match status {
-                        Some(new_status) => vec![BattleEvent::PokemonStatusApplied {
-                            target: pokemon.species,
-                            status: *new_status,
-                        }],
-                        None => {
-                            // Status removed - need to get the old status
-                            if let Some(old_status) = pokemon.status {
-                                vec![BattleEvent::PokemonStatusRemoved {
-                                    target: pokemon.species,
-                                    status: old_status,
-                                }]
-                            } else {
-                                vec![]
-                            }
-                        }
-                    }
+                    vec![BattleEvent::PokemonStatusApplied {
+                        target: pokemon.species,
+                        status: *status,
+                    }]
+                } else {
+                    vec![]
+                }
+            },
+            BattleCommand::CurePokemonStatus { target, status } => {
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    vec![BattleEvent::PokemonStatusRemoved {
+                        target: pokemon.species,
+                        status: *status,
+                    }]
                 } else {
                     vec![]
                 }
@@ -484,7 +487,13 @@ fn execute_state_change(
         }
         BattleCommand::SetPokemonStatus { target, status } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
-                pokemon.status = *status;
+                pokemon.status = Some(*status);
+                Ok(())
+            })
+        }
+        BattleCommand::CurePokemonStatus { target, status: _ } => {
+            execute_pokemon_command(*target, state, |pokemon, _| {
+                pokemon.status = None;
                 Ok(())
             })
         }

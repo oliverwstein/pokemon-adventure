@@ -615,9 +615,9 @@ pub fn calculate_action_prevention(
                 let roll = rng.next_outcome("Defrost Check"); // 0-100
                 if roll < 25 {
                     // Pokemon thaws out
-                    commands.push(BattleCommand::SetPokemonStatus {
+                    commands.push(BattleCommand::CurePokemonStatus {
                         target: PlayerTarget::from_index(player_index),
-                        status: None,
+                        status: crate::pokemon::StatusCondition::Freeze,
                     });
                     // Pokemon can act this turn after thawing
                 } else {

@@ -364,7 +364,7 @@ impl MoveEffect {
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
-                        status: Some(crate::pokemon::StatusCondition::Burn),
+                        status: crate::pokemon::StatusCondition::Burn,
                     });
                     // Event will be automatically emitted by the command system
                 }
@@ -399,7 +399,7 @@ impl MoveEffect {
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
-                        status: Some(crate::pokemon::StatusCondition::Paralysis),
+                        status: crate::pokemon::StatusCondition::Paralysis,
                     });
                     // Event will be automatically emitted by the command system
                 }
@@ -434,7 +434,7 @@ impl MoveEffect {
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
-                        status: Some(crate::pokemon::StatusCondition::Freeze),
+                        status: crate::pokemon::StatusCondition::Freeze,
                     });
                     // Event will be automatically emitted by the command system
                 }
@@ -469,7 +469,7 @@ impl MoveEffect {
                 if target_pokemon.status.is_none() {
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
-                        status: Some(crate::pokemon::StatusCondition::Poison(0)),
+                        status: crate::pokemon::StatusCondition::Poison(0),
                     });
                     // Event will be automatically emitted by the command system
                 }
@@ -508,7 +508,7 @@ impl MoveEffect {
 
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(context.defender_index),
-                        status: Some(sleep_status),
+                        status: sleep_status,
                     });
                     // Event will be automatically emitted by the command system
                 }
@@ -873,19 +873,19 @@ impl MoveEffect {
 
         if let Some(target_pokemon) = target_player.active_pokemon() {
             // Check if the Pokemon has the status condition we want to cure
-            let should_cure = match (&target_pokemon.status, status_type) {
-                (Some(crate::pokemon::StatusCondition::Sleep(_)), StatusType::Sleep) => true,
-                (Some(crate::pokemon::StatusCondition::Poison(_)), StatusType::Poison) => true,
-                (Some(crate::pokemon::StatusCondition::Burn), StatusType::Burn) => true,
-                (Some(crate::pokemon::StatusCondition::Freeze), StatusType::Freeze) => true,
-                (Some(crate::pokemon::StatusCondition::Paralysis), StatusType::Paralysis) => true,
-                _ => false,
+            let status_to_cure = match (&target_pokemon.status, status_type) {
+                (Some(status @ crate::pokemon::StatusCondition::Sleep(_)), StatusType::Sleep) => Some(*status),
+                (Some(status @ crate::pokemon::StatusCondition::Poison(_)), StatusType::Poison) => Some(*status),
+                (Some(status @ crate::pokemon::StatusCondition::Burn), StatusType::Burn) => Some(*status),
+                (Some(status @ crate::pokemon::StatusCondition::Freeze), StatusType::Freeze) => Some(*status),
+                (Some(status @ crate::pokemon::StatusCondition::Paralysis), StatusType::Paralysis) => Some(*status),
+                _ => None,
             };
 
-            if should_cure {
-                commands.push(BattleCommand::SetPokemonStatus {
+            if let Some(status) = status_to_cure {
+                commands.push(BattleCommand::CurePokemonStatus {
                     target: PlayerTarget::from_index(target_index),
-                    status: None,
+                    status,
                 });
             }
         }
@@ -1609,7 +1609,7 @@ impl MoveEffect {
             // Apply Sleep status
             commands.push(BattleCommand::SetPokemonStatus {
                 target: attacker_target,
-                status: Some(crate::pokemon::StatusCondition::Sleep(sleep_turns)),
+                status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
             });
             // Event will be automatically emitted by the command system
 

@@ -134,12 +134,14 @@ fn validate_pokemon_participation<'a>(
     BattleCommand,
 > {
     let attacker_pokemon = attacker_player.active_pokemon().ok_or_else(|| {
+        // This should fail silently
         BattleCommand::EmitEvent(BattleEvent::ActionFailed {
             reason: crate::battle::state::ActionFailureReason::PokemonFainted,
         })
     })?;
 
     let defender_pokemon = defender_player.active_pokemon().ok_or_else(|| {
+        // This should fail silently
         BattleCommand::EmitEvent(BattleEvent::ActionFailed {
             reason: crate::battle::state::ActionFailureReason::NoEnemyPresent,
         })
@@ -220,6 +222,11 @@ fn calculate_and_emit_type_effectiveness(
     defender_player: &crate::player::BattlePlayer,
     commands: &mut Vec<BattleCommand>,
 ) -> f64 {
+    // Status moves don't have type effectiveness
+    if matches!(move_data.category, crate::move_data::MoveCategory::Status) {
+        return 1.0;
+    }
+
     let defender_types = defender_pokemon.get_current_types(defender_player);
     let type_adv_multiplier =
         crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
@@ -498,7 +505,7 @@ pub fn calculate_end_turn_commands(battle_state: &BattleState, _rng: &mut TurnRn
 
             // 2. Process active Pokemon conditions - emit atomic commands for each condition
             let target = PlayerTarget::from_index(player_index);
-            for (_condition_type, condition) in &player.active_pokemon_conditions {
+            for (_condition_type, condition) in &player.active_pokemon_conditions {                
                 // Tick the condition
                 commands.push(BattleCommand::TickPokemonCondition {
                     target,
@@ -681,9 +688,20 @@ pub fn calculate_action_prevention(
     }
 
     // Check confusion - 50% chance to hit self instead
+    // Confusion ticks at end of turn, but expires when Pokemon tries to act with 0 turns remaining
     for condition in player.active_pokemon_conditions.values() {
         if let PokemonCondition::Confused { turns_remaining } = condition {
+            if *turns_remaining == 0 {
+                // This is the last turn of confusion - confusion ends, no self-hit check
+                commands.push(BattleCommand::ExpirePokemonCondition {
+                    target: PlayerTarget::from_index(player_index),
+                    condition: condition.clone(),
+                });
+                // Confusion has ended, so no chance to hit self - action proceeds normally
+                break;
+            }
             if *turns_remaining > 0 {
+                // Confusion continues, so roll for self-hit (don't decrement here - that happens at end of turn)
                 let roll = rng.next_outcome("Hit Itself in Confusion Check"); // 1-100
                 if roll < 50 {
                     return (Some(ActionFailureReason::IsConfused), commands);
@@ -737,27 +755,18 @@ pub fn calculate_action_prevention(
 pub fn calculate_switch_commands(
     player_index: usize,
     target_pokemon_index: usize,
-    battle_state: &BattleState,
+    _battle_state: &BattleState,
 ) -> Vec<BattleCommand> {
-    let player = &battle_state.players[player_index];
-    let old_pokemon = player.active_pokemon().unwrap().species;
-    let new_pokemon = player.team[target_pokemon_index].as_ref().unwrap().species;
     let target = PlayerTarget::from_index(player_index);
 
     vec![
         // 1. Command to clear the old state.
         BattleCommand::ClearPlayerState { target },
-        // 2. Command to perform the switch.
+        // 2. Command to perform the switch (this will automatically emit the PokemonSwitched event).
         BattleCommand::SwitchPokemon {
             target,
             new_pokemon_index: target_pokemon_index,
         },
-        // 3. Command to emit the event.
-        BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
-            player_index,
-            old_pokemon,
-            new_pokemon,
-        }),
     ]
 }
 

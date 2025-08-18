@@ -1,5 +1,5 @@
 MoveData(
-    name: "Vicegrip",
+    name: "ViceGrip",
     move_type: Rock,
     power: Some(60),
     category: Physical,

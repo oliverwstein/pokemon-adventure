@@ -12,7 +12,7 @@ PokemonSpecies(
     ),
     learnset: (
         level_up: {
-            1: [Vicegrip],
+            1: [ViceGrip],
             25: [SeismicToss],
             30: [Guillotine],
             36: [FocusEnergy],

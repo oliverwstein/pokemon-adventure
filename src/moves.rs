@@ -98,7 +98,7 @@ pub enum Move {
     SkyAttack,
 
     // Rock Type
-    Vicegrip,
+    ViceGrip,
     RockThrow,
     SkullBash,
     RockSlide,

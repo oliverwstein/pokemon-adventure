@@ -1833,7 +1833,7 @@ impl MoveEffect {
             Move::DrillPeck,
             Move::SkyAttack,
             // Rock Type
-            Move::Vicegrip,
+            Move::ViceGrip,
             Move::RockThrow,
             Move::SkullBash,
             Move::RockSlide,
@@ -2145,7 +2145,7 @@ impl std::str::FromStr for Move {
             "PECK" => Ok(Move::Peck),
             "DRILLPECK" => Ok(Move::DrillPeck),
             "SKYATTACK" => Ok(Move::SkyAttack),
-            "VICEGRIP" => Ok(Move::Vicegrip),
+            "VICEGRIP" => Ok(Move::ViceGrip),
             "ROCKTHROW" => Ok(Move::RockThrow),
             "SKULLBASH" => Ok(Move::SkullBash),
             "ROCKSLIDE" => Ok(Move::RockSlide),

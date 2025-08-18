@@ -12,8 +12,8 @@ PokemonSpecies(
     ),
     learnset: (
         level_up: {
-            1: [Bubblebeam, Leer, Vicegrip],
-            20: [Vicegrip],
+            1: [Bubblebeam, Leer, ViceGrip],
+            20: [ViceGrip],
             25: [Guillotine],
             34: [Stomp],
             42: [Bubblehammer],

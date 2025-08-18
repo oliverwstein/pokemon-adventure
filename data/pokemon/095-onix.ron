@@ -19,7 +19,7 @@ PokemonSpecies(
             33: [Slam],
             43: [Harden],
         },
-        signature: Some(Vicegrip),
+        signature: Some(ViceGrip),
         can_learn: [
             Toxic, BodySlam, TakeDown, DoubleEdge, Rage, Earthquake,
             Fissure, Dig, Mimic, DoubleTeam, Bide, SelfDestruct,

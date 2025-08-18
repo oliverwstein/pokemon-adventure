@@ -175,7 +175,7 @@
     * Shadow Ball
 
 * ONIX
-    * Vicegrip
+    * ViceGrip
 
 * DROWZEE
 * HYPNO

@@ -64,11 +64,8 @@ mod tests {
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
-        // Print all events for clarity
-        println!("Heal effect test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        // Print all events for clarity (using formatted output)
+        event_bus.print_formatted_with_message("Heal effect test events:", &battle_state);
 
         let final_hp = battle_state.players[0]
             .active_pokemon()
@@ -127,11 +124,9 @@ mod tests {
         let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
-        // Print all events for clarity
+        // Print all events for clarity (using Display trait)
         println!("No overheal test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        print!("{}", event_bus);
 
         let final_hp = battle_state.players[0]
             .active_pokemon()

@@ -71,10 +71,7 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Print events for debugging
-        println!("Ante effect test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        event_bus.print_debug_with_message("Ante effect test events:");
 
         // Player 2's ante should be increased by 2x Player 1's level (25 * 2 = 50)
         let expected_ante = 25u32 * 2;

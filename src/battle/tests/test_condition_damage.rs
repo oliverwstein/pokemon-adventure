@@ -65,10 +65,7 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Print events for debugging
-        println!("Leech Seed damage and healing test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        event_bus.print_debug_with_message("Leech Seed damage and healing test events:");
 
         let final_p1_hp = battle_state.players[0]
             .active_pokemon()
@@ -174,10 +171,7 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Print events for debugging
-        println!("Trapped damage test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        event_bus.print_debug_with_message("Trapped damage test events:");
 
         let final_p1_hp = battle_state.players[0]
             .active_pokemon()

@@ -1,297 +1,330 @@
-mod battle;
-mod move_data;
-mod moves;
-mod player;
-mod pokemon;
-mod prefab_teams;
-mod species;
+use std::io::{self, Write};
 
-use moves::Move;
-use player::BattlePlayer;
-use pokemon::{PokemonInst, get_species_data};
-use species::Species;
-
+use pokemon_adventure::battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
+use pokemon_adventure::battle::state::{BattleState, EventBus, GameState, TurnRng};
+use pokemon_adventure::player::{PlayerAction, PlayerType};
+use pokemon_adventure::prefab_teams::{self, PrefabTeam};
+use pokemon_adventure::{BattlePlayer, PokemonInst};
+/// The main entry point for the text-based battle game.
 fn main() {
-    // Example 1: Load a single Pokemon using Species enum
-    if let Some(pikachu) = get_species_data(Species::Pikachu) {
-        println!("Loaded Pikachu:");
-        println!("  Number: #{}", pikachu.pokedex_number);
-        println!("  Types: {:?}", pikachu.types);
-        println!(
-            "  Base Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}",
-            pikachu.base_stats.hp,
-            pikachu.base_stats.attack,
-            pikachu.base_stats.defense,
-            pikachu.base_stats.sp_attack,
-            pikachu.base_stats.sp_defense,
-            pikachu.base_stats.speed
-        );
-    } else {
-        println!("Error loading Pikachu");
-    }
+    println!("🔥 Welcome to the Pokémon Adventure Battle Engine! 🔥");
 
-    println!();
+    // --- Battle Setup ---
+    let player_team = select_player_team();
+    let mut human_player = prefab_teams::create_battle_player_from_prefab(
+        &player_team.id,
+        "human_player".to_string(),
+        "Player".to_string(),
+    )
+    .expect("Failed to create player team.");
+    human_player.player_type = PlayerType::Human;
 
+    // For this demo, the NPC always uses the Charizard team.
+    let mut npc_player = prefab_teams::create_battle_player_from_prefab(
+        "charizard_team",
+        "npc_opponent".to_string(),
+        "AI Trainer".to_string(),
+    )
+    .expect("Failed to create NPC team.");
+    npc_player.player_type = PlayerType::NPC;
 
-    // Example 4: Create a Pokemon instance using Species enum
-    if let Some(pikachu_species) = get_species_data(Species::Pikachu) {
-        // Create a level 25 Pikachu with some moves
-        let pikachu_moves = vec![
-            Move::QuickAttack,
-            Move::Thunderclap,
-            Move::TailWhip,
-            Move::Agility,
-        ];
+    let mut battle_state = BattleState::new("text_adventure_battle".to_string(), human_player, npc_player);
 
-        // Example with custom moves
-        let my_pikachu = PokemonInst::new(
-            Species::Pikachu,
-            &pikachu_species,
-            25,
-            Some([15, 20, 10, 25, 18, 30]), // Custom IVs
-            Some(pikachu_moves),            // Custom moves
-        );
-
-        println!("Created Pokemon instance (with custom moves):");
-        println!("  Name: {}", my_pikachu.name);
-        println!(
-            "  Species: {:?} ({})",
-            my_pikachu.species,
-            my_pikachu.species.name()
-        );
-        println!(
-            "  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}",
-            my_pikachu.stats.hp,
-            my_pikachu.stats.attack,
-            my_pikachu.stats.defense,
-            my_pikachu.stats.sp_attack,
-            my_pikachu.stats.sp_defense,
-            my_pikachu.stats.speed,
-        );
-        println!("  Moves:");
-        for (i, move_slot) in my_pikachu.moves.iter().enumerate() {
-            if let Some(move_inst) = move_slot {
-                println!(
-                    "    {}: {:?} (PP: {})",
-                    i + 1,
-                    move_inst.move_,
-                    move_inst.pp
-                );
-            }
-        }
-
-        println!();
-
-        // Example with moves derived from learnset
-        let auto_pikachu = PokemonInst::new(
-            Species::Pikachu,
-            &pikachu_species,
-            25,
-            None, // Default IVs
-            None, // Auto-derive moves from learnset
-        );
-
-        println!("Created Pokemon instance (with auto-derived moves):");
-        println!("  Name: {}", auto_pikachu.name);
-        println!(
-            "  Current Stats: HP:{} ATK:{} DEF:{} SP.ATK:{} SP.DEF:{} SPD:{}",
-            auto_pikachu.stats.hp,
-            auto_pikachu.stats.attack,
-            auto_pikachu.stats.defense,
-            auto_pikachu.stats.sp_attack,
-            auto_pikachu.stats.sp_defense,
-            auto_pikachu.stats.speed,
-        );
-        println!("  Moves (auto-derived from level {} learnset):", 25);
-        for (i, move_slot) in auto_pikachu.moves.iter().enumerate() {
-            if let Some(move_inst) = move_slot {
-                println!(
-                    "    {}: {:?} (PP: {})",
-                    i + 1,
-                    move_inst.move_,
-                    move_inst.pp
-                );
-            }
-        }
-    } else {
-        println!("Error loading Pikachu species data for Pokemon instance");
-    }
-
-    println!();
-
-    // Example 5: NPC vs NPC Multi-Pokemon Battle Demo
-    println!("=== NPC vs NPC Battle Demo ===");
-    run_npc_battle_demo();
-}
-
-fn run_npc_battle_demo() {
-    use battle::state::{BattleState, GameState, TurnRng};
-    use battle::engine::{
-        collect_npc_actions, ready_for_turn_resolution, resolve_turn,
-    };
-
-    // Create two trainers with multiple Pokemon each
-    let trainer1_team = vec![
-        create_demo_pokemon(Species::Pikachu, 25),
-        create_demo_pokemon(Species::Charmander, 20),
-        create_demo_pokemon(Species::Squirtle, 22),
-    ];
-
-    let trainer2_team = vec![
-        create_demo_pokemon(Species::Bulbasaur, 23),
-        create_demo_pokemon(Species::Rattata, 18),
-        create_demo_pokemon(Species::Pidgey, 21),
-    ];
-
-    let player1 = BattlePlayer::new(
-        "npc_trainer_1".to_string(),
-        "AI Trainer Red".to_string(),
-        trainer1_team,
-    );
-
-    let player2 = BattlePlayer::new(
-        "npc_trainer_2".to_string(),
-        "AI Trainer Blue".to_string(),
-        trainer2_team,
-    );
-
-    let mut battle_state = BattleState::new("npc_vs_npc_demo".to_string(), player1, player2);
-
-    println!("🔥 Battle begins!");
+    println!("\n💥 A wild trainer challenges you to a battle! 💥");
     println!(
-        "  {} sends out {}!",
-        battle_state.players[0].player_name,
+        "You sent out {}!",
         battle_state.players[0].active_pokemon().unwrap().name
     );
     println!(
-        "  {} sends out {}!",
+        "{} sends out {}!",
         battle_state.players[1].player_name,
         battle_state.players[1].active_pokemon().unwrap().name
     );
-    println!();
 
-    let mut execution_count = 0;
+    // --- Main Game Loop ---
+    run_game_loop(&mut battle_state);
 
-    // Battle loop - continue until one trainer has no Pokemon left
-    while !matches!(
-        battle_state.game_state,
-        GameState::Player1Win | GameState::Player2Win | GameState::Draw
-    ) {
-        println!("--- Turn {} ---", battle_state.turn_number);
-
-        // Print current Pokemon status
-        for player in &battle_state.players {
-            if let Some(pokemon) = player.active_pokemon() {
-                println!(
-                    "  {}: {} (HP: {}/{})",
-                    player.player_name,
-                    pokemon.name,
-                    pokemon.current_hp(),
-                    pokemon.max_hp()
-                );
-            }
-        }
-        println!();
-
-        // Step 1: Call the pure function to get a list of decided actions.
-        // It takes an immutable reference because it doesn't change the state itself.
-        let npc_actions = collect_npc_actions(&battle_state);
-
-        // Step 2: Explicitly apply the decided actions to the battle state's action queue.
-        // This makes it clear that we are modifying the state here.
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-
-        // Execute the game tick loop - keep resolving turns until waiting for input
-        while ready_for_turn_resolution(&battle_state) {
-            let rng = TurnRng::new_random();
-            let event_bus = resolve_turn(&mut battle_state, rng);
-            let events = event_bus.events();
-
-            // Show what actions were chosen based on events
-            for event in events {
-                match event {
-                    battle::state::BattleEvent::MoveUsed {
-                        player_index,
-                        pokemon: _,
-                        move_used,
-                    } => {
-                        println!(
-                            "  {} chooses {:?}!",
-                            battle_state.players[*player_index].player_name, move_used
-                        );
-                    }
-                    battle::state::BattleEvent::PokemonSwitched {
-                        player_index,
-                        new_pokemon,
-                        ..
-                    } => {
-                        println!(
-                            "  {} switches to {:?}!",
-                            battle_state.players[*player_index].player_name, new_pokemon
-                        );
-                    }
-                    _ => {} // Don't print other events here
-                }
-            }
-
-            // Print ALL events like the tests do
-            if !events.is_empty() {
-                println!("  Events generated this turn:");
-                for (i, event) in events.iter().enumerate() {
-                    println!("    {}: {:?}", i + 1, event);
-                }
-                println!();
-            }
-
-            execution_count += 1;
-
-            // Safety check to prevent infinite loops
-            if execution_count > 50 {
-                println!("Battle reached execution limit - ending demo");
-                return;
-            }
-
-            // Check if battle ended
-            if matches!(
-                battle_state.game_state,
-                GameState::Player1Win | GameState::Player2Win | GameState::Draw
-            ) {
-                break;
-            }
-        }
-    }
-
-    // Announce the winner
+    // --- Battle Conclusion ---
+    println!("\n--- Battle Over! ---");
     match battle_state.game_state {
-        GameState::Player1Win => {
-            println!(
-                "🏆 {} wins the battle!",
-                battle_state.players[0].player_name
-            );
+        GameState::Player1Win => println!("🏆 You are victorious! 🏆"),
+        GameState::Player2Win => println!("💔 You were defeated... 💔"),
+        GameState::Draw => println!("🤝 The battle ended in a draw! 🤝"),
+        _ => println!("The battle ended unexpectedly."),
+    }
+}
+
+/// Runs the main interactive game loop until the battle concludes.
+fn run_game_loop(battle_state: &mut BattleState) {
+    loop {
+        // Check for terminal states first.
+        if matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+            break;
         }
-        GameState::Player2Win => {
-            println!(
-                "🏆 {} wins the battle!",
-                battle_state.players[1].player_name
-            );
+
+        // Handle forced player actions, like switching after a faint.
+        if let GameState::WaitingForPlayer1Replacement = battle_state.game_state {
+            println!("\nYour Pokémon fainted!");
+            display_team_status(&battle_state.players[0]);
+            let action = get_player_action(battle_state, true); // `true` forces switch-only actions
+            battle_state.action_queue[0] = Some(action);
         }
-        GameState::Draw => {
-            println!("🤝 The battle ended in a draw!");
+
+        // Standard turn flow.
+        if ready_for_turn_resolution(battle_state) {
+            // Both players have queued actions, resolve the turn.
+            let rng = TurnRng::new_random();
+            let event_bus = resolve_turn(battle_state, rng);
+            print_turn_events(&event_bus, battle_state);
+        } else if battle_state.action_queue[0].is_none() {
+            // It's the human player's turn to act.
+            println!("\n--- Turn {} ---", battle_state.turn_number);
+            display_battle_status(battle_state);
+            let action = get_player_action(battle_state, false);
+            battle_state.action_queue[0] = Some(action);
         }
-        _ => {
-            println!("🔚 Battle ended (Execution limit reached)");
+
+        // Let the AI act if its slot is empty.
+        if battle_state.action_queue[1].is_none() {
+            let npc_actions = collect_npc_actions(battle_state);
+            for (player_index, action) in npc_actions {
+                battle_state.action_queue[player_index] = Some(action);
+            }
         }
     }
+}
+
+/// Prompts the human player to select a prefab team.
+fn select_player_team() -> PrefabTeam {
+    let teams = prefab_teams::get_prefab_teams();
+    println!("\nPlease choose your team:");
+    for (i, team) in teams.iter().enumerate() {
+        println!("  {}. {} - {}", i + 1, team.name, team.description);
+    }
+
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap();
+        let mut choice = String::new();
+        io::stdin().read_line(&mut choice).unwrap();
+        
+        match choice.trim().parse::<usize>() {
+            Ok(n) if n > 0 && n <= teams.len() => {
+                return teams[n - 1].clone();
+            }
+            _ => println!("Invalid selection. Please enter a number from 1 to {}.", teams.len()),
+        }
+    }
+}
+
+/// Handles the user input loop to get a valid player action.
+fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAction {
+    loop {
+        print!("\nWhat will you do? (Type 'help' for commands)\n> ");
+        io::stdout().flush().unwrap();
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("Failed to read line");
+
+        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+        if parts.is_empty() {
+            continue;
+        }
+
+        let command = parts[0].to_lowercase();
+        let args = &parts[1..];
+
+        // --- Handle Informational Commands (don't consume a turn) ---
+        if command == "help" {
+            println!("--- Available Commands ---");
+            println!("  use <move name>      - Use one of your Pokémon's moves (e.g., 'use tackle').");
+            println!("  switch to <team_num> - Switch to a Pokémon on your team (e.g., 'switch to 2').");
+            println!("  check self           - View your active Pokémon's details and moves.");
+            println!("  check opponent       - View the opponent's active Pokémon's details.");
+            println!("  check team           - View a summary of your team.");
+            println!("  check team <team_num>  - View a benched Pokémon's details.");
+            println!("  quit / forfeit       - Give up the battle.");
+            println!("------------------------");
+            continue;
+        }
+        if command == "check" {
+            handle_check_command(args, battle_state);
+            continue;
+        }
+
+        // --- Handle Action Commands (consume a turn) ---
+        if switch_only && command != "switch" {
+            println!("You must switch to a new Pokémon!");
+            continue;
+        }
+        
+        match command.as_str() {
+            "use" => {
+                let move_name = args.join(" ");
+                let player = &battle_state.players[0];
+                if let Some(active_pokemon) = player.active_pokemon() {
+                    for (i, move_slot) in active_pokemon.moves.iter().enumerate() {
+                        if let Some(move_instance) = move_slot {
+                            let formatted_move_name = format!("{:?}", move_instance.move_).replace('_', " ");
+                            if formatted_move_name.eq_ignore_ascii_case(&move_name) {
+                                return PlayerAction::UseMove { move_index: i };
+                            }
+                        }
+                    }
+                }
+                println!("'{}' is not a valid move for your active Pokémon.", move_name);
+            }
+            "switch" => {
+                if args.len() == 2 && args[0] == "to" {
+                    if let Ok(index) = args[1].parse::<usize>() {
+                        if index > 0 && index <= 6 {
+                            let team_index = index - 1; // Convert to 0-based index
+                            let action = PlayerAction::SwitchPokemon { team_index };
+                            if battle_state.players[0].validate_action(&action).is_ok() {
+                                return action;
+                            } else {
+                                println!("Invalid switch: {}", battle_state.players[0].validate_action(&action).unwrap_err());
+                            }
+                        }
+                    }
+                }
+                 println!("Invalid switch command. Use 'switch to <number>'.");
+            }
+            "quit" | "forfeit" => return PlayerAction::Forfeit,
+            _ => println!("Unknown command. Type 'help' to see a list of commands."),
+        }
+    }
+}
+
+/// Sub-parser for the "check" command.
+fn handle_check_command(args: &[&str], battle_state: &BattleState) {
+    if args.is_empty() {
+        println!("What do you want to check? (e.g., 'check self', 'check opponent', 'check team')");
+        return;
+    }
+    match args[0].to_lowercase().as_str() {
+        "self" => display_self_status(&battle_state.players[0]),
+        "opponent" => display_opponent_status(&battle_state.players[1]),
+        "team" => {
+            if args.len() > 1 {
+                if let Ok(index) = args[1].parse::<usize>() {
+                    display_benched_pokemon_details(index - 1, &battle_state.players[0]);
+                } else {
+                     println!("Invalid team index. Please use a number.");
+                }
+            } else {
+                display_team_status(&battle_state.players[0]);
+            }
+        }
+        _ => println!("Unknown check command. Use 'self', 'opponent', or 'team'."),
+    }
+}
+
+// --- Display Functions ---
+
+fn display_hp_bar(pokemon: &PokemonInst) -> String {
+    let percent = (pokemon.current_hp() as f32 / pokemon.max_hp() as f32) * 100.0;
+    let filled_count = (percent / 10.0).round() as usize;
+    let empty_count = 10 - filled_count;
+    format!("[{}{}] {}/{}", "█".repeat(filled_count), " ".repeat(empty_count), pokemon.current_hp(), pokemon.max_hp())
+}
+
+fn display_battle_status(state: &BattleState) {
+    let player_pokemon = state.players[0].active_pokemon().unwrap();
+    let opponent_pokemon = state.players[1].active_pokemon().unwrap();
 
     println!(
-        "Battle completed after {} turn(s).",
-        battle_state.turn_number
+        "  Opponent: {} {} {}",
+        opponent_pokemon.name,
+        display_hp_bar(opponent_pokemon),
+        opponent_pokemon.status.map_or("".to_string(), |s| format!("{:?}", s))
+    );
+    println!(
+        "      Your: {} {} {}",
+        player_pokemon.name,
+        display_hp_bar(player_pokemon),
+        player_pokemon.status.map_or("".to_string(), |s| format!("{:?}", s))
     );
 }
 
-fn create_demo_pokemon(species: Species, level: u8) -> PokemonInst {
-    let species_data = get_species_data(species).expect("Species data should exist");
-    PokemonInst::new(species, &species_data, level, None, None)
+fn display_self_status(player: &BattlePlayer) {
+    if let Some(pokemon) = player.active_pokemon() {
+        println!("\n--- Your Pokémon: {} (Lvl {}) ---", pokemon.name, pokemon.level);
+        println!("  HP: {}", display_hp_bar(pokemon));
+        if let Some(status) = pokemon.status {
+            println!("  Status: {:?}", status);
+        }
+        println!("  Moves:");
+        for (i, move_slot) in pokemon.moves.iter().enumerate() {
+            if let Some(mv) = move_slot {
+                println!("    {}. {:?} (PP: {}/{})", i + 1, mv.move_, mv.pp, mv.max_pp());
+            }
+        }
+    }
+}
+
+fn display_opponent_status(opponent: &BattlePlayer) {
+     if let Some(pokemon) = opponent.active_pokemon() {
+        println!("\n--- Opponent's Pokémon: {} (Lvl {}) ---", pokemon.name, pokemon.level);
+        println!("  HP: {}", display_hp_bar(pokemon));
+        if let Some(status) = pokemon.status {
+            println!("  Status: {:?}", status);
+        }
+        if !opponent.active_pokemon_conditions.is_empty() {
+            println!("  Active Conditions: {:?}", opponent.active_pokemon_conditions.keys().collect::<Vec<_>>());
+        }
+        let total_pokemon = opponent.team.iter().filter(|p| p.is_some()).count();
+        let remaining_pokemon = opponent.team.iter().filter(|p| p.as_ref().map_or(false, |pk| !pk.is_fainted())).count();
+        println!("  Team: {}/{} Pokémon remaining", remaining_pokemon, total_pokemon);
+    }
+}
+
+fn display_team_status(player: &BattlePlayer) {
+    println!("\n--- Your Team ---");
+    for (i, pokemon_opt) in player.team.iter().enumerate() {
+        if let Some(pokemon) = pokemon_opt {
+            let active_marker = if i == player.active_pokemon_index { "(Active)" } else { "" };
+            let fainted_marker = if pokemon.is_fainted() { "(Fainted)" } else { "" };
+            println!(
+                "  {}. {} (Lvl {}) {} {} {}",
+                i + 1,
+                pokemon.name,
+                pokemon.level,
+                display_hp_bar(pokemon),
+                pokemon.status.map_or("".to_string(), |s| format!("{:?}", s)),
+                active_marker.to_string() + fainted_marker
+            );
+        }
+    }
+}
+
+fn display_benched_pokemon_details(index: usize, player: &BattlePlayer) {
+    if let Some(Some(pokemon)) = player.team.get(index) {
+        if index == player.active_pokemon_index {
+            println!("This Pokémon is already active. Use 'check self' instead.");
+            return;
+        }
+        println!("\n--- Benched: {} (Lvl {}) ---", pokemon.name, pokemon.level);
+        println!("  HP: {}", display_hp_bar(pokemon));
+        if let Some(status) = pokemon.status {
+            println!("  Status: {:?}", status);
+        }
+        println!("  Types: {:?}", pokemon.get_current_types(player));
+        println!("  Moves:");
+        for (i, move_slot) in pokemon.moves.iter().enumerate() {
+            if let Some(mv) = move_slot {
+                println!("    {}. {:?} (PP: {}/{})", i + 1, mv.move_, mv.pp, mv.max_pp());
+            }
+        }
+    } else {
+        println!("No Pokémon at that position in your team.");
+    }
+}
+
+fn print_turn_events(event_bus: &EventBus, battle_state: &BattleState) {
+    println!();
+    for event in event_bus.events() {
+        if let Some(formatted_event) = event.format(battle_state) {
+            println!("{}", formatted_event);
+        }
+    }
 }

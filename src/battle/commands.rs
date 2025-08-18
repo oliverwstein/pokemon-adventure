@@ -342,18 +342,9 @@ impl BattleCommand {
                 // The state change function will emit the appropriate event if needed
                 vec![]
             },
-            BattleCommand::TickPokemonCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &state.players[player_index];
-                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    vec![BattleEvent::StatusDamage {
-                        target: pokemon.species,
-                        status: condition.clone(),
-                        damage: 0, // Damage will be calculated separately if needed
-                    }]
-                } else {
-                    vec![]
-                }
+            BattleCommand::TickPokemonCondition { target: _, condition: _ } => {
+                // Ticking conditions doesn't generate damage events - only DealConditionDamage does
+                vec![]
             },
             BattleCommand::ExpirePokemonCondition { target, condition } => {
                 let player_index = target.to_index();

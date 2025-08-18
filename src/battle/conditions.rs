@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     battle::commands::{BattleCommand, PlayerTarget},
-    battle::state::BattleEvent,
     moves::Move,
     player::StatType,
     pokemon::{PokemonInst, PokemonType},
@@ -102,7 +101,7 @@ impl PokemonCondition {
         damage: u16,
         attacker_target: PlayerTarget,
         defender_target: PlayerTarget,
-        defender_pokemon_species: crate::species::Species,
+        _defender_pokemon_species: crate::species::Species,
         move_category: crate::move_data::MoveCategory,
         defender_current_hp: u16,
         defender_stat_stage: i8,

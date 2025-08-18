@@ -1,144 +1,62 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
-    use crate::moves::Move;
-    use crate::player::{BattlePlayer};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::battle::state::{BattleEvent, TurnRng};
+    use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
+    use crate::moves::{Move};
     use crate::species::Species;
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 10 });
-            }
-        }
+    #[rstest]
+    #[case(
+        "guaranteed critical hits",
+        // Force hit (low roll), force crit (low roll), then damage variance
+        // This is repeated for the second Pokémon's turn.
+        vec![10, 2, 90, 10, 2, 90], 
+        true, // Expect at least one critical hit
+        false // Expect no misses
+    )]
+    #[case(
+        "guaranteed misses",
+        // High rolls will cause moves with accuracy <= 99 to miss.
+        vec![99, 99, 99, 99, 99, 99],
+        false, // Expect no critical hits
+        true // Expect at least one miss
+    )]
+    fn test_hit_outcomes(
+        #[case] desc: &str,
+        #[case] rng_values: Vec<u8>,
+        #[case] expect_crit: bool,
+        #[case] expect_miss: bool,
+    ) {
+        // Arrange
+        let pokemon1 = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let pokemon2 = TestPokemonBuilder::new(Species::Charmander, 10)
+            .with_moves(vec![Move::Scratch])
+            .build();
+        let mut battle_state = create_test_battle(pokemon1, pokemon2);
 
-        {
-            let mut pokemon = PokemonInst::new_for_test(
-                species,
-                10,
-                0,
-                0, // Will be set below
-                [15; 6],
-                [0; 6],
-                [100, 80, 80, 80, 80, 80],
-                pokemon_moves,
-                None,
-            );
-            pokemon.set_hp_to_max();
-            pokemon
-        }
-    }
-
-    fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        let player_team = vec![pokemon];
-
-        // Step 2: Use the constructor to create the player.
-        // This will create a default player with ante = 0. We declare it `mut` to change it.
-        let mut player = BattlePlayer::new(
-            "test_player".to_string(),
-            "TestPlayer".to_string(),
-            player_team,
-        );
-
-        // Step 3: Modify any fields that differ from the default constructor values.
-        player.ante = 200;
-        player
-    }
-
-    #[test]
-    fn test_critical_hits_in_battle() {
-        // Create two test Pokemon
-        let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
-        let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);
-
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Collect AI actions
+        // Let the AI decide on the actions for both players.
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
 
-        // Create RNG with values that will guarantee critical hits
-        let test_rng = TurnRng::new_for_test(vec![
-            2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3, // Low values to ensure critical hits
-        ]);
+        let test_rng = TurnRng::new_for_test(rng_values);
 
-        // Execute turn
+        // Act
         let event_bus = resolve_turn(&mut battle_state, test_rng);
 
-        // Check events
-        let events = event_bus.events();
-        let critical_hit_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::CriticalHit { .. }))
-            .collect();
+        // Assert
+        event_bus.print_debug_with_message(&format!("Events for test_hit_outcomes [{}]:", desc));
 
-        println!("Generated {} events:", events.len());
-        for event in events {
-            println!("  {:?}", event);
-        }
+        let has_crit = event_bus.events().iter().any(|e| matches!(e, BattleEvent::CriticalHit { .. }));
+        let has_miss = event_bus.events().iter().any(|e| matches!(e, BattleEvent::MoveMissed { .. }));
 
-        // Should have at least one critical hit with these low RNG values
-        assert!(
-            !critical_hit_events.is_empty(),
-            "Should generate at least one critical hit event"
-        );
-    }
-
-    #[test]
-    fn test_no_critical_hits_guaranteed_miss() {
-        // Create two test Pokemon
-        let pokemon1 = create_test_pokemon(Species::Pikachu, vec![Move::Tackle]);
-        let pokemon2 = create_test_pokemon(Species::Charmander, vec![Move::Scratch]);
-
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Collect AI actions
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-        // Create RNG with high values that will miss all attacks
-        let test_rng = TurnRng::new_for_test(vec![
-            99, 99, 99, 99, 99, 99, // High values to ensure misses
-        ]);
-
-        // Execute turn
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-        let critical_hit_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::CriticalHit { .. }))
-            .collect();
-        let miss_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::MoveMissed { .. }))
-            .collect();
-
-        println!("Generated {} events:", events.len());
-        for event in events {
-            println!("  {:?}", event);
-        }
-
-        // Should have no critical hits when moves miss
-        assert!(
-            critical_hit_events.is_empty(),
-            "Should not generate critical hit events when moves miss"
-        );
-        assert!(!miss_events.is_empty(), "Should generate miss events");
+        assert_eq!(has_crit, expect_crit, "Critical hit expectation mismatch");
+        assert_eq!(has_miss, expect_miss, "Miss expectation mismatch");
     }
 }

@@ -1,6 +1,7 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
+use crate::battle::state::BattleEvent;
 use serde::{Deserialize, Serialize};
 
 // Include the compiled move data
@@ -527,7 +528,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -555,7 +555,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -587,7 +586,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -618,7 +616,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -646,7 +643,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -679,7 +675,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
         let rng_reason = format!("Apply {:?} {:?} Effect: ", stat, stages);
@@ -782,7 +777,6 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -864,7 +858,6 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -918,7 +911,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -1016,7 +1008,6 @@ impl MoveEffect {
         damage_dealt: u16,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -1098,7 +1089,6 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
@@ -1113,17 +1103,13 @@ impl MoveEffect {
         }
 
         // First turn - apply condition and skip normal attack
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::InAir;
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1139,22 +1125,17 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::Teleported;
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1170,7 +1151,6 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
@@ -1185,17 +1165,13 @@ impl MoveEffect {
         }
 
         // First turn - apply condition and skip normal attack
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::Charging;
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1211,7 +1187,6 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
@@ -1226,17 +1201,13 @@ impl MoveEffect {
         }
 
         // First turn - apply condition and skip normal attack
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::Underground;
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1252,13 +1223,12 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let defender_player = &state.players[context.defender_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let (Some(attacker_species), Some(target_pokemon)) = (
+        if let (Some(_), Some(target_pokemon)) = (
             attacker_player.active_pokemon().map(|p| p.species),
             defender_player.active_pokemon().cloned(),
         ) {
@@ -1270,10 +1240,6 @@ impl MoveEffect {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: attacker_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1289,13 +1255,12 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let defender_player = &state.players[context.defender_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let (Some(attacker_species), Some(target_type)) = (
+        if let (Some(_), Some(target_type)) = (
             attacker_player.active_pokemon().map(|p| p.species),
             defender_player
                 .active_pokemon()
@@ -1310,10 +1275,6 @@ impl MoveEffect {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: attacker_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1329,13 +1290,11 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-            let pokemon_species = attacker_pokemon.species;
             // Substitute uses 25% of max HP
             let substitute_hp = (attacker_pokemon.max_hp() / 4).max(1) as u8;
             let condition = PokemonCondition::Substitute { hp: substitute_hp };
@@ -1345,10 +1304,6 @@ impl MoveEffect {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1364,22 +1319,17 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::Countering { damage: 0 };
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Skip(commands);
         }
@@ -1396,12 +1346,11 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             // Check if Pokemon is already rampaging
             if let Some(current_rampage) = attacker_player.active_pokemon_conditions.values()
                 .find(|c| matches!(c, PokemonCondition::Rampaging { .. })) {
@@ -1420,10 +1369,6 @@ impl MoveEffect {
                                 target: attacker_target,
                                 condition: confusion_condition.clone(),
                             },
-                            BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                                target: pokemon_species,
-                                status: confusion_condition,
-                            }),
                         ];
                         return EffectResult::Continue(commands);
                     }
@@ -1445,10 +1390,6 @@ impl MoveEffect {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Continue(commands); // Continue with attack
         }
@@ -1464,22 +1405,17 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
-        if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+        if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
             let condition = PokemonCondition::Enraged;
             let commands = vec![
                 BattleCommand::AddCondition {
                     target: attacker_target,
                     condition: condition.clone(),
                 },
-                BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: pokemon_species,
-                    status: condition,
-                }),
             ];
             return EffectResult::Continue(commands); // Continue with attack
         }
@@ -1520,7 +1456,6 @@ impl MoveEffect {
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
         use crate::battle::conditions::PokemonCondition;
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
@@ -1556,7 +1491,7 @@ impl MoveEffect {
             }
         } else {
             // Not currently Biding - start new Bide
-            if let Some(pokemon_species) = attacker_player.active_pokemon().map(|p| p.species) {
+            if let Some(_) = attacker_player.active_pokemon().map(|p| p.species) {
                 let condition = PokemonCondition::Biding {
                     turns_remaining: turns,
                     damage: 0,
@@ -1566,10 +1501,6 @@ impl MoveEffect {
                         target: attacker_target,
                         condition: condition.clone(),
                     },
-                    BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                        target: pokemon_species,
-                        status: condition,
-                    }),
                 ];
                 return EffectResult::Skip(commands);
             }
@@ -1586,13 +1517,12 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let attacker_player = &state.players[context.attacker_index];
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-            let pokemon_species = attacker_pokemon.species;
+            let _pokemon_species = attacker_pokemon.species;
             let max_hp = attacker_pokemon.max_hp();
             let current_hp = attacker_pokemon.current_hp();
             let mut commands = Vec::new();
@@ -1675,7 +1605,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> EffectResult {
         use crate::battle::commands::{BattleCommand};
-        use crate::battle::state::BattleEvent;
         use crate::battle::action_stack::BattleAction;
         use crate::moves::Move;
 

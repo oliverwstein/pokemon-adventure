@@ -1,5 +1,4 @@
 use crate::battle::state::{BattleState, TurnRng};
-use crate::battle::conditions::PokemonCondition;
 use crate::player::BattlePlayer;
 use crate::pokemon::{PokemonInst, StatusCondition};
 use crate::species::Species;

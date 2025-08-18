@@ -158,26 +158,14 @@ impl BattleCommand {
     pub fn emit_events(&self, state: &BattleState) -> Vec<BattleEvent> {
         match self {
             BattleCommand::DealDamage { target, amount } => {
-                let player_index = target.to_index();
-                let player = &state.players[player_index];
-                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    let mut events = vec![BattleEvent::DamageDealt {
-                        target: pokemon.species,
-                        damage: *amount,
-                        remaining_hp: pokemon.current_hp(),
-                    }];
-                    
-                    if pokemon.is_fainted() {
-                        events.push(BattleEvent::PokemonFainted {
-                            player_index,
-                            pokemon: pokemon.species,
-                        });
-                    }
-                    events
-                } else {
-                    vec![]
-                }
-            },
+                emit_damage_and_faint_events(*target, *amount, state, None, None)
+            }
+            BattleCommand::DealStatusDamage { target, status, amount } => {
+                emit_damage_and_faint_events(*target, *amount, state, Some(*status), None)
+            }
+            BattleCommand::DealConditionDamage { target, condition, amount } => {
+                emit_damage_and_faint_events(*target, *amount, state, None, Some(condition.clone()))
+            }
             BattleCommand::HealPokemon { target, amount } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -303,42 +291,6 @@ impl BattleCommand {
                     vec![]
                 }
             },
-            BattleCommand::DealStatusDamage { target, status, amount } => {
-                let player_index = target.to_index();
-                let player = &state.players[player_index];
-                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    vec![BattleEvent::PokemonStatusDamage {
-                        target: pokemon.species,
-                        status: *status,
-                        damage: *amount,
-                        remaining_hp: pokemon.current_hp(),
-                    }]
-                } else {
-                    vec![]
-                }
-            },
-            BattleCommand::DealConditionDamage { target, condition, amount } => {
-                let player_index = target.to_index();
-                let player = &state.players[player_index];
-                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    let mut events = vec![BattleEvent::StatusDamage {
-                        target: pokemon.species,
-                        status: condition.clone(),
-                        damage: *amount,
-                    }];
-                    
-                    // Check if the Pokemon fainted from this condition damage
-                    if pokemon.is_fainted() {
-                        events.push(BattleEvent::PokemonFainted {
-                            player_index,
-                            pokemon: pokemon.species,
-                        });
-                    }
-                    events
-                } else {
-                    vec![]
-                }
-            },
             BattleCommand::UpdateStatusProgress { target: _ } => {
                 // This command can potentially cure a status, so we need to check if we should emit a removed event
                 // However, the actual determination happens during state change, so we return empty here
@@ -391,6 +343,53 @@ impl BattleCommand {
             BattleCommand::PushAction(_) => vec![],
         }
     }
+}
+
+/// Centralized function to emit damage events and check for fainting.
+fn emit_damage_and_faint_events(
+    target: PlayerTarget,
+    amount: u16,
+    state: &BattleState,
+    status: Option<StatusCondition>,
+    condition: Option<PokemonCondition>,
+) -> Vec<BattleEvent> {
+    let player_index = target.to_index();
+    let player = &state.players[player_index];
+    if let Some(pokemon) = player.active_pokemon() {
+        let mut events = Vec::new();
+
+        // 1. Create the appropriate primary damage event.
+        if let Some(s) = status {
+            events.push(BattleEvent::PokemonStatusDamage {
+                target: pokemon.species,
+                status: s,
+                damage: amount,
+                remaining_hp: pokemon.current_hp(),
+            });
+        } else if let Some(c) = condition {
+            events.push(BattleEvent::StatusDamage {
+                target: pokemon.species,
+                status: c,
+                damage: amount,
+            });
+        } else {
+            events.push(BattleEvent::DamageDealt {
+                target: pokemon.species,
+                damage: amount,
+                remaining_hp: pokemon.current_hp(),
+            });
+        }
+
+        // 2. Check for fainting and add the event if necessary.
+        if pokemon.is_fainted() {
+            events.push(BattleEvent::PokemonFainted {
+                player_index,
+                pokemon: pokemon.species,
+            });
+        }
+        return events;
+    }
+    vec![]
 }
 
 /// Execute a batch of commands atomically

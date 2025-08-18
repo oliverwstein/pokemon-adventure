@@ -1,4 +1,4 @@
-use crate::battle::conditions::PokemonCondition;
+use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
@@ -348,7 +348,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -367,12 +366,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Burn),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Burn,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -389,7 +383,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -408,12 +401,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Paralysis),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Paralysis,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -430,7 +418,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -449,12 +436,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Freeze),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Freeze,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -471,7 +453,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -490,12 +471,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(crate::pokemon::StatusCondition::Poison(0)),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: crate::pokemon::StatusCondition::Poison(0),
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -512,7 +488,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -535,12 +510,7 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.defender_index),
                         status: Some(sleep_status),
                     });
-                    commands.push(BattleCommand::EmitEvent(
-                        BattleEvent::PokemonStatusApplied {
-                            target: target_pokemon.species,
-                            status: sleep_status,
-                        },
-                    ));
+                    // Event will be automatically emitted by the command system
                 }
             }
         }
@@ -773,12 +743,7 @@ impl MoveEffect {
                             stat: player_stat,
                             delta: new_stage - old_stage,
                         });
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                            target: target_pokemon.species,
-                            stat: player_stat,
-                            old_stage,
-                            new_stage,
-                        }));
+                        // Event will be automatically emitted by the command system
                     }
                 }
             }
@@ -796,13 +761,12 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
         if rng.next_outcome("Apply Raise All Stats Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
-            if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            if let Some(_attacker_pokemon) = attacker_player.active_pokemon() {
                 let stats_to_raise = [
                     crate::player::StatType::Attack,
                     crate::player::StatType::Defense,
@@ -821,12 +785,7 @@ impl MoveEffect {
                             stat: *stat,
                             delta: 1,
                         });
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                            target: attacker_pokemon.species,
-                            stat: *stat,
-                            old_stage,
-                            new_stage,
-                        }));
+                        // Event will be automatically emitted by the command system
                     }
                 }
             }
@@ -888,7 +847,6 @@ impl MoveEffect {
         rng: &mut crate::battle::state::TurnRng,
     ) -> Vec<crate::battle::commands::BattleCommand> {
         use crate::battle::commands::{BattleCommand, PlayerTarget};
-        use crate::battle::state::BattleEvent;
 
         let mut commands = Vec::new();
 
@@ -896,7 +854,7 @@ impl MoveEffect {
             // Clear stat stages for both players
             for player_index in 0..2 {
                 let player = &state.players[player_index];
-                if let Some(pokemon) = player.active_pokemon() {
+                if let Some(_pokemon) = player.active_pokemon() {
                     let all_stats = [
                         crate::player::StatType::Attack,
                         crate::player::StatType::Defense,
@@ -916,14 +874,7 @@ impl MoveEffect {
                                 stat: *stat,
                                 delta: -current_stage, // Reset to 0
                             });
-                            commands.push(BattleCommand::EmitEvent(
-                                BattleEvent::StatStageChanged {
-                                    target: pokemon.species,
-                                    stat: *stat,
-                                    old_stage: current_stage,
-                                    new_stage: 0,
-                                },
-                            ));
+                            // Event will be automatically emitted by the command system
                         }
                     }
 
@@ -1204,10 +1155,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already in air, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::InAir) {
+        if attacker_player.has_condition_type(PokemonConditionType::InAir) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::InAir,
+                condition_type: PokemonConditionType::InAir,
             }];
             return EffectResult::Continue(commands);
         }
@@ -1276,10 +1227,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already charging, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::Charging) {
+        if attacker_player.has_condition_type(PokemonConditionType::Charging) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::Charging,
+                condition_type: PokemonConditionType::Charging,
             }];
             return EffectResult::Continue(commands);
         }
@@ -1317,10 +1268,10 @@ impl MoveEffect {
         let attacker_target = PlayerTarget::from_index(context.attacker_index);
 
         // If already underground, this is the second turn - clear condition and proceed with normal attack
-        if attacker_player.has_condition(&PokemonCondition::Underground) {
+        if attacker_player.has_condition_type(PokemonConditionType::Underground) {
             let commands = vec![BattleCommand::RemoveCondition {
                 target: attacker_target,
-                condition_type: crate::battle::conditions::PokemonConditionType::Underground,
+                condition_type: PokemonConditionType::Underground,
             }];
             return EffectResult::Continue(commands);
         }
@@ -1716,12 +1667,7 @@ impl MoveEffect {
                 target: attacker_target,
                 status: Some(crate::pokemon::StatusCondition::Sleep(sleep_turns)),
             });
-            commands.push(BattleCommand::EmitEvent(
-                BattleEvent::PokemonStatusApplied {
-                    target: pokemon_species,
-                    status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
-                },
-            ));
+            // Event will be automatically emitted by the command system
 
             // Clear all active Pokemon conditions
             for condition in attacker_player.active_pokemon_conditions.values() {

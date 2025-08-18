@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::conditions::PokemonCondition;
+    use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
     use crate::battle::state::{BattleEvent, BattleState, EventBus, GameState, TurnRng};
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data};
@@ -39,18 +39,17 @@ mod tests {
         // Apply regular poison (severity 0)
         pokemon.status = Some(StatusCondition::Poison(0));
 
-        // Deal status damage - should deal 1/16 of max HP damage
-        let (damage, status_changed) = pokemon.deal_status_damage();
+        // Calculate status damage - should calculate 1/16 of max HP damage
+        let damage = pokemon.calculate_status_damage();
 
         assert_eq!(
             damage,
             (max_hp / 16).max(1),
             "Regular poison should deal 1/16 of max hp"
         );
-        assert!(
-            !status_changed,
-            "Status should not change when dealing poison damage."
-        );
+        
+        // Apply the damage
+        pokemon.take_damage(damage);
         assert_eq!(
             pokemon.current_hp(),
             initial_hp - damage,
@@ -74,8 +73,8 @@ mod tests {
         pokemon.status = Some(StatusCondition::Poison(1)); // Start with "badly poisoned" severity 1
 
         // --- Action ---
-        // Deal damage based on current severity (1)
-        let (damage, status_changed) = pokemon.deal_status_damage();
+        // Calculate damage based on current severity (1)
+        let damage = pokemon.calculate_status_damage();
 
         // --- Verification ---
         let expected_damage = (max_hp * 1 / 16).max(1); // Should be severity 1, not 2
@@ -87,10 +86,8 @@ mod tests {
             damage, expected_damage
         );
 
-        assert!(
-            !status_changed,
-            "Status should not change when dealing poison damage"
-        );
+        // Apply the damage
+        pokemon.take_damage(damage);
 
         assert_eq!(
             pokemon.current_hp(),
@@ -120,7 +117,8 @@ mod tests {
         pokemon.status = Some(StatusCondition::Burn);
 
         // Deal status damage - should deal 1/8 of max HP damage
-        let (damage, _) = pokemon.deal_status_damage();
+        let damage = pokemon.calculate_status_damage();
+        pokemon.take_damage(damage);
 
         assert_eq!(
             damage,
@@ -192,7 +190,7 @@ mod tests {
         assert!(expired.contains(&PokemonCondition::Flinched));
 
         // Check remaining conditions with actual values
-        assert!(!player.has_condition(&PokemonCondition::Flinched));
+        assert!(!player.has_condition_type(PokemonConditionType::Flinched));
 
         // Check confused condition has 2 turns remaining
         let confused_key = PokemonCondition::Confused { turns_remaining: 2 };
@@ -281,17 +279,19 @@ mod tests {
         pokemon.status = Some(StatusCondition::Poison(0));
         let expected_damage = (pokemon.max_hp() / 16).max(1);
 
-        // If damage >= current HP, should faint
-        let (damage, status_changed) = pokemon.deal_status_damage();
+        // Calculate and apply damage
+        let damage = pokemon.calculate_status_damage();
+        let did_faint = pokemon.take_damage(damage);
 
         if expected_damage >= 3 {
             // Should faint
             assert_eq!(damage, expected_damage);
-            assert!(status_changed); // Status changed to Faint
+            assert!(did_faint); // Pokemon fainted from damage
             assert_eq!(pokemon.current_hp(), 0);
             assert!(matches!(pokemon.status, Some(StatusCondition::Faint)));
         } else {
             // Should survive
+            assert!(!did_faint); // Pokemon did not faint
             assert_eq!(pokemon.current_hp(), 3 - damage);
             assert!(matches!(pokemon.status, Some(StatusCondition::Poison(0))));
         }
@@ -312,7 +312,7 @@ mod tests {
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![24, 100, 100, 100]); // Below 25% threshold - should defrost, plus extra values for other RNG calls
 
-        // Test defrost by trying to execute an attack (this will call check_action_preventing_conditions)
+        // Test defrost by trying to execute an attack
         let mut action_stack = ActionStack::new();
         crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {
@@ -359,7 +359,7 @@ mod tests {
         let mut bus = EventBus::new();
         let mut rng = TurnRng::new_for_test(vec![25, 100, 100, 100]); // At 25% threshold - should remain frozen, plus extra values
 
-        // Test freeze check by trying to execute an attack (this will call check_action_preventing_conditions)
+        // Test freeze check by trying to execute an attack
         let mut action_stack = ActionStack::new();
         crate::battle::engine::execute_battle_action(
             BattleAction::AttackHit {

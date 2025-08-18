@@ -1,9 +1,10 @@
 use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
-use crate::battle::state::{BattleEvent, BattleState, TurnRng};
+use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
 use crate::move_data::MoveData;
 use crate::moves::Move;
+use crate::player::PlayerAction;
 
 /// Calculate the outcome of an attack attempt
 ///
@@ -329,14 +330,10 @@ fn handle_substitute_damage_absorption(
 
     if remaining_substitute_hp == 0 {
         // Substitute is destroyed
-        commands.push(BattleCommand::RemoveCondition {
+        commands.push(BattleCommand::RemoveSpecificCondition {
             target: PlayerTarget::from_index(defender_index),
-            condition_type: PokemonConditionType::Substitute,
+            condition: PokemonCondition::Substitute { hp: substitute_hp },
         });
-        commands.push(BattleCommand::EmitEvent(BattleEvent::StatusRemoved {
-            target: defender_pokemon.species,
-            status: PokemonCondition::Substitute { hp: substitute_hp },
-        }));
     } else {
         // Update substitute HP - remove old and add new
         commands.push(BattleCommand::RemoveCondition {
@@ -396,6 +393,389 @@ fn handle_damage_triggered_conditions(
         );
         commands.extend(condition_commands);
     }
+}
+
+/// Other Calculations
+
+/// Calculate damage/healing effects from active Pokemon conditions (Trapped, Seeded)
+/// Returns commands to execute the condition damage without directly mutating state
+pub fn calculate_condition_damage_commands(battle_state: &BattleState) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+
+    // Process each player's active Pokemon for condition effects
+    for player_index in 0..2 {
+        let opponent_index = 1 - player_index;
+
+        // Check if this player has an active, non-fainted Pokemon
+        let player = &battle_state.players[player_index];
+        if let Some(pokemon) = player.active_pokemon() {
+            if pokemon.is_fainted() {
+                continue;
+            }
+
+            let max_hp = pokemon.max_hp();
+            let has_trapped = player
+                .active_pokemon_conditions
+                .values()
+                .any(|condition| matches!(condition, PokemonCondition::Trapped { .. }));
+            let has_seeded = player.has_condition_type(PokemonConditionType::Seeded);
+
+            // Handle Trapped condition (1/16 max HP damage per turn)
+            if has_trapped {
+                let condition_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
+                commands.push(BattleCommand::DealConditionDamage {
+                    target: PlayerTarget::from_index(player_index),
+                    condition: PokemonCondition::Trapped { turns_remaining: 1 }, 
+                    amount: condition_damage,
+                });
+            }
+
+            // Handle Seeded condition (1/8 max HP drained per turn, heals opponent)
+            if has_seeded {
+                let current_hp = pokemon.current_hp();
+                let actual_damage = (max_hp / 8).max(1).min(current_hp);
+                
+                commands.push(BattleCommand::DealConditionDamage {
+                    target: PlayerTarget::from_index(player_index),
+                    condition: PokemonCondition::Seeded,
+                    amount: actual_damage,
+                });
+
+                // Heal the opponent if they have an active Pokemon
+                let opponent_player = &battle_state.players[opponent_index];
+                if let Some(opponent_pokemon) = opponent_player.active_pokemon() {
+                    if !opponent_pokemon.is_fainted() {
+                        let opponent_current_hp = opponent_pokemon.current_hp();
+                        let opponent_max_hp = opponent_pokemon.max_hp();
+                        let actual_heal = actual_damage.min(opponent_max_hp.saturating_sub(opponent_current_hp));
+
+                        if actual_heal > 0 {
+                            commands.push(BattleCommand::HealPokemon {
+                                target: PlayerTarget::from_index(opponent_index),
+                                amount: actual_heal,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    commands
+}
+
+/// Calculate all end-of-turn effects and return commands to execute them
+/// Returns commands for status damage, condition expiry, and team condition ticking
+pub fn calculate_end_turn_commands(battle_state: &BattleState, _rng: &mut TurnRng) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+    
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+        if let Some(pokemon) = player.active_pokemon() {
+            // Fainted Pokemon do not take end-of-turn damage or effects.
+            if pokemon.is_fainted() {
+                continue;
+            }
+
+            // 1. Process Pokemon status damage (Poison, Burn) - use Pokemon's own calculation logic
+            if let Some(status) = pokemon.status {
+                let status_damage = pokemon.calculate_status_damage();
+                
+                if status_damage > 0 {
+                    commands.push(BattleCommand::DealStatusDamage {
+                        target: PlayerTarget::from_index(player_index),
+                        status,
+                        amount: status_damage,
+                    });
+                }
+            }
+
+            // 2. Process active Pokemon conditions - emit atomic commands for each condition
+            let target = PlayerTarget::from_index(player_index);
+            for (_condition_type, condition) in &player.active_pokemon_conditions {
+                // Tick the condition
+                commands.push(BattleCommand::TickPokemonCondition {
+                    target,
+                    condition: condition.clone(),
+                });
+                
+                // Check if the condition should expire after ticking
+                let should_expire = match condition {
+                    PokemonCondition::Confused { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Exhausted { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Trapped { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Rampaging { turns_remaining } => *turns_remaining <= 0,
+                    PokemonCondition::Disabled { turns_remaining, .. } => *turns_remaining <= 0,
+                    PokemonCondition::Biding { turns_remaining, .. } => *turns_remaining <= 0,
+                    PokemonCondition::Flinched => true, // Flinch always expires at end of turn
+                    PokemonCondition::Teleported => true, // Teleported expires at end of turn
+                    PokemonCondition::Countering { .. } => true, // Counter expires at end of turn
+                    // Charging does NOT expire at end of turn - it expires when the move executes
+                    _ => false, // Other conditions don't expire automatically
+                };
+                
+                if should_expire {
+                    commands.push(BattleCommand::ExpirePokemonCondition {
+                        target,
+                        condition: condition.clone(),
+                    });
+                }
+            }
+        }
+    }
+    
+    // 3. Process condition-based damage effects (Trapped, Seeded)
+    let condition_damage_commands = calculate_condition_damage_commands(battle_state);
+    commands.extend(condition_damage_commands);
+
+    // 4. Tick team conditions (Reflect, Light Screen, Mist) - emit atomic commands for each
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+        let target = PlayerTarget::from_index(player_index);
+        
+        for (condition, turns) in &player.team_conditions {
+            // Tick the team condition
+            commands.push(BattleCommand::TickTeamCondition {
+                target,
+                condition: *condition,
+            });
+            
+            // Check if it should expire after ticking
+            if *turns <= 1 {
+                commands.push(BattleCommand::ExpireTeamCondition {
+                    target,
+                    condition: *condition,
+                });
+            }
+        }
+    }
+    
+    commands
+}
+
+/// Calculate commands to queue forced actions for the next turn
+pub fn calculate_forced_action_commands(battle_state: &BattleState) -> Vec<BattleCommand> {
+    let mut commands = Vec::new();
+    
+    for player_index in 0..2 {
+        let player = &battle_state.players[player_index];
+
+        if let Some(forced_move) = player.forced_move() {
+            if let Some(active_pokemon) = player.active_pokemon() {
+                if let Some(index) = active_pokemon.moves.iter().position(|m| {
+                    m.as_ref().map_or(false, |inst| inst.move_ == forced_move)
+                }) {
+                    commands.push(BattleCommand::QueueForcedAction {
+                        target: PlayerTarget::from_index(player_index),
+                        action: PlayerAction::UseMove { move_index: index },
+                    });
+                }
+            }
+        }
+    }
+    
+    commands
+}
+
+/// Calculate all conditions that can prevent a Pokemon from taking action
+/// Returns (Option<ActionFailureReason>, Vec<BattleCommand>) where the commands handle
+/// status updates and condition changes that occur during the prevention check
+pub fn calculate_action_prevention(
+    player_index: usize,
+    battle_state: &BattleState,
+    rng: &mut TurnRng,
+    move_used: Move,
+) -> (Option<ActionFailureReason>, Vec<BattleCommand>) {
+    let mut commands = Vec::new();
+    
+    // Check Pokemon status conditions BEFORE updating counters
+    let pokemon_status = if let Some(pokemon) = battle_state.players[player_index].team
+        [battle_state.players[player_index].active_pokemon_index]
+        .as_ref()
+    {
+        pokemon.status
+    } else {
+        return (Some(ActionFailureReason::PokemonFainted), commands);
+    };
+
+    // First check if Pokemon should fail to act (including Sleep > 0)
+    if let Some(status) = pokemon_status {
+        match status {
+            crate::pokemon::StatusCondition::Sleep(turns) => {
+                if turns > 0 {
+                    // Pokemon is still asleep, update counters after determining failure
+                    commands.push(BattleCommand::UpdateStatusProgress {
+                        target: PlayerTarget::from_index(player_index),
+                    });
+                    return (Some(ActionFailureReason::IsAsleep), commands);
+                }
+            }
+            crate::pokemon::StatusCondition::Freeze => {
+                // 25% chance to thaw out when trying to act
+                let roll = rng.next_outcome("Defrost Check"); // 0-100
+                if roll < 25 {
+                    // Pokemon thaws out
+                    if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
+                        commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusRemoved {
+                            target: pokemon.species,
+                            status: crate::pokemon::StatusCondition::Freeze,
+                        }));
+                    }
+                    commands.push(BattleCommand::SetPokemonStatus {
+                        target: PlayerTarget::from_index(player_index),
+                        status: None,
+                    });
+                    // Pokemon can act this turn after thawing
+                } else {
+                    return (Some(ActionFailureReason::IsFrozen), commands);
+                }
+            }
+            _ => {} // Other status conditions don't prevent actions
+        }
+    }
+
+    // Update status counters for Pokemon that are not asleep with turns > 0 (they were handled above)
+    let current_status = if let Some(pokemon) = battle_state.players[player_index].team
+        [battle_state.players[player_index].active_pokemon_index]
+        .as_ref()
+    {
+        pokemon.status
+    } else {
+        return (Some(ActionFailureReason::PokemonFainted), commands);
+    };
+
+    // Only update counters if Pokemon doesn't have sleep with turns > 0 (those were already updated above)
+    let should_update_counters = match current_status {
+        Some(crate::pokemon::StatusCondition::Sleep(turns)) => turns == 0,
+        _ => true,
+    };
+
+    if should_update_counters {
+        commands.push(BattleCommand::UpdateStatusProgress {
+            target: PlayerTarget::from_index(player_index),
+        });
+    }
+
+    let player = &battle_state.players[player_index];
+
+    // Check active Pokemon conditions
+    if player.has_condition_type(PokemonConditionType::Flinched) {
+        return (Some(ActionFailureReason::IsFlinching), commands);
+    }
+
+    // Check for exhausted condition (any turns_remaining > 0 means still exhausted)
+    for condition in player.active_pokemon_conditions.values() {
+        if let PokemonCondition::Exhausted { turns_remaining } = condition {
+            if *turns_remaining > 0 {
+                return (Some(ActionFailureReason::IsExhausted), commands);
+            }
+        }
+    }
+
+    // Check paralysis - 25% chance to be fully paralyzed
+    if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon_status {
+        let roll = rng.next_outcome("Immobilized by Paralysis Check"); // 0-100
+        if roll < 25 {
+            return (Some(ActionFailureReason::IsParalyzed), commands);
+        }
+    }
+
+    // Check confusion - 50% chance to hit self instead
+    for condition in player.active_pokemon_conditions.values() {
+        if let PokemonCondition::Confused { turns_remaining } = condition {
+            if *turns_remaining > 0 {
+                let roll = rng.next_outcome("Hit Itself in Confusion Check"); // 1-100
+                if roll < 50 {
+                    return (Some(ActionFailureReason::IsConfused), commands);
+                }
+                // If not confused this turn, action proceeds normally
+                break; // Only check once
+            }
+        }
+    }
+
+    // Check for disabled moves
+    for condition in player.active_pokemon_conditions.values() {
+        if let PokemonCondition::Disabled {
+            pokemon_move,
+            turns_remaining,
+        } = condition
+        {
+            if *turns_remaining > 0 && *pokemon_move == move_used {
+                return (Some(ActionFailureReason::MoveFailedToExecute), commands);
+            }
+        }
+    }
+
+    // Check for Nightmare effect - move fails unless target is asleep
+    if let Some(move_data) = MoveData::get_move_data(move_used) {
+        for effect in &move_data.effects {
+            if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
+                // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
+                let target_index = if player_index == 0 { 1 } else { 0 };
+                let target_player = &battle_state.players[target_index];
+
+                if let Some(target_pokemon) = target_player.active_pokemon() {
+                    // Check if target is asleep
+                    let is_asleep = matches!(
+                        target_pokemon.status,
+                        Some(crate::pokemon::StatusCondition::Sleep(_))
+                    );
+
+                    if !is_asleep {
+                        return (Some(ActionFailureReason::MoveFailedToExecute), commands);
+                    }
+                }
+            }
+        }
+    }
+
+    (None, commands) // No conditions prevent action
+}
+
+/// Calculate commands for a Pokemon switch action
+pub fn calculate_switch_commands(
+    player_index: usize,
+    target_pokemon_index: usize,
+    battle_state: &BattleState,
+) -> Vec<BattleCommand> {
+    let player = &battle_state.players[player_index];
+    let old_pokemon = player.active_pokemon().unwrap().species;
+    let new_pokemon = player.team[target_pokemon_index].as_ref().unwrap().species;
+    let target = PlayerTarget::from_index(player_index);
+
+    vec![
+        // 1. Command to clear the old state.
+        BattleCommand::ClearPlayerState { target },
+        // 2. Command to perform the switch.
+        BattleCommand::SwitchPokemon {
+            target,
+            new_pokemon_index: target_pokemon_index,
+        },
+        // 3. Command to emit the event.
+        BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
+            player_index,
+            old_pokemon,
+            new_pokemon,
+        }),
+    ]
+}
+
+/// Calculate commands for a forfeit action
+pub fn calculate_forfeit_commands(player_index: usize) -> Vec<BattleCommand> {
+    let new_state = if player_index == 0 {
+        crate::battle::state::GameState::Player2Win
+    } else {
+        crate::battle::state::GameState::Player1Win
+    };
+    
+    vec![
+        BattleCommand::SetGameState(new_state),
+        BattleCommand::EmitEvent(BattleEvent::PlayerDefeated { player_index }),
+        BattleCommand::EmitEvent(BattleEvent::BattleEnded {
+            winner: Some(if player_index == 0 { 1 } else { 0 }),
+        }),
+    ]
 }
 
 #[cfg(test)]
@@ -611,16 +991,16 @@ mod tests {
 
         let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
 
-        // Should have substitute destruction event
+        // Should have substitute removal command (which auto-generates the StatusRemoved event)
         assert!(commands.iter().any(|cmd| matches!(
             cmd,
-            BattleCommand::EmitEvent(BattleEvent::StatusRemoved { .. })
+            BattleCommand::RemoveSpecificCondition { .. }
         )));
 
-        // Should only have RemoveCondition (no AddCondition since substitute is destroyed)
+        // Should only have RemoveSpecificCondition (no AddCondition since substitute is destroyed)
         let remove_condition_count = commands
             .iter()
-            .filter(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. }))
+            .filter(|cmd| matches!(cmd, BattleCommand::RemoveSpecificCondition { .. }))
             .count();
         let add_condition_count = commands
             .iter()

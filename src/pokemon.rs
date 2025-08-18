@@ -14,7 +14,7 @@ pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
     compiled_data[index].clone()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PokemonType {
     Normal,
     Fighting,
@@ -138,7 +138,7 @@ pub enum Item {
     // Add more items as needed
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub enum StatusCondition {
     Sleep(u8),
     Poison(u8),
@@ -148,7 +148,7 @@ pub enum StatusCondition {
     Faint, // Pokemon has 0 HP, can replace any other status
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub struct MoveInstance {
     pub move_: Move,
     pub pp: u8,
@@ -160,7 +160,7 @@ pub enum UseMoveError {
     MoveNotKnown,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub struct PokemonInst {
     pub name: String,     // Species name if no nickname
     pub species: Species, // Species enum for type-safe lookup
@@ -184,7 +184,7 @@ pub struct BaseStats {
     pub speed: u8,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct CurrentStats {
     pub hp: u16,
     pub attack: u16,
@@ -578,14 +578,12 @@ impl PokemonInst {
         (should_cure, self.status != original_status)
     }
 
-    /// Apply status damage without changing counters.
-    /// Should be called at end of turn.
-    /// Returns (status_damage, status_changed).
-    pub fn deal_status_damage(&mut self) -> (u16, bool) {
+    /// Calculate status damage without mutating state.
+    /// Returns the amount of damage that would be dealt by status conditions.
+    pub fn calculate_status_damage(&self) -> u16 {
         let max_hp = self.max_hp();
-        let original_status = self.status;
 
-        let damage = match &self.status {
+        match &self.status {
             Some(StatusCondition::Poison(severity)) => {
                 if *severity == 0 {
                     (max_hp / 16).max(1) // Regular poison: 1/16 max HP
@@ -595,12 +593,6 @@ impl PokemonInst {
             }
             Some(StatusCondition::Burn) => (max_hp / 8).max(1), // Burn: 1/8 max HP
             _ => 0,
-        };
-
-        if damage > 0 {
-            self.take_damage(damage);
         }
-
-        (damage, self.status != original_status)
     }
 }

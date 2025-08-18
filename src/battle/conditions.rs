@@ -7,8 +7,7 @@ use crate::{
     player::StatType,
     pokemon::{PokemonInst, PokemonType},
 };
-use std::hash::{Hash, Hasher};
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PokemonCondition {
     Flinched,
     Confused {
@@ -51,17 +50,9 @@ pub enum PokemonCondition {
     },
 }
 
-impl Hash for PokemonCondition {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // Hash only the discriminant (variant), not the data
-        std::mem::discriminant(self).hash(state);
-    }
-}
-
-impl Eq for PokemonCondition {}
 
 /// Condition type without data payload for RemoveCondition commands
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PokemonConditionType {
     Flinched,
     Confused,

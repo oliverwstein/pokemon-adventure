@@ -175,58 +175,90 @@ mod tests {
 
     #[test]
     fn test_active_condition_timers() {
+        use crate::battle::commands::{BattleCommand, PlayerTarget, execute_command_batch};
+        use crate::battle::action_stack::ActionStack;
+
         let species_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");
         let pokemon = PokemonInst::new(Species::Pikachu, &species_data, 25, None, None);
-        let mut player = BattlePlayer::new("test".to_string(), "Test".to_string(), vec![pokemon]);
+        let player1 = BattlePlayer::new("test".to_string(), "Test".to_string(), vec![pokemon.clone()]);
+        let player2 = BattlePlayer::new("test2".to_string(), "Test2".to_string(), vec![pokemon]);
+        
+        let mut battle_state = BattleState {
+            battle_id: "test".to_string(),
+            players: [player1, player2],
+            turn_number: 1,
+            game_state: GameState::TurnInProgress,
+            action_queue: [None, None],
+        };
 
-        // Add some conditions with timers
-        player.add_condition(PokemonCondition::Confused { turns_remaining: 3 });
-        player.add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
-        player.add_condition(PokemonCondition::Flinched); // Should expire after 1 turn
+        let mut bus = EventBus::new();
+        let mut action_stack = ActionStack::new();
 
-        // First tick
-        let expired = player.tick_active_conditions();
-        assert_eq!(expired.len(), 1); // Flinched should expire
-        assert!(expired.contains(&PokemonCondition::Flinched));
+        // Add some conditions with timers to player 1
+        battle_state.players[0].add_condition(PokemonCondition::Confused { turns_remaining: 3 });
+        battle_state.players[0].add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
+        battle_state.players[0].add_condition(PokemonCondition::Flinched); // Should expire after 1 turn
 
-        // Check remaining conditions with actual values
-        assert!(!player.has_condition_type(PokemonConditionType::Flinched));
+        // First tick - simulate end of turn condition processing
+        let commands = vec![
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Confused { turns_remaining: 3 },
+            },
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Trapped { turns_remaining: 2 },
+            },
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Flinched,
+            },
+            BattleCommand::ExpirePokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Flinched,
+            },
+        ];
 
-        // Check confused condition has 2 turns remaining
-        let confused_key = PokemonCondition::Confused { turns_remaining: 2 };
-        match player.get_condition(&confused_key) {
-            Some(condition) => {
-                if let PokemonCondition::Confused { turns_remaining } = condition {
-                    assert_eq!(*turns_remaining, 2);
-                } else {
-                    panic!("Expected Confused condition, got: {:?}", condition);
-                }
-            }
-            None => {
-                println!(
-                    "Available conditions: {:?}",
-                    player.active_pokemon_conditions
-                );
-                panic!("Confused condition should exist with 2 turns remaining");
-            }
+        execute_command_batch(commands, &mut battle_state, &mut bus, &mut action_stack).unwrap();
+
+        // Check that Flinched expired
+        assert!(!battle_state.players[0].has_condition_type(PokemonConditionType::Flinched));
+
+        // Check confused condition has 2 turns remaining  
+        if let Some(PokemonCondition::Confused { turns_remaining }) =
+            battle_state.players[0].get_condition(&PokemonCondition::Confused { turns_remaining: 2 })
+        {
+            assert_eq!(*turns_remaining, 2);
+        } else {
+            panic!("Confused condition should exist with 2 turns remaining");
         }
 
         // Check trapped condition has 1 turn remaining
         if let Some(PokemonCondition::Trapped { turns_remaining }) =
-            player.get_condition(&PokemonCondition::Trapped { turns_remaining: 1 })
+            battle_state.players[0].get_condition(&PokemonCondition::Trapped { turns_remaining: 1 })
         {
             assert_eq!(*turns_remaining, 1);
         } else {
             panic!("Trapped condition should exist with 1 turn remaining");
         }
 
-        // Second tick - Trapped goes 1->0 but doesn't expire yet
-        let expired = player.tick_active_conditions();
-        assert_eq!(expired.len(), 0); // No conditions expire this tick
+        // Second tick - no conditions expire this tick
+        let commands = vec![
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Confused { turns_remaining: 2 },
+            },
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Trapped { turns_remaining: 1 },
+            },
+        ];
+
+        execute_command_batch(commands, &mut battle_state, &mut bus, &mut action_stack).unwrap();
 
         // Check confused condition now has 1 turn remaining
         if let Some(PokemonCondition::Confused { turns_remaining }) =
-            player.get_condition(&PokemonCondition::Confused { turns_remaining: 1 })
+            battle_state.players[0].get_condition(&PokemonCondition::Confused { turns_remaining: 1 })
         {
             assert_eq!(*turns_remaining, 1);
         } else {
@@ -235,7 +267,7 @@ mod tests {
 
         // Check trapped condition now has 0 turns remaining (but still active)
         if let Some(PokemonCondition::Trapped { turns_remaining }) =
-            player.get_condition(&PokemonCondition::Trapped { turns_remaining: 0 })
+            battle_state.players[0].get_condition(&PokemonCondition::Trapped { turns_remaining: 0 })
         {
             assert_eq!(*turns_remaining, 0);
         } else {
@@ -243,13 +275,29 @@ mod tests {
         }
 
         // Third tick - Trapped should expire (0 -> gone), Confused goes 1->0
-        let expired = player.tick_active_conditions();
-        assert_eq!(expired.len(), 1); // Trapped should expire
-        assert!(expired.contains(&PokemonCondition::Trapped { turns_remaining: 0 }));
+        let commands = vec![
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Confused { turns_remaining: 1 },
+            },
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Trapped { turns_remaining: 0 },
+            },
+            BattleCommand::ExpirePokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Trapped { turns_remaining: 0 },
+            },
+        ];
+
+        execute_command_batch(commands, &mut battle_state, &mut bus, &mut action_stack).unwrap();
+
+        // Check that Trapped is gone
+        assert!(!battle_state.players[0].has_condition_type(PokemonConditionType::Trapped));
 
         // Check confused condition now has 0 turns remaining (but still active)
         if let Some(PokemonCondition::Confused { turns_remaining }) =
-            player.get_condition(&PokemonCondition::Confused { turns_remaining: 0 })
+            battle_state.players[0].get_condition(&PokemonCondition::Confused { turns_remaining: 0 })
         {
             assert_eq!(*turns_remaining, 0);
         } else {
@@ -257,12 +305,21 @@ mod tests {
         }
 
         // Fourth tick - Confused should expire (0 -> gone)
-        let expired = player.tick_active_conditions();
-        assert_eq!(expired.len(), 1); // Confused should expire
-        assert!(expired.contains(&PokemonCondition::Confused { turns_remaining: 0 }));
+        let commands = vec![
+            BattleCommand::TickPokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Confused { turns_remaining: 0 },
+            },
+            BattleCommand::ExpirePokemonCondition {
+                target: PlayerTarget::Player1,
+                condition: PokemonCondition::Confused { turns_remaining: 0 },
+            },
+        ];
+
+        execute_command_batch(commands, &mut battle_state, &mut bus, &mut action_stack).unwrap();
 
         // Should have no active conditions now
-        assert_eq!(player.active_pokemon_conditions.len(), 0);
+        assert_eq!(battle_state.players[0].active_pokemon_conditions.len(), 0);
     }
 
     #[test]

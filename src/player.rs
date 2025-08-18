@@ -310,6 +310,7 @@ impl BattlePlayer {
     }
     
     /// Check if the active Pokemon has this exact condition (type AND data must match)
+    #[cfg(test)]
     pub fn has_condition(&self, condition: &PokemonCondition) -> bool {
         if let Some(existing_condition) = self.active_pokemon_conditions.get(&condition.get_type()) {
             existing_condition == condition
@@ -340,17 +341,13 @@ impl BattlePlayer {
         self.team_conditions.insert(condition, turns_remaining);
     }
 
-    /// Remove a team condition
-    pub fn remove_team_condition(&mut self, condition: &TeamCondition) -> Option<u8> {
-        self.team_conditions.remove(condition)
-    }
-
     /// Get turns remaining for a team condition
     #[cfg(test)]
     pub fn get_team_condition_turns(&self, condition: &TeamCondition) -> Option<u8> {
         self.team_conditions.get(condition).copied()
     }
 
+    #[cfg(test)]
     /// Decrement all team condition turns and remove expired ones
     pub fn tick_team_conditions(&mut self) -> Vec<TeamCondition> {
         let mut expired = Vec::new();
@@ -387,139 +384,6 @@ impl BattlePlayer {
         self.active_pokemon_conditions.clear();
         self.stat_stages.clear();
         self.last_move = None;
-    }
-
-    /// Update active Pokemon condition timers and return which conditions should be removed
-    /// Returns a vector of conditions that expired and should be removed
-    pub fn tick_active_conditions(&mut self) -> Vec<PokemonCondition> {
-        let mut expired_conditions = Vec::new();
-        let mut updated_conditions = Vec::new();
-
-        // Process each condition and check for expiration/updates
-        for (key, condition) in self.active_pokemon_conditions.iter() {
-            match condition {
-                // Conditions that expire after one turn (cleared at end-of-turn)
-                PokemonCondition::Flinched
-                | PokemonCondition::Teleported
-                | PokemonCondition::Countering { .. } => {
-                    expired_conditions.push(condition.clone());
-                }
-
-                // Multi-turn conditions with countdown timers
-                PokemonCondition::Confused { turns_remaining } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Confused {
-                                turns_remaining: turns_remaining - 1,
-                            },
-                        ));
-                    }
-                }
-
-                PokemonCondition::Exhausted { turns_remaining } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Exhausted {
-                                turns_remaining: turns_remaining - 1,
-                            },
-                        ));
-                    }
-                }
-
-                PokemonCondition::Trapped { turns_remaining } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Trapped {
-                                turns_remaining: turns_remaining - 1,
-                            },
-                        ));
-                    }
-                }
-
-                PokemonCondition::Disabled {
-                    pokemon_move,
-                    turns_remaining,
-                } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Disabled {
-                                pokemon_move: *pokemon_move,
-                                turns_remaining: turns_remaining - 1,
-                            },
-                        ));
-                    }
-                }
-
-                PokemonCondition::Rampaging { turns_remaining } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Rampaging {
-                                turns_remaining: turns_remaining - 1,
-                            },
-                        ));
-                    }
-                }
-
-                PokemonCondition::Biding {
-                    turns_remaining,
-                    damage,
-                } => {
-                    if *turns_remaining < 1 {
-                        expired_conditions.push(condition.clone());
-                    } else {
-                        updated_conditions.push((
-                            key.clone(),
-                            PokemonCondition::Biding {
-                                turns_remaining: turns_remaining - 1,
-                                damage: *damage,
-                            },
-                        ));
-                    }
-                }
-
-                // Conditions that persist until explicitly removed
-                PokemonCondition::Seeded
-                | PokemonCondition::Underground
-                | PokemonCondition::InAir
-                | PokemonCondition::Enraged
-                | PokemonCondition::Charging
-                | PokemonCondition::Transformed { .. }
-                | PokemonCondition::Converted { .. }
-                | PokemonCondition::Substitute { .. } => {
-                    // These don't have automatic expiration timers
-                    // They're removed by specific game events
-                }
-            }
-        }
-
-        // Remove expired conditions
-        for condition in &expired_conditions {
-            self.active_pokemon_conditions.remove(&condition.get_type());
-        }
-
-        // Update conditions with decremented counters
-        for (old_key, updated_condition) in updated_conditions {
-            self.active_pokemon_conditions.remove(&old_key);
-            self.active_pokemon_conditions
-                .insert(updated_condition.get_type(), updated_condition);
-        }
-
-        expired_conditions
     }
 
     /// Get current ante amount

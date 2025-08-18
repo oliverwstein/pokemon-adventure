@@ -582,8 +582,9 @@ impl PokemonInst {
     /// Returns the amount of damage that would be dealt by status conditions.
     pub fn calculate_status_damage(&self) -> u16 {
         let max_hp = self.max_hp();
+        let current_hp = self.current_hp();
 
-        match &self.status {
+        let theoretical_damage = match &self.status {
             Some(StatusCondition::Poison(severity)) => {
                 if *severity == 0 {
                     (max_hp / 16).max(1) // Regular poison: 1/16 max HP
@@ -593,6 +594,9 @@ impl PokemonInst {
             }
             Some(StatusCondition::Burn) => (max_hp / 8).max(1), // Burn: 1/8 max HP
             _ => 0,
-        }
+        };
+        
+        // Cap damage to current HP to get actual damage that will be dealt
+        theoretical_damage.min(current_hp)
     }
 }

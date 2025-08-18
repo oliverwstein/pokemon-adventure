@@ -247,7 +247,7 @@ fn calculate_move_damage(
     rng: &mut TurnRng,
     commands: &mut Vec<BattleCommand>,
 ) -> u16 {
-    if let Some(special_damage) = crate::battle::stats::calculate_special_attack_damage(
+    let theoretical_damage = if let Some(special_damage) = crate::battle::stats::calculate_special_attack_damage(
         move_used,
         attacker_pokemon,
         defender_pokemon,
@@ -280,7 +280,10 @@ fn calculate_move_damage(
             is_critical,
             rng,
         )
-    }
+    };
+    
+    // Cap damage to defender's current HP to get actual damage that will be dealt
+    theoretical_damage.min(defender_pokemon.current_hp())
 }
 
 /// Handle damage application, including substitute protection
@@ -422,7 +425,8 @@ pub fn calculate_condition_damage_commands(battle_state: &BattleState) -> Vec<Ba
 
             // Handle Trapped condition (1/16 max HP damage per turn)
             if has_trapped {
-                let condition_damage = (max_hp / 16).max(1); // 1/16 of max HP, minimum 1
+                let current_hp = pokemon.current_hp();
+                let condition_damage = (max_hp / 16).max(1).min(current_hp); // Cap to current HP
                 commands.push(BattleCommand::DealConditionDamage {
                     target: PlayerTarget::from_index(player_index),
                     condition: PokemonCondition::Trapped { turns_remaining: 1 }, 

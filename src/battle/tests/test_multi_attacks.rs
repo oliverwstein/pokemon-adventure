@@ -27,7 +27,7 @@ mod tests {
         let attacker = TestPokemonBuilder::new(Species::Meowth, 10)
             .with_moves(vec![Move::FurySwipes])
             .build();
-        let defender = TestPokemonBuilder::new(Species::Pidgey, 10)
+        let defender = TestPokemonBuilder::new(Species::Onix, 10)
             .with_moves(vec![Move::Tackle])
             .with_hp(100) // Ensure it can survive multiple hits
             .build();

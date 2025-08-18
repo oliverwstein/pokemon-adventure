@@ -90,7 +90,7 @@ mod tests {
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
         
         // This specific RNG seed will cause Metronome to select Tackle.
-        let test_rng = TurnRng::new_for_test(vec![14, 50, 50, 50, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 14, 50, 50, 50, 50]);
 
         // Act
         let event_bus = resolve_turn(&mut battle_state, test_rng);

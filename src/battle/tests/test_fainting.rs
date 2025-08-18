@@ -51,7 +51,7 @@ mod tests {
     #[test]
     fn test_healing_and_revival_unit() {
         // Arrange
-        let mut pokemon = TestPokemonBuilder::new(Species::Pikachu, 10).with_hp(50).build();
+        let mut pokemon = TestPokemonBuilder::new(Species::Pikachu, 50).with_hp(50).build(); // Level 50 for higher HP
 
         // Damage and Heal
         pokemon.take_damage(30);

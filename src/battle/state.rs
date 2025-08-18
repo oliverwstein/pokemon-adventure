@@ -147,6 +147,7 @@ pub enum BattleEvent {
 }
 
 impl BattleEvent {
+    #[allow(dead_code)]
     /// Formats the event into a human-readable string using battle context.
     /// Returns None for silent events that should not produce user-visible text.
     pub fn format(&self, battle_state: &BattleState) -> Option<String> {
@@ -622,6 +623,7 @@ impl EventBus {
         &self.events
     }
 
+    #[allow(dead_code)]
     /// Print all events in debug format with indentation.
     /// This replaces the common pattern of manually iterating and printing events.
     pub fn print_debug(&self) {
@@ -630,12 +632,14 @@ impl EventBus {
         }
     }
 
+    #[allow(dead_code)]
     /// Print all events in debug format with a custom prefix message.
     pub fn print_debug_with_message(&self, message: &str) {
         println!("{}", message);
         self.print_debug();
     }
 
+    #[allow(dead_code)]
     /// Print all events using their formatted text (when available) along with battle context.
     /// Falls back to debug format for silent events.
     pub fn print_formatted(&self, battle_state: &BattleState) {
@@ -647,17 +651,20 @@ impl EventBus {
         }
     }
 
+    #[allow(dead_code)]
     /// Print all events using their formatted text with a custom prefix message.
     pub fn print_formatted_with_message(&self, message: &str, battle_state: &BattleState) {
         println!("{}", message);
         self.print_formatted(battle_state);
     }
 
+    #[allow(dead_code)]
     /// Return true if the event bus contains no events.
     pub fn is_empty(&self) -> bool {
         self.events.is_empty()
     }
 
+    #[allow(dead_code)]
     /// Return the number of events in the bus.
     pub fn len(&self) -> usize {
         self.events.len()

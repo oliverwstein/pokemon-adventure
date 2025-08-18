@@ -615,12 +615,6 @@ pub fn calculate_action_prevention(
                 let roll = rng.next_outcome("Defrost Check"); // 0-100
                 if roll < 25 {
                     // Pokemon thaws out
-                    if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonStatusRemoved {
-                            target: pokemon.species,
-                            status: crate::pokemon::StatusCondition::Freeze,
-                        }));
-                    }
                     commands.push(BattleCommand::SetPokemonStatus {
                         target: PlayerTarget::from_index(player_index),
                         status: None,

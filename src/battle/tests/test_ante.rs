@@ -1,270 +1,130 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::resolve_turn;
+    use crate::battle::state::{BattleEvent, TurnRng};
+    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::player::PlayerAction;
     use crate::species::Species;
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
-    fn create_test_pokemon_with_level(
-        species: Species,
-        level: u8,
-        moves: Vec<Move>,
-    ) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
+    #[rstest]
+    #[case("level 25", 25)]
+    #[case("level 10", 10)]
+    fn test_pay_day_increases_ante_based_on_level(#[case] desc: &str, #[case] attacker_level: u8) {
+        // Arrange
+        let attacker = TestPokemonBuilder::new(Species::Alakazam, attacker_level)
+            .with_moves(vec![Move::PayDay])
+            .build();
+        let defender = TestPokemonBuilder::new(Species::Machamp, 30)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(attacker, defender);
 
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            level,
-            0,                         // curr_exp
-            0,                         // Will be set below
-            [15; 6],                   // ivs
-            [0; 6],                    // evs
-            [100, 80, 80, 80, 80, 80], // curr_stats
-            pokemon_moves,
-            None, // status
-        );
-        pokemon.set_hp_to_max();
-        pokemon
-    }
-
-    #[test]
-    fn test_ante_effect_increases_opponent_ante() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Alakazam,
-                25,
-                vec![Move::PayDay],
-            )], // Level 25 Pokemon with Pay Day
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Machamp,
-                30,
-                vec![Move::Splash],
-            )],
-        );
-
-        // Initially no ante
-        assert_eq!(player1.get_ante(), 0);
-        assert_eq!(player2.get_ante(), 0);
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Pay Day (should increase Player 2's ante), Player 2 uses Splash
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pay Day
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
 
-        // Use RNG that will activate Pay Day's Ante effect (assuming 100% chance for Pay Day)
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print events for debugging
-        event_bus.print_debug_with_message("Ante effect test events:");
-
-        // Player 2's ante should be increased by 2x Player 1's level (25 * 2 = 50)
-        let expected_ante = 25u32 * 2;
+        // Assert
+        event_bus.print_debug_with_message(&format!("Events for test_pay_day_increases_ante_based_on_level [{}]:", desc));
+        
+        let expected_ante = attacker_level as u32 * 2;
         assert_eq!(
             battle_state.players[1].get_ante(),
             expected_ante,
-            "Player 2's ante should be increased by 2x attacker's level"
+            "Player 2's ante should be 2x the attacker's level"
         );
-
-        // Player 1's ante should remain 0
         assert_eq!(
             battle_state.players[0].get_ante(),
             0,
             "Player 1's ante should remain unchanged"
         );
 
-        // Should have AnteIncreased event
-        let ante_events: Vec<_> = event_bus
+        // Find and verify the specific event
+        let ante_event = event_bus
             .events()
             .iter()
-            .filter(|event| matches!(event, BattleEvent::AnteIncreased { .. }))
-            .collect();
-        assert!(!ante_events.is_empty(), "Should have AnteIncreased event");
+            .find_map(|event| match event {
+                BattleEvent::AnteIncreased { player_index, amount, new_total } => {
+                    Some((*player_index, *amount, *new_total))
+                }
+                _ => None,
+            });
 
-        // Check event details
-        if let BattleEvent::AnteIncreased {
-            player_index,
-            amount,
-            new_total,
-        } = &ante_events[0]
-        {
-            assert_eq!(*player_index, 1, "Should target player 2");
-            assert_eq!(
-                *amount, expected_ante,
-                "Amount should be 2x attacker's level"
-            );
-            assert_eq!(
-                *new_total, expected_ante,
-                "New total should match expected ante"
-            );
-        }
+        assert!(ante_event.is_some(), "Should have emitted an AnteIncreased event");
+        let (player_index, amount, new_total) = ante_event.unwrap();
+        assert_eq!(player_index, 1);
+        assert_eq!(amount, expected_ante);
+        assert_eq!(new_total, expected_ante);
     }
 
     #[test]
-    fn test_ante_effect_with_different_levels() {
-        // Test that different Pokemon levels produce different ante amounts
-         // Test with level 10 Pokemon
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Alakazam,
-                10,
-                vec![Move::PayDay],
-            )],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Machamp,
-                50,
-                vec![Move::Splash],
-            )],
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+    fn test_pay_day_activates_at_100_percent_chance() {
+        // Arrange: This test confirms that Pay Day's effect, which has a 100% activation
+        // chance in its data file, will always trigger, even on the highest possible RNG roll.
+        let attacker = TestPokemonBuilder::new(Species::Alakazam, 20)
+            .with_moves(vec![Move::PayDay])
+            .build();
+        let defender = TestPokemonBuilder::new(Species::Machamp, 30)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(attacker, defender);
 
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pay Day
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        
+        // Use an RNG roll of 100. For an effect with `chance: 100`, this should still succeed.
+        let test_rng = TurnRng::new_for_test(vec![100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng);
-
-        // Should be 10 * 2 = 20 ante
-        let expected_ante = 10u32 * 2;
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        
+        // Assert
+        event_bus.print_debug_with_message("Events for test_pay_day_activates_at_100_percent_chance:");
+        let expected_ante = 20u32 * 2;
         assert_eq!(
             battle_state.players[1].get_ante(),
             expected_ante,
-            "Ante should be 2x level 10 = 20"
+            "Pay Day with 100% chance should activate even with an RNG roll of 100"
         );
-    }
-
-    #[test]
-    fn test_ante_effect_chance_based() {
-        // Test that Ante effect only triggers based on chance
-         let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Alakazam,
-                20,
-                vec![Move::PayDay],
-            )],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Machamp,
-                30,
-                vec![Move::Splash],
-            )],
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pay Day
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        // Use RNG that will cause the effect to miss (assuming Pay Day has <100% chance)
-        // Use a high roll that would exceed most reasonable chance percentages
-        let test_rng = TurnRng::new_for_test(vec![99, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // If Pay Day has less than 99% chance, ante should remain 0
-        // This test validates the chance-based nature rather than specific values
-        // since we don't know the exact chance percentage for Pay Day
-        let ante_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::AnteIncreased { .. }))
-            .collect();
-
-        // The test outcome depends on Pay Day's actual chance percentage in the data files
-        println!(
-            "Player 2 final ante: {}",
-            battle_state.players[1].get_ante()
-        );
-        println!("AnteIncreased events: {}", ante_events.len());
     }
 
     #[test]
     fn test_ante_accumulation() {
-        // Test that ante accumulates across multiple uses
-         let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Alakazam,
-                15,
-                vec![Move::PayDay],
-            )],
+        // Arrange
+        let attacker = TestPokemonBuilder::new(Species::Alakazam, 15)
+            .with_moves(vec![Move::PayDay])
+            .build();
+        let defender = TestPokemonBuilder::new(Species::Machamp, 25)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(attacker, defender);
+        
+        let expected_per_use = 15u32 * 2;
+
+        // Act - Turn 1
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+        let bus1 = resolve_turn(&mut battle_state, predictable_rng());
+        
+        // Assert - Turn 1
+        bus1.print_debug_with_message("Events for test_ante_accumulation (Turn 1):");
+        assert_eq!(battle_state.players[1].get_ante(), expected_per_use);
+        
+        // Act - Turn 2
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+        let bus2 = resolve_turn(&mut battle_state, predictable_rng());
+        
+        // Assert - Turn 2
+        bus2.print_debug_with_message("Events for test_ante_accumulation (Turn 2):");
+        assert_eq!(
+            battle_state.players[1].get_ante(),
+            expected_per_use * 2,
+            "Ante should accumulate across multiple turns"
         );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon_with_level(
-                Species::Machamp,
-                25,
-                vec![Move::Splash],
-            )],
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Turn 1: First Pay Day
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pay Day
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng1 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng1);
-
-        let first_ante = battle_state.players[1].get_ante();
-        let expected_per_use = 15u32 * 2; // Level 15 * 2
-
-        // Turn 2: Second Pay Day
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Pay Day
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng2);
-
-        let second_ante = battle_state.players[1].get_ante();
-
-        // If both Pay Day uses succeeded, ante should have accumulated
-        // This test helps verify that the add_ante method works correctly
-        if first_ante == expected_per_use {
-            // First use succeeded, check if second use also succeeded
-            assert!(second_ante >= first_ante, "Ante should not decrease");
-            if second_ante > first_ante {
-                assert_eq!(
-                    second_ante,
-                    first_ante + expected_per_use,
-                    "Ante should accumulate correctly"
-                );
-            }
-        }
-
-        println!("Ante after first use: {}", first_ante);
-        println!("Ante after second use: {}", second_ante);
     }
 }

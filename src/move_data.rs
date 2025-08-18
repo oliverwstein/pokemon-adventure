@@ -533,17 +533,13 @@ impl MoveEffect {
 
         if rng.next_outcome("Apply Flinch Effect") <= chance {
             let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+            if let Some(_) = target_player.active_pokemon() {
                 let condition = PokemonCondition::Flinched;
 
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: target_pokemon.species,
-                    status: condition,
-                }));
             }
         }
 
@@ -565,7 +561,7 @@ impl MoveEffect {
 
         if rng.next_outcome("Apply Confuse Effect") <= chance {
             let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+            if let Some(_) = target_player.active_pokemon() {
                 // Confuse for 1-4 turns (random)
                 let confuse_turns = (rng.next_outcome("Generate Confusion Duration") % 4) + 1;
                 let condition = PokemonCondition::Confused {
@@ -576,10 +572,6 @@ impl MoveEffect {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: target_pokemon.species,
-                    status: condition,
-                }));
             }
         }
 
@@ -601,7 +593,7 @@ impl MoveEffect {
 
         if rng.next_outcome("Apply Trap Check") <= chance {
             let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+            if let Some(_) = target_player.active_pokemon() {
                 // Trap for 2-5 turns (random)
                 let trap_turns = (rng.next_outcome("Generate Trap Duration") % 4) + 2;
                 let condition = PokemonCondition::Trapped {
@@ -612,10 +604,6 @@ impl MoveEffect {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: target_pokemon.species,
-                    status: condition,
-                }));
             }
         }
 
@@ -636,17 +624,13 @@ impl MoveEffect {
 
         if rng.next_outcome("Apply Seeded Effect") <= chance {
             let target_player = &state.players[context.defender_index];
-            if let Some(target_pokemon) = target_player.active_pokemon() {
+            if let Some(_) = target_player.active_pokemon() {
                 let condition = PokemonCondition::Seeded;
 
                 commands.push(BattleCommand::AddCondition {
                     target: PlayerTarget::from_index(context.defender_index),
                     condition: condition.clone(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: target_pokemon.species,
-                    status: condition,
-                }));
             }
         }
 
@@ -668,7 +652,7 @@ impl MoveEffect {
 
         if rng.next_outcome("Apply Exhaust Check") <= chance {
             let attacker_player = &state.players[context.attacker_index];
-            if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+            if let Some(_) = attacker_player.active_pokemon() {
                 let condition = PokemonCondition::Exhausted {
                     turns_remaining: 2, // Decremented same turn, so start at 2
                 };
@@ -677,10 +661,6 @@ impl MoveEffect {
                     target: PlayerTarget::from_index(context.attacker_index),
                     condition: condition.clone(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::StatusApplied {
-                    target: attacker_pokemon.species,
-                    status: condition,
-                }));
             }
         }
 
@@ -819,18 +799,6 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.attacker_index),
                         amount: heal_amount,
                     });
-
-                    // Calculate new HP for event (capped at max)
-                    let new_hp = (current_hp + heal_amount).min(max_hp);
-                    let actual_heal = new_hp - current_hp;
-
-                    if actual_heal > 0 {
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
-                            target: attacker_pokemon.species,
-                            amount: actual_heal,
-                            new_hp,
-                        }));
-                    }
                 }
             }
         }
@@ -915,18 +883,10 @@ impl MoveEffect {
             };
 
             if should_cure {
-                let old_status = target_pokemon.status.clone().unwrap();
-
                 commands.push(BattleCommand::SetPokemonStatus {
                     target: PlayerTarget::from_index(target_index),
                     status: None,
                 });
-                commands.push(BattleCommand::EmitEvent(
-                    BattleEvent::PokemonStatusRemoved {
-                        target: target_pokemon.species,
-                        status: old_status,
-                    },
-                ));
             }
         }
 
@@ -979,6 +939,7 @@ impl MoveEffect {
                 });
 
                 // Command to emit the event
+                // TODO: The AddAnte BattleCommand should automatically emit this.
                 commands.push(BattleCommand::EmitEvent(BattleEvent::AnteIncreased {
                     player_index: context.defender_index,
                     amount: ante_amount,
@@ -1072,18 +1033,6 @@ impl MoveEffect {
                         target: PlayerTarget::from_index(context.attacker_index),
                         amount: heal_amount,
                     });
-
-                    // Calculate actual healing for event (capped at max)
-                    let new_hp = (current_hp + heal_amount).min(max_hp);
-                    let actual_heal = new_hp - current_hp;
-
-                    if actual_heal > 0 {
-                        commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
-                            target: attacker_pokemon.species,
-                            amount: actual_heal,
-                            new_hp,
-                        }));
-                    }
                 }
             }
         }
@@ -1655,11 +1604,6 @@ impl MoveEffect {
                     target: attacker_target,
                     amount: heal_amount,
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonHealed {
-                    target: pokemon_species,
-                    amount: heal_amount,
-                    new_hp: max_hp,
-                }));
             }
 
             // Apply Sleep status
@@ -1675,10 +1619,6 @@ impl MoveEffect {
                     target: attacker_target,
                     condition_type: condition.get_type(),
                 });
-                commands.push(BattleCommand::EmitEvent(BattleEvent::ConditionExpired {
-                    target: pokemon_species,
-                    condition: condition.clone(),
-                }));
             }
 
             return EffectResult::Skip(commands);

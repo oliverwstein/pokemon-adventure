@@ -155,12 +155,6 @@ impl PokemonCondition {
                         stat: StatType::Attack,
                         delta: 1,
                     });
-                    commands.push(BattleCommand::EmitEvent(BattleEvent::StatStageChanged {
-                        target: defender_pokemon_species,
-                        stat: StatType::Attack,
-                        old_stage: defender_stat_stage,
-                        new_stage,
-                    }));
                 }
             }
 

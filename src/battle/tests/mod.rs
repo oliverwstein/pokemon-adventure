@@ -1,3 +1,4 @@
+mod common;
 mod test_action_prevention;
 mod test_ante;
 mod test_condition_damage;

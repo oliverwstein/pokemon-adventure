@@ -178,11 +178,16 @@ impl BattleCommand {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                    vec![BattleEvent::PokemonHealed {
-                        target: pokemon.species,
-                        amount: *amount,
-                        new_hp: pokemon.current_hp(),
-                    }]
+                    if *amount > 0 {
+                        vec![BattleEvent::PokemonHealed {
+                            target: pokemon.species,
+                            amount: *amount,
+                            new_hp: pokemon.current_hp(),
+                        }]
+                    } else {
+                    vec![]
+                }
+                    
                 } else {
                     vec![]
                 }
@@ -599,7 +604,12 @@ fn execute_state_change(
         }
         BattleCommand::DealConditionDamage { target, condition: _, amount } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
-                pokemon.take_damage(*amount);
+                let actual_damage = pokemon.take_damage(*amount);
+                // Note: We don't emit events here as they're handled by emit_events()
+                // The fainted check will be handled by the DealDamage-style logic in emit_events()
+                if actual_damage {
+                    // Pokemon fainted from status damage - this is handled by the event system
+                }
                 Ok(())
             })
         }

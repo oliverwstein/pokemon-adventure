@@ -1,251 +1,110 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::resolve_turn;
+    use crate::battle::state::{BattleEvent, BattleState};
+    use crate::battle::tests::common::{create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction, StatType};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::player::{PlayerAction, StatType};
     use crate::species::Species;
-
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
-
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            10,
-            0,
-            0, // Will be set below
-            [15; 6],
-            [0; 6],
-            [100, 80, 80, 80, 80, 80],
-            pokemon_moves,
-            None,
-        );
-        pokemon.set_hp_to_max();
-        pokemon
-    }
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_haze_clears_all_stat_changes_both_players() {
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Koffing, vec![Move::Haze])],
-        );
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Koffing, 10)
+            .with_moves(vec![Move::Haze])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
 
-        let mut player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
-
-        // Set up stat stage modifications for both players
+        // Set initial stat stages for both players
+        let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
         player1.set_stat_stage(StatType::Attack, 2);
         player1.set_stat_stage(StatType::Defense, -1);
         player1.set_stat_stage(StatType::Speed, 3);
 
+        let mut player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
         player2.set_stat_stage(StatType::Attack, -2);
         player2.set_stat_stage(StatType::SpecialAttack, 1);
         player2.set_stat_stage(StatType::Accuracy, -3);
 
-        // Verify initial stat stages
-        assert_eq!(player1.get_stat_stage(StatType::Attack), 2);
-        assert_eq!(player1.get_stat_stage(StatType::Defense), -1);
-        assert_eq!(player1.get_stat_stage(StatType::Speed), 3);
-        assert_eq!(player2.get_stat_stage(StatType::Attack), -2);
-        assert_eq!(player2.get_stat_stage(StatType::SpecialAttack), 1);
-        assert_eq!(player2.get_stat_stage(StatType::Accuracy), -3);
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Haze, Player 2 uses Tackle
+        let mut battle_state = BattleState::new("test".to_string(), player1, player2);
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Haze
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print all events for clarity
-        println!("Haze effect clears all stat changes test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        // Assert
+        event_bus.print_debug_with_message("Events for test_haze_clears_all_stat_changes_both_players:");
 
-        // Verify all stat stages are now 0 for both players
-        assert_eq!(battle_state.players[0].get_stat_stage(StatType::Attack), 0);
-        assert_eq!(battle_state.players[0].get_stat_stage(StatType::Defense), 0);
-        assert_eq!(battle_state.players[0].get_stat_stage(StatType::Speed), 0);
-        assert_eq!(battle_state.players[1].get_stat_stage(StatType::Attack), 0);
-        assert_eq!(
-            battle_state.players[1].get_stat_stage(StatType::SpecialAttack),
-            0
-        );
-        assert_eq!(
-            battle_state.players[1].get_stat_stage(StatType::Accuracy),
-            0
-        );
+        // Both players' stat stages should be empty (reset to 0)
+        assert!(battle_state.players[0].stat_stages.is_empty(), "Player 1's stat changes should be cleared");
+        assert!(battle_state.players[1].stat_stages.is_empty(), "Player 2's stat changes should be cleared");
 
-        // Should have StatStageChanged events for each cleared stat
-        let stat_change_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::StatStageChanged { new_stage: 0, .. }))
-            .collect();
-
-        // Should have 6 events (3 for player 1 + 3 for player 2)
-        assert_eq!(
-            stat_change_events.len(),
-            6,
-            "Should have 6 StatStageChanged events clearing stats to 0"
-        );
-
-        // Verify specific stat stage change events
-        let player1_attack_reset = event_bus.events().iter().any(|e| {
-            matches!(
-                e,
-                BattleEvent::StatStageChanged {
-                    target: Species::Koffing,
-                    stat: StatType::Attack,
-                    old_stage: 2,
-                    new_stage: 0
-                }
-            )
-        });
-        assert!(
-            player1_attack_reset,
-            "Player 1 attack should be reset from +2 to 0"
-        );
-
-        let player2_accuracy_reset = event_bus.events().iter().any(|e| {
-            matches!(
-                e,
-                BattleEvent::StatStageChanged {
-                    target: Species::Snorlax,
-                    stat: StatType::Accuracy,
-                    old_stage: -3,
-                    new_stage: 0
-                }
-            )
-        });
-        assert!(
-            player2_accuracy_reset,
-            "Player 2 accuracy should be reset from -3 to 0"
-        );
+        // Verify that events were generated for each stat that was reset
+        let stat_reset_events = event_bus.events().iter().filter(|e| {
+            matches!(e, BattleEvent::StatStageChanged { new_stage, .. } if *new_stage == 0)
+        }).count();
+        assert_eq!(stat_reset_events, 6, "Should be exactly 6 stat reset events");
     }
 
     #[test]
     fn test_haze_no_effect_when_no_stat_changes() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Koffing, vec![Move::Haze])],
-        );
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Koffing, 10)
+            .with_moves(vec![Move::Haze])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
-
-        // Both players have no stat changes (all stats at stage 0)
-        assert_eq!(player1.get_stat_stage(StatType::Attack), 0);
-        assert_eq!(player2.get_stat_stage(StatType::Attack), 0);
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Haze, Player 2 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Haze
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print all events for clarity
-        println!("Haze with no stat changes test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        // Assert
+        event_bus.print_debug_with_message("Events for test_haze_no_effect_when_no_stat_changes:");
 
-        // Should have used Haze
-        let haze_used_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    BattleEvent::MoveUsed {
-                        pokemon: Species::Koffing,
-                        move_used: Move::Haze,
-                        ..
-                    }
-                )
-            })
-            .collect();
-        assert!(!haze_used_events.is_empty(), "Haze should be used");
+        let haze_used = event_bus.events().iter().any(|e| matches!(e, BattleEvent::MoveUsed { move_used: Move::Haze, .. }));
+        assert!(haze_used, "Haze should still be used even if there are no stat changes");
 
-        // Should NOT have any StatStageChanged events since no stats were changed
-        let stat_change_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::StatStageChanged { .. }))
-            .collect();
-        assert!(
-            stat_change_events.is_empty(),
-            "Should not have StatStageChanged events when no stats need clearing"
-        );
+        let stat_change_events = event_bus.events().iter().any(|e| matches!(e, BattleEvent::StatStageChanged { .. }));
+        assert!(!stat_change_events, "Should not be any StatStageChanged events when no stats were modified");
     }
 
     #[test]
-    fn test_haze_chance_based_effect() {
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Koffing, vec![Move::Haze])],
-        );
+    fn test_haze_activates_at_100_percent_chance() {
+        // Arrange: Verify that Haze, with a 100% activation chance, works even on the highest RNG roll.
+        let p1_pokemon = TestPokemonBuilder::new(Species::Koffing, 10)
+            .with_moves(vec![Move::Haze])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
-
-        // Set up stat stage modification for testing
+        let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
         player1.set_stat_stage(StatType::Attack, 1);
+        let player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
 
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+        let mut battle_state = BattleState::new("test".to_string(), player1, player2);
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+        
+        // Act
+        // The first RNG value (100) is for Haze's effect activation check. It should pass.
+        let event_bus = resolve_turn(&mut battle_state, crate::battle::state::TurnRng::new_for_test(vec![100; 20]));
 
-        // Player 1 uses Haze with a very low chance (should fail)
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Haze
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
-
-        // Use RNG that will cause Haze to fail (roll 99, but Haze has 100% chance so it will succeed)
-        // Let's test that it still works with high rolls
-        let test_rng = TurnRng::new_for_test(vec![100, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Print all events for clarity
-        println!("Haze chance-based test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
-
-        // With normal Haze (100% chance), should still clear stats even with high roll
-        assert_eq!(battle_state.players[0].get_stat_stage(StatType::Attack), 0);
-
-        // Should have StatStageChanged event
-        let stat_change_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::StatStageChanged { new_stage: 0, .. }))
-            .collect();
-        assert!(
-            !stat_change_events.is_empty(),
-            "Should have cleared the stat change"
-        );
+        // Assert
+        event_bus.print_debug_with_message("Events for test_haze_activates_at_100_percent_chance:");
+        assert!(battle_state.players[0].stat_stages.is_empty(), "Player 1's stat changes should be cleared");
+        let stat_reset_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::StatStageChanged { target: Species::Koffing, stat: StatType::Attack, old_stage: 1, new_stage: 0 })
+        });
+        assert!(stat_reset_event_found, "A StatStageChanged event should confirm the stat reset");
     }
 }

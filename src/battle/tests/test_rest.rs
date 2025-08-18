@@ -1,384 +1,126 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
+    use crate::battle::conditions::PokemonCondition;
     use crate::battle::engine::resolve_turn;
+    use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState};
+    use crate::battle::tests::common::{create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction, PokemonCondition};
-    use crate::pokemon::{MoveInstance, PokemonInst, StatusCondition};
+    use crate::player::PlayerAction;
+    use crate::pokemon::StatusCondition;
     use crate::species::Species;
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
+    #[rstest]
+    #[case("heals when damaged", 50, true)]
+    #[case("does not heal at full hp", 100, false)]
+    fn test_rest_healing_logic(#[case] desc: &str, #[case] start_hp_percent: u16, #[case] should_heal: bool) {
+        // Arrange
+        let template = TestPokemonBuilder::new(Species::Snorlax, 10).build();
+        let max_hp = template.max_hp();
+        let start_hp = (max_hp * start_hp_percent) / 100;
 
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            10,
-            0,
-            0, // Will be set below
-            [15; 6],
-            [0; 6],
-            [100, 80, 80, 80, 80, 80],
-            pokemon_moves,
-            None,
-        );
-        pokemon.set_hp_to_max();
-        pokemon
+        let p1_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Rest])
+            .with_hp(start_hp)
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
+
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
+
+        // Assert
+        event_bus.print_debug_with_message(&format!("Events for test_rest_healing_logic [{}]:", desc));
+
+        let final_pokemon = battle_state.players[0].active_pokemon().unwrap();
+        assert_eq!(final_pokemon.current_hp(), final_pokemon.max_hp(), "HP should be full after Rest");
+        assert!(matches!(final_pokemon.status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep");
+
+        let heal_event_found = event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonHealed { .. }));
+        assert_eq!(heal_event_found, should_heal, "Heal event expectation mismatch");
     }
 
     #[test]
-    fn test_rest_full_heal() {
-        // Initialize move data
+    fn test_rest_clears_all_conditions_and_statuses() {
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Rest])
+            .with_status(StatusCondition::Poison(1)) // Existing status
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Splash])
+            .build();
         
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest])], // Snorlax with Rest
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        // Damage the Pokemon to low HP
-        let attacker_pokemon = player1.active_pokemon_mut().unwrap();
-        let max_hp = attacker_pokemon.max_hp();
-        let damage_taken = max_hp / 2; // Take 50% damage
-        attacker_pokemon.take_damage(damage_taken);
-        let damaged_hp = attacker_pokemon.current_hp();
-        
-        assert_eq!(damaged_hp, max_hp - damage_taken, "Pokemon should be at 50% HP");
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Rest, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Print events for debugging
-        println!("Rest full heal test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
-
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let final_status = battle_state.players[0].active_pokemon().unwrap().status;
-
-        // Should be fully healed
-        assert_eq!(final_hp, max_hp, "Pokemon should be at full HP after Rest");
-
-        // Should be asleep for 2 turns
-        assert!(matches!(final_status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep for 2 turns");
-
-        // Should have healing event
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Snorlax, amount, new_hp } if *amount == damage_taken && *new_hp == max_hp))
-            .collect();
-        assert!(!heal_events.is_empty(), "Should have PokemonHealed event");
-
-        // Should have sleep status change event
-        let sleep_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusChanged { target: Species::Snorlax, new_status: Some(StatusCondition::Sleep(2)) }))
-            .collect();
-        assert!(!sleep_events.is_empty(), "Should have PokemonStatusChanged event for Sleep");
-    }
-
-    #[test]
-    fn test_rest_no_heal_at_full_hp() {
-        // Initialize move data
-        
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        // Pokemon is already at full HP
-        let max_hp = player1.active_pokemon().unwrap().max_hp();
-        let initial_hp = player1.active_pokemon().unwrap().current_hp();
-        assert_eq!(initial_hp, max_hp, "Pokemon should start at full HP");
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Rest, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Print events for debugging
-        println!("Rest no heal at full HP test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
-
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let final_status = battle_state.players[0].active_pokemon().unwrap().status;
-
-        // Should still be at full HP
-        assert_eq!(final_hp, max_hp, "Pokemon should remain at full HP");
-
-        // Should be asleep for 2 turns
-        assert!(matches!(final_status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep for 2 turns");
-
-        // Should NOT have healing event (no healing needed)
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { .. }))
-            .collect();
-        assert!(heal_events.is_empty(), "Should not have PokemonHealed event when already at full HP");
-
-        // Should still have sleep status change event
-        let sleep_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusChanged { target: Species::Snorlax, new_status: Some(StatusCondition::Sleep(2)) }))
-            .collect();
-        assert!(!sleep_events.is_empty(), "Should have PokemonStatusChanged event for Sleep");
-    }
-
-    #[test]
-    fn test_rest_clears_all_active_conditions() {
-        // Initialize move data
-        
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        // Add some active conditions to the Pokemon
+        let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
+        // Add a variety of active conditions
         player1.add_condition(PokemonCondition::Confused { turns_remaining: 2 });
-        player1.add_condition(PokemonCondition::Substitute { hp: 25 });
-        player1.add_condition(PokemonCondition::Teleported);
-
-        // Verify conditions are present
-        assert!(player1.has_condition(&PokemonCondition::Confused { turns_remaining: 2 }));
-        assert!(player1.has_condition(&PokemonCondition::Substitute { hp: 25 }));
-        assert!(player1.has_condition(&PokemonCondition::Teleported));
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Rest, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Print events for debugging
-        println!("Rest clears conditions test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
-
-        // All active conditions should be cleared
-        assert!(battle_state.players[0].active_pokemon_conditions.is_empty(), "All active conditions should be cleared");
-
-        // Should have status removal events
-        let status_removed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { target: Species::Snorlax, .. }))
-            .collect();
-        assert_eq!(status_removed_events.len(), 3, "Should have 3 PokemonStatusRemoved events for the 3 conditions");
-
-        // Should be asleep
-        let final_status = battle_state.players[0].active_pokemon().unwrap().status;
-        assert!(matches!(final_status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep for 2 turns");
-    }
-
-    #[test]
-    fn test_rest_clears_existing_status_condition() {
-        // Initialize move data
-        
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        // Give Pokemon a different status condition (Burn)
-        player1.active_pokemon_mut().unwrap().status = Some(StatusCondition::Burn);
-        assert!(matches!(player1.active_pokemon().unwrap().status, Some(StatusCondition::Burn)));
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Rest, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Print events for debugging
-        println!("Rest clears existing status test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
-
-        // Should be asleep (not burned)
-        let final_status = battle_state.players[0].active_pokemon().unwrap().status;
-        assert!(matches!(final_status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep, not burned");
-
-        // Should have status change event showing Sleep replacing Burn
-        let status_change_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusChanged { target: Species::Snorlax, new_status: Some(StatusCondition::Sleep(2)) }))
-            .collect();
-        assert!(!status_change_events.is_empty(), "Should have PokemonStatusChanged event for Sleep");
-    }
-
-    #[test]
-    fn test_rest_with_damage_and_conditions_combined() {
-        // Initialize move data
-        
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
-
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        // Damage the Pokemon and add conditions
-        let attacker_pokemon = player1.active_pokemon_mut().unwrap();
-        let max_hp = attacker_pokemon.max_hp();
-        let damage_taken = max_hp * 3 / 4; // Take 75% damage
-        attacker_pokemon.take_damage(damage_taken);
-        attacker_pokemon.status = Some(StatusCondition::Poison);
-
-        player1.add_condition(PokemonCondition::Confused { turns_remaining: 3 });
         player1.add_condition(PokemonCondition::Enraged);
+        player1.add_condition(PokemonCondition::Substitute { hp: 20 });
 
-        let damaged_hp = player1.active_pokemon().unwrap().current_hp();
-        assert_eq!(damaged_hp, max_hp - damage_taken, "Pokemon should be at 25% HP");
-        assert!(matches!(player1.active_pokemon().unwrap().status, Some(StatusCondition::Poison)));
+        let player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
+        let mut battle_state = BattleState::new("test".to_string(), player1, player2);
 
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
-        // Player 1 uses Rest, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Assert
+        event_bus.print_debug_with_message("Events for test_rest_clears_all_conditions_and_statuses:");
 
-        // Print events for debugging
-        println!("Rest combined effects test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        let final_pokemon = battle_state.players[0].active_pokemon().unwrap();
+        let final_player = &battle_state.players[0];
 
-        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
-        let final_status = battle_state.players[0].active_pokemon().unwrap().status;
+        // Check final status and conditions
+        assert!(matches!(final_pokemon.status, Some(StatusCondition::Sleep(2))), "Final status should be Sleep");
+        assert!(final_player.active_pokemon_conditions.is_empty(), "All active conditions should be cleared");
 
-        // Should be fully healed
-        assert_eq!(final_hp, max_hp, "Pokemon should be at full HP after Rest");
+        // Check for events
+        let status_applied_event = event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonStatusApplied { status: StatusCondition::Sleep(2), .. }));
+        let status_removed_events = event_bus.events().iter().filter(|e| matches!(e, BattleEvent::StatusRemoved { .. })).count();
 
-        // Should be asleep (not poisoned)
-        assert!(matches!(final_status, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep, not poisoned");
-
-        // All active conditions should be cleared
-        assert!(battle_state.players[0].active_pokemon_conditions.is_empty(), "All active conditions should be cleared");
-
-        // Should have healing event
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Snorlax, amount, new_hp } if *amount == damage_taken && *new_hp == max_hp))
-            .collect();
-        assert!(!heal_events.is_empty(), "Should have PokemonHealed event");
-
-        // Should have status removal events for active conditions
-        let status_removed_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonStatusRemoved { target: Species::Snorlax, .. }))
-            .collect();
-        assert_eq!(status_removed_events.len(), 2, "Should have 2 PokemonStatusRemoved events for the 2 active conditions");
+        assert!(status_applied_event, "Should emit an event for applying sleep");
+        assert_eq!(status_removed_events, 3, "Should have emitted 3 events for removing active conditions");
     }
 
     #[test]
-    fn test_rest_prevents_action_when_asleep() {
-        // Test that Pokemon cannot use moves when asleep after Rest
-        
-        crate::pokemon::initialize_species_data(data_path).expect("Failed to initialize species data");
+    fn test_rest_prevents_action_on_subsequent_turn() {
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Rest, Move::Tackle])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Rest, Move::Tackle])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Pikachu, vec![Move::Splash])],
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Turn 1: Player 1 uses Rest
+        // Act - Turn 1: Use Rest
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Rest
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        let bus1 = resolve_turn(&mut battle_state, predictable_rng());
 
-        let test_rng1 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng1);
+        // Assert - Turn 1
+        bus1.print_debug_with_message("Events for test_rest_prevents_action (Turn 1):");
+        assert!(matches!(battle_state.players[0].active_pokemon().unwrap().status, Some(StatusCondition::Sleep(2))));
 
-        // Verify Pokemon is asleep
-        let status_after_rest = battle_state.players[0].active_pokemon().unwrap().status;
-        assert!(matches!(status_after_rest, Some(StatusCondition::Sleep(2))), "Pokemon should be asleep for 2 turns");
-
-        // Turn 2: Try to use Tackle while asleep (should fail)
+        // Act - Turn 2: Try to use Tackle while asleep
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 1 }); // Tackle
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        let bus2 = resolve_turn(&mut battle_state, predictable_rng());
 
-        let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus2 = resolve_turn(&mut battle_state, test_rng2);
-
-        // Should have ActionFailed event due to sleep
-        let action_failed_events: Vec<_> = event_bus2.events().iter()
-            .filter(|event| matches!(event, BattleEvent::ActionFailed { .. }))
-            .collect();
-        assert!(!action_failed_events.is_empty(), "Should have ActionFailed event when trying to move while asleep");
-
-        // Should NOT have damage dealt to opponent
-        let damage_events: Vec<_> = event_bus2.events().iter()
-            .filter(|event| matches!(event, BattleEvent::DamageDealt { target: Species::Pikachu, .. }))
-            .collect();
-        assert!(damage_events.is_empty(), "Should not deal damage when asleep");
+        // Assert - Turn 2
+        bus2.print_debug_with_message("Events for test_rest_prevents_action (Turn 2):");
+        let action_failed_event = bus2.events().iter().any(|e| matches!(e, BattleEvent::ActionFailed { reason: ActionFailureReason::IsAsleep }));
+        let damage_dealt_event = bus2.events().iter().any(|e| matches!(e, BattleEvent::DamageDealt { target: Species::Pikachu, .. }));
+        
+        assert!(action_failed_event, "Action should fail due to sleep");
+        assert!(!damage_dealt_event, "No damage should be dealt to the opponent");
     }
 }

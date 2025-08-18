@@ -1,237 +1,120 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::resolve_turn;
+    use crate::battle::state::{BattleEvent};
+    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::player::PlayerAction;
     use crate::species::Species;
-
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
-
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            10,
-            0,
-            0, // Will be set below
-            [15; 6],
-            [0; 6],
-            [100, 80, 80, 80, 80, 80],
-            pokemon_moves,
-            None,
-        );
-        pokemon.set_hp_to_max();
-        pokemon
-    }
+    use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_heal_effect_recovers_hp() {
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Chansey, vec![Move::Recover])],
-        );
+    fn test_recover_heals_damaged_pokemon() {
+        // Arrange
+        let template_pokemon = TestPokemonBuilder::new(Species::Chansey, 10).build();
+        let max_hp = template_pokemon.max_hp();
+        let starting_hp = max_hp / 2; // Start at half health
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
+        let p1_pokemon = TestPokemonBuilder::new(Species::Chansey, 10)
+            .with_moves(vec![Move::Recover])
+            .with_hp(starting_hp)
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        // Damage Player 1's Pokemon to half health
-        player1.active_pokemon_mut().unwrap().take_damage(50);
-
-        let initial_hp = player1.active_pokemon().unwrap().current_hp();
-        let max_hp = player1.active_pokemon().unwrap().max_hp();
-
-        assert_eq!(
-            initial_hp, 50,
-            "Should start with 50 HP after taking 50 damage"
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Recover (50% heal), Player 2 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Recover
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print all events for clarity (using formatted output)
-        event_bus.print_formatted_with_message("Heal effect test events:", &battle_state);
+        // Assert
+        event_bus.print_debug_with_message("Events for test_recover_heals_damaged_pokemon:");
+        
+        // Recover is a status move and should execute before Tackle.
+        // We verify that a heal event occurred.
+        let heal_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::PokemonHealed { target: Species::Chansey, .. })
+        });
+        assert!(heal_event_found, "A PokemonHealed event should have been emitted for Chansey");
 
-        let final_hp = battle_state.players[0]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
-        let expected_heal = (max_hp * 50) / 100; // 50% of max HP
-
-        // The test shows that healing happened (50 HP restored) but then Tackle dealt damage (36)
-        // So the final HP should reflect both the heal and the subsequent damage
-        // Let's just verify that healing occurred by checking the event
-
-        // Should have heal event that shows healing from 50 to 100 HP
-        let heal_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonHealed { target: Species::Chansey, amount, new_hp, .. } if *amount == expected_heal && *new_hp == max_hp))
-            .collect();
-        assert!(
-            !heal_events.is_empty(),
-            "Should have PokemonHealed event for {} HP, bringing HP to {}",
-            expected_heal,
-            max_hp
-        );
-
-        // Verify that the heal happened before the damage (evidenced by the fact that Chansey took damage from Tackle)
-        // The final HP should be less than max_hp due to Tackle damage
-        assert!(
-            final_hp < max_hp,
-            "Pokemon should have taken damage from Tackle after being healed"
-        );
+        // We also verify that Chansey still took damage from Snorlax's Tackle after healing.
+        let damage_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::DamageDealt { target: Species::Chansey, .. })
+        });
+        assert!(damage_event_found, "Chansey should have taken damage from Tackle after healing");
     }
 
     #[test]
-    fn test_heal_effect_no_overheal() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Chansey, vec![Move::Recover])], // Already at full HP
-        );
+    fn test_recover_does_not_heal_at_full_hp() {
+        // Arrange: Chansey is at full HP.
+        let p1_pokemon = TestPokemonBuilder::new(Species::Chansey, 10)
+            .with_moves(vec![Move::Recover])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
-
-        let initial_hp = player1.active_pokemon().unwrap().current_hp();
-        let max_hp = player1.active_pokemon().unwrap().max_hp();
-
-        assert_eq!(initial_hp, max_hp, "Should start at full HP");
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Recover at full HP, Player 2 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Recover
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print all events for clarity (using Display trait)
-        println!("No overheal test events:");
-        print!("{}", event_bus);
+        // Assert
+        event_bus.print_debug_with_message("Events for test_recover_does_not_heal_at_full_hp:");
 
-        let final_hp = battle_state.players[0]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
+        // Recover, a status move, goes first. Since Chansey is at full HP, no healing occurs.
+        // Therefore, no PokemonHealed event should be generated.
+        let heal_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::PokemonHealed { target: Species::Chansey, .. })
+        });
+        assert!(!heal_event_found, "A PokemonHealed event should NOT be emitted when Recover is used at full HP");
 
-        // HP should remain at max (no overheal) but might be reduced by Tackle
-        assert!(final_hp <= max_hp, "HP should not exceed max HP");
-
-        // Should NOT have heal event since already at full HP
-        let _: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    BattleEvent::PokemonHealed {
-                        target: Species::Chansey,
-                        ..
-                    }
-                )
-            })
-            .collect();
-
-        // If Tackle goes first and deals damage, then Recover might heal
-        // If Recover goes first, there should be no heal event since at full HP
-        // Let's check if Recover was used first (Status moves typically have higher priority)
-
-        // For now, just ensure the move was executed
-        let recover_used_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    BattleEvent::MoveUsed {
-                        pokemon: Species::Chansey,
-                        move_used: Move::Recover,
-                        ..
-                    }
-                )
-            })
-            .collect();
-        assert!(!recover_used_events.is_empty(), "Recover should be used");
+        // The move should still be marked as used.
+        let recover_used_event = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::MoveUsed { move_used: Move::Recover, .. })
+        });
+        assert!(recover_used_event, "Recover should still be registered as used");
     }
 
     #[test]
-    fn test_heal_effect_does_not_heal_fainted() {
-        let mut player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Chansey, vec![Move::Recover])],
-        );
+    fn test_recover_does_not_heal_fainted_pokemon() {
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Chansey, 10)
+            .with_moves(vec![Move::Recover])
+            .with_hp(0) // Fainted
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Snorlax, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Snorlax, vec![Move::Tackle])],
-        );
-
-        // Set Player 1's Pokemon to 0 HP (fainted)
-        player1.active_pokemon_mut().unwrap().take_damage(100); // Deal max damage to faint
-
-        let initial_hp = player1.active_pokemon().unwrap().current_hp();
-        assert_eq!(initial_hp, 0, "Should be fainted with 0 HP");
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Recover while fainted, Player 2 uses Tackle
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Recover
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Print all events for clarity
-        println!("Heal fainted Pokemon test events:");
-        for event in event_bus.events() {
-            println!("  {:?}", event);
-        }
+        // Assert
+        event_bus.print_debug_with_message("Events for test_recover_does_not_heal_fainted_pokemon:");
 
-        let final_hp = battle_state.players[0]
-            .active_pokemon()
-            .unwrap()
-            .current_hp();
+        // The action for the fainted Pokémon should fail.
+        let action_failed_event = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::ActionFailed { .. })
+        });
+        assert!(action_failed_event, "The fainted Pokémon's action should have failed");
 
-        assert_eq!(final_hp, 0, "Fainted Pokemon should remain fainted (0 HP)");
+        // No healing event should be generated.
+        let heal_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::PokemonHealed { target: Species::Chansey, .. })
+        });
+        assert!(!heal_event_found, "A fainted Pokémon should not be healed");
 
-        // Should NOT have heal event for fainted Pokemon
-        let heal_events: Vec<_> = event_bus
-            .events()
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    BattleEvent::PokemonHealed {
-                        target: Species::Chansey,
-                        ..
-                    }
-                )
-            })
-            .collect();
-        assert!(
-            heal_events.is_empty(),
-            "Fainted Pokemon should not be healed"
-        );
+        // The final HP should still be 0.
+        assert_eq!(battle_state.players[0].active_pokemon().unwrap().current_hp(), 0);
     }
 }

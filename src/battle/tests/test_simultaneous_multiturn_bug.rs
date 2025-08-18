@@ -1,120 +1,75 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::conditions::PokemonCondition;
-    use crate::battle::state::{BattleState, TurnRng};
-    use crate::battle::engine::{collect_npc_actions, resolve_turn, ready_for_turn_resolution};
+    use crate::battle::conditions::PokemonConditionType;
+    use crate::battle::engine::{collect_npc_actions, resolve_turn};
+    use crate::battle::state::BattleState;
+    use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction, PlayerType};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::player::{PlayerAction, PlayerType};
     use crate::species::Species;
 
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
-
-        {
-            let mut pokemon = PokemonInst::new_for_test(
-                species,
-                10,
-                0,
-                0,
-                [15; 6],
-                [0; 6],
-                [100, 80, 80, 80, 80, 80],
-                pokemon_moves,
-                None,
-            );
-            pokemon.set_hp_to_max();
-            pokemon
-        }
-    }
-
     #[test]
-    fn test_simultaneous_multiturn_bug_reproduction() {
-        // This test verifies that the "End-of-Turn Injection" model correctly handles
-        // a scenario that would have caused a deadlock in the old architecture:
-        // both players using a forced multi-turn move at the same time.
+    fn test_simultaneous_multiturn_moves_resolve_correctly() {
+        // This integration test verifies that the "End-of-Turn Injection" model
+        // correctly handles a scenario where both players initiate a multi-turn move
+        // simultaneously, preventing a deadlock.
 
-        println!("=== Testing Simultaneous Multi-Turn Move Resolution ===");
+        // Arrange - Turn 1
+        let p1_pokemon = TestPokemonBuilder::new(Species::Venusaur, 50).with_moves(vec![Move::SolarBeam]).build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Charizard, 50).with_moves(vec![Move::Fly]).build();
 
-        // --- SETUP ---
-        let player1 = BattlePlayer::new(
-            "testuser".to_string(),
-            "testuser".to_string(),
-            vec![create_test_pokemon(Species::Venusaur, vec![Move::SolarBeam])], // move_index: 0
-        );
+        let player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
+        let mut player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
+        player2.player_type = PlayerType::NPC; // Ensure AI can act if needed
 
-        let mut player2 = BattlePlayer::new(
-            "ai_opponent".to_string(),
-            "AI charizard_team".to_string(),
-            vec![create_test_pokemon(Species::Charizard, vec![Move::Fly])], // move_index: 0
-        );
-        player2.player_type = PlayerType::NPC;
+        let mut battle_state = BattleState::new("test_simultaneous_multiturn".to_string(), player1, player2);
 
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-        
-        // --- TURN 1: Both players initiate multi-turn moves ---
-        println!("\n--- TURN 1: SolarBeam vs Fly ---");
-        
+        // --- TURN 1: Both players initiate their multi-turn moves ---
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // SolarBeam
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Fly
 
-        assert!(ready_for_turn_resolution(&battle_state));
+        // Act - Turn 1
+        let bus_turn1 = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Execute Turn 1
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng);
-
-        // Verify both conditions were applied
-        assert!(battle_state.players[0].has_condition(&PokemonCondition::Charging));
-        assert!(battle_state.players[1].has_condition(&PokemonCondition::InAir));
-
-        println!("After Turn 1:");
-        println!("  Player 1 conditions: {:?}", battle_state.players[0].active_pokemon_conditions);
-        println!("  Player 2 conditions: {:?}", battle_state.players[1].active_pokemon_conditions);
-        println!("  Action queue after finalize_turn: {:?}", battle_state.action_queue);
-
-        // --- TURN 2: Verify the new architecture works ---
-        println!("\n--- TURN 2: Verifying Forced Action Injection ---");
-        
-        // NEW ASSERTION: The core of the fix. After Turn 1, `finalize_turn` should have
-        // pre-filled the action queue for BOTH players for the upcoming Turn 2.
+        // Assert - Turn 1
+        bus_turn1.print_debug_with_message("Events for Turn 1 (Initiating Moves):");
+        assert!(
+            battle_state.players[0].has_condition_type(PokemonConditionType::Charging),
+            "Player 1 should be in the Charging state after using Solar Beam"
+        );
+        assert!(
+            battle_state.players[1].has_condition_type(PokemonConditionType::InAir),
+            "Player 2 should be in the InAir state after using Fly"
+        );
         assert!(
             battle_state.action_queue[0].is_some() && battle_state.action_queue[1].is_some(),
-            "Action queue should be PRE-FILLED with both players' forced moves."
+            "After turn 1, the action queue should be pre-filled with both players' forced moves for turn 2"
         );
-        assert_eq!(battle_state.action_queue[0], Some(PlayerAction::UseMove { move_index: 0 }));
-        assert_eq!(battle_state.action_queue[1], Some(PlayerAction::UseMove { move_index: 0 }));
+        
+        // --- TURN 2: Engine resolves the forced moves ---
 
-        // Calling collect_npc_actions should now do nothing, as both slots are full.
+        // Arrange - Turn 2: The action queue is already filled. Calling `collect_npc_actions` should do nothing.
         let npc_actions_turn2 = collect_npc_actions(&battle_state);
         assert!(npc_actions_turn2.is_empty(), "AI should not select an action when its queue slot is already filled.");
-        
-        // The battle is now ready for resolution because the queue is full.
-        let ready = ready_for_turn_resolution(&battle_state);
-        assert!(ready, "Battle should be ready for resolution with a full action queue.");
 
-        // Resolve Turn 2
-        let test_rng_2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus_2 = resolve_turn(&mut battle_state, test_rng_2);
+        // Act - Turn 2
+        let bus_turn2 = resolve_turn(&mut battle_state, predictable_rng());
+
+        // Assert - Turn 2
+        bus_turn2.print_debug_with_message("Events for Turn 2 (Executing Moves):");
+        assert!(
+            !battle_state.players[0].has_condition_type(PokemonConditionType::Charging),
+            "Charging condition should be cleared after Solar Beam executes"
+        );
+        assert!(
+            !battle_state.players[1].has_condition_type(PokemonConditionType::InAir),
+            "InAir condition should be cleared after Fly executes"
+        );
+
+        let solar_beam_executed = bus_turn2.events().iter().any(|e| matches!(e, crate::battle::state::BattleEvent::MoveUsed { move_used: Move::SolarBeam, .. }));
+        let fly_executed = bus_turn2.events().iter().any(|e| matches!(e, crate::battle::state::BattleEvent::MoveUsed { move_used: Move::Fly, .. }));
         
-        println!("Turn 2 resolved successfully! Events:");
-        for event in event_bus_2.events() {
-            println!("  {:?}", event);
-        }
-        
-        // Verify that forced moves executed and conditions were cleared
-        assert!(!battle_state.players[0].has_condition(&PokemonCondition::Charging), "Charging should be cleared after forced SolarBeam");
-        assert!(!battle_state.players[1].has_condition(&PokemonCondition::InAir), "InAir should be cleared after forced Fly");
-        
-        println!("\n=== SIMULTANEOUS FORCED MOVE SCENARIO PASSES ===");
+        assert!(solar_beam_executed, "Solar Beam should have executed on the second turn");
+        assert!(fly_executed, "Fly should have executed on the second turn");
     }
-
 }

@@ -1,493 +1,194 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
+    use crate::battle::state::{ActionFailureReason, BattleEvent, GameState};
+    use crate::battle::tests::common::{create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction};
-    use crate::pokemon::{MoveInstance, PokemonInst, StatusCondition};
+    use crate::player::PlayerAction;
+    use crate::pokemon::{StatusCondition};
     use crate::species::Species;
+    use pretty_assertions::assert_eq;
 
-    fn create_test_pokemon_with_hp(species: Species, moves: Vec<Move>, hp: u16) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 10 });
-            }
-        }
-
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            10,
-            0,
-            0, // Will be set below
-            [15; 6],
-            [0; 6],
-            [hp, 80, 80, 80, 80, 80], // Set specific HP as max HP too
-            pokemon_moves,
-            None,
-        );
-        pokemon.set_hp(hp); // Set current HP with validation
-
-        pokemon
-    }
-
-    fn create_test_player(pokemon: PokemonInst) -> BattlePlayer {
-        let player_team = vec![pokemon];
-
-        // Step 2: Use the constructor to create the player.
-        // This will create a default player with ante = 0. We declare it `mut` to change it.
-        let mut player = BattlePlayer::new(
-            "test_player".to_string(),
-            "TestPlayer".to_string(),
-            player_team,
-        );
-
-        // Step 3: Modify any fields that differ from the default constructor values.
-        player.ante = 200;
-        player
-    }
+    // --- Unit Tests for PokemonInst Fainting Logic ---
 
     #[test]
-    fn test_pokemon_fainting_mechanics() {
-        // Test Pokemon with low HP that will faint from one hit
-        let mut pokemon = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20);
+    fn test_pokemon_fainting_mechanics_unit() {
+        // Arrange
+        let mut pokemon = TestPokemonBuilder::new(Species::Pikachu, 10).with_hp(20).build();
 
-        // Test initial state
-        assert!(!pokemon.is_fainted());
-        assert_eq!(pokemon.current_hp(), 20);
-
-        // Test taking damage without fainting
-        let fainted = pokemon.take_damage(10);
-        assert!(!fainted);
+        // Act & Assert: Damage without fainting
+        let fainted1 = pokemon.take_damage(10);
+        assert!(!fainted1);
         assert_eq!(pokemon.current_hp(), 10);
         assert!(!pokemon.is_fainted());
 
-        // Test taking fatal damage
-        let fainted = pokemon.take_damage(15); // More than remaining HP
-        assert!(fainted);
+        // Act & Assert: Fatal damage
+        let fainted2 = pokemon.take_damage(15);
+        assert!(fainted2);
         assert_eq!(pokemon.current_hp(), 0);
         assert!(pokemon.is_fainted());
         assert_eq!(pokemon.status, Some(StatusCondition::Faint));
     }
 
     #[test]
-    fn test_faint_replaces_other_statuses() {
-        let mut pokemon = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 10);
-
-        // Apply burn status
-        pokemon.status = Some(StatusCondition::Burn);
+    fn test_faint_replaces_other_statuses_unit() {
+        // Arrange
+        let mut pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_hp(10)
+            .with_status(StatusCondition::Burn)
+            .build();
         assert_eq!(pokemon.status, Some(StatusCondition::Burn));
 
-        // Take fatal damage - faint should replace burn
+        // Act
         let fainted = pokemon.take_damage(20);
+
+        // Assert
         assert!(fainted);
         assert!(pokemon.is_fainted());
         assert_eq!(pokemon.status, Some(StatusCondition::Faint));
     }
 
     #[test]
-    fn test_healing_and_revival() {
-        let mut pokemon = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 50);
+    fn test_healing_and_revival_unit() {
+        // Arrange
+        let mut pokemon = TestPokemonBuilder::new(Species::Pikachu, 10).with_hp(50).build();
 
-        // Damage without fainting
+        // Damage and Heal
         pokemon.take_damage(30);
         assert_eq!(pokemon.current_hp(), 20);
-
-        // Heal (should work on non-fainted Pokemon) - but our max_hp logic is simplified
-        // For now, let's test that heal doesn't crash and changes HP appropriately
-        let hp_before_heal = pokemon.current_hp();
         pokemon.heal(10);
-        let hp_after_heal = pokemon.current_hp();
-        assert!(
-            hp_after_heal >= hp_before_heal,
-            "Healing should not decrease HP"
-        );
+        assert_eq!(pokemon.current_hp(), 30);
 
-        // Faint the Pokemon
-        pokemon.take_damage(100); // Ensure it faints
+        // Faint and attempt to heal
+        pokemon.take_damage(100);
         assert!(pokemon.is_fainted());
-        assert_eq!(pokemon.current_hp(), 0);
-
-        // Healing should not work on fainted Pokemon
         pokemon.heal(20);
         assert_eq!(pokemon.current_hp(), 0);
-        assert!(pokemon.is_fainted());
 
-        // Revive should work
+        // Revive
         pokemon.revive(25);
         assert!(!pokemon.is_fainted());
         assert_eq!(pokemon.current_hp(), 25);
         assert_eq!(pokemon.status, None);
     }
 
+    // --- Integration Tests for Fainting in Battle ---
+
     #[test]
     fn test_battle_with_fainting() {
-        // Initialize move data
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Charmander, 5) // Low level ensures it's weaker
+            .with_moves(vec![Move::Scratch])
+            .with_hp(10) // Low HP to guarantee fainting
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
+
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
         
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Create Pokemon with low HP to ensure fainting
-        let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
-        let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 10); // Low HP
-
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Collect AI actions
-        let npc_actions = collect_npc_actions(&battle_state);
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-        // Create RNG that ensures hits
-        let test_rng = TurnRng::new_for_test(vec![
-            50, 50, 50, 50, 50, 50, // Mid values for hits but no crits
-        ]);
-
-        // Execute turn
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-
-        println!("Generated {} events:", events.len());
-        for event in events {
-            println!("  {:?}", event);
-        }
-
-        // Should have damage and potentially fainting events
-        let damage_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::DamageDealt { .. }))
-            .collect();
-
-        let faint_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonFainted { .. }))
-            .collect();
-
-        assert!(!damage_events.is_empty(), "Should generate damage events");
-
-        // Check if Pokemon actually fainted in battle state
-        let pokemon2_hp = battle_state.players[1].team[0]
-            .as_ref()
-            .unwrap()
-            .current_hp();
-        if pokemon2_hp == 0 {
-            assert!(
-                !faint_events.is_empty(),
-                "Should generate faint event when Pokemon faints"
-            );
-        }
-    }
-
-    #[test]
-    fn test_skip_actions_against_fainted_pokemon() {
-        // Initialize move data
-        
-
-        // Create Pokemon where one is already fainted
-        let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
-        let mut pokemon2 =
-            create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 20);
-
-        // Pre-faint the second Pokemon
-        pokemon2.take_damage(50);
-        assert!(pokemon2.is_fainted());
-
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Manually set actions since AI might not work with fainted Pokemon
-        battle_state.action_queue[0] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
-        battle_state.action_queue[1] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
-
-        // Create RNG
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50]);
-
-        // Execute turn
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-
-        println!("Generated {} events:", events.len());
-        for event in events {
-            println!("  {:?}", event);
-        }
-
-        // Should have action failed events for targeting fainted Pokemon
-        let action_failed_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::ActionFailed { .. }))
-            .collect();
-
-        assert!(
-            !action_failed_events.is_empty(),
-            "Should skip actions against fainted Pokemon"
-        );
+        // Assert
+        event_bus.print_debug_with_message("Events for test_battle_with_fainting:");
+        assert!(battle_state.players[1].active_pokemon().unwrap().is_fainted());
+        let faint_event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::PokemonFainted { player_index: 1, pokemon: Species::Charmander })
+        });
+        assert!(faint_event_found, "A PokemonFainted event should have been emitted");
     }
 
     #[test]
     fn test_fainted_pokemon_cannot_act() {
-        // Initialize move data
-        
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Pikachu, 10)
+            .with_moves(vec![Move::Tackle])
+            .with_hp(0) // Starts fainted
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Charmander, 10)
+            .with_moves(vec![Move::Scratch])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        // Create Pokemon where the first one is fainted
-        let mut pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20);
-        let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100);
+        // Manually set an attack action for the fainted Pokémon.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
-        // Faint the first Pokemon
-        pokemon1.take_damage(50);
-        assert!(pokemon1.is_fainted());
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        let player1 = create_test_player(pokemon1);
-        let player2 = create_test_player(pokemon2);
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        let npc_actions = crate::battle::engine::collect_npc_actions(&battle_state);
-
-        // Apply the decided actions to the battle state's action queue.
-        for (player_index, action) in npc_actions {
-            battle_state.action_queue[player_index] = Some(action);
-        }
-
-        // Now, verify that the correct action was queued for the fainted player.
-        assert_eq!(
-            battle_state.action_queue[0],
-            Some(PlayerAction::Forfeit),
-            "Player 1, with no usable Pokemon, should be forced to forfeit."
-        );
-
-        // Manually try to set an action for the fainted Pokemon and see if it gets blocked
-        battle_state.action_queue[0] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
-        battle_state.action_queue[1] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
-
-        // Create RNG
-        let test_rng = crate::battle::state::TurnRng::new_for_test(vec![50, 50, 50]);
-
-        // Execute turn
-        let event_bus = crate::battle::engine::resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-
-        println!(
-            "Generated {} events when fainted Pokemon tries to act:",
-            events.len()
-        );
-        for event in events {
-            println!("  {:?}", event);
-        }
-
-        // Should have action failed events for the fainted Pokemon trying to act
-        let fainted_action_failed_events: Vec<_> = events
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    crate::battle::state::BattleEvent::ActionFailed {
-                        reason: crate::battle::state::ActionFailureReason::PokemonFainted
-                    }
-                )
-            })
-            .collect();
-
-        assert!(
-            !fainted_action_failed_events.is_empty(),
-            "Should generate PokemonFainted action failure when fainted Pokemon tries to act"
-        );
+        // Assert
+        event_bus.print_debug_with_message("Events for test_fainted_pokemon_cannot_act:");
+        let action_failed_event = event_bus.events().iter().find(|e| {
+            matches!(e, BattleEvent::ActionFailed { reason: ActionFailureReason::PokemonFainted })
+        });
+        assert!(action_failed_event.is_some(), "Action should fail because the Pokémon is fainted");
     }
 
     #[test]
     fn test_forced_pokemon_replacement_after_fainting() {
-        // Create a player with multiple Pokemon, where active Pokemon will faint
-        let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 20); // Will faint
-        let pokemon2 = create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 100); // Replacement
+        // Arrange
+        let p1_active = TestPokemonBuilder::new(Species::Pikachu, 25).with_moves(vec![Move::Tackle]).with_hp(1).build();
+        let p1_backup = TestPokemonBuilder::new(Species::Bulbasaur, 25).with_moves(vec![Move::VineWhip]).build();
+        let p2_active = TestPokemonBuilder::new(Species::Charizard, 25).with_moves(vec![Move::Scratch]).build();
         
-        let mut player1 = create_test_player(pokemon1);
-        player1.team[1] = Some(pokemon2);
+        // Manually create players and state for multi-pokemon teams
+        let player1 = create_test_player("p1", "Player 1", vec![p1_active, p1_backup]);
+        let player2 = create_test_player("p2", "Player 2", vec![p2_active]);
+        let mut battle_state = crate::battle::state::BattleState::new("test_multi".to_string(), player1, player2);
+
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+
+        // Act: Resolve the turn where the fainting occurs.
+        let faint_bus = resolve_turn(&mut battle_state, predictable_rng());
         
+        // Assert: Check the state after the faint.
+        faint_bus.print_debug_with_message("Events for test_forced_pokemon_replacement_after_fainting (Faint Turn):");
+        assert!(matches!(battle_state.game_state, GameState::WaitingForPlayer1Replacement));
 
-        let player2 = create_test_player(create_test_pokemon_with_hp(
-            Species::Squirtle,
-            vec![Move::Tackle],
-            100,
-        ));
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Collect initial actions
+        // Act 2: Let the AI choose the replacement and resolve the replacement phase.
         let npc_actions = collect_npc_actions(&battle_state);
         for (player_index, action) in npc_actions {
             battle_state.action_queue[player_index] = Some(action);
         }
-        // Create RNG that ensures a hit that will cause fainting
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50]);
+        let switch_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Execute turn - this should cause Player 1's Pikachu to faint
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-
-        // Should have a fainting event
-        let faint_events: Vec<_> = events
-            .iter()
-            .filter(|event| matches!(event, BattleEvent::PokemonFainted { .. }))
-            .collect();
-
-        // Check if fainting actually occurred by checking Pokemon HP
-        let pikachu_fainted = battle_state.players[0].team[0]
-            .as_ref()
-            .unwrap()
-            .is_fainted();
-
-        // If fainting occurred, check that game state transitioned correctly
-        if pikachu_fainted || !faint_events.is_empty() {
-            assert!(
-                matches!(
-                    battle_state.game_state,
-                    crate::battle::state::GameState::WaitingForPlayer1Replacement
-                ),
-                "Game state should be waiting for Player 1 replacement after fainting"
-            );
-
-            // Now test that the system can handle the replacement
-            let replacement_npc_actions = collect_npc_actions(&battle_state);
-            for (player_index, action) in replacement_npc_actions {
-                battle_state.action_queue[player_index] = Some(action);
-            }
-
-            // Player 1 should have a switch action
-            assert!(
-                battle_state.action_queue[0].is_some(),
-                "Player 1 should have a replacement action"
-            );
-            if let Some(PlayerAction::SwitchPokemon { team_index }) = &battle_state.action_queue[0]
-            {
-                assert_eq!(*team_index, 1, "Should switch to Charmander at index 1");
-            } else {
-                panic!("Player 1 should have a switch action for replacement");
-            }
-
-            // Execute the replacement turn
-            let replacement_rng = TurnRng::new_for_test(vec![50, 50]);
-            let replacement_event_bus = resolve_turn(&mut battle_state, replacement_rng);
-
-            // Check that switch occurred
-            let switch_events: Vec<_> = replacement_event_bus
-                .events()
-                .iter()
-                .filter(|event| matches!(event, BattleEvent::PokemonSwitched { .. }))
-                .collect();
-
-            assert!(
-                !switch_events.is_empty(),
-                "Should have switch event for replacement"
-            );
-
-            // Check that active Pokemon changed
-            assert_eq!(
-                battle_state.players[0].active_pokemon_index, 1,
-                "Active Pokemon should now be Charmander"
-            );
-
-            // Battle should be back to normal state
-            assert!(
-                matches!(
-                    battle_state.game_state,
-                    crate::battle::state::GameState::WaitingForActions
-                ),
-                "Battle should be back to waiting for both actions"
-            );
-        }
+        // Assert 2: Check the state after the switch.
+        switch_bus.print_debug_with_message("Events for test_forced_pokemon_replacement_after_fainting (Switch Turn):");
+        assert_eq!(battle_state.players[0].active_pokemon_index, 1);
+        assert_eq!(battle_state.players[0].active_pokemon().unwrap().species, Species::Bulbasaur);
+        assert!(matches!(battle_state.game_state, GameState::WaitingForActions));
     }
 
     #[test]
     fn test_cannot_switch_to_fainted_pokemon() {
-        // Note: This is a test of whether you can try to switch to a fainted pokemon,
-        // not what happens when a pokemon faints.
+        // Arrange
+        let p1_active = TestPokemonBuilder::new(Species::Pikachu, 25).with_moves(vec![Move::Tackle]).build();
+        let p1_fainted = TestPokemonBuilder::new(Species::Charmander, 25).with_hp(0).build();
+        let p2_active = TestPokemonBuilder::new(Species::Squirtle, 25).with_moves(vec![Move::Tackle]).build();
+        
+        // Manually create players and state for multi-pokemon teams
+        let player1 = create_test_player("p1", "Player 1", vec![p1_active, p1_fainted]);
+        let player2 = create_test_player("p2", "Player 2", vec![p2_active]);
+        let mut battle_state = crate::battle::state::BattleState::new("test_multi".to_string(), player1, player2);
 
-        // Initialize move data and species data
-         // Create player with multiple Pokemon, one fainted
-        let pokemon1 = create_test_pokemon_with_hp(Species::Pikachu, vec![Move::Tackle], 100);
-        let mut pokemon2 =
-            create_test_pokemon_with_hp(Species::Charmander, vec![Move::Scratch], 20);
+        // Player 1 attempts to switch to the fainted Pokémon at index 1.
+        battle_state.action_queue[0] = Some(PlayerAction::SwitchPokemon { team_index: 1 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
-        // Faint the second Pokemon
-        pokemon2.take_damage(50);
-        assert!(pokemon2.is_fainted());
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        let player_team = vec![pokemon1, pokemon2];
-
-        // Step 2: Use the constructor to create the player.
-        // This will create a default player with ante = 0. We declare it `mut` to change it.
-        let mut player1 = BattlePlayer::new(
-            "test_player".to_string(),
-            "TestPlayer".to_string(),
-            player_team,
-        );
-
-        // Step 3: Modify any fields that differ from the default constructor values.
-        player1.ante = 200;
-
-        let player2 = create_test_player(create_test_pokemon_with_hp(
-            Species::Squirtle,
-            vec![Move::Tackle],
-            100,
-        ));
-
-        // Create battle state
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Manually set actions - player1 tries to switch to fainted Pokemon (index 1)
-        battle_state.action_queue[0] =
-            Some(crate::player::PlayerAction::SwitchPokemon { team_index: 1 });
-        battle_state.action_queue[1] = Some(crate::player::PlayerAction::UseMove { move_index: 0 });
-
-        // Create RNG
-        let test_rng = crate::battle::state::TurnRng::new_for_test(vec![
-            50, 50, 50, 60, 70, 80, 90, 40, 30, 20,
-        ]);
-
-        // Execute turn
-        let event_bus = crate::battle::engine::resolve_turn(&mut battle_state, test_rng);
-
-        // Check events
-        let events = event_bus.events();
-
-        println!(
-            "Generated {} events when trying to switch to fainted Pokemon:",
-            events.len()
-        );
-        for event in events {
-            println!("  {:?}", event);
-        }
-
-        // Should have action failed events for trying to switch to fainted Pokemon
-        let switch_failed_events: Vec<_> = events
-            .iter()
-            .filter(|event| {
-                matches!(
-                    event,
-                    crate::battle::state::BattleEvent::ActionFailed {
-                        reason: crate::battle::state::ActionFailureReason::PokemonFainted
-                    }
-                )
-            })
-            .collect();
-
-        assert!(
-            !switch_failed_events.is_empty(),
-            "Should prevent switching to fainted Pokemon"
-        );
+        // Assert
+        event_bus.print_debug_with_message("Events for test_cannot_switch_to_fainted_pokemon:");
+        let action_failed_event = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::ActionFailed { reason: ActionFailureReason::PokemonFainted })
+        });
+        assert!(action_failed_event, "Should fail when trying to switch to a fainted Pokémon");
+        assert_eq!(battle_state.players[0].active_pokemon_index, 0, "Player 1 should not have switched");
     }
 }

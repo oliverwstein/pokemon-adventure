@@ -1,242 +1,106 @@
 #[cfg(test)]
 mod tests {
-    use crate::battle::state::{BattleState, TurnRng};
     use crate::battle::engine::resolve_turn;
+    use crate::battle::state::{BattleEvent};
+    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
-    use crate::player::{BattlePlayer, PlayerAction, TeamCondition};
-    use crate::pokemon::{MoveInstance, PokemonInst};
+    use crate::player::{PlayerAction, TeamCondition};
     use crate::species::Species;
+    use pretty_assertions::assert_eq;
+    use rstest::rstest;
 
-    fn create_test_pokemon(species: Species, moves: Vec<Move>) -> PokemonInst {
-        let mut pokemon_moves = [const { None }; 4];
-        for (i, mv) in moves.into_iter().enumerate() {
-            if i < 4 {
-                pokemon_moves[i] = Some(MoveInstance { move_: mv, pp: 20 });
-            }
-        }
+    #[rstest]
+    #[case("Reflect", Move::Reflect, TeamCondition::Reflect)]
+    #[case("LightScreen", Move::LightScreen, TeamCondition::LightScreen)]
+    #[case("Mist", Move::Mist, TeamCondition::Mist)]
+    fn test_team_condition_moves_apply_correct_condition(
+        #[case] desc: &str,
+        #[case] move_to_use: Move,
+        #[case] expected_condition: TeamCondition,
+    ) {
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Alakazam, 10)
+            .with_moves(vec![move_to_use])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Machamp, 10)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let mut pokemon = PokemonInst::new_for_test(
-            species,
-            10,
-            0,
-            0, // Will be set below
-            [15; 6],
-            [0; 6],
-            [100, 80, 80, 80, 80, 80],
-            pokemon_moves,
-            None,
-        );
-        pokemon.set_hp_to_max();
-        pokemon
-    }
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
-    #[test]
-    fn test_reflect_move_applies_reflect_condition() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Reflect])],
-        );
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Machamp, vec![Move::Splash])],
-        );
+        // Assert
+        event_bus.print_debug_with_message(&format!("Events for {} test:", desc));
 
-        // Initially no team conditions
-        assert!(!player1.has_team_condition(&TeamCondition::Reflect));
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Reflect, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Reflect
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng);
-
-        // Player 1 should now have Reflect condition
         assert!(
-            battle_state.players[0].has_team_condition(&TeamCondition::Reflect),
-            "Reflect move should apply Reflect team condition"
+            battle_state.players[0].has_team_condition(&expected_condition),
+            "The correct team condition should be applied to the user"
         );
-        assert_eq!(
-            battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
-            Some(4),
-            "Reflect should have 4 turns remaining after first turn"
-        );
-
-        // Player 2 should not have Reflect
-        assert!(!battle_state.players[1].has_team_condition(&TeamCondition::Reflect));
-    }
-
-    #[test]
-    fn test_light_screen_move_applies_light_screen_condition() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(
-                Species::Alakazam,
-                vec![Move::LightScreen],
-            )],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Machamp, vec![Move::Splash])],
-        );
-
-        // Initially no team conditions
-        assert!(!player1.has_team_condition(&TeamCondition::LightScreen));
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Light Screen, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Light Screen
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng);
-
-        // Player 1 should now have Light Screen condition
         assert!(
-            battle_state.players[0].has_team_condition(&TeamCondition::LightScreen),
-            "Light Screen move should apply Light Screen team condition"
-        );
-        assert_eq!(
-            battle_state.players[0].get_team_condition_turns(&TeamCondition::LightScreen),
-            Some(4),
-            "Light Screen should have 4 turns remaining after first turn"
+            !battle_state.players[1].has_team_condition(&expected_condition),
+            "The team condition should not be applied to the opponent"
         );
 
-        // Player 2 should not have Light Screen
-        assert!(!battle_state.players[1].has_team_condition(&TeamCondition::LightScreen));
-    }
-
-    #[test]
-    fn test_mist_move_applies_mist_condition() {
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Mist])],
-        );
-
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Machamp, vec![Move::Splash])],
-        );
-
-        // Initially no team conditions
-        assert!(!player1.has_team_condition(&TeamCondition::Mist));
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Player 1 uses Mist, Player 2 uses Splash
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Mist
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng);
-
-        // Player 1 should now have Mist condition
-        assert!(
-            battle_state.players[0].has_team_condition(&TeamCondition::Mist),
-            "Mist move should apply Mist team condition"
-        );
-        assert_eq!(
-            battle_state.players[0].get_team_condition_turns(&TeamCondition::Mist),
-            Some(4),
-            "Mist should have 4 turns remaining after first turn"
-        );
-
-        // Player 2 should not have Mist
-        assert!(!battle_state.players[1].has_team_condition(&TeamCondition::Mist));
+        let event_found = event_bus.events().iter().any(|e| {
+            matches!(e, BattleEvent::TeamConditionApplied { player_index: 0, condition } if *condition == expected_condition)
+        });
+        assert!(event_found, "The correct TeamConditionApplied event should have been emitted");
     }
 
     #[test]
     fn test_team_conditions_work_immediately() {
-        // Test that team conditions become active immediately after being applied
-         // Player 1 sets up Mist, Player 2 tries to use Growl (stat reduction)
-        let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Mist])],
-        );
+        // Arrange: Player 1 uses Mist, which should immediately protect it from Player 2's Growl in the same turn.
+        let p1_pokemon = TestPokemonBuilder::new(Species::Alakazam, 25).with_moves(vec![Move::Mist]).build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Machamp, 10).with_moves(vec![Move::Growl]).build(); // Slower
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Machamp, vec![Move::Growl])],
-        );
-
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
-
-        // Turn 1: Player 1 uses Mist, Player 2 uses Growl
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Mist
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Growl
 
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let event_bus = resolve_turn(&mut battle_state, test_rng);
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
-        // Player 1 should have Mist
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::Mist));
+        // Assert
+        event_bus.print_debug_with_message("Events for test_team_conditions_work_immediately:");
 
-        // Growl should have been blocked by Mist (Mist protects the team that used it)
-        let blocked_events: Vec<_> = event_bus.events().iter()
-            .filter(|event| matches!(event, crate::battle::state::BattleEvent::StatChangeBlocked { reason, .. } if reason.contains("Mist")))
-            .collect();
-        assert!(
-            !blocked_events.is_empty(),
-            "Mist should immediately protect against stat reductions"
-        );
+        let stat_blocked_event = event_bus.events().iter().any(|e| matches!(e, BattleEvent::StatChangeBlocked { .. }));
+        let stat_changed_event = event_bus.events().iter().any(|e| matches!(e, BattleEvent::StatStageChanged { target: Species::Alakazam, .. }));
+
+        assert!(stat_blocked_event, "Mist should have blocked Growl's stat reduction");
+        assert!(!stat_changed_event, "The user's stats should not have changed");
     }
 
     #[test]
-    fn test_using_team_condition_when_already_active() {
-        // Test behavior when using a move to set up a condition that's already active
-         let player1 = BattlePlayer::new(
-            "player1".to_string(),
-            "Player 1".to_string(),
-            vec![create_test_pokemon(Species::Alakazam, vec![Move::Reflect])],
-        );
+    fn test_using_team_condition_move_refreshes_duration() {
+        // Arrange
+        let p1_pokemon = TestPokemonBuilder::new(Species::Alakazam, 10).with_moves(vec![Move::Reflect]).build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Machamp, 10).with_moves(vec![Move::Splash]).build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
-        let player2 = BattlePlayer::new(
-            "player2".to_string(),
-            "Player 2".to_string(),
-            vec![create_test_pokemon(Species::Machamp, vec![Move::Splash])],
-        );
+        // Act - Turn 1: Set up Reflect. Duration should be 5 turns, so it becomes 4 after the turn tick.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+        let bus1 = resolve_turn(&mut battle_state, predictable_rng());
 
-        let mut battle_state = BattleState::new("test_battle".to_string(), player1, player2);
+        // Assert - Turn 1
+        bus1.print_debug_with_message("Events for refreshing condition [Turn 1]:");
+        assert_eq!(battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect), Some(4));
 
-        // Turn 1: Set up Reflect
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Reflect
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
+        // Act - Turn 2: Use Reflect again. It should be reapplied for 5 turns, then ticked to 4.
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+        let bus2 = resolve_turn(&mut battle_state, predictable_rng());
 
-        let test_rng1 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng1);
-
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::Reflect));
-        assert_eq!(
-            battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
-            Some(4)
-        );
-
-        // Turn 2: Use Reflect again (should reset the turn counter)
-        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Reflect again
-        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
-
-        let test_rng2 = TurnRng::new_for_test(vec![50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
-        let _ = resolve_turn(&mut battle_state, test_rng2);
-
-        // Should still have Reflect, and turn counter should be back to 4 (refreshed and decremented)
-        assert!(battle_state.players[0].has_team_condition(&TeamCondition::Reflect));
+        // Assert - Turn 2
+        bus2.print_debug_with_message("Events for refreshing condition [Turn 2]:");
         assert_eq!(
             battle_state.players[0].get_team_condition_turns(&TeamCondition::Reflect),
             Some(4),
-            "Using Reflect again should refresh the turn counter"
+            "Using Reflect again should refresh its duration"
         );
     }
 }

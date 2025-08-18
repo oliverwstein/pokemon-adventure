@@ -55,6 +55,12 @@ pub enum BattleEvent {
         damage: u16,
         remaining_hp: u16,
     },
+    SubstituteDamaged {
+        target: Species,
+        damage: u16,
+        remaining_substitute_hp: u8,
+        substitute_destroyed: bool,
+    },
     PokemonHealed {
         target: Species,
         amount: u16,
@@ -193,6 +199,14 @@ impl BattleEvent {
             BattleEvent::DamageDealt { target, damage, .. } => {
                 let target_name = Self::format_species_name(*target);
                 Some(format!("{} took {} damage!", target_name, damage))
+            }
+            BattleEvent::SubstituteDamaged { target, damage, substitute_destroyed, .. } => {
+                let target_name = Self::format_species_name(*target);
+                if *substitute_destroyed {
+                    Some(format!("{}'s substitute took {} damage and was destroyed!", target_name, damage))
+                } else {
+                    Some(format!("{}'s substitute took {} damage!", target_name, damage))
+                }
             }
             BattleEvent::PokemonHealed { target, amount, .. } => {
                 let target_name = Self::format_species_name(*target);

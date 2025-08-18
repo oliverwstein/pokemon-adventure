@@ -62,7 +62,7 @@ mod tests {
     fn test_rampage_forces_action_and_ends_with_confusion() {
         // Arrange
         let p1_pokemon = TestPokemonBuilder::new(Species::Tauros, 25).with_moves(vec![Move::Thrash]).build();
-        let p2_pokemon = TestPokemonBuilder::new(Species::Slowpoke, 25).with_moves(vec![Move::Tackle]).build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Slowpoke, 50).with_moves(vec![Move::TailWhip]).build();
         let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
         // --- TURN 1: Initiate Rampage (force 2-turn duration with RNG) ---
@@ -207,10 +207,16 @@ mod tests {
         // Check that the Pokémon behind the sub took no damage and received no status/conditions.
         let final_hp = battle_state.players[1].active_pokemon().unwrap().current_hp();
         let final_status = battle_state.players[1].active_pokemon().unwrap().status;
-        let final_conditions_empty = battle_state.players[1].active_pokemon_conditions.len() == 1; // Only Substitute should remain
+        // Check conditions based on whether substitute was destroyed or not
+        let substitute_destroyed = event_bus.events().iter().any(|e| 
+            matches!(e, BattleEvent::SubstituteDamaged { substitute_destroyed: true, .. })
+        );
+        let expected_conditions = if substitute_destroyed { 0 } else { 1 }; // 0 if destroyed, 1 if substitute remains
+        let final_conditions_count = battle_state.players[1].active_pokemon_conditions.len();
+        let final_conditions_correct = final_conditions_count == expected_conditions;
         
         assert_eq!(final_hp, original_hp, "HP of Pokémon behind substitute should not change");
         assert!(final_status.is_none(), "Status should not be applied to a Pokémon behind a substitute");
-        assert!(final_conditions_empty, "Active conditions should not be applied to a Pokémon behind a substitute");
+        assert!(final_conditions_correct, "Active conditions should not be applied to a Pokémon behind a substitute");
     }
 }

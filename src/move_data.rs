@@ -1376,11 +1376,12 @@ impl MoveEffect {
             }
             
             // Not rampaging yet, apply rampage normally
-            // Rampage lasts 2-3 turns (50/50 chance)
+            // Rampage lasts 2-3 turns (50/50 chance), 
+            // but as we remove on turn 0, this translates to 1 or 2.
             let turns = if rng.next_outcome("Generate Rampage Duration") <= 50 {
-                2
+                1
             } else {
-                3
+                2
             };
             let condition = PokemonCondition::Rampaging {
                 turns_remaining: turns,

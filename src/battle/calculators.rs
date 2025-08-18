@@ -330,8 +330,9 @@ fn handle_substitute_damage_absorption(
 ) {
     let actual_damage = damage.min(substitute_hp as u16);
     let remaining_substitute_hp = substitute_hp.saturating_sub(actual_damage as u8);
+    let substitute_destroyed = remaining_substitute_hp == 0;
 
-    if remaining_substitute_hp == 0 {
+    if substitute_destroyed {
         // Substitute is destroyed
         commands.push(BattleCommand::RemoveSpecificCondition {
             target: PlayerTarget::from_index(defender_index),
@@ -351,11 +352,12 @@ fn handle_substitute_damage_absorption(
         });
     }
 
-    // No damage to Pokemon, substitute took it all - emit 0 damage event
-    commands.push(BattleCommand::EmitEvent(BattleEvent::DamageDealt {
+    // Emit substitute damage event instead of confusing zero damage event
+    commands.push(BattleCommand::EmitEvent(BattleEvent::SubstituteDamaged {
         target: defender_pokemon.species,
-        damage: 0,
-        remaining_hp: defender_pokemon.current_hp(),
+        damage: actual_damage,
+        remaining_substitute_hp,
+        substitute_destroyed,
     }));
 }
 
@@ -965,10 +967,10 @@ mod tests {
             BattleCommand::EmitEvent(BattleEvent::MoveHit { .. })
         ));
 
-        // Should have a DamageDealt event with 0 damage (substitute absorbed it)
+        // Should have a SubstituteDamaged event (substitute absorbed the damage)
         assert!(commands.iter().any(|cmd| matches!(
             cmd,
-            BattleCommand::EmitEvent(BattleEvent::DamageDealt { damage: 0, .. })
+            BattleCommand::EmitEvent(BattleEvent::SubstituteDamaged { .. })
         )));
 
         // Should have condition update commands (RemoveCondition and possibly AddCondition if substitute survives)

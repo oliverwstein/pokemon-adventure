@@ -1579,6 +1579,20 @@ impl MoveEffect {
                 return EffectResult::Skip(commands);
             }
 
+            // Emit MoveUsed event for the mirrored move
+            let attacker_player = &state.players[context.attacker_index];
+            let move_used_event = if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
+                BattleCommand::EmitEvent(BattleEvent::MoveUsed {
+                    player_index: context.attacker_index,
+                    pokemon: attacker_pokemon.species,
+                    move_used: mirrored_move,
+                })
+            } else {
+                BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+                    reason: ActionFailureReason::PokemonFainted,
+                })
+            };
+
             // Queue the mirrored move action
             let mirrored_action = BattleAction::AttackHit {
                 attacker_index: context.attacker_index,
@@ -1587,7 +1601,7 @@ impl MoveEffect {
                 hit_number: 1, // Must be greater than zero to avoid trying to use PP
             };
 
-            let commands = vec![BattleCommand::PushAction(mirrored_action)];
+            let commands = vec![move_used_event, BattleCommand::PushAction(mirrored_action)];
             return EffectResult::Skip(commands);
         }
 

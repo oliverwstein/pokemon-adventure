@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -69,6 +71,32 @@ pub enum PokemonConditionType {
     Countering,
     Substitute,
     Disabled,
+}
+
+impl fmt::Display for PokemonConditionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let display_name = match self {
+            PokemonConditionType::Flinched => "Flinched",
+            PokemonConditionType::Confused => "Confused",
+            PokemonConditionType::Seeded => "Seeded",
+            PokemonConditionType::Underground => "Underground",
+            PokemonConditionType::InAir => "In the Air",
+            PokemonConditionType::Teleported => "Teleported",
+            PokemonConditionType::Enraged => "Enraged",
+            PokemonConditionType::Exhausted => "Exhausted",
+            PokemonConditionType::Trapped => "Trapped",
+            PokemonConditionType::Charging => "Charging Attack",
+            PokemonConditionType::Rampaging => "Rampaging",
+            PokemonConditionType::Transformed => "Transformed",
+            PokemonConditionType::Converted => "Converted",
+            PokemonConditionType::Biding => "Biding",
+            PokemonConditionType::Countering => "Countering",
+            PokemonConditionType::Substitute => "Substitute",
+            PokemonConditionType::Disabled => "Disabled",
+        };
+
+        write!(f, "{}", display_name)
+    }
 }
 
 impl PokemonCondition {

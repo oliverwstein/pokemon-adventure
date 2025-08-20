@@ -267,7 +267,9 @@ pub fn execute_battle_action(
 
                 // Check if Enraged Pokemon used a move other than Rage - if so, remove Enraged condition
                 if battle_state.players[attacker_index].has_condition_type(PokemonConditionType::Enraged)
-                    && move_used != crate::moves::Move::Rage
+                    && Some(move_used) != battle_state.players[attacker_index].last_move
+                    // Rather than requiring use of Rage, we just require it is the same move as before.
+                    // This allows for multiple moves that cause the user to become Enraged.
                 {
                     if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
                         execute_command(

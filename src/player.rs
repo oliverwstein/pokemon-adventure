@@ -2,7 +2,7 @@ use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
 use crate::pokemon::{PokemonInst};
 use serde::{Deserialize, Serialize};
-use core::fmt;
+use std::fmt;
 use std::collections::HashMap;
 use std::hash::{Hash};
 

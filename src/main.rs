@@ -4,9 +4,11 @@ use pokemon_adventure::battle::engine::{
     collect_npc_actions, ready_for_turn_resolution, resolve_turn,
 };
 use pokemon_adventure::battle::state::{BattleState, EventBus, GameState, TurnRng};
+use pokemon_adventure::move_data::MoveData;
 use pokemon_adventure::player::{PlayerAction, PlayerType};
 use pokemon_adventure::prefab_teams::{self, PrefabTeam};
-use pokemon_adventure::{BattlePlayer, PokemonInst};
+use pokemon_adventure::{BattlePlayer, Move};
+
 /// The main entry point for the text-based battle game.
 fn main() {
     println!("🔥 Welcome to the Pokémon Adventure Battle Engine! 🔥");
@@ -52,12 +54,8 @@ fn main() {
 
     // --- Battle Conclusion ---
     println!("\n--- Battle Over! ---");
-    match battle_state.game_state {
-        GameState::Player1Win => println!("🏆 You are victorious! 🏆"),
-        GameState::Player2Win => println!("💔 You were defeated... 💔"),
-        GameState::Draw => println!("🤝 The battle ended in a draw! 🤝"),
-        _ => println!("The battle ended unexpectedly."),
-    }
+    // Use the BattleState's Display trait for the final status.
+    println!("{}", battle_state);
 }
 
 /// Runs the main interactive game loop until the battle concludes.
@@ -73,7 +71,7 @@ fn run_game_loop(battle_state: &mut BattleState) {
 
         // Handle forced player actions, like switching after a faint.
         if let GameState::WaitingForPlayer1Replacement = battle_state.game_state {
-            println!("\nYour Pokémon fainted!");
+            println!("\nYour Pokémon fainted! You must switch.");
             display_team_status(&battle_state.players[0]);
             let action = get_player_action(battle_state, true); // `true` forces switch-only actions
             battle_state.action_queue[0] = Some(action);
@@ -87,7 +85,7 @@ fn run_game_loop(battle_state: &mut BattleState) {
             print_turn_events(&event_bus, battle_state);
         } else if battle_state.action_queue[0].is_none() {
             // It's the human player's turn to act.
-            println!("\n--- Turn {} ---", battle_state.turn_number);
+            // Display the entire battle state using our new Display trait.
             display_battle_status(battle_state);
             let action = get_player_action(battle_state, false);
             battle_state.action_queue[0] = Some(action);
@@ -150,17 +148,14 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
         // --- Handle Informational Commands (don't consume a turn) ---
         if command == "help" {
             println!("--- Available Commands ---");
-            println!(
-                "  use <move name>      - Use one of your Pokémon's moves (e.g., 'use tackle')."
-            );
-            println!(
-                "  switch to <team_num> - Switch to a Pokémon on your team (e.g., 'switch to 2')."
-            );
-            println!("  check self           - View your active Pokémon's details and moves.");
-            println!("  check opponent       - View the opponent's active Pokémon's details.");
-            println!("  check team           - View a summary of your team.");
-            println!("  check team <team_num>  - View a benched Pokémon's details.");
-            println!("  quit / forfeit       - Give up the battle.");
+            println!("  use <move name>        - Use one of your Pokémon's moves (e.g., 'use tackle').");
+            println!("  switch to <team_num>   - Switch to a Pokémon on your team (e.g., 'switch to 2').");
+            println!("  check self             - View your active Pokémon's details and moves.");
+            println!("  check opponent         - View the opponent's active Pokémon's details.");
+            println!("  check team             - View a summary of your team.");
+            println!("  check team <team_num>    - View a benched Pokémon's details.");
+            println!("  lookup <move name>     - View the details of a specific move (e.g., 'lookup flamethrower').");
+            println!("  quit / forfeit         - Give up the battle.");
             println!("------------------------");
             continue;
         }
@@ -168,7 +163,10 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
             handle_check_command(args, battle_state);
             continue;
         }
-
+        if command == "lookup" {
+            handle_lookup_command(args);
+            continue;
+        }
         // --- Handle Action Commands (consume a turn) ---
         if switch_only && command != "switch" {
             println!("You must switch to a new Pokémon!");
@@ -182,18 +180,17 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
                 if let Some(active_pokemon) = player.active_pokemon() {
                     for (i, move_slot) in active_pokemon.moves.iter().enumerate() {
                         if let Some(move_instance) = move_slot {
-                            let formatted_move_name =
-                                format!("{:?}", move_instance.move_).replace('_', " ");
-                            if formatted_move_name.eq_ignore_ascii_case(&move_name) {
-                                return PlayerAction::UseMove { move_index: i };
+                            // Fetch move data to compare names
+                            if let Some(move_data) = MoveData::get_move_data(move_instance.move_)
+                            {
+                                if move_data.name.eq_ignore_ascii_case(&move_name) {
+                                    return PlayerAction::UseMove { move_index: i };
+                                }
                             }
                         }
                     }
                 }
-                println!(
-                    "'{}' is not a valid move for your active Pokémon.",
-                    move_name
-                );
+                println!("'{}' is not a valid move for your active Pokémon.", move_name);
             }
             "switch" => {
                 if args.len() == 2 && args[0] == "to" {
@@ -201,15 +198,10 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
                         if index > 0 && index <= 6 {
                             let team_index = index - 1; // Convert to 0-based index
                             let action = PlayerAction::SwitchPokemon { team_index };
-                            if battle_state.players[0].validate_action(&action).is_ok() {
-                                return action;
+                            if let Err(msg) = battle_state.players[0].validate_action(&action) {
+                                println!("Invalid switch: {}", msg);
                             } else {
-                                println!(
-                                    "Invalid switch: {}",
-                                    battle_state.players[0]
-                                        .validate_action(&action)
-                                        .unwrap_err()
-                                );
+                                return action;
                             }
                         }
                     }
@@ -246,161 +238,99 @@ fn handle_check_command(args: &[&str], battle_state: &BattleState) {
     }
 }
 
-// --- Display Functions ---
+// --- Rewritten Display Functions ---
 
-fn display_hp_bar(pokemon: &PokemonInst) -> String {
-    let percent = (pokemon.current_hp() as f32 / pokemon.max_hp() as f32) * 100.0;
-    let filled_count = (percent / 10.0).round() as usize;
-    let empty_count = 10 - filled_count;
-    format!(
-        "[{}{}] {}/{}",
-        "█".repeat(filled_count),
-        " ".repeat(empty_count),
-        pokemon.current_hp(),
-        pokemon.max_hp()
-    )
-}
-
+/// Displays the entire battle state. Replaces the old two-line summary.
 fn display_battle_status(state: &BattleState) {
-    let player_pokemon = state.players[0].active_pokemon().unwrap();
-    let opponent_pokemon = state.players[1].active_pokemon().unwrap();
-
-    println!(
-        "  Opponent: {} {} {}",
-        opponent_pokemon.name,
-        display_hp_bar(opponent_pokemon),
-        opponent_pokemon
-            .status
-            .map_or("".to_string(), |s| format!("{:?}", s))
-    );
-    println!(
-        "      Your: {} {} {}",
-        player_pokemon.name,
-        display_hp_bar(player_pokemon),
-        player_pokemon
-            .status
-            .map_or("".to_string(), |s| format!("{:?}", s))
-    );
+    println!("\n{}", state);
 }
 
+/// Displays the full details of the player's active Pokémon using its Display trait.
 fn display_self_status(player: &BattlePlayer) {
     if let Some(pokemon) = player.active_pokemon() {
-        println!(
-            "\n--- Your Pokémon: {} (Lvl {}) ---",
-            pokemon.name, pokemon.level
-        );
-        println!("  HP: {}", display_hp_bar(pokemon));
-        if let Some(status) = pokemon.status {
-            println!("  Status: {:?}", status);
-        }
-        println!("  Moves:");
-        for (i, move_slot) in pokemon.moves.iter().enumerate() {
-            if let Some(mv) = move_slot {
-                println!(
-                    "    {}. {:?} (PP: {}/{})",
-                    i + 1,
-                    mv.move_,
-                    mv.pp,
-                    mv.max_pp()
-                );
+        println!("\n--- Your Active Pokémon ---");
+        println!("{}", pokemon);
+    } else {
+        println!("You have no active Pokémon.");
+    }
+}
+
+/// Sub-parser for the "lookup" command.
+fn handle_lookup_command(args: &[&str]) {
+    if args.is_empty() {
+        println!("What move do you want to look up? (e.g., 'lookup tackle')");
+        return;
+    }
+
+    // Join all arguments to handle multi-word move names like "swords dance"
+    let move_name = args.join(" ");
+
+    // Use the FromStr implementation for the Move enum to parse the string.
+    match move_name.parse::<Move>() {
+        Ok(move_enum) => {
+            // The parse was successful, now get the associated data.
+            if let Some(move_data) = MoveData::get_move_data(move_enum) {
+                // We found the data, so print it using its Display implementation.
+                println!("\n--- Move Details ---");
+                println!("{}", move_data);
+            } else {
+                // This is an unlikely edge case where a Move variant exists
+                // but has no entry in the data map.
+                println!("Could not find details for the move '{}'.", move_name);
             }
         }
+        Err(_) => {
+            // The string did not match any known Move variants.
+            println!("The move '{}' was not found.", move_name);
+        }
     }
 }
 
+/// Displays a summary of the opponent's status using the BattlePlayer's Display trait.
 fn display_opponent_status(opponent: &BattlePlayer) {
-    if let Some(pokemon) = opponent.active_pokemon() {
-        println!(
-            "\n--- Opponent's Pokémon: {} (Lvl {}) ---",
-            pokemon.name, pokemon.level
-        );
-        println!("  HP: {}", display_hp_bar(pokemon));
-        if let Some(status) = pokemon.status {
-            println!("  Status: {:?}", status);
-        }
-        if !opponent.active_pokemon_conditions.is_empty() {
-            println!(
-                "  Active Conditions: {:?}",
-                opponent
-                    .active_pokemon_conditions
-                    .keys()
-                    .collect::<Vec<_>>()
-            );
-        }
-        let total_pokemon = opponent.team.iter().filter(|p| p.is_some()).count();
-        let remaining_pokemon = opponent
-            .team
-            .iter()
-            .filter(|p| p.as_ref().map_or(false, |pk| !pk.is_fainted()))
-            .count();
-        println!(
-            "  Team: {}/{} Pokémon remaining",
-            remaining_pokemon, total_pokemon
-        );
-    }
+    println!("\n--- Opponent's Status ---");
+    println!("{}", opponent);
 }
 
+/// Displays a summary of the player's entire team.
 fn display_team_status(player: &BattlePlayer) {
     println!("\n--- Your Team ---");
     for (i, pokemon_opt) in player.team.iter().enumerate() {
         if let Some(pokemon) = pokemon_opt {
-            let active_marker = if i == player.active_pokemon_index {
-                "(Active)"
-            } else {
-                ""
-            };
-            let fainted_marker = if pokemon.is_fainted() {
-                "(Fainted)"
-            } else {
-                ""
-            };
-            println!(
-                "  {}. {} (Lvl {}) {} {} {}",
-                i + 1,
-                pokemon.name,
-                pokemon.level,
-                display_hp_bar(pokemon),
-                pokemon
-                    .status
-                    .map_or("".to_string(), |s| format!("{:?}", s)),
-                active_marker.to_string() + fainted_marker
-            );
+            let pokemon_display = format!("{}", pokemon);
+            let mut lines = pokemon_display.lines();
+
+            // Print the first line with contextual markers
+            if let Some(first_line) = lines.next() {
+                let active_marker = if i == player.active_pokemon_index { " (Active)" } else { "" };
+                let fainted_marker = if pokemon.is_fainted() { " (Fainted)" } else { "" };
+                println!(" {}. {}{}{}", i + 1, first_line, active_marker, fainted_marker);
+            }
+
+            // Print the rest of the Pokemon's details, indented
+            for line in lines {
+                println!("    {}", line);
+            }
+            println!(); // Add a blank line between Pokémon for readability
         }
     }
 }
 
+/// Displays the full details of a single benched Pokémon using its Display trait.
 fn display_benched_pokemon_details(index: usize, player: &BattlePlayer) {
     if let Some(Some(pokemon)) = player.team.get(index) {
         if index == player.active_pokemon_index {
-            println!("This Pokémon is already active. Use 'check self' instead.");
+            println!("\nThis Pokémon is already active. Use 'check self' instead.");
             return;
         }
-        println!(
-            "\n--- Benched: {} (Lvl {}) ---",
-            pokemon.name, pokemon.level
-        );
-        println!("  HP: {}", display_hp_bar(pokemon));
-        if let Some(status) = pokemon.status {
-            println!("  Status: {:?}", status);
-        }
-        println!("  Types: {:?}", pokemon.get_current_types(player));
-        println!("  Moves:");
-        for (i, move_slot) in pokemon.moves.iter().enumerate() {
-            if let Some(mv) = move_slot {
-                println!(
-                    "    {}. {:?} (PP: {}/{})",
-                    i + 1,
-                    mv.move_,
-                    mv.pp,
-                    mv.max_pp()
-                );
-            }
-        }
+        println!("\n--- Benched Pokémon Details ---");
+        println!("{}", pokemon);
     } else {
         println!("No Pokémon at that position in your team.");
     }
 }
 
+/// Prints formatted events from the event bus.
 fn print_turn_events(event_bus: &EventBus, battle_state: &BattleState) {
     println!();
     for event in event_bus.events() {

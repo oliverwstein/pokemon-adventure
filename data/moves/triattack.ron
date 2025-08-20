@@ -6,7 +6,7 @@ MoveData(
     accuracy: Some(80),
     max_pp: 10,
     effects: [
-        MultiHit(3, 3),
+        MultiHit(3, 0),
         Burn(10),
         Paralyze(10),
         Freeze(10),

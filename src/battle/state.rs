@@ -167,21 +167,33 @@ impl BattleEvent {
             }
 
             // === Pokemon Switching Events ===
-            BattleEvent::PokemonSwitched { player_index, old_pokemon, new_pokemon } => {
+            BattleEvent::PokemonSwitched {
+                player_index,
+                old_pokemon,
+                new_pokemon,
+            } => {
                 let player_name = &battle_state.players[*player_index].player_name;
-                Some(format!("{} recalled {} and sent out {}!", 
-                    player_name, 
-                    Self::format_species_name(*old_pokemon), 
+                Some(format!(
+                    "{} recalled {} and sent out {}!",
+                    player_name,
+                    Self::format_species_name(*old_pokemon),
                     Self::format_species_name(*new_pokemon)
                 ))
             }
 
             // === Move Events ===
-            BattleEvent::MoveUsed { player_index, pokemon, move_used } => {
+            BattleEvent::MoveUsed {
+                player_index,
+                pokemon,
+                move_used,
+            } => {
                 let player_name = &battle_state.players[*player_index].player_name;
                 let pokemon_name = Self::format_species_name(*pokemon);
-                Some(format!("{}'s {} used {}!", 
-                    player_name, pokemon_name, Self::format_move_name(*move_used)
+                Some(format!(
+                    "{}'s {} used {}!",
+                    player_name,
+                    pokemon_name,
+                    Self::format_move_name(*move_used)
                 ))
             }
             BattleEvent::MoveMissed { attacker, .. } => {
@@ -191,9 +203,7 @@ impl BattleEvent {
             BattleEvent::MoveHit { .. } => {
                 None // Silent - hit is usually obvious from damage/effects
             }
-            BattleEvent::CriticalHit { .. } => {
-                Some("A critical hit!".to_string())
-            }
+            BattleEvent::CriticalHit { .. } => Some("A critical hit!".to_string()),
 
             // === Damage and Healing Events ===
             BattleEvent::DamageDealt { target, damage, .. } => {
@@ -201,12 +211,23 @@ impl BattleEvent {
                 let target_name = Self::format_species_name(*target);
                 Some(format!("{} took {} damage!", target_name, damage))
             }
-            BattleEvent::SubstituteDamaged { target, damage, substitute_destroyed, .. } => {
+            BattleEvent::SubstituteDamaged {
+                target,
+                damage,
+                substitute_destroyed,
+                ..
+            } => {
                 let target_name = Self::format_species_name(*target);
                 if *substitute_destroyed {
-                    Some(format!("{}'s substitute took {} damage and was destroyed!", target_name, damage))
+                    Some(format!(
+                        "{}'s substitute took {} damage and was destroyed!",
+                        target_name, damage
+                    ))
                 } else {
-                    Some(format!("{}'s substitute took {} damage!", target_name, damage))
+                    Some(format!(
+                        "{}'s substitute took {} damage!",
+                        target_name, damage
+                    ))
                 }
             }
             BattleEvent::PokemonHealed { target, amount, .. } => {
@@ -233,20 +254,29 @@ impl BattleEvent {
                 let target_name = Self::format_species_name(*target);
                 // TODO: "was affected by" is generic; the preamble should vary by condition,
                 // with a string for applying, removing, etc.
-                Some(format!("{} was affected by {}!", 
-                    target_name, Self::format_condition(status)
+                Some(format!(
+                    "{} was affected by {}!",
+                    target_name,
+                    Self::format_condition(status)
                 ))
             }
             BattleEvent::StatusRemoved { target, status } => {
                 let target_name = Self::format_species_name(*target);
-                Some(format!("{} is no longer affected by {}!", 
-                    target_name, Self::format_condition(status)
+                Some(format!(
+                    "{} is no longer affected by {}!",
+                    target_name,
+                    Self::format_condition(status)
                 ))
             }
-            BattleEvent::StatusDamage { target, status, damage } => {
+            BattleEvent::StatusDamage {
+                target,
+                status,
+                damage,
+            } => {
                 let target_name = Self::format_species_name(*target);
                 let condition_name = Self::format_condition(status);
-                Some(format!("{} is hurt by {}! ({} damage)", 
+                Some(format!(
+                    "{} is hurt by {}! ({} damage)",
                     target_name, condition_name, damage
                 ))
             }
@@ -259,35 +289,61 @@ impl BattleEvent {
             // === Pokemon Status Events ===
             BattleEvent::PokemonStatusApplied { target, status } => {
                 let target_name = Self::format_species_name(*target);
-                Some(format!("{} {}", target_name, Self::format_pokemon_status_applied(status)))
+                Some(format!(
+                    "{} {}",
+                    target_name,
+                    Self::format_pokemon_status_applied(status)
+                ))
             }
             BattleEvent::PokemonStatusRemoved { target, status } => {
                 let target_name = Self::format_species_name(*target);
-                Some(format!("{} {}", target_name, Self::format_pokemon_status_removed(status)))
+                Some(format!(
+                    "{} {}",
+                    target_name,
+                    Self::format_pokemon_status_removed(status)
+                ))
             }
-            BattleEvent::PokemonStatusDamage { target, status, damage, .. } => {
+            BattleEvent::PokemonStatusDamage {
+                target,
+                status,
+                damage,
+                ..
+            } => {
                 let target_name = Self::format_species_name(*target);
                 let status_name = Self::format_pokemon_status(status);
-                Some(format!("{} is hurt by its {}! ({} damage)", 
+                Some(format!(
+                    "{} is hurt by its {}! ({} damage)",
                     target_name, status_name, damage
                 ))
             }
 
             // === Team Condition Events ===
-            BattleEvent::TeamConditionApplied { player_index, condition } => {
+            BattleEvent::TeamConditionApplied {
+                player_index,
+                condition,
+            } => {
                 let player_name = &battle_state.players[*player_index].player_name;
                 Some(format!("{}'s {} is now in effect!", player_name, condition))
             }
-            BattleEvent::TeamConditionExpired { player_index, condition } => {
+            BattleEvent::TeamConditionExpired {
+                player_index,
+                condition,
+            } => {
                 let player_name = &battle_state.players[*player_index].player_name;
                 Some(format!("{}'s {} wore off.", player_name, condition))
             }
 
             // === Stat Change Events ===
-            BattleEvent::StatStageChanged { target, stat, new_stage, .. } => {
+            BattleEvent::StatStageChanged {
+                target,
+                stat,
+                new_stage,
+                ..
+            } => {
                 let target_name = Self::format_species_name(*target);
                 let stat_name = Self::format_stat_type(stat);
-                if *new_stage > 6 || *new_stage < -6 { // This indicates a reset to 0 from Haze
+                if *new_stage > 6 || *new_stage < -6 {
+                    // This indicates a reset to 0 from Haze
                     Some("All stat changes were eliminated!".to_string())
                 } else if *new_stage > 0 {
                     Some(format!("{}'s {} rose!", target_name, stat_name))
@@ -317,12 +373,13 @@ impl BattleEvent {
                 let player_name = &battle_state.players[*player_index].player_name;
                 Some(format!("{} is out of usable Pokémon!", player_name))
             }
-            BattleEvent::BattleEnded { winner } => {
-                match winner {
-                    Some(index) => Some(format!("{} has won the battle!", battle_state.players[*index].player_name)),
-                    None => Some("The battle ended in a draw!".to_string()),
-                }
-            }
+            BattleEvent::BattleEnded { winner } => match winner {
+                Some(index) => Some(format!(
+                    "{} has won the battle!",
+                    battle_state.players[*index].player_name
+                )),
+                None => Some("The battle ended in a draw!".to_string()),
+            },
         }
     }
 
@@ -331,7 +388,7 @@ impl BattleEvent {
     fn format_species_name(species: Species) -> String {
         species.name().to_string()
     }
-    
+
     fn format_move_name(move_used: Move) -> String {
         // Convert CamelCase enum variants to human-readable names
         match move_used {
@@ -345,7 +402,8 @@ impl BattleEvent {
             _ => {
                 // Convert other moves from CamelCase to Title Case
                 let debug_string = format!("{:?}", move_used);
-                debug_string.chars()
+                debug_string
+                    .chars()
                     .enumerate()
                     .map(|(i, c)| {
                         if i > 0 && c.is_uppercase() {
@@ -358,7 +416,7 @@ impl BattleEvent {
             }
         }
     }
-    
+
     fn format_condition(condition: &PokemonCondition) -> String {
         // Convert condition types to human-readable names
         match condition.get_type() {
@@ -369,19 +427,29 @@ impl BattleEvent {
             crate::battle::conditions::PokemonConditionType::Rampaging => "rampage".to_string(),
             crate::battle::conditions::PokemonConditionType::Disabled => "disable".to_string(),
             crate::battle::conditions::PokemonConditionType::Biding => "bide".to_string(),
-            crate::battle::conditions::PokemonConditionType::Teleported => "teleportation".to_string(),
-            crate::battle::conditions::PokemonConditionType::Countering => "counter stance".to_string(),
+            crate::battle::conditions::PokemonConditionType::Teleported => {
+                "teleportation".to_string()
+            }
+            crate::battle::conditions::PokemonConditionType::Countering => {
+                "counter stance".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Charging => "charging".to_string(),
-            crate::battle::conditions::PokemonConditionType::Underground => "underground".to_string(),
+            crate::battle::conditions::PokemonConditionType::Underground => {
+                "underground".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::InAir => "in air".to_string(),
             crate::battle::conditions::PokemonConditionType::Substitute => "substitute".to_string(),
             crate::battle::conditions::PokemonConditionType::Seeded => "leech seed".to_string(),
-            crate::battle::conditions::PokemonConditionType::Converted => "type conversion".to_string(),
-            crate::battle::conditions::PokemonConditionType::Transformed => "transformation".to_string(),
+            crate::battle::conditions::PokemonConditionType::Converted => {
+                "type conversion".to_string()
+            }
+            crate::battle::conditions::PokemonConditionType::Transformed => {
+                "transformation".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Enraged => "rage".to_string(),
         }
     }
-    
+
     fn format_pokemon_status(status: &crate::pokemon::StatusCondition) -> String {
         match status {
             crate::pokemon::StatusCondition::Sleep(_) => "sleep".to_string(),
@@ -399,7 +467,9 @@ impl BattleEvent {
             crate::pokemon::StatusCondition::Poison(_) => "was poisoned!".to_string(),
             crate::pokemon::StatusCondition::Burn => "was burned!".to_string(),
             crate::pokemon::StatusCondition::Freeze => "was frozen solid!".to_string(),
-            crate::pokemon::StatusCondition::Paralysis => "is paralyzed! It may be unable to move!".to_string(),
+            crate::pokemon::StatusCondition::Paralysis => {
+                "is paralyzed! It may be unable to move!".to_string()
+            }
             crate::pokemon::StatusCondition::Faint => "fainted!".to_string(),
         }
     }
@@ -410,7 +480,7 @@ impl BattleEvent {
             _ => format!("was cured of its {}!", Self::format_pokemon_status(status)),
         }
     }
-    
+
     fn format_stat_type(stat: &StatType) -> String {
         match stat {
             StatType::Attack => "Attack".to_string(),
@@ -423,7 +493,7 @@ impl BattleEvent {
             StatType::Focus => "critical hit ratio".to_string(),
         }
     }
-    
+
     fn format_action_failure_reason(reason: &ActionFailureReason) -> Option<String> {
         match reason {
             ActionFailureReason::IsAsleep => Some("is fast asleep.".to_string()),
@@ -444,14 +514,15 @@ impl BattleEvent {
 #[cfg(test)]
 mod event_formatting_tests {
     use super::*;
-    use crate::species::Species;
     use crate::moves::Move;
     use crate::player::BattlePlayer;
     use crate::pokemon::{PokemonInst, StatusCondition, get_species_data};
+    use crate::species::Species;
 
     fn create_test_battle_state() -> BattleState {
         let pikachu_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");
-        let charmander_data = get_species_data(Species::Charmander).expect("Failed to load Charmander data");
+        let charmander_data =
+            get_species_data(Species::Charmander).expect("Failed to load Charmander data");
 
         let pikachu = PokemonInst::new(Species::Pikachu, &pikachu_data, 25, None, None);
         let charmander = PokemonInst::new(Species::Charmander, &charmander_data, 25, None, None);
@@ -471,42 +542,51 @@ mod event_formatting_tests {
     #[test]
     fn test_silent_events_return_none() {
         let battle_state = create_test_battle_state();
-        
+
         // These events should be silent (return None)
         let silent_events = vec![
             BattleEvent::TurnEnded,
-            BattleEvent::MoveHit { 
-                attacker: Species::Pikachu, 
-                defender: Species::Charmander, 
-                move_used: Move::Tackle 
+            BattleEvent::MoveHit {
+                attacker: Species::Pikachu,
+                defender: Species::Charmander,
+                move_used: Move::Tackle,
             },
             BattleEvent::AttackTypeEffectiveness { multiplier: 1.0 }, // Normal effectiveness
         ];
 
         for event in silent_events {
-            assert!(event.format(&battle_state).is_none(), 
-                "Event {:?} should be silent but returned text", event);
+            assert!(
+                event.format(&battle_state).is_none(),
+                "Event {:?} should be silent but returned text",
+                event
+            );
         }
     }
 
-    #[test] 
+    #[test]
     fn test_formatted_events_return_some() {
         let battle_state = create_test_battle_state();
 
         let formatted_events = vec![
             BattleEvent::TurnStarted { turn_number: 1 },
-            BattleEvent::CriticalHit { 
-                attacker: Species::Pikachu, 
-                defender: Species::Charmander, 
-                move_used: Move::Tackle 
+            BattleEvent::CriticalHit {
+                attacker: Species::Pikachu,
+                defender: Species::Charmander,
+                move_used: Move::Tackle,
             },
             BattleEvent::AttackTypeEffectiveness { multiplier: 2.0 }, // Super effective
-            BattleEvent::PokemonFainted { player_index: 0, pokemon: Species::Pikachu },
+            BattleEvent::PokemonFainted {
+                player_index: 0,
+                pokemon: Species::Pikachu,
+            },
         ];
 
         for event in formatted_events {
-            assert!(event.format(&battle_state).is_some(),
-                "Event {:?} should return formatted text but returned None", event);
+            assert!(
+                event.format(&battle_state).is_some(),
+                "Event {:?} should return formatted text but returned None",
+                event
+            );
         }
     }
 
@@ -514,24 +594,48 @@ mod event_formatting_tests {
     fn test_move_name_formatting() {
         // Test that move names are properly formatted with spaces and hyphens
         assert_eq!(BattleEvent::format_move_name(Move::ViceGrip), "Vice Grip");
-        assert_eq!(BattleEvent::format_move_name(Move::SolarBeam), "Solar Beam");  
-        assert_eq!(BattleEvent::format_move_name(Move::ThunderWave), "Thunder Wave");
-        assert_eq!(BattleEvent::format_move_name(Move::SelfDestruct), "Self-Destruct");
-        
+        assert_eq!(BattleEvent::format_move_name(Move::SolarBeam), "Solar Beam");
+        assert_eq!(
+            BattleEvent::format_move_name(Move::ThunderWave),
+            "Thunder Wave"
+        );
+        assert_eq!(
+            BattleEvent::format_move_name(Move::SelfDestruct),
+            "Self-Destruct"
+        );
+
         // Test CamelCase conversion for unlisted moves
         assert_eq!(BattleEvent::format_move_name(Move::Tackle), "Tackle");
-        assert_eq!(BattleEvent::format_move_name(Move::QuickAttack), "Quick Attack");
+        assert_eq!(
+            BattleEvent::format_move_name(Move::QuickAttack),
+            "Quick Attack"
+        );
     }
 
     #[test]
     fn test_status_condition_formatting() {
         // Test Pokemon status formatting
-        assert_eq!(BattleEvent::format_pokemon_status_applied(&StatusCondition::Sleep(3)), "fell asleep!");
-        assert_eq!(BattleEvent::format_pokemon_status_applied(&StatusCondition::Poison(0)), "was poisoned!");
-        assert_eq!(BattleEvent::format_pokemon_status_applied(&StatusCondition::Paralysis), "is paralyzed! It may be unable to move!");
-        
-        assert_eq!(BattleEvent::format_pokemon_status_removed(&StatusCondition::Sleep(0)), "woke up!");
-        assert_eq!(BattleEvent::format_pokemon_status_removed(&StatusCondition::Burn), "was cured of its burn!");
+        assert_eq!(
+            BattleEvent::format_pokemon_status_applied(&StatusCondition::Sleep(3)),
+            "fell asleep!"
+        );
+        assert_eq!(
+            BattleEvent::format_pokemon_status_applied(&StatusCondition::Poison(0)),
+            "was poisoned!"
+        );
+        assert_eq!(
+            BattleEvent::format_pokemon_status_applied(&StatusCondition::Paralysis),
+            "is paralyzed! It may be unable to move!"
+        );
+
+        assert_eq!(
+            BattleEvent::format_pokemon_status_removed(&StatusCondition::Sleep(0)),
+            "woke up!"
+        );
+        assert_eq!(
+            BattleEvent::format_pokemon_status_removed(&StatusCondition::Burn),
+            "was cured of its burn!"
+        );
     }
 
     #[test]
@@ -540,20 +644,32 @@ mod event_formatting_tests {
 
         // Test a few specific event text outputs
         let turn_event = BattleEvent::TurnStarted { turn_number: 5 };
-        assert_eq!(turn_event.format(&battle_state), Some("=== Turn 5 ===".to_string()));
+        assert_eq!(
+            turn_event.format(&battle_state),
+            Some("=== Turn 5 ===".to_string())
+        );
 
-        let crit_event = BattleEvent::CriticalHit { 
-            attacker: Species::Pikachu, 
-            defender: Species::Charmander, 
-            move_used: Move::Tackle 
+        let crit_event = BattleEvent::CriticalHit {
+            attacker: Species::Pikachu,
+            defender: Species::Charmander,
+            move_used: Move::Tackle,
         };
-        assert_eq!(crit_event.format(&battle_state), Some("A critical hit!".to_string()));
+        assert_eq!(
+            crit_event.format(&battle_state),
+            Some("A critical hit!".to_string())
+        );
 
         let effectiveness_event = BattleEvent::AttackTypeEffectiveness { multiplier: 0.5 };
-        assert_eq!(effectiveness_event.format(&battle_state), Some("It's not very effective...".to_string()));
+        assert_eq!(
+            effectiveness_event.format(&battle_state),
+            Some("It's not very effective...".to_string())
+        );
 
         let no_effect_event = BattleEvent::AttackTypeEffectiveness { multiplier: 0.0 };
-        assert_eq!(no_effect_event.format(&battle_state), Some("It had no effect!".to_string()));
+        assert_eq!(
+            no_effect_event.format(&battle_state),
+            Some("It had no effect!".to_string())
+        );
     }
 
     #[test]
@@ -563,15 +679,15 @@ mod event_formatting_tests {
 
         // Add some sample events
         event_bus.push(BattleEvent::TurnStarted { turn_number: 1 });
-        event_bus.push(BattleEvent::MoveHit { 
-            attacker: Species::Pikachu, 
-            defender: Species::Charmander, 
-            move_used: Move::Tackle 
+        event_bus.push(BattleEvent::MoveHit {
+            attacker: Species::Pikachu,
+            defender: Species::Charmander,
+            move_used: Move::Tackle,
         });
-        event_bus.push(BattleEvent::CriticalHit { 
-            attacker: Species::Pikachu, 
-            defender: Species::Charmander, 
-            move_used: Move::Tackle 
+        event_bus.push(BattleEvent::CriticalHit {
+            attacker: Species::Pikachu,
+            defender: Species::Charmander,
+            move_used: Move::Tackle,
         });
 
         // Test basic properties
@@ -609,21 +725,21 @@ pub enum ActionFailureReason {
 }
 
 /// Event bus for collecting and managing battle events.
-/// 
+///
 /// ## Usage Examples
-/// 
+///
 /// ```rust,ignore
 /// // Basic debug printing (old way)
 /// for event in event_bus.events() {
 ///     println!("  {:?}", event);
 /// }
-/// 
+///
 /// // New convenient methods
 /// event_bus.print_debug();                                    // Just print events
 /// event_bus.print_debug_with_message("Turn 1 events:");      // With header message
 /// event_bus.print_formatted(&battle_state);                  // Human-readable format
 /// event_bus.print_formatted_with_message("Battle log:", &battle_state);  // With header
-/// 
+///
 /// // Using Display trait
 /// println!("{}", event_bus);                                  // Print all events
 /// ```
@@ -739,7 +855,6 @@ impl TurnRng {
         self.index += 1;
         outcome
     }
-
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-use crate::{battle::stats::effective_speed, move_data::MoveData, Move};
-use crate::player::PlayerAction;
 use crate::battle::state::BattleState;
+use crate::player::PlayerAction;
+use crate::{Move, battle::stats::effective_speed, move_data::MoveData};
 /// Internal action types for the action stack
 /// These represent atomic actions that can be executed during battle resolution
 #[derive(Debug, Clone)]
@@ -52,10 +52,13 @@ impl ActionStack {
         // 1. Collect the actions that have been submitted into the queue.
         // It's assumed the queue has been pre-filled by player input, AI, and/or
         // the "End-of-Turn Injection" of forced moves.
-        let actions_to_prioritize: Vec<(usize, PlayerAction)> = battle_state.action_queue
+        let actions_to_prioritize: Vec<(usize, PlayerAction)> = battle_state
+            .action_queue
             .iter()
             .enumerate()
-            .filter_map(|(index, action_opt)| action_opt.as_ref().map(|action| (index, action.clone())))
+            .filter_map(|(index, action_opt)| {
+                action_opt.as_ref().map(|action| (index, action.clone()))
+            })
             .collect();
 
         // 2. Determine the execution order based on game rules (priority, speed).
@@ -65,14 +68,17 @@ impl ActionStack {
         // 3. Convert the sorted PlayerActions into executable BattleActions and build the stack.
         let mut new_stack = Self::new();
         for (player_index, player_action) in action_order {
-            let battle_action =
-                Self::convert_player_action_to_battle_action(&player_action, player_index, battle_state);
+            let battle_action = Self::convert_player_action_to_battle_action(
+                &player_action,
+                player_index,
+                battle_state,
+            );
             new_stack.push_back(battle_action);
         }
 
         new_stack
     }
-    
+
     /// Adds an action to the end of the execution queue.
     pub fn push_back(&mut self, action: BattleAction) {
         self.actions.push_back(action);
@@ -133,7 +139,6 @@ impl ActionStack {
         action: &PlayerAction,
         battle_state: &BattleState,
     ) -> ActionPriority {
-
         match action {
             PlayerAction::SwitchPokemon { .. } => {
                 ActionPriority {
@@ -157,7 +162,8 @@ impl ActionStack {
                     .as_ref()
                     .expect("Move must exist in queue");
 
-                let move_data = MoveData::get_move_data(move_instance.move_).expect("Move data must exist");
+                let move_data =
+                    MoveData::get_move_data(move_instance.move_).expect("Move data must exist");
 
                 let speed = effective_speed(active_pokemon, player);
 
@@ -193,12 +199,20 @@ impl ActionStack {
             },
             PlayerAction::UseMove { move_index } => {
                 let player = &battle_state.players[player_index];
-                let active_pokemon = player.active_pokemon().expect("Active pokemon should exist");
-                
+                let active_pokemon = player
+                    .active_pokemon()
+                    .expect("Active pokemon should exist");
+
                 // Determine if the move should become Struggle due to 0 PP.
                 let final_move = active_pokemon.moves[*move_index]
                     .as_ref()
-                    .map(|inst| if inst.pp > 0 { inst.move_ } else { Move::Struggle })
+                    .map(|inst| {
+                        if inst.pp > 0 {
+                            inst.move_
+                        } else {
+                            Move::Struggle
+                        }
+                    })
                     .unwrap_or(Move::Struggle);
 
                 BattleAction::AttackHit {

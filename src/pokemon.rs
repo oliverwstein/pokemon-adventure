@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 
 // Include the compiled species data
-use crate::move_data::{get_compiled_species_data, MoveData};
+use crate::move_data::{MoveData, get_compiled_species_data};
 
 /// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
@@ -268,7 +268,6 @@ impl Learnset {
     }
 }
 
-
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
@@ -319,7 +318,7 @@ impl PokemonInst {
         level: u8,
         ivs: Option<[u8; 6]>,
         moves: Option<Vec<Move>>,
-        curr_hp:u16,
+        curr_hp: u16,
     ) -> Self {
         // Use default IVs (all 0) if not provided.
         // In a full implementation, you might want random IVs here.
@@ -601,7 +600,7 @@ impl PokemonInst {
             Some(StatusCondition::Burn) => (max_hp / 8).max(1), // Burn: 1/8 max HP
             _ => 0,
         };
-        
+
         // Cap damage to current HP to get actual damage that will be dealt
         theoretical_damage.min(current_hp)
     }

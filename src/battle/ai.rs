@@ -2,7 +2,7 @@
 
 use crate::battle::state::BattleState;
 use crate::move_data::{MoveCategory, MoveData};
-use crate::player::{PlayerAction};
+use crate::player::PlayerAction;
 
 /// A trait for any system that can decide on a battle action.
 /// This provides a common interface for different AI difficulties or strategies.
@@ -19,12 +19,7 @@ impl ScoringAI {
     }
 
     /// The core scoring logic. Assigns a floating-point value to a given action.
-    fn score_action(
-        &self,
-        action: &PlayerAction,
-        player_index: usize,
-        state: &BattleState,
-    ) -> f32 {
+    fn score_action(&self, action: &PlayerAction, player_index: usize, state: &BattleState) -> f32 {
         let opponent_index = 1 - player_index;
 
         match action {
@@ -60,15 +55,19 @@ impl ScoringAI {
         // This score is based on the move's potential to deal direct damage.
         // For non-damaging moves, this starts at 0.
         let mut damage_score = 0.0;
-        if matches!(move_data.category, MoveCategory::Physical | MoveCategory::Special) {
+        if matches!(
+            move_data.category,
+            MoveCategory::Physical | MoveCategory::Special
+        ) {
             // Start with the move's base power.
             let base_power = move_data.power.unwrap_or(0) as f32;
 
             // Factor in Type Effectiveness. This is the most critical multiplier.
             let defender_types = defender.get_current_types(opponent);
             let effectiveness =
-                crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types) as f32;
-            
+                crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types)
+                    as f32;
+
             // If the opponent is immune, this is a terrible move.
             if effectiveness < 0.1 {
                 return -1.0;
@@ -76,10 +75,15 @@ impl ScoringAI {
 
             // Factor in STAB (Same-Type Attack Bonus).
             let attacker_types = attacker.get_current_types(player);
-            let stab_multiplier = if attacker_types.contains(&move_data.move_type) { 1.5 } else { 1.0 };
-            
+            let stab_multiplier = if attacker_types.contains(&move_data.move_type) {
+                1.5
+            } else {
+                1.0
+            };
+
             // Factor in the attacker's normalized effective power.
-            let effective_stat = crate::battle::stats::effective_attack(attacker, player, move_instance.move_);
+            let effective_stat =
+                crate::battle::stats::effective_attack(attacker, player, move_instance.move_);
             let level_scalar = (attacker.level as f32 * 2.0).max(1.0);
             let normalized_power = effective_stat as f32 / level_scalar;
 
@@ -92,27 +96,30 @@ impl ScoringAI {
         for effect in &move_data.effects {
             match effect {
                 // Self-buffs are valuable if the stat isn't maxed out.
-                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance) 
-                if *target == crate::move_data::Target::User && *stages > 0 => {
+                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance)
+                    if *target == crate::move_data::Target::User && *stages > 0 =>
+                {
                     let current_stage = player.get_stat_stage(stat_type.clone().into());
                     if current_stage < 6 {
                         let potential_gain = 1.0 - (current_stage as f32 / 6.0); // Value diminishes as stat rises
-                        utility_score += 20.0 * (*stages as f32) * potential_gain * (*chance as f32 / 100.0);
+                        utility_score +=
+                            20.0 * (*stages as f32) * potential_gain * (*chance as f32 / 100.0);
                     }
                 }
                 // Opponent debuffs are valuable if the stat isn't minimized.
-                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance) 
-                if *target == crate::move_data::Target::Target && *stages < 0 => {
+                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance)
+                    if *target == crate::move_data::Target::Target && *stages < 0 =>
+                {
                     let opponent_stage = opponent.get_stat_stage(stat_type.clone().into());
                     if opponent_stage > -6 {
                         utility_score += 15.0 * (stages.abs() as f32) * (*chance as f32 / 100.0);
                     }
                 }
                 // Inflicting a status is very valuable, but only if the opponent is healthy.
-                crate::move_data::MoveEffect::Sedate(chance) 
-                | crate::move_data::MoveEffect::Paralyze(chance) 
-                | crate::move_data::MoveEffect::Poison(chance) 
-                | crate::move_data::MoveEffect::Burn(chance) 
+                crate::move_data::MoveEffect::Sedate(chance)
+                | crate::move_data::MoveEffect::Paralyze(chance)
+                | crate::move_data::MoveEffect::Poison(chance)
+                | crate::move_data::MoveEffect::Burn(chance)
                 | crate::move_data::MoveEffect::Freeze(chance) => {
                     if defender.status.is_none() {
                         utility_score += 45.0 * (*chance as f32 / 100.0);
@@ -146,7 +153,7 @@ impl ScoringAI {
 
         final_score
     }
-    
+
     fn score_switch(
         &self,
         _team_index: usize,
@@ -183,14 +190,15 @@ impl Behavior for ScoringAI {
 
         if is_replacement_phase {
             let valid_switches = player.get_valid_switches();
-            
+
             // If there are no valid switches, the player has lost. Forfeit is the only option.
             if valid_switches.is_empty() {
                 return PlayerAction::Forfeit;
             }
 
             // Score only the switch actions and pick the best one.
-            return valid_switches.into_iter()
+            return valid_switches
+                .into_iter()
                 .max_by_key(|action| {
                     let score = self.score_action(action, player_index, battle_state);
                     ordered_float::OrderedFloat(score)
@@ -203,7 +211,8 @@ impl Behavior for ScoringAI {
 
         // 2a. Get and score all possible moves.
         let valid_moves = player.get_valid_moves();
-        let best_move = valid_moves.into_iter()
+        let best_move = valid_moves
+            .into_iter()
             .map(|action| {
                 let score = self.score_action(&action, player_index, battle_state);
                 (action, score)
@@ -212,7 +221,8 @@ impl Behavior for ScoringAI {
 
         // 2b. Get and score all possible switches.
         let valid_switches = player.get_valid_switches();
-        let best_switch = valid_switches.into_iter()
+        let best_switch = valid_switches
+            .into_iter()
             .map(|action| {
                 let score = self.score_action(&action, player_index, battle_state);
                 (action, score)
@@ -231,7 +241,7 @@ impl Behavior for ScoringAI {
                 } else {
                     move_action
                 }
-            },
+            }
             // If only attacking is possible...
             (Some((move_action, _)), None) => move_action,
             // If only switching is possible...
@@ -240,5 +250,4 @@ impl Behavior for ScoringAI {
             (None, None) => PlayerAction::Forfeit,
         }
     }
-
 }

@@ -1,8 +1,8 @@
+use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus};
-use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::moves::Move;
-use crate::player::{StatType, TeamCondition, PlayerAction};
+use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
 
 /// Player target for commands - provides type safety over raw indices
@@ -152,7 +152,6 @@ pub enum ExecutionError {
     InvalidPokemonIndex,
 }
 
-
 impl BattleCommand {
     /// Generate events that should be emitted after this command executes successfully
     pub fn emit_events(&self, state: &BattleState) -> Vec<BattleEvent> {
@@ -160,10 +159,16 @@ impl BattleCommand {
             BattleCommand::DealDamage { target, amount } => {
                 emit_damage_and_faint_events(*target, *amount, state, None, None)
             }
-            BattleCommand::DealStatusDamage { target, status, amount } => {
-                emit_damage_and_faint_events(*target, *amount, state, Some(*status), None)
-            }
-            BattleCommand::DealConditionDamage { target, condition, amount } => {
+            BattleCommand::DealStatusDamage {
+                target,
+                status,
+                amount,
+            } => emit_damage_and_faint_events(*target, *amount, state, Some(*status), None),
+            BattleCommand::DealConditionDamage {
+                target,
+                condition,
+                amount,
+            } => {
                 emit_damage_and_faint_events(*target, *amount, state, None, Some(condition.clone()))
             }
             BattleCommand::HealPokemon { target, amount } => {
@@ -177,13 +182,12 @@ impl BattleCommand {
                             new_hp: pokemon.current_hp(),
                         }]
                     } else {
-                    vec![]
-                }
-                    
+                        vec![]
+                    }
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::SetPokemonStatus { target, status } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -200,7 +204,7 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::CurePokemonStatus { target, status } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -212,12 +216,16 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::UsePP { .. } => {
                 // PP usage is silent - no events emitted
                 vec![]
-            },
-            BattleCommand::ChangeStatStage { target, stat, delta } => {
+            }
+            BattleCommand::ChangeStatStage {
+                target,
+                stat,
+                delta,
+            } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
@@ -231,7 +239,7 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::AddCondition { target, condition } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -248,13 +256,18 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
-            BattleCommand::RemoveCondition { target, condition_type } => {
+            }
+            BattleCommand::RemoveCondition {
+                target,
+                condition_type,
+            } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
                 if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
                     // Find the actual condition being removed
-                    if let Some(actual_condition) = player.active_pokemon_conditions.get(condition_type) {
+                    if let Some(actual_condition) =
+                        player.active_pokemon_conditions.get(condition_type)
+                    {
                         vec![BattleEvent::StatusRemoved {
                             target: pokemon.species,
                             status: actual_condition.clone(),
@@ -265,7 +278,7 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::RemoveSpecificCondition { target, condition } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -277,20 +290,27 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
-            BattleCommand::AddTeamCondition { target, condition, .. } => {
+            }
+            BattleCommand::AddTeamCondition {
+                target, condition, ..
+            } => {
                 let player_index = target.to_index();
                 vec![BattleEvent::TeamConditionApplied {
                     player_index,
                     condition: *condition,
                 }]
-            },
-            BattleCommand::SwitchPokemon { target, new_pokemon_index } => {
+            }
+            BattleCommand::SwitchPokemon {
+                target,
+                new_pokemon_index,
+            } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
-                let old_pokemon = player.team[player.active_pokemon_index].as_ref().map(|p| p.species);
+                let old_pokemon = player.team[player.active_pokemon_index]
+                    .as_ref()
+                    .map(|p| p.species);
                 let new_pokemon = player.team[*new_pokemon_index].as_ref().map(|p| p.species);
-                
+
                 if let (Some(old), Some(new)) = (old_pokemon, new_pokemon) {
                     vec![BattleEvent::PokemonSwitched {
                         player_index,
@@ -300,17 +320,20 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
+            }
             BattleCommand::UpdateStatusProgress { target: _ } => {
                 // This command can potentially cure a status, so we need to check if we should emit a removed event
                 // However, the actual determination happens during state change, so we return empty here
                 // The state change function will emit the appropriate event if needed
                 vec![]
-            },
-            BattleCommand::TickPokemonCondition { target: _, condition: _ } => {
+            }
+            BattleCommand::TickPokemonCondition {
+                target: _,
+                condition: _,
+            } => {
                 // Ticking conditions doesn't generate damage events - only DealConditionDamage does
                 vec![]
-            },
+            }
             BattleCommand::ExpirePokemonCondition { target, condition } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -322,35 +345,38 @@ impl BattleCommand {
                 } else {
                     vec![]
                 }
-            },
-            BattleCommand::TickTeamCondition { target: _, condition: _ } => {
+            }
+            BattleCommand::TickTeamCondition {
+                target: _,
+                condition: _,
+            } => {
                 // let player_index = target.to_index();
                 // Team conditions don't usually emit tick events, but this is where we'd add them
                 vec![]
-            },
+            }
             BattleCommand::ExpireTeamCondition { target, condition } => {
                 let player_index = target.to_index();
                 vec![BattleEvent::TeamConditionExpired {
                     player_index,
                     condition: *condition,
                 }]
-            },
+            }
             BattleCommand::QueueForcedAction { .. } => {
                 // Queuing actions doesn't generate events
                 vec![]
-            },
-            
+            }
+
             // Commands that emit manual events via EmitEvent should pass through
             BattleCommand::EmitEvent(event) => vec![event.clone()],
-            
+
             // Commands that don't generate automatic events
-            BattleCommand::SetGameState(_) |
-            BattleCommand::IncrementTurnNumber |
-            BattleCommand::ClearActionQueue |
-            BattleCommand::SetLastMove { .. } |
-            BattleCommand::AddAnte { .. } |
-            BattleCommand::ClearPlayerState { .. } |
-            BattleCommand::PushAction(_) => vec![],
+            BattleCommand::SetGameState(_)
+            | BattleCommand::IncrementTurnNumber
+            | BattleCommand::ClearActionQueue
+            | BattleCommand::SetLastMove { .. }
+            | BattleCommand::AddAnte { .. }
+            | BattleCommand::ClearPlayerState { .. }
+            | BattleCommand::PushAction(_) => vec![],
         }
     }
 }
@@ -460,17 +486,17 @@ pub fn execute_command(
         bus.push(event.clone());
         return Ok(());
     }
-    
+
     // Execute the state change
     let result = execute_state_change(&command, state, action_stack);
-    
+
     // If successful, auto-emit events
     if result.is_ok() {
         for event in command.emit_events(state) {
             bus.push(event);
         }
     }
-    
+
     result
 }
 
@@ -513,7 +539,9 @@ fn execute_state_change(
         }
         BattleCommand::UsePP { target, move_used } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
-                pokemon.use_move(*move_used).map_err(|_| ExecutionError::NoPokemon)
+                pokemon
+                    .use_move(*move_used)
+                    .map_err(|_| ExecutionError::NoPokemon)
             })
         }
         BattleCommand::ChangeStatStage {
@@ -551,7 +579,9 @@ fn execute_state_change(
         BattleCommand::RemoveSpecificCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
-            player.active_pokemon_conditions.remove(&condition.get_type());
+            player
+                .active_pokemon_conditions
+                .remove(&condition.get_type());
             Ok(())
         }
         BattleCommand::AddTeamCondition {
@@ -610,7 +640,11 @@ fn execute_state_change(
             player.clear_active_pokemon_state();
             Ok(())
         }
-        BattleCommand::DealStatusDamage { target, status: _, amount } => {
+        BattleCommand::DealStatusDamage {
+            target,
+            status: _,
+            amount,
+        } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
                 let actual_damage = pokemon.take_damage(*amount);
                 // Note: We don't emit events here as they're handled by emit_events()
@@ -621,7 +655,11 @@ fn execute_state_change(
                 Ok(())
             })
         }
-        BattleCommand::DealConditionDamage { target, condition: _, amount } => {
+        BattleCommand::DealConditionDamage {
+            target,
+            condition: _,
+            amount,
+        } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
                 let actual_damage = pokemon.take_damage(*amount);
                 // Note: We don't emit events here as they're handled by emit_events()
@@ -644,9 +682,12 @@ fn execute_state_change(
         BattleCommand::TickPokemonCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
-            
+
             // Apply tick effect for this specific condition
-            if let Some(existing_condition) = player.active_pokemon_conditions.get_mut(&condition.get_type()) {
+            if let Some(existing_condition) = player
+                .active_pokemon_conditions
+                .get_mut(&condition.get_type())
+            {
                 // Apply condition-specific tick behavior
                 match existing_condition {
                     crate::battle::conditions::PokemonCondition::Confused { turns_remaining } => {
@@ -661,10 +702,15 @@ fn execute_state_change(
                     crate::battle::conditions::PokemonCondition::Rampaging { turns_remaining } => {
                         *turns_remaining = turns_remaining.saturating_sub(1);
                     }
-                    crate::battle::conditions::PokemonCondition::Disabled { turns_remaining, .. } => {
+                    crate::battle::conditions::PokemonCondition::Disabled {
+                        turns_remaining,
+                        ..
+                    } => {
                         *turns_remaining = turns_remaining.saturating_sub(1);
                     }
-                    crate::battle::conditions::PokemonCondition::Biding { turns_remaining, .. } => {
+                    crate::battle::conditions::PokemonCondition::Biding {
+                        turns_remaining, ..
+                    } => {
                         *turns_remaining = turns_remaining.saturating_sub(1);
                     }
                     _ => {} // Other conditions don't have turns to tick
@@ -675,13 +721,15 @@ fn execute_state_change(
         BattleCommand::ExpirePokemonCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
-            player.active_pokemon_conditions.remove(&condition.get_type());
+            player
+                .active_pokemon_conditions
+                .remove(&condition.get_type());
             Ok(())
         }
         BattleCommand::TickTeamCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
-            
+
             // Decrement turns for this specific team condition
             if let Some(turns) = player.team_conditions.get_mut(condition) {
                 *turns = turns.saturating_sub(1);
@@ -705,8 +753,8 @@ fn execute_state_change(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::battle::state::{BattleState, EventBus, GameState};
     use crate::battle::action_stack::ActionStack;
+    use crate::battle::state::{BattleState, EventBus, GameState};
     use crate::player::BattlePlayer;
     use crate::pokemon::PokemonInst;
     use crate::species::Species;

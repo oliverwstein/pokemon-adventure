@@ -31,7 +31,7 @@ impl MoveEffect {
 
         commands
     }
-    
+
     /// Apply ante effect (Pay Day)
     pub(super) fn apply_ante_effect(
         &self,

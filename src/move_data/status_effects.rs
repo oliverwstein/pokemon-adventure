@@ -343,11 +343,22 @@ impl MoveEffect {
         if let Some(target_pokemon) = target_player.active_pokemon() {
             // Check if the Pokemon has the status condition we want to cure
             let status_to_cure = match (&target_pokemon.status, status_type) {
-                (Some(status @ crate::pokemon::StatusCondition::Sleep(_)), StatusType::Sleep) => Some(*status),
-                (Some(status @ crate::pokemon::StatusCondition::Poison(_)), StatusType::Poison) => Some(*status),
-                (Some(status @ crate::pokemon::StatusCondition::Burn), StatusType::Burn) => Some(*status),
-                (Some(status @ crate::pokemon::StatusCondition::Freeze), StatusType::Freeze) => Some(*status),
-                (Some(status @ crate::pokemon::StatusCondition::Paralysis), StatusType::Paralysis) => Some(*status),
+                (Some(status @ crate::pokemon::StatusCondition::Sleep(_)), StatusType::Sleep) => {
+                    Some(*status)
+                }
+                (Some(status @ crate::pokemon::StatusCondition::Poison(_)), StatusType::Poison) => {
+                    Some(*status)
+                }
+                (Some(status @ crate::pokemon::StatusCondition::Burn), StatusType::Burn) => {
+                    Some(*status)
+                }
+                (Some(status @ crate::pokemon::StatusCondition::Freeze), StatusType::Freeze) => {
+                    Some(*status)
+                }
+                (
+                    Some(status @ crate::pokemon::StatusCondition::Paralysis),
+                    StatusType::Paralysis,
+                ) => Some(*status),
                 _ => None,
             };
 

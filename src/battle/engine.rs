@@ -2,8 +2,13 @@
 
 use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::ai::{Behavior, ScoringAI};
-use crate::battle::calculators::{calculate_action_prevention, calculate_attack_outcome, calculate_end_turn_commands, calculate_forced_action_commands, calculate_forfeit_commands, calculate_switch_commands};
-use crate::battle::commands::{execute_command_batch, execute_command, BattleCommand, PlayerTarget};
+use crate::battle::calculators::{
+    calculate_action_prevention, calculate_attack_outcome, calculate_end_turn_commands,
+    calculate_forced_action_commands, calculate_forfeit_commands, calculate_switch_commands,
+};
+use crate::battle::commands::{
+    BattleCommand, PlayerTarget, execute_command, execute_command_batch,
+};
 use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
@@ -25,15 +30,16 @@ pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerActi
 
     for player_index in players_to_act {
         let player = &battle_state.players[player_index];
-        
+
         // The logic is now much cleaner: if the player is an NPC and their action slot is empty, fill it.
-        if player.player_type == crate::player::PlayerType::NPC 
-            && battle_state.action_queue[player_index].is_none() {
+        if player.player_type == crate::player::PlayerType::NPC
+            && battle_state.action_queue[player_index].is_none()
+        {
             let action = ai_brain.decide_action(player_index, battle_state);
             npc_actions.push((player_index, action));
         }
     }
-    
+
     npc_actions
 }
 
@@ -58,7 +64,7 @@ pub fn ready_for_turn_resolution(battle_state: &BattleState) -> bool {
 /// Returns EventBus containing all events that occurred during the turn
 pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBus {
     let mut bus = EventBus::new();
-    
+
     // We only need one action_stack for the entire resolution process.
     // It is temporary to this function call.
     let mut action_stack = ActionStack::new();
@@ -90,7 +96,12 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
 
         if battle_state.game_state == GameState::TurnInProgress {
             let end_turn_commands = calculate_end_turn_commands(battle_state, &mut rng);
-            let _ = execute_command_batch(end_turn_commands, battle_state, &mut bus, &mut ActionStack::new());
+            let _ = execute_command_batch(
+                end_turn_commands,
+                battle_state,
+                &mut bus,
+                &mut ActionStack::new(),
+            );
         }
 
         // Pass the now-empty stack to finalize_turn.
@@ -101,7 +112,11 @@ pub fn resolve_turn(battle_state: &mut BattleState, mut rng: TurnRng) -> EventBu
 }
 
 /// Handle forced replacement phase without turn progression
-fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus, action_stack: &mut ActionStack) {
+fn resolve_replacement_phase(
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+    action_stack: &mut ActionStack,
+) {
     let mut turn_action_stack = ActionStack::build_initial(battle_state);
 
     while let Some(action) = turn_action_stack.pop_front() {
@@ -114,14 +129,20 @@ fn resolve_replacement_phase(battle_state: &mut BattleState, bus: &mut EventBus,
                 &mut TurnRng::new_for_test(vec![]),
             );
         }
-        if matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+        if matches!(
+            battle_state.game_state,
+            GameState::Player1Win | GameState::Player2Win | GameState::Draw
+        ) {
             break;
         }
     }
 
     check_win_conditions(battle_state, bus);
 
-    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
+    if !matches!(
+        battle_state.game_state,
+        GameState::Player1Win | GameState::Player2Win | GameState::Draw
+    ) {
         let commands = vec![BattleCommand::SetGameState(GameState::WaitingForActions)];
         let _ = execute_command_batch(commands, battle_state, bus, action_stack);
     }
@@ -176,7 +197,8 @@ pub fn execute_battle_action(
                 }
             }
 
-            let commands = calculate_switch_commands(player_index, target_pokemon_index, battle_state);
+            let commands =
+                calculate_switch_commands(player_index, target_pokemon_index, battle_state);
             let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
         }
 
@@ -205,19 +227,14 @@ pub fn execute_battle_action(
             // This needs to happen BEFORE any move processing (including special moves)
             // Only check prevention on the first hit (hit_number 0) of a move
             let (failure_reason, prevention_commands) = if hit_number == 0 {
-                calculate_action_prevention(
-                    attacker_index,
-                    battle_state,
-                    rng,
-                    move_used,
-                )
+                calculate_action_prevention(attacker_index, battle_state, rng, move_used)
             } else {
                 (None, Vec::new()) // No prevention for subsequent hits
             };
-            
+
             // Execute any commands from the prevention check (status updates, etc.)
             let _ = execute_command_batch(prevention_commands, battle_state, bus, action_stack);
-            
+
             if let Some(failure_reason) = failure_reason {
                 // Always generate ActionFailed event first
                 bus.push(BattleEvent::ActionFailed {
@@ -266,10 +283,11 @@ pub fn execute_battle_action(
                 .expect("SetLastMove command should always succeed");
 
                 // Check if Enraged Pokemon used a move other than Rage - if so, remove Enraged condition
-                if battle_state.players[attacker_index].has_condition_type(PokemonConditionType::Enraged)
+                if battle_state.players[attacker_index]
+                    .has_condition_type(PokemonConditionType::Enraged)
                     && Some(move_used) != battle_state.players[attacker_index].last_move
-                    // Rather than requiring use of Rage, we just require it is the same move as before.
-                    // This allows for multiple moves that cause the user to become Enraged.
+                // Rather than requiring use of Rage, we just require it is the same move as before.
+                // This allows for multiple moves that cause the user to become Enraged.
                 {
                     if let Some(pokemon) = battle_state.players[attacker_index].active_pokemon() {
                         execute_command(
@@ -399,34 +417,59 @@ pub fn execute_attack_hit(
     }
 }
 
-
-fn finalize_turn(battle_state: &mut BattleState, bus: &mut EventBus, action_stack: &mut ActionStack) {
+fn finalize_turn(
+    battle_state: &mut BattleState,
+    bus: &mut EventBus,
+    action_stack: &mut ActionStack,
+) {
     // Step 1: Clear state for fainted Pokémon.
     for player_index in 0..2 {
         if let Some(pokemon) = battle_state.players[player_index].active_pokemon() {
             if pokemon.is_fainted() {
                 let _ = execute_command(
-                    BattleCommand::ClearPlayerState { target: PlayerTarget::from_index(player_index) },
-                    battle_state, bus, action_stack,
+                    BattleCommand::ClearPlayerState {
+                        target: PlayerTarget::from_index(player_index),
+                    },
+                    battle_state,
+                    bus,
+                    action_stack,
                 );
             }
         }
     }
-    
+
     // Step 2: Check for win/loss conditions.
     check_win_conditions(battle_state, bus);
 
     // Step 3: Increment turn number if the battle is ongoing.
     if matches!(battle_state.game_state, GameState::TurnInProgress) {
-        let _ = execute_command(BattleCommand::IncrementTurnNumber, battle_state, bus, action_stack);
+        let _ = execute_command(
+            BattleCommand::IncrementTurnNumber,
+            battle_state,
+            bus,
+            action_stack,
+        );
     }
-    
+
     // Step 4: Clear the action queue from the completed turn.
-    let _ = execute_command(BattleCommand::ClearActionQueue, battle_state, bus, action_stack);
+    let _ = execute_command(
+        BattleCommand::ClearActionQueue,
+        battle_state,
+        bus,
+        action_stack,
+    );
 
     // Step 5: If the battle hasn't ended, set the state to wait for the next set of actions.
-    if !matches!(battle_state.game_state, GameState::Player1Win | GameState::Player2Win | GameState::Draw) {
-        let _ = execute_command(BattleCommand::SetGameState(GameState::WaitingForActions), battle_state, bus, action_stack);
+    if !matches!(
+        battle_state.game_state,
+        GameState::Player1Win | GameState::Player2Win | GameState::Draw
+    ) {
+        let _ = execute_command(
+            BattleCommand::SetGameState(GameState::WaitingForActions),
+            battle_state,
+            bus,
+            action_stack,
+        );
     }
 
     // Step 6: Check if any Pokémon fainted and require replacements, overriding the previous state if so.

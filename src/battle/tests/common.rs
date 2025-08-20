@@ -1,8 +1,8 @@
 use crate::battle::state::{BattleState, TurnRng};
+use crate::moves::Move;
 use crate::player::BattlePlayer;
 use crate::pokemon::{PokemonInst, StatusCondition};
 use crate::species::Species;
-use crate::moves::Move;
 
 /// A builder for creating test Pokemon instances with common defaults.
 ///

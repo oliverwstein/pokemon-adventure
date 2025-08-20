@@ -4,10 +4,10 @@ mod tests {
     use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
     use crate::battle::engine::{execute_battle_action, resolve_turn};
     use crate::battle::state::{BattleEvent, EventBus, TurnRng};
-    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
+    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle, predictable_rng};
     use crate::moves::Move;
     use crate::player::PlayerAction;
-    use crate::pokemon::{StatusCondition};
+    use crate::pokemon::StatusCondition;
     use crate::species::Species;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
@@ -18,7 +18,11 @@ mod tests {
     #[case("regular poison", StatusCondition::Poison(0), 1.0/16.0)]
     #[case("badly poisoned (toxic)", StatusCondition::Poison(1), 1.0/16.0)] // Severity 1 means 1/16th damage
     #[case("burn", StatusCondition::Burn, 1.0/8.0)]
-    fn test_status_damage_calculation(#[case] desc: &str, #[case] status: StatusCondition, #[case] fraction: f32) {
+    fn test_status_damage_calculation(
+        #[case] desc: &str,
+        #[case] status: StatusCondition,
+        #[case] fraction: f32,
+    ) {
         // Arrange
         let pokemon = TestPokemonBuilder::new(Species::Charmander, 50)
             .with_status(status)
@@ -49,7 +53,7 @@ mod tests {
         let (should_cure, _) = pokemon.update_status_progress();
         assert!(!should_cure);
         assert_eq!(pokemon.status, Some(StatusCondition::Sleep(1)));
-        
+
         // Act & Assert - Turn 3 (Sleep 1 -> 0)
         let (should_cure, _) = pokemon.update_status_progress();
         assert!(!should_cure);
@@ -74,7 +78,7 @@ mod tests {
             .with_moves(vec![Move::Splash])
             .build();
         let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
-        
+
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
@@ -84,24 +88,41 @@ mod tests {
         // Assert
         event_bus.print_debug_with_message("Events for test_end_of_turn_integration_damage:");
         let poison_damage_event = event_bus.events().iter().any(|e| {
-            matches!(e, BattleEvent::PokemonStatusDamage { target: Species::Charmander, status: StatusCondition::Poison(0), .. })
+            matches!(
+                e,
+                BattleEvent::PokemonStatusDamage {
+                    target: Species::Charmander,
+                    status: StatusCondition::Poison(0),
+                    ..
+                }
+            )
         });
-        assert!(poison_damage_event, "Poison damage should be applied at the end of the turn");
+        assert!(
+            poison_damage_event,
+            "Poison damage should be applied at the end of the turn"
+        );
     }
 
     #[test]
     fn test_active_condition_timers_decrement() {
         // Arrange
-        let p1_pokemon = TestPokemonBuilder::new(Species::Pikachu, 25).with_moves(vec![Move::Splash]).build();
-        let p2_pokemon = TestPokemonBuilder::new(Species::Rattata, 25).with_moves(vec![Move::Splash]).build();
-        
-        let mut player1 = crate::battle::tests::common::create_test_player("p1", "Player 1", vec![p1_pokemon]);
+        let p1_pokemon = TestPokemonBuilder::new(Species::Pikachu, 25)
+            .with_moves(vec![Move::Splash])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Rattata, 25)
+            .with_moves(vec![Move::Splash])
+            .build();
+
+        let mut player1 =
+            crate::battle::tests::common::create_test_player("p1", "Player 1", vec![p1_pokemon]);
         player1.add_condition(PokemonCondition::Confused { turns_remaining: 3 });
         player1.add_condition(PokemonCondition::Trapped { turns_remaining: 2 });
         player1.add_condition(PokemonCondition::Flinched); // Should expire this turn
 
-        let player2 = crate::battle::tests::common::create_test_player("p2", "Player 2", vec![p2_pokemon]);
-        let mut battle_state = crate::battle::state::BattleState::new("test".to_string(), player1, player2);
+        let player2 =
+            crate::battle::tests::common::create_test_player("p2", "Player 2", vec![p2_pokemon]);
+        let mut battle_state =
+            crate::battle::state::BattleState::new("test".to_string(), player1, player2);
 
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
@@ -114,16 +135,32 @@ mod tests {
 
         // Check that Flinched was removed
         assert!(!battle_state.players[0].has_condition_type(PokemonConditionType::Flinched));
-        assert!(event_bus.events().iter().any(|e| matches!(e, BattleEvent::ConditionExpired { condition: PokemonCondition::Flinched, .. })));
+        assert!(event_bus.events().iter().any(|e| matches!(
+            e,
+            BattleEvent::ConditionExpired {
+                condition: PokemonCondition::Flinched,
+                ..
+            }
+        )));
 
         // Check that other timers decremented correctly
-        let confusion = battle_state.players[0].active_pokemon_conditions.get(&PokemonConditionType::Confused);
-        let trapped = battle_state.players[0].active_pokemon_conditions.get(&PokemonConditionType::Trapped);
-        
+        let confusion = battle_state.players[0]
+            .active_pokemon_conditions
+            .get(&PokemonConditionType::Confused);
+        let trapped = battle_state.players[0]
+            .active_pokemon_conditions
+            .get(&PokemonConditionType::Trapped);
+
         // Confusion should have decremented at end of turn
-        assert!(matches!(confusion, Some(PokemonCondition::Confused { turns_remaining: 2 })));
+        assert!(matches!(
+            confusion,
+            Some(PokemonCondition::Confused { turns_remaining: 2 })
+        ));
         // Trapped should have decremented at end of turn
-        assert!(matches!(trapped, Some(PokemonCondition::Trapped { turns_remaining: 1 })));
+        assert!(matches!(
+            trapped,
+            Some(PokemonCondition::Trapped { turns_remaining: 1 })
+        ));
     }
 
     #[test]
@@ -138,7 +175,9 @@ mod tests {
             .with_status(StatusCondition::Poison(0))
             .with_hp(poison_damage)
             .build();
-        let p2_pokemon = TestPokemonBuilder::new(Species::Pikachu, 50).with_moves(vec![Move::Splash]).build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Pikachu, 50)
+            .with_moves(vec![Move::Splash])
+            .build();
         let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
 
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
@@ -149,14 +188,29 @@ mod tests {
 
         // Assert
         event_bus.print_debug_with_message("Events for test_status_damage_causes_fainting:");
-        assert!(battle_state.players[0].active_pokemon().unwrap().is_fainted());
-        assert!(event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonFainted { player_index: 0, pokemon: Species::Magikarp })));
+        assert!(
+            battle_state.players[0]
+                .active_pokemon()
+                .unwrap()
+                .is_fainted()
+        );
+        assert!(event_bus.events().iter().any(|e| matches!(
+            e,
+            BattleEvent::PokemonFainted {
+                player_index: 0,
+                pokemon: Species::Magikarp
+            }
+        )));
     }
 
     #[rstest]
     #[case("thaws on low roll", 24, true)]
     #[case("stays frozen on high roll", 25, false)]
-    fn test_freeze_thaw_outcomes(#[case] desc: &str, #[case] rng_val: u8, #[case] should_thaw: bool) {
+    fn test_freeze_thaw_outcomes(
+        #[case] desc: &str,
+        #[case] rng_val: u8,
+        #[case] should_thaw: bool,
+    ) {
         // Arrange
         let attacker = TestPokemonBuilder::new(Species::Pikachu, 25)
             .with_moves(vec![Move::Tackle])
@@ -171,21 +225,47 @@ mod tests {
 
         // Act
         execute_battle_action(
-            BattleAction::AttackHit { attacker_index: 0, defender_index: 1, move_used: Move::Tackle, hit_number: 0 },
-            &mut battle_state, &mut action_stack, &mut bus, &mut rng,
+            BattleAction::AttackHit {
+                attacker_index: 0,
+                defender_index: 1,
+                move_used: Move::Tackle,
+                hit_number: 0,
+            },
+            &mut battle_state,
+            &mut action_stack,
+            &mut bus,
+            &mut rng,
         );
 
         // Assert
         bus.print_debug_with_message(&format!("Events for test_freeze_thaw_outcomes [{}]:", desc));
-        
+
         let final_status = battle_state.players[0].active_pokemon().unwrap().status;
-        let thaw_event_found = bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonStatusRemoved { status: StatusCondition::Freeze, .. }));
+        let thaw_event_found = bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::PokemonStatusRemoved {
+                    status: StatusCondition::Freeze,
+                    ..
+                }
+            )
+        });
 
         if should_thaw {
-            assert_eq!(final_status, None, "Pokemon should have thawed and have no status");
-            assert!(thaw_event_found, "A PokemonStatusRemoved event should have been emitted for the thaw");
+            assert_eq!(
+                final_status, None,
+                "Pokemon should have thawed and have no status"
+            );
+            assert!(
+                thaw_event_found,
+                "A PokemonStatusRemoved event should have been emitted for the thaw"
+            );
         } else {
-            assert_eq!(final_status, Some(StatusCondition::Freeze), "Pokemon should remain frozen");
+            assert_eq!(
+                final_status,
+                Some(StatusCondition::Freeze),
+                "Pokemon should remain frozen"
+            );
             assert!(!thaw_event_found, "No thaw event should have been emitted");
         }
     }

@@ -2,8 +2,8 @@
 mod tests {
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::battle::state::{BattleEvent, TurnRng};
-    use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
-    use crate::moves::{Move};
+    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle};
+    use crate::moves::Move;
     use crate::species::Species;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
@@ -53,8 +53,14 @@ mod tests {
         // Assert
         event_bus.print_debug_with_message(&format!("Events for test_hit_outcomes [{}]:", desc));
 
-        let has_crit = event_bus.events().iter().any(|e| matches!(e, BattleEvent::CriticalHit { .. }));
-        let has_miss = event_bus.events().iter().any(|e| matches!(e, BattleEvent::MoveMissed { .. }));
+        let has_crit = event_bus
+            .events()
+            .iter()
+            .any(|e| matches!(e, BattleEvent::CriticalHit { .. }));
+        let has_miss = event_bus
+            .events()
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveMissed { .. }));
 
         assert_eq!(has_crit, expect_crit, "Critical hit expectation mismatch");
         assert_eq!(has_miss, expect_miss, "Miss expectation mismatch");

@@ -1,10 +1,10 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::moves::Move;
-use crate::pokemon::{PokemonInst};
+use crate::pokemon::PokemonInst;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::collections::HashMap;
-use std::hash::{Hash};
+use std::fmt;
+use std::hash::Hash;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PlayerAction {
@@ -51,7 +51,7 @@ impl fmt::Display for TeamCondition {
             TeamCondition::LightScreen => "Light Screen", // Use a space for better readability
             TeamCondition::Mist => "Mist",
         };
-        
+
         // The write! macro handles writing the string to the output.
         write!(f, "{}", display_name)
     }
@@ -167,7 +167,9 @@ impl BattlePlayer {
     /// Check if a player has any non-fainted Pokemon in their team
     pub fn can_still_battle(&self) -> bool {
         self.team.iter().any(|pokemon_opt| {
-            pokemon_opt.as_ref().map_or(false, |pokemon| !pokemon.is_fainted())
+            pokemon_opt
+                .as_ref()
+                .map_or(false, |pokemon| !pokemon.is_fainted())
         })
     }
 
@@ -175,7 +177,9 @@ impl BattlePlayer {
     pub fn validate_action(&self, action: &PlayerAction) -> Result<(), String> {
         match action {
             PlayerAction::UseMove { move_index } => {
-                let pokemon = self.active_pokemon().ok_or("No active Pokemon to use a move.")?;
+                let pokemon = self
+                    .active_pokemon()
+                    .ok_or("No active Pokemon to use a move.")?;
 
                 if *move_index >= pokemon.moves.len() {
                     return Err("Invalid move index.".to_string());
@@ -201,7 +205,7 @@ impl BattlePlayer {
                 if *team_index >= self.team.len() {
                     return Err("Invalid team index for switching.".to_string());
                 }
-                
+
                 if let Some(target_pokemon) = &self.team[*team_index] {
                     if target_pokemon.is_fainted() {
                         return Err("Cannot switch to a fainted Pokémon.".to_string());
@@ -228,8 +232,8 @@ impl BattlePlayer {
         let mut moves = Vec::new();
         if let Some(active_pokemon) = self.active_pokemon() {
             // Check if the Pokémon can even attempt to use a move.
-            let can_use_moves = !self.has_condition_type(PokemonConditionType::Exhausted) 
-                                && !active_pokemon.is_fainted();
+            let can_use_moves = !self.has_condition_type(PokemonConditionType::Exhausted)
+                && !active_pokemon.is_fainted();
 
             if can_use_moves {
                 let usable_moves: Vec<_> = active_pokemon.moves.iter().enumerate()
@@ -260,7 +264,7 @@ impl BattlePlayer {
     /// are not fainted or already active.
     pub fn get_valid_switches(&self) -> Vec<PlayerAction> {
         let mut switches = Vec::new();
-        
+
         // If trapped, no switches are possible.
         if self.has_condition_type(PokemonConditionType::Trapped) {
             return switches;
@@ -278,14 +282,24 @@ impl BattlePlayer {
 
     pub fn forced_move(&self) -> Option<Move> {
         // Check for Biding condition, which forces the Bide move.
-        if self.active_pokemon_conditions.values().any(|c| matches!(c, PokemonCondition::Biding { .. })) {
+        if self
+            .active_pokemon_conditions
+            .values()
+            .any(|c| matches!(c, PokemonCondition::Biding { .. }))
+        {
             return Some(Move::Bide);
         }
 
         // Check for conditions that force a repeat of the last move.
         if let Some(last_move) = self.last_move {
             let is_locked_into_repeating = self.active_pokemon_conditions.values().any(|c| {
-                matches!(c, PokemonCondition::Charging | PokemonCondition::InAir | PokemonCondition::Underground | PokemonCondition::Rampaging { .. })
+                matches!(
+                    c,
+                    PokemonCondition::Charging
+                        | PokemonCondition::InAir
+                        | PokemonCondition::Underground
+                        | PokemonCondition::Rampaging { .. }
+                )
             });
 
             if is_locked_into_repeating {
@@ -308,11 +322,12 @@ impl BattlePlayer {
     pub fn has_condition_type(&self, condition_type: PokemonConditionType) -> bool {
         self.active_pokemon_conditions.contains_key(&condition_type)
     }
-    
+
     /// Check if the active Pokemon has this exact condition (type AND data must match)
     #[cfg(test)]
     pub fn has_condition(&self, condition: &PokemonCondition) -> bool {
-        if let Some(existing_condition) = self.active_pokemon_conditions.get(&condition.get_type()) {
+        if let Some(existing_condition) = self.active_pokemon_conditions.get(&condition.get_type())
+        {
             existing_condition == condition
         } else {
             false

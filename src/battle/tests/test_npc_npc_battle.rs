@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
     use crate::battle::state::{BattleState, GameState, TurnRng};
-    use crate::player::{PlayerType};
+    use crate::player::PlayerType;
     use crate::prefab_teams::create_battle_player_from_prefab;
     use pretty_assertions::assert_ne;
 
@@ -14,14 +14,16 @@ mod tests {
             "venusaur_team",
             "npc_trainer_1".to_string(),
             "AI Trainer Red".to_string(),
-        ).expect("Failed to create Player 1");
+        )
+        .expect("Failed to create Player 1");
         player1.player_type = PlayerType::NPC;
 
         let mut player2 = create_battle_player_from_prefab(
             "charizard_team",
             "npc_trainer_2".to_string(),
             "AI Trainer Blue".to_string(),
-        ).expect("Failed to create Player 2");
+        )
+        .expect("Failed to create Player 2");
         player2.player_type = PlayerType::NPC;
 
         let mut battle_state = BattleState::new("full_battle_test".to_string(), player1, player2);
@@ -43,11 +45,14 @@ mod tests {
             if ready_for_turn_resolution(&battle_state) {
                 let rng = TurnRng::new_random();
                 let event_bus = resolve_turn(&mut battle_state, rng);
-                
+
                 // As per our testing standard, log the events for this turn for clarity.
-                event_bus.print_debug_with_message(&format!("--- Events for Turn {} ---", battle_state.turn_number -1));
+                event_bus.print_debug_with_message(&format!(
+                    "--- Events for Turn {} ---",
+                    battle_state.turn_number - 1
+                ));
             }
-            
+
             turn_limit -= 1;
         }
 
@@ -68,6 +73,9 @@ mod tests {
             GameState::TurnInProgress,
             "Battle should have concluded and not be stuck in the middle of a turn."
         );
-        assert!(turn_limit > 0, "Battle failed to complete within the turn limit (100 turns)");
+        assert!(
+            turn_limit > 0,
+            "Battle failed to complete within the turn limit (100 turns)"
+        );
     }
 }

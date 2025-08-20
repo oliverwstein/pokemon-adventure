@@ -13,10 +13,8 @@ pub mod prefab_teams;
 pub mod species;
 
 // Re-export commonly used types for convenience
+pub use battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
 pub use battle::state::{BattleEvent, BattleState, GameState};
-pub use battle::engine::{
-    collect_npc_actions, ready_for_turn_resolution, resolve_turn,
-};
 pub use moves::Move;
 pub use player::{BattlePlayer, PlayerAction, StatType};
 pub use pokemon::{PokemonInst, get_species_data};

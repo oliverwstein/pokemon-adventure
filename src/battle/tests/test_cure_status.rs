@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::engine::resolve_turn;
-    use crate::battle::state::{BattleEvent};
-    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
+    use crate::battle::state::BattleEvent;
+    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle, predictable_rng};
     use crate::moves::Move;
     use crate::player::PlayerAction;
     use crate::pokemon::StatusCondition;
@@ -54,8 +54,10 @@ mod tests {
         #[case] expect_cure: bool,
     ) {
         // Arrange
-        let mut p1_builder = TestPokemonBuilder::new(Species::Alakazam, 10).with_moves(vec![user_move]);
-        let mut p2_builder = TestPokemonBuilder::new(Species::Snorlax, 10).with_moves(vec![Move::Growl]);
+        let mut p1_builder =
+            TestPokemonBuilder::new(Species::Alakazam, 10).with_moves(vec![user_move]);
+        let mut p2_builder =
+            TestPokemonBuilder::new(Species::Snorlax, 10).with_moves(vec![Move::Growl]);
 
         if let Some(status) = initial_status {
             if status_target_idx == 0 {
@@ -74,20 +76,37 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
         // Assert
-        event_bus.print_debug_with_message(&format!("Events for test_cure_status_outcomes [{}]:", desc));
+        event_bus
+            .print_debug_with_message(&format!("Events for test_cure_status_outcomes [{}]:", desc));
 
-        let final_status = battle_state.players[status_target_idx].active_pokemon().unwrap().status;
-        let status_cured = event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonStatusRemoved { .. }));
+        let final_status = battle_state.players[status_target_idx]
+            .active_pokemon()
+            .unwrap()
+            .status;
+        let status_cured = event_bus
+            .events()
+            .iter()
+            .any(|e| matches!(e, BattleEvent::PokemonStatusRemoved { .. }));
 
         if expect_cure {
             assert_eq!(final_status, None, "Status should have been cured to None");
-            assert!(status_cured, "A PokemonStatusRemoved event should have been emitted");
+            assert!(
+                status_cured,
+                "A PokemonStatusRemoved event should have been emitted"
+            );
         } else {
             // If we didn't expect a cure, the status should still be present (or None if it started as None).
             // Note: End-of-turn effects might change the status, e.g., Poison(1) -> Poison(2).
             // We check `is_some()` or `is_none()` which is more robust.
-            assert_eq!(final_status.is_some(), initial_status.is_some(), "Status presence should not have changed unexpectedly");
-            assert!(!status_cured, "A PokemonStatusRemoved event should NOT have been emitted");
+            assert_eq!(
+                final_status.is_some(),
+                initial_status.is_some(),
+                "Status presence should not have changed unexpectedly"
+            );
+            assert!(
+                !status_cured,
+                "A PokemonStatusRemoved event should NOT have been emitted"
+            );
         }
     }
 }

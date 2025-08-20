@@ -1,10 +1,11 @@
-use crate::battle::conditions::{PokemonCondition};
+use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
 
 // helper modules
 mod damage_effects;
+mod format_description;
 mod special_effects;
 mod stat_effects;
 mod status_effects;
@@ -84,20 +85,20 @@ pub enum MoveEffect {
     Teleport(u8), // chance % to teleport away
 
     // Special mechanics
-    OHKO,                         // one-hit KO
-    Explode,                      // user faints
-    Reckless(u8),                 // recoil if miss, chance %
-    Transform,                    // copy target's appearance/stats
-    Conversion,                   // change user's type
-    Disable(u8),                  // disable target's last move, chance %
-    Counter,                      // return double physical damage
-    MirrorMove,                   // copy target's last move
-    Metronome,                    // random move
-    Substitute,                   // create substitute with 25% HP
-    Rest(u8),                     // sleep for X turns, full heal
-    Bide(u8),                     // store damage for X turns
-    Rage(u8),                     // chance % to enter rage mode
-    Rampage, // rampage
+    OHKO,         // one-hit KO
+    Explode,      // user faints
+    Reckless(u8), // recoil if miss, chance %
+    Transform,    // copy target's appearance/stats
+    Conversion,   // change user's type
+    Disable(u8),  // disable target's last move, chance %
+    Counter,      // return double physical damage
+    MirrorMove,   // copy target's last move
+    Metronome,    // random move
+    Substitute,   // create substitute with 25% HP
+    Rest(u8),     // sleep for X turns, full heal
+    Bide(u8),     // store damage for X turns
+    Rage(u8),     // chance % to enter rage mode
+    Rampage,      // rampage
 
     // Field effects
     Haze(u8), // remove all stat changes, chance %
@@ -157,7 +158,6 @@ impl MoveEffect {
         state: &crate::battle::state::BattleState,
         rng: &mut crate::battle::state::TurnRng,
     ) -> EffectResult {
-
         let defender_has_substitute = state.players[context.defender_index]
             .active_pokemon_conditions
             .values()
@@ -301,7 +301,6 @@ impl MoveEffect {
             _ => true,
         }
     }
-
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -350,8 +349,10 @@ impl MoveData {
     }
 
     pub fn get_move_max_pp(move_: Move) -> u8 {
-        Self::get_move_data(move_).map(|data| data.max_pp).unwrap_or(30) // Default fallback
-}
+        Self::get_move_data(move_)
+            .map(|data| data.max_pp)
+            .unwrap_or(30) // Default fallback
+    }
 }
 
 // Helper function to parse Move enum from string

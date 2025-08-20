@@ -234,9 +234,10 @@ pub fn move_hits(
     };
 
     // If defender is Teleported, InAir, or Underground, moves with accuracy always miss
-    if defender_player.has_condition_type(PokemonConditionType::Teleported) 
+    if defender_player.has_condition_type(PokemonConditionType::Teleported)
         || defender_player.has_condition_type(PokemonConditionType::InAir)
-        || defender_player.has_condition_type(PokemonConditionType::Underground) {
+        || defender_player.has_condition_type(PokemonConditionType::Underground)
+    {
         return false;
     }
 
@@ -381,8 +382,8 @@ pub fn calculate_special_attack_damage(
     _attacker: &PokemonInst,
     defender: &PokemonInst,
 ) -> Option<u16> {
-    let move_data =
-        MoveData::get_move_data(move_used).expect("Move data must exist for special damage calculation");
+    let move_data = MoveData::get_move_data(move_used)
+        .expect("Move data must exist for special damage calculation");
 
     // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
     // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
@@ -485,7 +486,7 @@ mod tests {
     #[test]
     fn test_effective_attack_burn() {
         // Initialize move data (required for get_move_data to work)
-        
+
         let mut pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Charmander,
             0,
@@ -538,7 +539,6 @@ mod tests {
     #[test]
     fn test_critical_hit_calculation() {
         // Initialize move data (required for get_move_data to work)
-        
 
         let pokemon = crate::pokemon::PokemonInst::new_for_test(
             Species::Pikachu,
@@ -614,7 +614,6 @@ mod tests {
     #[test]
     fn test_combined_status_effects() {
         // Initialize move data (required for get_move_data to work)
-        
 
         // Test Pokemon with burn status
         let mut burned_pokemon = crate::pokemon::PokemonInst::new_for_test(

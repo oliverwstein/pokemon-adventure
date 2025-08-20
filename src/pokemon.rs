@@ -213,6 +213,22 @@ pub struct CurrentStats {
     pub sp_defense: u16,
     pub speed: u16,
 }
+impl fmt::Display for CurrentStats {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Use a consistent width for labels to ensure values align vertically.
+        // "Sp. Defense" is the longest, so we'll use a width of 12.
+        const LABEL_WIDTH: usize = 12;
+
+        writeln!(f, "{:<LABEL_WIDTH$} : {}", "Max HP", self.hp)?;
+        writeln!(f, "{:<LABEL_WIDTH$} : {}", "Attack", self.attack)?;
+        writeln!(f, "{:<LABEL_WIDTH$} : {}", "Defense", self.defense)?;
+        writeln!(f, "{:<LABEL_WIDTH$} : {}", "Sp. Atk", self.sp_attack)?;
+        writeln!(f, "{:<LABEL_WIDTH$} : {}", "Sp. Def", self.sp_defense)?;
+        // Use `write!` for the last line to avoid a trailing newline,
+        // giving the caller more formatting control.
+        write!(f, "{:<LABEL_WIDTH$} : {}", "Speed", self.speed)
+    }
+}
 
 impl From<[u16; 6]> for CurrentStats {
     fn from(stats: [u16; 6]) -> Self {

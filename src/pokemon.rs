@@ -2,7 +2,7 @@ use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 // Include the compiled species data
 use crate::move_data::{get_compiled_species_data, MoveData};
@@ -32,6 +32,12 @@ pub enum PokemonType {
     Ice,
     Dragon,
     Typeless,
+}
+
+impl fmt::Display for PokemonType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl PokemonType {

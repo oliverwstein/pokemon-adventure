@@ -297,7 +297,7 @@ fn display_team_status(player: &BattlePlayer) {
     println!("\n--- Your Team ---");
     for (i, pokemon_opt) in player.team.iter().enumerate() {
         if let Some(pokemon) = pokemon_opt {
-            let pokemon_display = format!("{}", pokemon);
+            let pokemon_display = format!("{:#}", pokemon);
             let mut lines = pokemon_display.lines();
 
             // Print the first line with contextual markers
@@ -320,8 +320,7 @@ fn display_team_status(player: &BattlePlayer) {
 fn display_benched_pokemon_details(index: usize, player: &BattlePlayer) {
     if let Some(Some(pokemon)) = player.team.get(index) {
         if index == player.active_pokemon_index {
-            println!("\nThis Pokémon is already active. Use 'check self' instead.");
-            return;
+            println!("\nThis is your active Pokémon.");
         }
         println!("\n--- Benched Pokémon Details ---");
         println!("{}", pokemon);

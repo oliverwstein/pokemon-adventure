@@ -666,7 +666,6 @@ impl PokemonInst {
 impl fmt::Display for PokemonInst {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // --- 1. Header Line: Name, Species, and Level ---
-        // Display the nickname only if it's different from the species name.
         let species_name = format!("{:?}", self.species);
         let name_display = if self.name != species_name {
             format!("{} ({})", self.name, species_name)
@@ -676,26 +675,27 @@ impl fmt::Display for PokemonInst {
         writeln!(f, "{} | Lvl. {}", name_display, self.level)?;
 
         // --- 2. HP and Status Line ---
-        // Format the HP part, left-aligned in a 15-character space for clean alignment.
         let hp_line = format!("HP: {}/{}", self.curr_hp, self.stats.hp);
-
-        // Append the status condition only if one exists.
         if let Some(status) = &self.status {
             writeln!(f, "{:<15} | Status: {}", hp_line, status)?;
         } else {
             writeln!(f, "{}", hp_line)?;
         }
 
-        // --- 3. Moves Section ---
-        // Check if the Pokémon has any moves before printing the header.
-        let has_moves = self.moves.iter().any(|m| m.is_some());
-
-        if has_moves {
+        // --- The following sections are only shown in the default format ---
+        if !f.alternate() {
+            // Full Stats Section
             writeln!(f, "--------------------")?;
-            writeln!(f, "Moves:")?;
-            // Use .flatten() to iterate only over the Some(MoveInstance) variants.
-            for move_instance in self.moves.iter().flatten() {
-                writeln!(f, "{}", move_instance)?;
+            writeln!(f, "{}", self.stats)?;
+
+            // Moves Section
+            let has_moves = self.moves.iter().any(|m| m.is_some());
+            if has_moves {
+                writeln!(f, "--------------------")?;
+                writeln!(f, "Moves:")?;
+                for move_instance in self.moves.iter().flatten() {
+                    writeln!(f, "{}", move_instance)?;
+                }
             }
         }
 

@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::battle::conditions::PokemonCondition;
 use crate::moves::Move;
 use crate::player::{BattlePlayer, PlayerAction, StatType, TeamCondition};
@@ -15,6 +17,24 @@ pub enum GameState {
     Player2Win,
     Draw,
 }
+impl fmt::Display for GameState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let text = match self {
+            // NOTE: This default text will be overridden by the more specific
+            // logic in the BattleState display implementation.
+            GameState::WaitingForActions => "Waiting for actions",
+            GameState::TurnInProgress => "Turn in progress...",
+            GameState::WaitingForPlayer1Replacement => "Waiting for Player 1 to select a new Pokémon",
+            GameState::WaitingForPlayer2Replacement => "Waiting for Player 2 to select a new Pokémon",
+            GameState::WaitingForBothReplacements => "Waiting for both players to select new Pokémon",
+            GameState::Player1Win => "Battle Ended: Player 1 Wins!",
+            GameState::Player2Win => "Battle Ended: Player 2 Wins!",
+            GameState::Draw => "Battle Ended: Draw",
+        };
+        write!(f, "{}", text)
+    }
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BattleEvent {
@@ -875,5 +895,58 @@ impl BattleState {
             game_state: GameState::WaitingForActions,
             action_queue: [None, None],
         }
+    }
+}
+
+impl fmt::Display for BattleState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // --- 1. Main Battle Header ---
+        writeln!(f, "========================================")?;
+        writeln!(f, " Battle Status (ID: {})", self.battle_id)?;
+        writeln!(f, " Turn: {}", self.turn_number)?;
+        writeln!(f, "----------------------------------------")?;
+
+        // --- 2. Context-Aware Game Status (Using Player Names) ---
+        write!(f, "Status: ")?;
+
+        // Get player names for easier access
+        let p1_name = &self.players[0].player_name;
+        let p2_name = &self.players[1].player_name;
+
+        match self.game_state {
+            GameState::WaitingForActions => {
+                match (self.action_queue[0].is_some(), self.action_queue[1].is_some()) {
+                    (false, false) => write!(f, "Waiting for actions from both players"),
+                    (true, false) => write!(f, "Waiting for {}'s action", p2_name),
+                    (false, true) => write!(f, "Waiting for {}'s action", p1_name),
+                    (true, true) => write!(f, "Actions received, processing turn..."),
+                }?;
+            }
+            GameState::WaitingForPlayer1Replacement => {
+                write!(f, "Waiting for {} to select a new Pokémon", p1_name)?;
+            }
+            GameState::WaitingForPlayer2Replacement => {
+                write!(f, "Waiting for {} to select a new Pokémon", p2_name)?;
+            }
+            GameState::Player1Win => {
+                write!(f, "Battle Ended: {} Wins!", p1_name)?;
+            }
+            GameState::Player2Win => {
+                write!(f, "Battle Ended: {} Wins!", p2_name)?;
+            }
+            // For states that don't need names, we can use the default Display impl
+            _ => {
+                write!(f, "{}", self.game_state)?;
+            }
+        }
+        writeln!(f)?; // Final newline for the status line
+
+        // --- 3. Player Summaries ---
+        writeln!(f)?; // Spacing
+        write!(f, "{}", self.players[0])?;
+        writeln!(f, "\n          --- VS --- \n")?;
+        write!(f, "{}", self.players[1])?;
+
+        Ok(())
     }
 }

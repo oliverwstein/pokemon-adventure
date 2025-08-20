@@ -411,3 +411,76 @@ impl BattlePlayer {
         self.ante = self.ante.saturating_add(amount);
     }
 }
+
+// In the impl block for the BattlePlayer struct
+
+impl fmt::Display for BattlePlayer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // --- 1. Header: Player Name and Team Status ---
+        let total_pokemon = self.team.iter().flatten().count();
+        let non_fainted_count = self.team.iter().flatten().filter(|p| !p.is_fainted()).count();
+
+        writeln!(
+            f,
+            "--- {} | Team: {}/{} ---",
+            self.player_name, non_fainted_count, total_pokemon
+        )?;
+
+        // --- 2. Team-Wide Conditions ---
+        if !self.team_conditions.is_empty() {
+            write!(f, "Team Conditions:")?;
+            let mut first = true;
+            for (condition, turns) in &self.team_conditions {
+                if !first {
+                    write!(f, ",")?;
+                }
+                write!(f, " {} ({}t)", condition, turns)?;
+                first = false;
+            }
+            writeln!(f)?; // Newline after the list
+        }
+
+        // --- 3. Active Pokémon Short View ---
+        writeln!(f, "Active Pokémon:")?;
+        if let Some(pokemon) = self.active_pokemon() {
+            // Build the name display (e.g., "Nickname (Species)")
+            let species_name = format!("{:?}", pokemon.species);
+            let name_display = if pokemon.name != species_name {
+                format!("{} ({})", pokemon.name, species_name)
+            } else {
+                species_name
+            };
+
+            // Format HP and status
+            let hp_status_line = format!(
+                "Lvl. {} | HP: {}/{}",
+                pokemon.level,
+                pokemon.current_hp(), // Assuming direct access for display
+                pokemon.max_hp(),
+            );
+
+            // Print the main active Pokémon line, including status if present
+            if let Some(status) = &pokemon.status {
+                writeln!(
+                    f,
+                    "  -> {:<20} | {} | Status: {}",
+                    name_display, hp_status_line, status
+                )?;
+            } else {
+                writeln!(f, "  -> {:<20} | {}", name_display, hp_status_line)?;
+            }
+        } else {
+            writeln!(f, "  -> [No active Pokémon]")?;
+        }
+
+        // --- 4. Active Pokémon Conditions ---
+        if !self.active_pokemon_conditions.is_empty() {
+            writeln!(f, "Active Conditions:")?;
+            for condition in self.active_pokemon_conditions.keys() {
+                writeln!(f, "  - {}", condition)?;
+            }
+        }
+
+        Ok(())
+    }
+}

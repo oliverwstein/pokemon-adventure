@@ -154,6 +154,20 @@ pub enum StatusCondition {
     Faint, // Pokemon has 0 HP, can replace any other status
 }
 
+impl fmt::Display for StatusCondition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let abbr = match self {
+            StatusCondition::Burn => "Burned",
+            StatusCondition::Poison(_) => "Poisoned",
+            StatusCondition::Freeze => "Frozen",
+            StatusCondition::Paralysis => "Paralyzed",
+            StatusCondition::Sleep(_) => "Asleep",
+            StatusCondition::Faint => "Fainted",
+        };
+        write!(f, "{}", abbr)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub struct MoveInstance {
     pub move_: Move,
@@ -296,6 +310,32 @@ impl MoveInstance {
     pub fn restore_pp(&mut self, amount: u8) {
         let max_pp = self.max_pp();
         self.pp = (self.pp + amount).min(max_pp);
+    }
+}
+
+impl fmt::Display for MoveInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Fetch the move's static data using the `Move` enum variant.
+        // This call might return None if a move is invalid, so we must handle it.
+        if let Some(move_data) = MoveData::get_move_data(self.move_) {
+            // The move data was found, so we can format it nicely.
+            write!(
+                f,
+                "- {:<16} (PP: {}/{})", // Left-align name for clean formatting
+                move_data.name,        // Use name from the fetched data
+                self.pp,               // Use current PP from the instance
+                self.max_pp()          // Use the helper method to get max PP
+            )
+        } else {
+            // This is a fallback for safety, in case a Move variant
+            // doesn't have corresponding data.
+            write!(
+                f,
+                "- {:<16} (PP: {}/??)",
+                format!("{:?}", self.move_), // Display the enum name as a fallback
+                self.pp
+            )
+        }
     }
 }
 
@@ -603,5 +643,46 @@ impl PokemonInst {
 
         // Cap damage to current HP to get actual damage that will be dealt
         theoretical_damage.min(current_hp)
+    }
+
+}
+
+impl fmt::Display for PokemonInst {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // --- 1. Header Line: Name, Species, and Level ---
+        // Display the nickname only if it's different from the species name.
+        let species_name = format!("{:?}", self.species);
+        let name_display = if self.name != species_name {
+            format!("{} ({})", self.name, species_name)
+        } else {
+            species_name
+        };
+        writeln!(f, "{} | Lvl. {}", name_display, self.level)?;
+
+        // --- 2. HP and Status Line ---
+        // Format the HP part, left-aligned in a 15-character space for clean alignment.
+        let hp_line = format!("HP: {}/{}", self.curr_hp, self.stats.hp);
+
+        // Append the status condition only if one exists.
+        if let Some(status) = &self.status {
+            writeln!(f, "{:<15} | Status: {}", hp_line, status)?;
+        } else {
+            writeln!(f, "{}", hp_line)?;
+        }
+
+        // --- 3. Moves Section ---
+        // Check if the Pokémon has any moves before printing the header.
+        let has_moves = self.moves.iter().any(|m| m.is_some());
+
+        if has_moves {
+            writeln!(f, "--------------------")?;
+            writeln!(f, "Moves:")?;
+            // Use .flatten() to iterate only over the Some(MoveInstance) variants.
+            for move_instance in self.moves.iter().flatten() {
+                writeln!(f, "{}", move_instance)?;
+            }
+        }
+
+        Ok(())
     }
 }

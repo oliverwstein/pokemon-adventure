@@ -407,17 +407,18 @@ impl MoveEffect {
                 });
             }
 
+            // Cure any existing status first, then apply Sleep
+            if let Some(existing_status) = attacker_pokemon.status {
+                commands.push(BattleCommand::CurePokemonStatus {
+                    target: attacker_target,
+                    status: existing_status,
+                });
+            }
+
             commands.push(BattleCommand::SetPokemonStatus {
                 target: attacker_target,
                 status: crate::pokemon::StatusCondition::Sleep(sleep_turns),
             });
-
-            for condition in attacker_player.active_pokemon_conditions.values() {
-                commands.push(BattleCommand::RemoveCondition {
-                    target: attacker_target,
-                    condition_type: condition.get_type(),
-                });
-            }
 
             return EffectResult::Skip(commands);
         }

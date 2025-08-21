@@ -509,8 +509,8 @@ fn execute_state_change(
         }
         BattleCommand::SetPokemonStatus { target, status } => {
             execute_pokemon_command(*target, state, |pokemon, _| {
-                // Don't apply status to fainted Pokemon
-                if pokemon.is_fainted() {
+                // Don't apply status to Pokemon that already have a status
+                if pokemon.status.is_some() {
                     Ok(())
                 } else {
                     pokemon.status = Some(*status);

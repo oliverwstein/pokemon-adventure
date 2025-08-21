@@ -149,6 +149,15 @@ fn resolve_replacement_phase(
 
     let commands = vec![BattleCommand::ClearActionQueue];
     let _ = execute_command_batch(commands, battle_state, bus, action_stack);
+
+    // Inject forced actions after replacement, just like in finalize_turn
+    if !matches!(
+        battle_state.game_state,
+        GameState::Player1Win | GameState::Player2Win | GameState::Draw
+    ) {
+        let forced_action_commands = calculate_forced_action_commands(battle_state);
+        let _ = execute_command_batch(forced_action_commands, battle_state, bus, action_stack);
+    }
 }
 
 fn initialize_turn(battle_state: &mut BattleState, bus: &mut EventBus) {

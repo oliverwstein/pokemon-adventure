@@ -84,10 +84,8 @@ mod tests {
 
         // Check for events
         let status_applied_event = event_bus.events().iter().any(|e| matches!(e, BattleEvent::PokemonStatusApplied { status: StatusCondition::Sleep(2), .. }));
-        let status_removed_events = event_bus.events().iter().filter(|e| matches!(e, BattleEvent::StatusRemoved { .. })).count();
 
         assert!(status_applied_event, "Should emit an event for applying sleep");
-        assert_eq!(status_removed_events, 3, "Should have emitted 3 events for removing active conditions");
     }
 
     #[test]

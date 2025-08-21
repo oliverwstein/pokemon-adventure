@@ -301,25 +301,12 @@ impl BattleCommand {
                 }]
             }
             BattleCommand::SwitchPokemon {
-                target,
-                new_pokemon_index,
+                target: _,
+                new_pokemon_index: _,
             } => {
-                let player_index = target.to_index();
-                let player = &state.players[player_index];
-                let old_pokemon = player.team[player.active_pokemon_index]
-                    .as_ref()
-                    .map(|p| p.species);
-                let new_pokemon = player.team[*new_pokemon_index].as_ref().map(|p| p.species);
-
-                if let (Some(old), Some(new)) = (old_pokemon, new_pokemon) {
-                    vec![BattleEvent::PokemonSwitched {
-                        player_index,
-                        old_pokemon: old,
-                        new_pokemon: new,
-                    }]
-                } else {
-                    vec![]
-                }
+                // Switch events are manually emitted by calculate_switch_commands
+                // before the state change to capture the correct old/new Pokemon
+                vec![]
             }
             BattleCommand::UpdateStatusProgress { target: _ } => {
                 // This command can potentially cure a status, so we need to check if we should emit a removed event

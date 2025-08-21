@@ -766,19 +766,36 @@ pub fn calculate_action_prevention(
 pub fn calculate_switch_commands(
     player_index: usize,
     target_pokemon_index: usize,
-    _battle_state: &BattleState,
+    battle_state: &BattleState,
 ) -> Vec<BattleCommand> {
     let target = PlayerTarget::from_index(player_index);
-
-    vec![
+    let player = &battle_state.players[player_index];
+    
+    // Capture the old and new Pokemon info before the state change
+    let old_pokemon = player.team[player.active_pokemon_index].as_ref().map(|p| p.species);
+    let new_pokemon = player.team[target_pokemon_index].as_ref().map(|p| p.species);
+    
+    let mut commands = vec![
         // 1. Command to clear the old state.
         BattleCommand::ClearPlayerState { target },
-        // 2. Command to perform the switch (this will automatically emit the PokemonSwitched event).
-        BattleCommand::SwitchPokemon {
-            target,
-            new_pokemon_index: target_pokemon_index,
-        },
-    ]
+    ];
+    
+    // 2. Emit the switch event with correct old/new Pokemon info
+    if let (Some(old), Some(new)) = (old_pokemon, new_pokemon) {
+        commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
+            player_index,
+            old_pokemon: old,
+            new_pokemon: new,
+        }));
+    }
+    
+    // 3. Command to perform the switch (disable automatic event emission)
+    commands.push(BattleCommand::SwitchPokemon {
+        target,
+        new_pokemon_index: target_pokemon_index,
+    });
+    
+    commands
 }
 
 /// Calculate commands for a forfeit action

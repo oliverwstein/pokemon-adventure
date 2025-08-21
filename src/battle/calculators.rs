@@ -770,16 +770,20 @@ pub fn calculate_switch_commands(
 ) -> Vec<BattleCommand> {
     let target = PlayerTarget::from_index(player_index);
     let player = &battle_state.players[player_index];
-    
+
     // Capture the old and new Pokemon info before the state change
-    let old_pokemon = player.team[player.active_pokemon_index].as_ref().map(|p| p.species);
-    let new_pokemon = player.team[target_pokemon_index].as_ref().map(|p| p.species);
-    
+    let old_pokemon = player.team[player.active_pokemon_index]
+        .as_ref()
+        .map(|p| p.species);
+    let new_pokemon = player.team[target_pokemon_index]
+        .as_ref()
+        .map(|p| p.species);
+
     let mut commands = vec![
         // 1. Command to clear the old state.
         BattleCommand::ClearPlayerState { target },
     ];
-    
+
     // 2. Emit the switch event with correct old/new Pokemon info
     if let (Some(old), Some(new)) = (old_pokemon, new_pokemon) {
         commands.push(BattleCommand::EmitEvent(BattleEvent::PokemonSwitched {
@@ -788,13 +792,13 @@ pub fn calculate_switch_commands(
             new_pokemon: new,
         }));
     }
-    
+
     // 3. Command to perform the switch (disable automatic event emission)
     commands.push(BattleCommand::SwitchPokemon {
         target,
         new_pokemon_index: target_pokemon_index,
     });
-    
+
     commands
 }
 

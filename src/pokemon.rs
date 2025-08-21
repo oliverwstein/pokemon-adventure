@@ -338,9 +338,9 @@ impl fmt::Display for MoveInstance {
             write!(
                 f,
                 "- {:<16} (PP: {}/{})", // Left-align name for clean formatting
-                move_data.name,        // Use name from the fetched data
-                self.pp,               // Use current PP from the instance
-                self.max_pp()          // Use the helper method to get max PP
+                move_data.name,         // Use name from the fetched data
+                self.pp,                // Use current PP from the instance
+                self.max_pp()           // Use the helper method to get max PP
             )
         } else {
             // This is a fallback for safety, in case a Move variant
@@ -660,7 +660,6 @@ impl PokemonInst {
         // Cap damage to current HP to get actual damage that will be dealt
         theoretical_damage.min(current_hp)
     }
-
 }
 
 impl fmt::Display for PokemonInst {

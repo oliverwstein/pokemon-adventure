@@ -24,9 +24,15 @@ impl fmt::Display for GameState {
             // logic in the BattleState display implementation.
             GameState::WaitingForActions => "Waiting for actions",
             GameState::TurnInProgress => "Turn in progress...",
-            GameState::WaitingForPlayer1Replacement => "Waiting for Player 1 to select a new Pokémon",
-            GameState::WaitingForPlayer2Replacement => "Waiting for Player 2 to select a new Pokémon",
-            GameState::WaitingForBothReplacements => "Waiting for both players to select new Pokémon",
+            GameState::WaitingForPlayer1Replacement => {
+                "Waiting for Player 1 to select a new Pokémon"
+            }
+            GameState::WaitingForPlayer2Replacement => {
+                "Waiting for Player 2 to select a new Pokémon"
+            }
+            GameState::WaitingForBothReplacements => {
+                "Waiting for both players to select new Pokémon"
+            }
             GameState::Player1Win => "Battle Ended: Player 1 Wins!",
             GameState::Player2Win => "Battle Ended: Player 2 Wins!",
             GameState::Draw => "Battle Ended: Draw",
@@ -34,7 +40,6 @@ impl fmt::Display for GameState {
         write!(f, "{}", text)
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum BattleEvent {
@@ -301,7 +306,6 @@ impl BattleEvent {
                 ))
             }
             BattleEvent::ConditionExpired { target, condition } => {
-                let target_name = Self::format_species_name(*target);
                 Self::format_condition_expired(*target, condition)
             }
 
@@ -471,7 +475,7 @@ impl BattleEvent {
 
     fn format_condition_expired(target: Species, condition: &PokemonCondition) -> Option<String> {
         let target_name = Self::format_species_name(target);
-        
+
         match condition.get_type() {
             // Silent conditions (no message when they expire)
             crate::battle::conditions::PokemonConditionType::Flinched => None,
@@ -501,7 +505,7 @@ impl BattleEvent {
             crate::battle::conditions::PokemonConditionType::Enraged => {
                 Some(format!("{} calmed down.", target_name))
             }
-            
+
             // Generic message for other conditions
             crate::battle::conditions::PokemonConditionType::Substitute => {
                 Some(format!("{}'s substitute faded.", target_name))
@@ -963,7 +967,10 @@ impl fmt::Display for BattleState {
 
         match self.game_state {
             GameState::WaitingForActions => {
-                match (self.action_queue[0].is_some(), self.action_queue[1].is_some()) {
+                match (
+                    self.action_queue[0].is_some(),
+                    self.action_queue[1].is_some(),
+                ) {
                     (false, false) => write!(f, "Waiting for actions from both players"),
                     (true, false) => write!(f, "Waiting for {}'s action", p2_name),
                     (false, true) => write!(f, "Waiting for {}'s action", p1_name),

@@ -148,13 +148,19 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
         // --- Handle Informational Commands (don't consume a turn) ---
         if command == "help" {
             println!("--- Available Commands ---");
-            println!("  use <move name>        - Use one of your Pokémon's moves (e.g., 'use tackle').");
-            println!("  switch to <team_num>   - Switch to a Pokémon on your team (e.g., 'switch to 2').");
+            println!(
+                "  use <move name>        - Use one of your Pokémon's moves (e.g., 'use tackle')."
+            );
+            println!(
+                "  switch to <team_num>   - Switch to a Pokémon on your team (e.g., 'switch to 2')."
+            );
             println!("  check self             - View your active Pokémon's details and moves.");
             println!("  check opponent         - View the opponent's active Pokémon's details.");
             println!("  check team             - View a summary of your team.");
             println!("  check team <team_num>    - View a benched Pokémon's details.");
-            println!("  lookup <move name>     - View the details of a specific move (e.g., 'lookup flamethrower').");
+            println!(
+                "  lookup <move name>     - View the details of a specific move (e.g., 'lookup flamethrower')."
+            );
             println!("  quit / forfeit         - Give up the battle.");
             println!("------------------------");
             continue;
@@ -181,8 +187,7 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
                     for (i, move_slot) in active_pokemon.moves.iter().enumerate() {
                         if let Some(move_instance) = move_slot {
                             // Fetch move data to compare names
-                            if let Some(move_data) = MoveData::get_move_data(move_instance.move_)
-                            {
+                            if let Some(move_data) = MoveData::get_move_data(move_instance.move_) {
                                 if move_data.name.eq_ignore_ascii_case(&move_name) {
                                     return PlayerAction::UseMove { move_index: i };
                                 }
@@ -190,7 +195,10 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
                         }
                     }
                 }
-                println!("'{}' is not a valid move for your active Pokémon.", move_name);
+                println!(
+                    "'{}' is not a valid move for your active Pokémon.",
+                    move_name
+                );
             }
             "switch" => {
                 if args.len() == 2 && args[0] == "to" {
@@ -302,9 +310,23 @@ fn display_team_status(player: &BattlePlayer) {
 
             // Print the first line with contextual markers
             if let Some(first_line) = lines.next() {
-                let active_marker = if i == player.active_pokemon_index { " (Active)" } else { "" };
-                let fainted_marker = if pokemon.is_fainted() { " (Fainted)" } else { "" };
-                println!(" {}. {}{}{}", i + 1, first_line, active_marker, fainted_marker);
+                let active_marker = if i == player.active_pokemon_index {
+                    " (Active)"
+                } else {
+                    ""
+                };
+                let fainted_marker = if pokemon.is_fainted() {
+                    " (Fainted)"
+                } else {
+                    ""
+                };
+                println!(
+                    " {}. {}{}{}",
+                    i + 1,
+                    first_line,
+                    active_marker,
+                    fainted_marker
+                );
             }
 
             // Print the rest of the Pokemon's details, indented

@@ -13,7 +13,7 @@ mod tests {
         "guaranteed critical hits",
         // Force hit (low roll), force crit (low roll), then damage variance
         // This is repeated for the second Pokémon's turn.
-        vec![10, 2, 90, 10, 2, 90], 
+        vec![10, 2, 90, 10, 2, 90],
         true, // Expect at least one critical hit
         false // Expect no misses
     )]

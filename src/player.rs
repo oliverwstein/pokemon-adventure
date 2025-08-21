@@ -418,7 +418,12 @@ impl fmt::Display for BattlePlayer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // --- 1. Header: Player Name and Team Status ---
         let total_pokemon = self.team.iter().flatten().count();
-        let non_fainted_count = self.team.iter().flatten().filter(|p| !p.is_fainted()).count();
+        let non_fainted_count = self
+            .team
+            .iter()
+            .flatten()
+            .filter(|p| !p.is_fainted())
+            .count();
 
         writeln!(
             f,

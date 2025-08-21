@@ -12,12 +12,12 @@ use crate::move_data::{MoveData, get_compiled_species_data};
 pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
     let compiled_data = get_compiled_species_data();
     let index = species.pokedex_number() as usize - 1; // 0-indexed
-    
+
     // Check bounds to prevent index out of bounds
     if index >= compiled_data.len() {
         return Err(SpeciesDataError::InvalidSpeciesReference);
     }
-    
+
     compiled_data[index]
         .clone()
         .ok_or(SpeciesDataError::SpeciesNotFound(species))

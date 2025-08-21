@@ -24,9 +24,9 @@ impl ScoringAI {
         let opponent_index = 1 - player_index;
 
         match action {
-            PlayerAction::UseMove { move_index } => {
-                self.score_move(*move_index, player_index, opponent_index, state).unwrap_or(0.0)
-            }
+            PlayerAction::UseMove { move_index } => self
+                .score_move(*move_index, player_index, opponent_index, state)
+                .unwrap_or(0.0),
             PlayerAction::SwitchPokemon { team_index } => {
                 self.score_switch(*team_index, player_index, opponent_index, state)
             }
@@ -43,13 +43,19 @@ impl ScoringAI {
     ) -> BattleResult<f32> {
         let player = &state.players[player_index];
         let opponent = &state.players[opponent_index];
-        let attacker = player.active_pokemon().unwrap();
+        let attacker = match player.active_pokemon() {
+            Some(p) => p,
+            None => return Ok(0.0), // Cannot score if there is no attacker.
+        };
         let defender = match opponent.active_pokemon() {
             Some(p) => p,
             None => return Ok(0.0), // Cannot score if there is no target.
         };
 
-        let move_instance = attacker.moves[move_index].as_ref().unwrap();
+        let move_instance = match attacker.moves[move_index].as_ref() {
+            Some(m) => m,
+            None => return Ok(0.0), // Cannot score a move that doesn't exist.
+        };
         let move_data = MoveData::get_move_data(move_instance.move_)?;
 
         // --- Step 1: Calculate the Core Damage Score ---
@@ -84,7 +90,8 @@ impl ScoringAI {
 
             // Factor in the attacker's normalized effective power.
             let effective_stat =
-                crate::battle::stats::effective_attack(attacker, player, move_instance.move_).unwrap_or(0);
+                crate::battle::stats::effective_attack(attacker, player, move_instance.move_)
+                    .unwrap_or(0);
             let level_scalar = (attacker.level as f32 * 2.0).max(1.0);
             let normalized_power = effective_stat as f32 / level_scalar;
 

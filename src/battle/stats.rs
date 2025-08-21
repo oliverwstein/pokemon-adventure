@@ -6,7 +6,11 @@ use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
-pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> BattleResult<u16> {
+pub fn effective_attack(
+    pokemon: &PokemonInst,
+    player: &BattlePlayer,
+    move_: Move,
+) -> BattleResult<u16> {
     let move_data = MoveData::get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
@@ -61,7 +65,11 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 }
 
 /// Calculate effective defense stat including stat stages, conditions, and other modifiers
-pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> BattleResult<u16> {
+pub fn effective_defense(
+    pokemon: &PokemonInst,
+    player: &BattlePlayer,
+    move_: Move,
+) -> BattleResult<u16> {
     let move_data = MoveData::get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
@@ -422,6 +430,7 @@ pub fn calculate_special_attack_damage(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::battle::tests::common::{assert_ok, assert_ok_false, assert_ok_true};
     use crate::species::Species;
     use std::collections::HashMap;
 
@@ -513,24 +522,40 @@ mod tests {
 
         // Burn should halve physical attack: 80 / 2 = 40
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             40
         );
 
         // Burn should NOT affect special attacks
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80
         );
 
         // Test without burn
         pokemon.status = None;
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80
         );
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80
         );
     }
@@ -566,48 +591,40 @@ mod tests {
 
         // Test with deterministic RNG - low roll should not be critical hit
         let mut rng_low = crate::battle::state::TurnRng::new_for_test(vec![10, 10, 10]);
-        let is_crit_low =
-            move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_low);
-        assert!(
-            !is_crit_low,
-            "Low roll (10) should not be critical hit with base rate (threshold 4)"
-        );
+        assert_ok_false(move_is_critical_hit(
+            &pokemon,
+            &player,
+            crate::moves::Move::Tackle,
+            &mut rng_low,
+        ));
 
         // Test with deterministic RNG - low roll should be critical hit
         let mut rng_high = crate::battle::state::TurnRng::new_for_test(vec![3, 3, 3]);
-        let is_crit_high =
-            move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_high);
-        assert!(
-            is_crit_high,
-            "Low roll (3) should be critical hit with base rate (threshold 4)"
-        );
+        assert_ok_true(move_is_critical_hit(
+            &pokemon,
+            &player,
+            crate::moves::Move::Tackle,
+            &mut rng_high,
+        ));
 
         // Test with Focus Energy stat stage
         player.set_stat_stage(StatType::Focus, 2);
         let mut rng_focus = crate::battle::state::TurnRng::new_for_test(vec![20, 20, 20]);
-        let is_crit_focus = move_is_critical_hit(
+        assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
             crate::moves::Move::Tackle,
             &mut rng_focus,
-        );
-        assert!(
-            is_crit_focus,
-            "Focus Energy should increase critical hit chance (ratio 3, threshold 25)"
-        );
+        ));
 
         // Test status moves cannot be critical hits
         let mut rng_status = crate::battle::state::TurnRng::new_for_test(vec![99, 99, 99]);
-        let is_crit_status = move_is_critical_hit(
+        assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
             crate::moves::Move::Growl,
             &mut rng_status,
-        );
-        assert!(
-            !is_crit_status,
-            "Status moves should never be critical hits"
-        );
+        ));
     }
 
     #[test]
@@ -655,12 +672,20 @@ mod tests {
 
         // Test burn effects
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             40,
             "Burn should halve physical attack: 80/2=40"
         );
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80,
             "Burn should NOT affect special attack"
         );
@@ -677,16 +702,20 @@ mod tests {
             "Paralysis should quarter speed: 100/4=25"
         );
         assert_eq!(
-            effective_attack(&paralyzed_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &paralyzed_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80,
             "Paralysis should NOT affect attack"
         );
         assert_eq!(
-            effective_attack(
+            assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
                 crate::moves::Move::ThunderPunch
-            ),
+            )),
             80,
             "Paralysis should NOT affect special attack"
         );
@@ -696,7 +725,11 @@ mod tests {
         paralyzed_pokemon.status = None;
 
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80
         );
         assert_eq!(effective_speed(&paralyzed_pokemon, &player), 100);

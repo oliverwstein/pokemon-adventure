@@ -866,6 +866,7 @@ pub fn calculate_forfeit_commands(player_index: usize) -> Vec<BattleCommand> {
 mod tests {
     use super::*;
     use crate::battle::state::{BattleState, TurnRng};
+    use crate::battle::tests::common::assert_ok;
     use crate::moves::Move;
     use crate::player::BattlePlayer;
     use crate::pokemon::PokemonInst;
@@ -945,7 +946,14 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed, MoveHit, and DealDamage commands at minimum
         assert!(commands.len() >= 3);
@@ -974,7 +982,14 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![100]); // High value should force miss
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed and MoveMissed events
         assert_eq!(commands.len(), 2);
@@ -997,7 +1012,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![50]);
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should fail with PokemonFainted
         assert_eq!(commands.len(), 1);
@@ -1017,7 +1039,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![50]);
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should fail with NoEnemyPresent
         assert_eq!(commands.len(), 1);
@@ -1037,7 +1066,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed, MoveHit, and substitute-related commands
         assert!(commands.len() >= 3);
@@ -1073,7 +1109,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have substitute removal command (which auto-generates the StatusRemoved event)
         assert!(

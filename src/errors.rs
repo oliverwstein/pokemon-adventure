@@ -83,9 +83,13 @@ impl fmt::Display for MoveDataError {
 impl fmt::Display for SpeciesDataError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SpeciesDataError::SpeciesNotFound(species) => write!(f, "Species not found: {:?}", species),
+            SpeciesDataError::SpeciesNotFound(species) => {
+                write!(f, "Species not found: {:?}", species)
+            }
             SpeciesDataError::InvalidSpeciesReference => write!(f, "Invalid species reference"),
-            SpeciesDataError::MalformedData(details) => write!(f, "Malformed species data: {}", details),
+            SpeciesDataError::MalformedData(details) => {
+                write!(f, "Malformed species data: {}", details)
+            }
         }
     }
 }
@@ -94,8 +98,12 @@ impl fmt::Display for BattleStateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             BattleStateError::NoActivePokemon => write!(f, "No active Pokemon found"),
-            BattleStateError::InvalidPlayerIndex(index) => write!(f, "Invalid player index: {}", index),
-            BattleStateError::InconsistentState(details) => write!(f, "Inconsistent battle state: {}", details),
+            BattleStateError::InvalidPlayerIndex(index) => {
+                write!(f, "Invalid player index: {}", index)
+            }
+            BattleStateError::InconsistentState(details) => {
+                write!(f, "Inconsistent battle state: {}", details)
+            }
         }
     }
 }
@@ -104,7 +112,9 @@ impl fmt::Display for ActionError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ActionError::InvalidMoveIndex(index) => write!(f, "Invalid move index: {}", index),
-            ActionError::InvalidPokemonIndex(index) => write!(f, "Invalid Pokemon index: {}", index),
+            ActionError::InvalidPokemonIndex(index) => {
+                write!(f, "Invalid Pokemon index: {}", index)
+            }
             ActionError::InvalidAction(details) => write!(f, "Invalid action: {}", details),
         }
     }

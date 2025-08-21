@@ -47,7 +47,7 @@ mod tests {
         assert!(matches!(
             bus.events()[0],
             BattleEvent::ActionFailed {
-                reason: ActionFailureReason::IsAsleep
+                reason: ActionFailureReason::IsAsleep {..}
             }
         ));
     }
@@ -88,7 +88,7 @@ mod tests {
             assert!(matches!(
                 bus.events()[0],
                 BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::IsParalyzed
+                    reason: ActionFailureReason::IsParalyzed {..}
                 }
             ));
         } else {
@@ -151,7 +151,7 @@ mod tests {
             assert!(matches!(
                 bus.events()[0],
                 BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::IsConfused
+                    reason: ActionFailureReason::IsConfused {..}
                 }
             ));
             assert!(bus.events().iter().any(|e| matches!(
@@ -224,7 +224,7 @@ mod tests {
         assert!(!bus.events().iter().any(|e| matches!(
             e,
             BattleEvent::ActionFailed {
-                reason: ActionFailureReason::IsConfused
+                reason: ActionFailureReason::IsConfused {..}
             }
         )));
         assert!(!bus.events().iter().any(|e| matches!(
@@ -311,7 +311,7 @@ mod tests {
         assert!(!event_bus2.events().iter().any(|e| matches!(
             e,
             BattleEvent::ActionFailed {
-                reason: ActionFailureReason::IsConfused
+                reason: ActionFailureReason::IsConfused {..}
             }
         )));
         assert!(!event_bus2.events().iter().any(|e| matches!(
@@ -361,7 +361,7 @@ mod tests {
         assert!(matches!(
             bus.events()[0],
             BattleEvent::ActionFailed {
-                reason: ActionFailureReason::IsExhausted
+                reason: ActionFailureReason::IsExhausted {..}
             }
         ));
     }
@@ -405,7 +405,7 @@ mod tests {
         assert!(matches!(
             bus.events()[0],
             BattleEvent::ActionFailed {
-                reason: ActionFailureReason::IsAsleep
+                reason: ActionFailureReason::IsAsleep {..}
             }
         ));
     }
@@ -461,7 +461,7 @@ mod tests {
             assert!(matches!(
                 bus.events()[0],
                 BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::MoveFailedToExecute
+                    reason: ActionFailureReason::MoveFailedToExecute {..}
                 }
             ));
         } else {

@@ -613,11 +613,11 @@ pub fn calculate_action_prevention(
     let mut commands = Vec::new();
 
     // Check Pokemon status conditions BEFORE updating counters
-    let pokemon_status = if let Some(pokemon) = battle_state.players[player_index].team
+    let (pokemon_status, pokemon_species) = if let Some(pokemon) = battle_state.players[player_index].team
         [battle_state.players[player_index].active_pokemon_index]
         .as_ref()
     {
-        pokemon.status
+        (pokemon.status, pokemon.species)
     } else {
         return (Some(ActionFailureReason::PokemonFainted), commands);
     };
@@ -631,7 +631,7 @@ pub fn calculate_action_prevention(
                     commands.push(BattleCommand::UpdateStatusProgress {
                         target: PlayerTarget::from_index(player_index),
                     });
-                    return (Some(ActionFailureReason::IsAsleep), commands);
+                    return (Some(ActionFailureReason::IsAsleep { pokemon: pokemon_species }), commands);
                 }
             }
             crate::pokemon::StatusCondition::Freeze => {
@@ -645,7 +645,7 @@ pub fn calculate_action_prevention(
                     });
                     // Pokemon can act this turn after thawing
                 } else {
-                    return (Some(ActionFailureReason::IsFrozen), commands);
+                    return (Some(ActionFailureReason::IsFrozen { pokemon: pokemon_species }), commands);
                 }
             }
             _ => {} // Other status conditions don't prevent actions
@@ -678,14 +678,14 @@ pub fn calculate_action_prevention(
 
     // Check active Pokemon conditions
     if player.has_condition_type(PokemonConditionType::Flinched) {
-        return (Some(ActionFailureReason::IsFlinching), commands);
+        return (Some(ActionFailureReason::IsFlinching { pokemon: pokemon_species }), commands);
     }
 
     // Check for exhausted condition (any turns_remaining > 0 means still exhausted)
     for condition in player.active_pokemon_conditions.values() {
         if let PokemonCondition::Exhausted { turns_remaining } = condition {
             if *turns_remaining > 0 {
-                return (Some(ActionFailureReason::IsExhausted), commands);
+                return (Some(ActionFailureReason::IsExhausted { pokemon: pokemon_species }), commands);
             }
         }
     }
@@ -694,7 +694,7 @@ pub fn calculate_action_prevention(
     if let Some(crate::pokemon::StatusCondition::Paralysis) = pokemon_status {
         let roll = rng.next_outcome("Immobilized by Paralysis Check"); // 0-100
         if roll < 25 {
-            return (Some(ActionFailureReason::IsParalyzed), commands);
+            return (Some(ActionFailureReason::IsParalyzed { pokemon: pokemon_species }), commands);
         }
     }
 
@@ -715,7 +715,7 @@ pub fn calculate_action_prevention(
                 // Confusion continues, so roll for self-hit (don't decrement here - that happens at end of turn)
                 let roll = rng.next_outcome("Hit Itself in Confusion Check"); // 1-100
                 if roll < 50 {
-                    return (Some(ActionFailureReason::IsConfused), commands);
+                    return (Some(ActionFailureReason::IsConfused { pokemon: pokemon_species }), commands);
                 }
                 // If not confused this turn, action proceeds normally
                 break; // Only check once
@@ -731,7 +731,7 @@ pub fn calculate_action_prevention(
         } = condition
         {
             if *turns_remaining > 0 && *pokemon_move == move_used {
-                return (Some(ActionFailureReason::MoveFailedToExecute), commands);
+                return (Some(ActionFailureReason::MoveFailedToExecute {move_used: *pokemon_move}), commands);
             }
         }
     }
@@ -752,7 +752,7 @@ pub fn calculate_action_prevention(
                     );
 
                     if !is_asleep {
-                        return (Some(ActionFailureReason::MoveFailedToExecute), commands);
+                        return (Some(ActionFailureReason::MoveFailedToExecute {move_used: move_used}), commands);
                     }
                 }
             }

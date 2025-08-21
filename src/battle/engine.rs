@@ -190,11 +190,17 @@ pub fn execute_battle_action(
             // But switching TO a fainted Pokemon should not be allowed
             let target_pokemon = &battle_state.players[player_index].team[target_pokemon_index];
             let player = &battle_state.players[player_index];
+            
+            // Only prevent switching if there's an active, non-fainted Pokemon that is trapped
             if player.has_condition_type(PokemonConditionType::Trapped) {
-                bus.push(BattleEvent::ActionFailed {
-                    reason: crate::battle::state::ActionFailureReason::IsTrapped,
-                });
-                return;
+                if let Some(active_pokemon) = player.active_pokemon() {
+                    if !active_pokemon.is_fainted() {
+                        bus.push(BattleEvent::ActionFailed {
+                            reason: crate::battle::state::ActionFailureReason::IsTrapped { pokemon: active_pokemon.species },
+                        });
+                        return;
+                    }
+                }
             }
             if let Some(target_pokemon) = target_pokemon {
                 if target_pokemon.is_fainted() {
@@ -251,7 +257,7 @@ pub fn execute_battle_action(
                 });
 
                 // Special case for confusion - also causes self-damage after the action fails
-                if matches!(failure_reason, ActionFailureReason::IsConfused) {
+                if matches!(failure_reason, ActionFailureReason::IsConfused { .. }) {
                     // Add confusion self-attack action to the stack
                     action_stack.push_front(BattleAction::AttackHit {
                         attacker_index,
@@ -274,7 +280,7 @@ pub fn execute_battle_action(
                     action_stack,
                 ) {
                     bus.push(BattleEvent::ActionFailed {
-                        reason: crate::battle::state::ActionFailureReason::NoPPRemaining,
+                        reason: crate::battle::state::ActionFailureReason::NoPPRemaining { move_used },
                     });
                     return;
                 }

@@ -440,7 +440,7 @@ impl MoveEffect {
         if let Some(mirrored_move) = defender_player.last_move {
             if mirrored_move == crate::moves::Move::MirrorMove {
                 let commands = vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::MoveFailedToExecute,
+                    reason: ActionFailureReason::MoveFailedToExecute { move_used: crate::moves::Move::MirrorMove },
                 })];
                 return EffectResult::Skip(commands);
             }
@@ -472,7 +472,7 @@ impl MoveEffect {
         }
 
         EffectResult::Skip(vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
-            reason: ActionFailureReason::MoveFailedToExecute,
+            reason: ActionFailureReason::MoveFailedToExecute { move_used: crate::moves::Move::MirrorMove },
         })])
     }
 

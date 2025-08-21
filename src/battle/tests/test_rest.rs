@@ -165,7 +165,7 @@ mod tests {
             matches!(
                 e,
                 BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::IsAsleep
+                    reason: ActionFailureReason::IsAsleep {..}
                 }
             )
         });

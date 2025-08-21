@@ -568,17 +568,36 @@ impl BattleEvent {
 
     fn format_action_failure_reason(reason: &ActionFailureReason) -> Option<String> {
         match reason {
-            ActionFailureReason::IsAsleep => Some("is fast asleep.".to_string()),
-            ActionFailureReason::IsFrozen => Some("is frozen solid!".to_string()),
-            ActionFailureReason::IsExhausted => Some("must recharge!".to_string()),
-            ActionFailureReason::IsParalyzed => Some("is fully paralyzed!".to_string()),
-            ActionFailureReason::IsFlinching => Some("flinched and couldn't move!".to_string()),
-            ActionFailureReason::IsConfused => Some("is confused!".to_string()),
-            ActionFailureReason::IsTrapped => Some("can't escape!".to_string()),
+            ActionFailureReason::IsAsleep { pokemon } => {
+                Some(format!("{} is fast asleep.", pokemon.name()))
+            }
+            ActionFailureReason::IsFrozen { pokemon } => {
+                Some(format!("{} is frozen solid!", pokemon.name()))
+            }
+            ActionFailureReason::IsExhausted { pokemon } => {
+                Some(format!("{} must recharge!", pokemon.name()))
+            }
+            ActionFailureReason::IsParalyzed { pokemon } => {
+                Some(format!("{} is fully paralyzed!", pokemon.name()))
+            }
+            ActionFailureReason::IsFlinching { pokemon } => {
+                Some(format!("{} flinched and couldn't move!", pokemon.name()))
+            }
+            ActionFailureReason::IsConfused { pokemon } => {
+                Some(format!("{} hit itself in its confusion!", pokemon.name()))
+            }
+            ActionFailureReason::IsTrapped { pokemon } => {
+                Some(format!("{} can't escape!", pokemon.name()))
+            }
+            ActionFailureReason::NoPPRemaining { move_used } => {
+                Some(format!("But there was no PP left for {}!", Self::format_move_name(*move_used)))
+            }
+            ActionFailureReason::MoveFailedToExecute { move_used } => {
+                Some(format!("{} failed!", Self::format_move_name(*move_used)))
+            }
             // Silent failures - these happen naturally and don't need messages
             ActionFailureReason::PokemonFainted => None, // Pokemon faints before moving
             ActionFailureReason::NoEnemyPresent => None, // No target for move
-            _ => Some("But it failed!".to_string()),
         }
     }
 }
@@ -783,17 +802,17 @@ mod event_formatting_tests {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ActionFailureReason {
-    IsAsleep,
-    IsFrozen,
-    IsExhausted,
-    IsParalyzed,
-    IsFlinching,
-    IsConfused,
-    IsTrapped,
+    IsAsleep { pokemon: crate::species::Species },
+    IsFrozen { pokemon: crate::species::Species },
+    IsExhausted { pokemon: crate::species::Species },
+    IsParalyzed { pokemon: crate::species::Species },
+    IsFlinching { pokemon: crate::species::Species },
+    IsConfused { pokemon: crate::species::Species },
+    IsTrapped { pokemon: crate::species::Species },
     NoEnemyPresent, // When opponent-targeting move can't execute (e.g., opponent fainted, only self-targeting moves allowed)
-    NoPPRemaining,
+    NoPPRemaining { move_used: Move },
     PokemonFainted, // When the acting Pokemon or target is fainted
-    MoveFailedToExecute,
+    MoveFailedToExecute { move_used: Move },
 }
 
 /// Event bus for collecting and managing battle events.

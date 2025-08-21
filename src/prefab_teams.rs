@@ -162,7 +162,7 @@ pub fn create_battle_player_from_prefab(
 
     for prefab_pokemon in prefab_team.pokemon.iter() {
         let species_data = crate::pokemon::get_species_data(prefab_pokemon.species)
-            .ok_or_else(|| format!("Species data not found for {:?}", prefab_pokemon.species))?;
+            .map_err(|err| format!("Species data error for {:?}: {}", prefab_pokemon.species, err))?;
 
         // Convert Move enum to move instances
         let moves: Vec<Move> = prefab_pokemon.moves.clone();

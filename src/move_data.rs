@@ -1,4 +1,5 @@
 use crate::battle::conditions::PokemonCondition;
+use crate::errors::{MoveDataError, MoveDataResult};
 use crate::moves::Move;
 use crate::pokemon::PokemonType;
 use serde::{Deserialize, Serialize};
@@ -316,11 +317,11 @@ pub struct MoveData {
 
 impl MoveData {
     /// Get move data for a specific move from the compiled data
-    pub fn get_move_data(move_: Move) -> Option<MoveData> {
+    pub fn get_move_data(move_: Move) -> MoveDataResult<MoveData> {
         // Handle special hardcoded moves first
         match move_ {
             Move::HittingItself => {
-                Some(MoveData {
+                Ok(MoveData {
                     name: "Hit Itself".to_string(),
                     move_type: PokemonType::Typeless,
                     power: Some(40),
@@ -331,7 +332,7 @@ impl MoveData {
                 })
             }
             Move::Struggle => {
-                Some(MoveData {
+                Ok(MoveData {
                     name: "Struggle".to_string(),
                     move_type: PokemonType::Typeless,
                     power: Some(50),
@@ -343,15 +344,30 @@ impl MoveData {
             }
             _ => {
                 // For regular moves, get from compiled data
-                get_compiled_move_data().get(&move_).cloned()
+                get_compiled_move_data()
+                    .get(&move_)
+                    .cloned()
+                    .ok_or(MoveDataError::MoveNotFound(move_))
             }
         }
     }
 
-    pub fn get_move_max_pp(move_: Move) -> u8 {
-        Self::get_move_data(move_)
-            .map(|data| data.max_pp)
-            .unwrap_or(30) // Default fallback
+    /// Get move data for a specific move from the compiled data (legacy version that panics)
+    /// This function is deprecated - use get_move_data() instead
+    #[deprecated(note = "Use get_move_data() instead for proper error handling")]
+    pub fn get_move_data_unchecked(move_: Move) -> Option<MoveData> {
+        Self::get_move_data(move_).ok()
+    }
+
+    pub fn get_move_max_pp(move_: Move) -> MoveDataResult<u8> {
+        Self::get_move_data(move_).map(|data| data.max_pp)
+    }
+
+    /// Get move max PP with fallback (legacy version that uses fallback)
+    /// This function is deprecated - use get_move_max_pp() instead
+    #[deprecated(note = "Use get_move_max_pp() instead for proper error handling")]
+    pub fn get_move_max_pp_with_fallback(move_: Move) -> u8 {
+        Self::get_move_max_pp(move_).unwrap_or(30) // Default fallback
     }
 }
 

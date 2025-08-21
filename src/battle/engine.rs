@@ -420,14 +420,20 @@ pub fn execute_attack_hit(
 
     // 2. Calculation: Delegate ALL game logic to the pure calculator function.
     //    This single call determines everything that should happen as a result of the attack.
-    let commands = calculate_attack_outcome(
+    let commands = match calculate_attack_outcome(
         battle_state,
         attacker_index,
         defender_index,
         move_used,
         hit_number,
         rng,
-    );
+    ) {
+        Ok(commands) => commands,
+        Err(e) => {
+            eprintln!("Error calculating attack outcome: {:?}", e);
+            return;
+        }
+    };
 
     // 3. Execution: Pass the resulting list of commands to the executor bridge.
     //    This step applies all the calculated state changes and emits all events.

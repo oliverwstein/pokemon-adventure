@@ -302,8 +302,7 @@ impl BattleEvent {
             }
             BattleEvent::ConditionExpired { target, condition } => {
                 let target_name = Self::format_species_name(*target);
-                let condition_name = Self::format_condition(condition);
-                Some(format!("{}'s {} wore off.", target_name, condition_name))
+                Self::format_condition_expired(*target, condition)
             }
 
             // === Pokemon Status Events ===
@@ -467,6 +466,55 @@ impl BattleEvent {
                 "transformation".to_string()
             }
             crate::battle::conditions::PokemonConditionType::Enraged => "rage".to_string(),
+        }
+    }
+
+    fn format_condition_expired(target: Species, condition: &PokemonCondition) -> Option<String> {
+        let target_name = Self::format_species_name(target);
+        
+        match condition.get_type() {
+            // Silent conditions (no message when they expire)
+            crate::battle::conditions::PokemonConditionType::Flinched => None,
+            crate::battle::conditions::PokemonConditionType::Charging => None,
+            crate::battle::conditions::PokemonConditionType::Underground => None,
+            crate::battle::conditions::PokemonConditionType::InAir => None,
+            crate::battle::conditions::PokemonConditionType::Teleported => None,
+            crate::battle::conditions::PokemonConditionType::Countering => None,
+            crate::battle::conditions::PokemonConditionType::Biding => None,
+
+            // Custom messages for specific conditions
+            crate::battle::conditions::PokemonConditionType::Confused => {
+                Some(format!("{} snapped out of confusion!", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Rampaging => {
+                Some(format!("{} calmed down.", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Exhausted => {
+                Some(format!("{} is no longer exhausted.", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Trapped => {
+                Some(format!("{} broke free!", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Disabled => {
+                Some(format!("{} is no longer disabled!", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Enraged => {
+                Some(format!("{} calmed down.", target_name))
+            }
+            
+            // Generic message for other conditions
+            crate::battle::conditions::PokemonConditionType::Substitute => {
+                Some(format!("{}'s substitute faded.", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Seeded => {
+                Some(format!("{} shook off the leech seed.", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Converted => {
+                Some(format!("{}'s type returned to normal.", target_name))
+            }
+            crate::battle::conditions::PokemonConditionType::Transformed => {
+                Some(format!("{} returned to its original form.", target_name))
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 MoveData(
     name: "Roar",
     move_type: Normal,
-    power: Some(40),
+    power: Some(20),
     category: Special,
     accuracy: Some(100),
     max_pp: 10,

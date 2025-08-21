@@ -90,7 +90,7 @@ impl MoveEffect {
             let next_hit_number = hit_number + 1;
 
             // Determine if the next hit should be queued.
-            let should_queue_next_hit = if next_hit_number <= *guaranteed_hits {
+            let should_queue_next_hit = if next_hit_number < *guaranteed_hits {
                 // We are still within the guaranteed number of hits.
                 true
             } else {

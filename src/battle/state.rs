@@ -589,9 +589,10 @@ impl BattleEvent {
             ActionFailureReason::IsTrapped { pokemon } => {
                 Some(format!("{} can't escape!", pokemon.name()))
             }
-            ActionFailureReason::NoPPRemaining { move_used } => {
-                Some(format!("But there was no PP left for {}!", Self::format_move_name(*move_used)))
-            }
+            ActionFailureReason::NoPPRemaining { move_used } => Some(format!(
+                "But there was no PP left for {}!",
+                Self::format_move_name(*move_used)
+            )),
             ActionFailureReason::MoveFailedToExecute { move_used } => {
                 Some(format!("{} failed!", Self::format_move_name(*move_used)))
             }

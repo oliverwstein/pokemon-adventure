@@ -46,7 +46,7 @@ mod tests {
             matches!(
                 e,
                 BattleEvent::ActionFailed {
-                    reason: ActionFailureReason::MoveFailedToExecute {..}
+                    reason: ActionFailureReason::MoveFailedToExecute { .. }
                 }
             )
         });

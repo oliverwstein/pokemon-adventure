@@ -1,5 +1,5 @@
 //! MCP interface functions extracted from main.rs for use in the MCP server
-//! 
+//!
 //! This module contains all the display, command handling, and interaction functions
 //! that were originally in main.rs, made available as library functions.
 
@@ -15,7 +15,12 @@ pub fn get_available_teams_display() -> String {
     let teams = prefab_teams::get_prefab_teams();
     let mut output = String::from("Available Teams:\n");
     for (i, team) in teams.iter().enumerate() {
-        output.push_str(&format!("  {}. {} - {}\n", i + 1, team.name, team.description));
+        output.push_str(&format!(
+            "  {}. {} - {}\n",
+            i + 1,
+            team.name,
+            team.description
+        ));
     }
     output
 }
@@ -24,9 +29,12 @@ pub fn get_available_teams_display() -> String {
 pub fn create_battle(team_choice: usize) -> Result<(BattleState, String), String> {
     let teams = prefab_teams::get_prefab_teams();
     if team_choice == 0 || team_choice > teams.len() {
-        return Err(format!("Invalid team choice. Please choose 1-{}", teams.len()));
+        return Err(format!(
+            "Invalid team choice. Please choose 1-{}",
+            teams.len()
+        ));
     }
-    
+
     let player_team = &teams[team_choice - 1];
     let mut human_player = prefab_teams::create_battle_player_from_prefab(
         &player_team.id,
@@ -44,18 +52,20 @@ pub fn create_battle(team_choice: usize) -> Result<(BattleState, String), String
     .map_err(|e| format!("Failed to create NPC team: {}", e))?;
     npc_player.player_type = PlayerType::NPC;
 
-    let battle_state = BattleState::new(
-        "mcp_battle".to_string(),
-        human_player,
-        npc_player,
-    );
+    let battle_state = BattleState::new("mcp_battle".to_string(), human_player, npc_player);
 
     let intro_text = format!(
         "🔥 Welcome to the Pokémon Adventure Battle Engine! 🔥\n\nYou chose the {}!\n\n💥 A wild trainer challenges you to a battle! 💥\nYou sent out {}!\n{} sends out {}!",
         player_team.name,
-        battle_state.players[0].active_pokemon().map(|p| p.name.as_str()).unwrap_or("Unknown"),
+        battle_state.players[0]
+            .active_pokemon()
+            .map(|p| p.name.as_str())
+            .unwrap_or("Unknown"),
         battle_state.players[1].player_name,
-        battle_state.players[1].active_pokemon().map(|p| p.name.as_str()).unwrap_or("Unknown")
+        battle_state.players[1]
+            .active_pokemon()
+            .map(|p| p.name.as_str())
+            .unwrap_or("Unknown")
     );
 
     Ok((battle_state, intro_text))
@@ -139,7 +149,7 @@ pub fn handle_check_command(args: &str, battle_state: &BattleState) -> String {
     if parts.is_empty() {
         return "What do you want to check? (e.g., 'self', 'opponent', 'team')".to_string();
     }
-    
+
     match parts[0].to_lowercase().as_str() {
         "self" => display_self_status(&battle_state.players[0]),
         "opponent" => display_opponent_status(&battle_state.players[1]),
@@ -212,7 +222,10 @@ pub fn execute_move_action(
             }
         }
     }
-    Err(format!("'{}' is not a valid move for your active Pokémon.", move_name))
+    Err(format!(
+        "'{}' is not a valid move for your active Pokémon.",
+        move_name
+    ))
 }
 
 /// Executes a switch action and returns the battle events as formatted text
@@ -223,14 +236,14 @@ pub fn execute_switch_action(
     if pokemon_number == 0 || pokemon_number > 6 {
         return Err("Invalid Pokemon number. Use 1-6.".to_string());
     }
-    
+
     let team_index = pokemon_number - 1;
     let action = PlayerAction::SwitchPokemon { team_index };
-    
+
     if let Err(msg) = battle_state.players[0].validate_action(&action) {
         return Err(format!("Invalid switch: {}", msg));
     }
-    
+
     execute_player_action(battle_state, action)
 }
 
@@ -260,7 +273,7 @@ fn execute_player_action(
     if ready_for_turn_resolution(battle_state) {
         let rng = TurnRng::new_random();
         let event_bus = resolve_turn(battle_state, rng);
-        
+
         // Format turn events
         for event in event_bus.events() {
             if let Some(formatted_event) = event.format(battle_state) {
@@ -299,13 +312,16 @@ pub fn is_battle_over(battle_state: &BattleState) -> bool {
 
 /// Checks if the player needs to make a forced replacement
 pub fn needs_forced_replacement(battle_state: &BattleState) -> bool {
-    matches!(battle_state.game_state, GameState::WaitingForPlayer1Replacement)
+    matches!(
+        battle_state.game_state,
+        GameState::WaitingForPlayer1Replacement
+    )
 }
 
 /// Gets the current battle status as a formatted string
 pub fn get_battle_status_summary(battle_state: &BattleState) -> String {
     let mut output = String::new();
-    
+
     if is_battle_over(battle_state) {
         output.push_str(&match battle_state.game_state {
             GameState::Player1Win => "🎉 Battle Over - You Won! 🎉",
@@ -319,7 +335,7 @@ pub fn get_battle_status_summary(battle_state: &BattleState) -> String {
     } else {
         output.push_str("⚔️  Battle in Progress ⚔️\n");
     }
-    
+
     output.push_str(&display_battle_status(battle_state));
     output
 }

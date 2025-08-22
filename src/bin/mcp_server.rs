@@ -1,5 +1,5 @@
 //! Pokemon Adventure MCP Server
-//! 
+//!
 //! A Model Context Protocol server that exposes the Pokemon Adventure battle engine
 //! for LLM interaction through natural language responses.
 
@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use pokemon_adventure::battle::state::BattleState;
 use pokemon_adventure::mcp_interface::*;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Shared battle state that persists across MCP tool calls
 type SharedBattleState = Arc<Mutex<Option<BattleState>>>;
@@ -168,108 +168,108 @@ impl McpServer {
     }
 
     fn handle_tool_call(&self, tool_name: &str, args: &Value) -> Value {
-        let result = match tool_name {
-            "start_battle" => {
-                let team_choice = args["team_choice"].as_u64().unwrap_or(1) as usize;
-                match create_battle(team_choice) {
-                    Ok((new_battle_state, intro_text)) => {
-                        *self.battle_state.lock().unwrap() = Some(new_battle_state);
-                        json!({
-                            "content": [{"type": "text", "text": intro_text}]
-                        })
+        let result =
+            match tool_name {
+                "start_battle" => {
+                    let team_choice = args["team_choice"].as_u64().unwrap_or(1) as usize;
+                    match create_battle(team_choice) {
+                        Ok((new_battle_state, intro_text)) => {
+                            *self.battle_state.lock().unwrap() = Some(new_battle_state);
+                            json!({
+                                "content": [{"type": "text", "text": intro_text}]
+                            })
+                        }
+                        Err(e) => json!({
+                            "content": [{"type": "text", "text": format!("Error: {}", e)}]
+                        }),
                     }
-                    Err(e) => json!({
-                        "content": [{"type": "text", "text": format!("Error: {}", e)}]
+                }
+                "get_available_teams" => {
+                    let teams = get_available_teams_display();
+                    json!({
+                        "content": [{"type": "text", "text": teams}]
                     })
                 }
-            }
-            "get_available_teams" => {
-                let teams = get_available_teams_display();
-                json!({
-                    "content": [{"type": "text", "text": teams}]
-                })
-            }
-            "get_battle_state" => {
-                let text = match self.battle_state.lock().unwrap().as_ref() {
-                    Some(state) => get_battle_status_summary(state),
-                    None => "No battle is currently active. Use 'start_battle' to begin.".to_string(),
-                };
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "use_move" => {
-                let move_name = args["move_name"].as_str().unwrap_or("");
-                let text = match self.battle_state.lock().unwrap().as_mut() {
-                    Some(state) => {
-                        match execute_move_action(state, move_name) {
+                "get_battle_state" => {
+                    let text = match self.battle_state.lock().unwrap().as_ref() {
+                        Some(state) => get_battle_status_summary(state),
+                        None => "No battle is currently active. Use 'start_battle' to begin."
+                            .to_string(),
+                    };
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "use_move" => {
+                    let move_name = args["move_name"].as_str().unwrap_or("");
+                    let text = match self.battle_state.lock().unwrap().as_mut() {
+                        Some(state) => match execute_move_action(state, move_name) {
                             Ok(result) => result,
                             Err(e) => format!("Error: {}", e),
-                        }
-                    }
-                    None => "No battle is currently active. Use 'start_battle' to begin.".to_string(),
-                };
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "switch_pokemon" => {
-                let pokemon_number = args["pokemon_number"].as_u64().unwrap_or(1) as usize;
-                let text = match self.battle_state.lock().unwrap().as_mut() {
-                    Some(state) => {
-                        match execute_switch_action(state, pokemon_number) {
+                        },
+                        None => "No battle is currently active. Use 'start_battle' to begin."
+                            .to_string(),
+                    };
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "switch_pokemon" => {
+                    let pokemon_number = args["pokemon_number"].as_u64().unwrap_or(1) as usize;
+                    let text = match self.battle_state.lock().unwrap().as_mut() {
+                        Some(state) => match execute_switch_action(state, pokemon_number) {
                             Ok(result) => result,
                             Err(e) => format!("Error: {}", e),
-                        }
-                    }
-                    None => "No battle is currently active. Use 'start_battle' to begin.".to_string(),
-                };
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "check" => {
-                let target = args["target"].as_str().unwrap_or("self");
-                let text = match self.battle_state.lock().unwrap().as_ref() {
-                    Some(state) => handle_check_command(target, state),
-                    None => "No battle is currently active. Use 'start_battle' to begin.".to_string(),
-                };
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "lookup_move" => {
-                let move_name = args["move_name"].as_str().unwrap_or("");
-                let text = handle_lookup_move_command(move_name);
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "lookup_pokemon" => {
-                let species_name = args["species_name"].as_str().unwrap_or("");
-                let text = handle_lookup_pokemon_command(species_name);
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            "forfeit_battle" => {
-                let text = match self.battle_state.lock().unwrap().as_mut() {
-                    Some(state) => {
-                        match execute_forfeit_action(state) {
+                        },
+                        None => "No battle is currently active. Use 'start_battle' to begin."
+                            .to_string(),
+                    };
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "check" => {
+                    let target = args["target"].as_str().unwrap_or("self");
+                    let text = match self.battle_state.lock().unwrap().as_ref() {
+                        Some(state) => handle_check_command(target, state),
+                        None => "No battle is currently active. Use 'start_battle' to begin."
+                            .to_string(),
+                    };
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "lookup_move" => {
+                    let move_name = args["move_name"].as_str().unwrap_or("");
+                    let text = handle_lookup_move_command(move_name);
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "lookup_pokemon" => {
+                    let species_name = args["species_name"].as_str().unwrap_or("");
+                    let text = handle_lookup_pokemon_command(species_name);
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                "forfeit_battle" => {
+                    let text = match self.battle_state.lock().unwrap().as_mut() {
+                        Some(state) => match execute_forfeit_action(state) {
                             Ok(result) => result,
                             Err(e) => format!("Error: {}", e),
-                        }
-                    }
-                    None => "No battle is currently active. Use 'start_battle' to begin.".to_string(),
-                };
-                json!({
-                    "content": [{"type": "text", "text": text}]
-                })
-            }
-            _ => json!({
-                "content": [{"type": "text", "text": format!("Unknown tool: {}", tool_name)}]
-            })
-        };
+                        },
+                        None => "No battle is currently active. Use 'start_battle' to begin."
+                            .to_string(),
+                    };
+                    json!({
+                        "content": [{"type": "text", "text": text}]
+                    })
+                }
+                _ => json!({
+                    "content": [{"type": "text", "text": format!("Unknown tool: {}", tool_name)}]
+                }),
+            };
 
         result
     }
@@ -297,7 +297,7 @@ impl McpServer {
 
             // Handle the request and create response
             let result = self.handle_request(method, params);
-            
+
             let response = json!({
                 "jsonrpc": "2.0",
                 "id": id,

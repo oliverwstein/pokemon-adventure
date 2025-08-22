@@ -6,6 +6,7 @@
 
 pub mod battle;
 pub mod errors;
+pub mod mcp_interface;
 pub mod move_data;
 pub mod moves;
 pub mod player;

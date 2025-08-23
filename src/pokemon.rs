@@ -137,9 +137,11 @@ impl PokemonType {
             (Rock, _) => 1.0,
 
             // Ghost
-            (Ghost, Normal) | (Ghost, Psychic) => 0.0,
+            (Ghost, Normal) => 0.0,
             (Ghost, Ghost) => 2.0,
+            (Ghost, Psychic) => 0.5,
             (Ghost, _) => 1.0,
+            
 
             // Dragon
             (Dragon, Dragon) => 2.0,

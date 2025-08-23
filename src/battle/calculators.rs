@@ -233,7 +233,7 @@ fn calculate_and_emit_type_effectiveness(
         crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
 
     // Emit type effectiveness event if significant
-    if (type_adv_multiplier - 1.0).abs() > 0.1 && move_data.power.is_some() {
+    if (type_adv_multiplier - 1.0).abs() > 0.1 && (type_adv_multiplier == 0.0 || move_data.power.is_some()) {
         commands.push(BattleCommand::EmitEvent(
             BattleEvent::AttackTypeEffectiveness {
                 multiplier: type_adv_multiplier,

@@ -29,7 +29,9 @@ impl McpServer {
             "initialize" => {
                 json!({
                     "capabilities": {
-                        "tools": {}
+                        "tools": {
+                            "listChanged": false
+                        }
                     },
                     "serverInfo": {
                         "name": "pokemon-adventure",
@@ -279,21 +281,38 @@ impl McpServer {
         let mut stdout = io::stdout();
         let reader = BufReader::new(stdin.lock());
 
+        // Add error logging to stderr for MCP debugging
+        eprintln!("Pokemon Adventure MCP Server starting...");
+
         for line in reader.lines() {
-            let line = line?;
+            let line = match line {
+                Ok(line) => line,
+                Err(e) => {
+                    eprintln!("Error reading line: {}", e);
+                    break; // Exit gracefully on stdin error
+                }
+            };
+            
             if line.trim().is_empty() {
                 continue;
             }
 
+            eprintln!("Received request: {}", line);
+
             // Parse the JSON-RPC request
             let request: Value = match serde_json::from_str(&line) {
                 Ok(req) => req,
-                Err(_) => continue,
+                Err(e) => {
+                    eprintln!("JSON parse error: {}", e);
+                    continue;
+                }
             };
 
             let id = request["id"].clone();
             let method = request["method"].as_str().unwrap_or("");
             let params = &request["params"];
+
+            eprintln!("Handling method: {}", method);
 
             // Handle the request and create response
             let result = self.handle_request(method, params);
@@ -305,10 +324,22 @@ impl McpServer {
             });
 
             // Send response
-            writeln!(stdout, "{}", response)?;
-            stdout.flush()?;
+            match writeln!(stdout, "{}", response) {
+                Ok(_) => {
+                    if let Err(e) = stdout.flush() {
+                        eprintln!("Error flushing stdout: {}", e);
+                        break;
+                    }
+                    eprintln!("Sent response for method: {}", method);
+                }
+                Err(e) => {
+                    eprintln!("Error writing response: {}", e);
+                    break;
+                }
+            }
         }
 
+        eprintln!("Pokemon Adventure MCP Server exiting...");
         Ok(())
     }
 }

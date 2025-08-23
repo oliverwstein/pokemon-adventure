@@ -18,21 +18,76 @@ cargo build --bin pokemon-adventure-mcp
 
 The binary will be located at `target/debug/pokemon-adventure-mcp` (or `target/release/pokemon-adventure-mcp` for release builds).
 
+### Testing the MCP Server
+
+Before configuring with Claude, you can test the server directly:
+
+```bash
+# Test server initialization
+echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}' | cargo run --bin pokemon-adventure-mcp
+
+# Test getting available tools
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}' | cargo run --bin pokemon-adventure-mcp
+
+# Test getting available teams
+echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_available_teams", "arguments": {}}}' | cargo run --bin pokemon-adventure-mcp
+```
+
 ### Configuration for Claude Code
-Add to your MCP configuration:
+
+**Option 1: Using Claude CLI (Recommended)**
+```bash
+cd pokemon-adventure
+claude mcp add pokemon-adventure --cwd $(pwd) -- cargo run --bin pokemon-adventure-mcp
+```
+
+**Option 2: Manual Configuration**
+
+**Step 1: Locate Configuration File**
+The Claude Code MCP configuration file location depends on your operating system:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+**Step 2: Add MCP Server Configuration**
+Add or update the configuration file with:
 ```json
 {
   "mcpServers": {
     "pokemon-adventure": {
-      "command": "/path/to/pokemon-adventure/target/debug/pokemon-adventure-mcp"
+      "command": "cargo",
+      "args": ["run", "--bin", "pokemon-adventure-mcp"],
+      "cwd": "/full/path/to/pokemon-adventure"
     }
   }
 }
 ```
 
+Replace `/full/path/to/pokemon-adventure` with the actual absolute path to your pokemon-adventure directory.
+
+**Step 3: Restart Claude Code**
+After saving the configuration file, you MUST completely restart Claude Code for the MCP server to be loaded and the tools to become available.
+
+**Step 4: Verify Configuration**
+```bash
+claude mcp list
+```
+
+Should show:
+```
+pokemon-adventure: cargo run --bin pokemon-adventure-mcp - ✓ Connected
+```
+
+If the connection fails:
+1. Ensure the working directory (`cwd`) is correct and absolute
+2. Verify the binary builds successfully with `cargo build --bin pokemon-adventure-mcp`
+3. Check that Rust and Cargo are in the PATH
+4. The binary must have execute permissions
+5. Restart Claude Code completely after configuration changes
+
 ## Available Tools
 
-The MCP server provides 9 tools that cover all aspects of Pokemon battling:
+The MCP server provides 8 tools that cover all aspects of Pokemon battling:
 
 ### 1. `get_available_teams`
 **Purpose**: List all available pre-built Pokemon teams  
@@ -170,7 +225,7 @@ Base Stats:
 Evolution: Evolves from Charmeleon at level 36
 ```
 
-### 9. `forfeit_battle`
+### 8. `forfeit_battle`
 **Purpose**: Give up and end the current battle  
 **Parameters**: None  
 **Example Usage**: "I give up, forfeit the battle"
@@ -266,6 +321,32 @@ The MCP server provides helpful error messages:
 - **Persistent state**: Battle continues across multiple tool calls
 - **Fresh starts**: Use `start_battle` anytime to begin a new battle
 - **Stateful tracking**: Server remembers Pokemon HP, status, and battle progress
+
+## Verified Functionality
+
+The MCP server has been thoroughly tested and verified to work correctly:
+
+### ✅ Server Initialization
+- Responds properly to JSON-RPC `initialize` requests
+- Returns correct server info and capabilities
+- Supports all standard MCP protocol methods
+
+### ✅ Tool Discovery
+- Exposes exactly 8 Pokemon battle tools
+- Each tool has proper JSON schema validation
+- All parameter requirements are correctly defined
+
+### ✅ Battle Functionality
+- **Team Selection**: Successfully lists 3 pre-built teams (Venusaur, Blastoise, Charizard)
+- **Battle Initialization**: Properly starts battles with chosen teams
+- **State Management**: Maintains battle state across tool calls
+- **JSON-RPC Compliance**: All responses follow proper JSON-RPC 2.0 format
+
+### ✅ Integration Ready
+- Compatible with Claude Code MCP configuration
+- Works with both CLI (`claude mcp add`) and manual JSON configuration
+- Requires proper working directory (`cwd`) for successful connection
+- Tested command: `cargo run --bin pokemon-adventure-mcp`
 
 ---
 

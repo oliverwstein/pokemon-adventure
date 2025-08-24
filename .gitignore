@@ -1,2 +1,5 @@
 /target
 EarlGrayTree_accessKeys.csv
+
+# macOS system files
+.DS_Store

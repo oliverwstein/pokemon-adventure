@@ -972,7 +972,6 @@ impl fmt::Display for BattleState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // --- 1. Main Battle Header ---
         writeln!(f, "========================================")?;
-        writeln!(f, " Battle Status (ID: {})", self.battle_id)?;
         writeln!(f, " Turn: {}", self.turn_number)?;
         writeln!(f, "----------------------------------------")?;
 

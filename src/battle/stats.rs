@@ -1,12 +1,17 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
+use crate::errors::BattleResult;
 use crate::move_data::{MoveCategory, MoveData};
 use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
-pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
+pub fn effective_attack(
+    pokemon: &PokemonInst,
+    player: &BattlePlayer,
+    move_: Move,
+) -> BattleResult<u16> {
+    let move_data = MoveData::get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
     let base_attack = if let Some(transform_condition) = player
@@ -19,15 +24,15 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
         match move_data.category {
             MoveCategory::Physical => transform_condition.stats.attack,
             MoveCategory::Special => transform_condition.stats.sp_attack,
-            MoveCategory::Status => return 0,
-            MoveCategory::Other => return 0,
+            MoveCategory::Status => return Ok(0),
+            MoveCategory::Other => return Ok(0),
         }
     } else {
         match move_data.category {
             MoveCategory::Physical => pokemon.stats.attack,
             MoveCategory::Special => pokemon.stats.sp_attack,
-            MoveCategory::Status => return 0, // Status moves don't use attack stats
-            MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use attack stats
+            MoveCategory::Status => return Ok(0), // Status moves don't use attack stats
+            MoveCategory::Other => return Ok(0), // Set damage, OHKO, status effects targeting enemy don't use attack stats
         }
     };
 
@@ -35,8 +40,8 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
     let attack_stat = match move_data.category {
         MoveCategory::Physical => StatType::Attack,
         MoveCategory::Special => StatType::SpecialAttack,
-        MoveCategory::Status => return 0,
-        MoveCategory::Other => return 0,
+        MoveCategory::Status => return Ok(0),
+        MoveCategory::Other => return Ok(0),
     };
 
     let stage = player.get_stat_stage(attack_stat);
@@ -56,12 +61,16 @@ pub fn effective_attack(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mov
 
     // TODO: Apply other modifiers (items, abilities, etc.)
 
-    multiplied_attack
+    Ok(multiplied_attack)
 }
 
 /// Calculate effective defense stat including stat stages, conditions, and other modifiers
-pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Move) -> u16 {
-    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
+pub fn effective_defense(
+    pokemon: &PokemonInst,
+    player: &BattlePlayer,
+    move_: Move,
+) -> BattleResult<u16> {
+    let move_data = MoveData::get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
     let base_defense = if let Some(transform_condition) = player
@@ -74,15 +83,15 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
         match move_data.category {
             MoveCategory::Physical => transform_condition.stats.defense,
             MoveCategory::Special => transform_condition.stats.sp_defense,
-            MoveCategory::Status => return 0,
-            MoveCategory::Other => return 0,
+            MoveCategory::Status => return Ok(0),
+            MoveCategory::Other => return Ok(0),
         }
     } else {
         match move_data.category {
             MoveCategory::Physical => pokemon.stats.defense,
             MoveCategory::Special => pokemon.stats.sp_defense,
-            MoveCategory::Status => return 0, // Status moves don't target defense
-            MoveCategory::Other => return 0, // Set damage, OHKO, status effects targeting enemy don't use defense stats
+            MoveCategory::Status => return Ok(0), // Status moves don't target defense
+            MoveCategory::Other => return Ok(0), // Set damage, OHKO, status effects targeting enemy don't use defense stats
         }
     };
 
@@ -90,8 +99,8 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
     let defense_stat = match move_data.category {
         MoveCategory::Physical => StatType::Defense,
         MoveCategory::Special => StatType::SpecialDefense,
-        MoveCategory::Status => return 0,
-        MoveCategory::Other => return 0,
+        MoveCategory::Status => return Ok(0),
+        MoveCategory::Other => return Ok(0),
     };
 
     let stage = player.get_stat_stage(defense_stat);
@@ -133,7 +142,7 @@ pub fn effective_defense(pokemon: &PokemonInst, player: &BattlePlayer, move_: Mo
 
     // TODO: Apply other modifiers (items, abilities, etc.)
 
-    multiplied_defense
+    Ok(multiplied_defense)
 }
 
 /// Calculate effective speed including stat stages, paralysis, and other modifiers
@@ -174,12 +183,12 @@ pub fn move_is_critical_hit(
     attacker_player: &BattlePlayer,
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
-) -> bool {
-    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
+) -> BattleResult<bool> {
+    let move_data = MoveData::get_move_data(move_)?;
 
     // Status moves cannot be critical hits (with very rare exceptions)
     if matches!(move_data.category, MoveCategory::Status) {
-        return false;
+        return Ok(false);
     }
 
     // Base critical hit ratio - starts at 1 (1/24 chance in Gen 1)
@@ -213,7 +222,7 @@ pub fn move_is_critical_hit(
 
     // Roll for critical hit
     let roll = rng.next_outcome("Critical Hit Check");
-    roll <= crit_threshold
+    Ok(roll <= crit_threshold)
 }
 
 /// Calculate if a move hits based on accuracy, evasion, and move accuracy
@@ -225,12 +234,12 @@ pub fn move_hits(
     defender_player: &BattlePlayer,
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
-) -> bool {
-    let move_data = MoveData::get_move_data(move_).expect("Move data should exist");
+) -> BattleResult<bool> {
+    let move_data = MoveData::get_move_data(move_)?;
 
     // If move has no accuracy value, it never misses (like Swift)
     let Some(base_accuracy) = move_data.accuracy else {
-        return true;
+        return Ok(true);
     };
 
     // If defender is Teleported, InAir, or Underground, moves with accuracy always miss
@@ -238,7 +247,7 @@ pub fn move_hits(
         || defender_player.has_condition_type(PokemonConditionType::InAir)
         || defender_player.has_condition_type(PokemonConditionType::Underground)
     {
-        return false;
+        return Ok(false);
     }
 
     // Calculate adjusted stages: attacker's accuracy - defender's evasion
@@ -255,7 +264,7 @@ pub fn move_hits(
 
     // Roll for hit/miss
     let roll = rng.next_outcome("Hit/Miss Check");
-    roll <= clamped_accuracy
+    Ok(roll <= clamped_accuracy)
 }
 
 /// Apply accuracy/evasion stage multipliers according to Pokemon formula
@@ -316,22 +325,21 @@ pub fn calculate_attack_damage(
     move_used: Move,
     is_critical: bool,
     rng: &mut crate::battle::state::TurnRng,
-) -> u16 {
-    let move_data =
-        MoveData::get_move_data(move_used).expect("Move data should exist for damage calculation");
+) -> BattleResult<u16> {
+    let move_data = MoveData::get_move_data(move_used)?;
 
     // 1. Get Power from move data. If no power, no damage.
     let Some(power) = move_data.power else {
-        return 0;
+        return Ok(0);
     };
     if power == 0 {
-        return 0;
+        return Ok(0);
     }
 
     // 2. Determine effective Attack and Defense stats.
     // These functions already account for stat stages, burn, etc.
-    let attack = effective_attack(attacker, attacker_player, move_used);
-    let defense = effective_defense(defender, defender_player, move_used);
+    let attack = effective_attack(attacker, attacker_player, move_used)?;
+    let defense = effective_defense(defender, defender_player, move_used)?;
 
     // Assume a fixed level for all battle calculations, a common standard for competitive play.
     let level: u16 = 50;
@@ -374,16 +382,15 @@ pub fn calculate_attack_damage(
     // 7. Convert to integer and ensure damage is at least 1.
     let final_damage = final_damage_float.round() as u16;
 
-    final_damage.max(1)
+    Ok(final_damage.max(1))
 }
 
 pub fn calculate_special_attack_damage(
     move_used: Move,
     _attacker: &PokemonInst,
     defender: &PokemonInst,
-) -> Option<u16> {
-    let move_data = MoveData::get_move_data(move_used)
-        .expect("Move data must exist for special damage calculation");
+) -> BattleResult<Option<u16>> {
+    let move_data = MoveData::get_move_data(move_used)?;
 
     // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
     // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
@@ -396,33 +403,34 @@ pub fn calculate_special_attack_damage(
                 // OHKO moves fail if the attacker's level is less than the defender's.
                 // Otherwise, they deal damage equal to the target's current HP.
                 if attacker_level < defender_level {
-                    return Some(0); // The move fails
+                    return Ok(Some(0)); // The move fails
                 } else {
-                    return Some(defender.current_hp());
+                    return Ok(Some(defender.current_hp()));
                 }
             }
             crate::move_data::MoveEffect::SuperFang(_) => {
                 // Super Fang deals damage equal to half of the opponent's current HP.
-                return Some((defender.current_hp() / 2).max(1));
+                return Ok(Some((defender.current_hp() / 2).max(1)));
             }
             crate::move_data::MoveEffect::LevelDamage => {
                 // Deals damage equal to the user's level.
-                return Some(attacker_level);
+                return Ok(Some(attacker_level));
             }
             crate::move_data::MoveEffect::SetDamage(fixed_damage) => {
                 // Deals a fixed amount of damage.
-                return Some(*fixed_damage);
+                return Ok(Some(*fixed_damage));
             }
             _ => {} // Ignore other effects, continue searching.
         }
     }
 
     // If the loop completes without finding a special damage effect, return None.
-    None
+    Ok(None)
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::battle::tests::common::{assert_ok, assert_ok_false, assert_ok_true};
     use crate::species::Species;
     use std::collections::HashMap;
 
@@ -514,24 +522,40 @@ mod tests {
 
         // Burn should halve physical attack: 80 / 2 = 40
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             40
         );
 
         // Burn should NOT affect special attacks
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80
         );
 
         // Test without burn
         pokemon.status = None;
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80
         );
         assert_eq!(
-            effective_attack(&pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80
         );
     }
@@ -567,48 +591,40 @@ mod tests {
 
         // Test with deterministic RNG - low roll should not be critical hit
         let mut rng_low = crate::battle::state::TurnRng::new_for_test(vec![10, 10, 10]);
-        let is_crit_low =
-            move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_low);
-        assert!(
-            !is_crit_low,
-            "Low roll (10) should not be critical hit with base rate (threshold 4)"
-        );
+        assert_ok_false(move_is_critical_hit(
+            &pokemon,
+            &player,
+            crate::moves::Move::Tackle,
+            &mut rng_low,
+        ));
 
         // Test with deterministic RNG - low roll should be critical hit
         let mut rng_high = crate::battle::state::TurnRng::new_for_test(vec![3, 3, 3]);
-        let is_crit_high =
-            move_is_critical_hit(&pokemon, &player, crate::moves::Move::Tackle, &mut rng_high);
-        assert!(
-            is_crit_high,
-            "Low roll (3) should be critical hit with base rate (threshold 4)"
-        );
+        assert_ok_true(move_is_critical_hit(
+            &pokemon,
+            &player,
+            crate::moves::Move::Tackle,
+            &mut rng_high,
+        ));
 
         // Test with Focus Energy stat stage
         player.set_stat_stage(StatType::Focus, 2);
         let mut rng_focus = crate::battle::state::TurnRng::new_for_test(vec![20, 20, 20]);
-        let is_crit_focus = move_is_critical_hit(
+        assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
             crate::moves::Move::Tackle,
             &mut rng_focus,
-        );
-        assert!(
-            is_crit_focus,
-            "Focus Energy should increase critical hit chance (ratio 3, threshold 25)"
-        );
+        ));
 
         // Test status moves cannot be critical hits
         let mut rng_status = crate::battle::state::TurnRng::new_for_test(vec![99, 99, 99]);
-        let is_crit_status = move_is_critical_hit(
+        assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
             crate::moves::Move::Growl,
             &mut rng_status,
-        );
-        assert!(
-            !is_crit_status,
-            "Status moves should never be critical hits"
-        );
+        ));
     }
 
     #[test]
@@ -656,12 +672,20 @@ mod tests {
 
         // Test burn effects
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             40,
             "Burn should halve physical attack: 80/2=40"
         );
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Ember),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Ember
+            )),
             80,
             "Burn should NOT affect special attack"
         );
@@ -678,16 +702,20 @@ mod tests {
             "Paralysis should quarter speed: 100/4=25"
         );
         assert_eq!(
-            effective_attack(&paralyzed_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &paralyzed_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80,
             "Paralysis should NOT affect attack"
         );
         assert_eq!(
-            effective_attack(
+            assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
                 crate::moves::Move::ThunderPunch
-            ),
+            )),
             80,
             "Paralysis should NOT affect special attack"
         );
@@ -697,7 +725,11 @@ mod tests {
         paralyzed_pokemon.status = None;
 
         assert_eq!(
-            effective_attack(&burned_pokemon, &player, crate::moves::Move::Tackle),
+            assert_ok(effective_attack(
+                &burned_pokemon,
+                &player,
+                crate::moves::Move::Tackle
+            )),
             80
         );
         assert_eq!(effective_speed(&paralyzed_pokemon, &player), 100);

@@ -337,8 +337,13 @@ pub fn execute_battle_action(
             if let Some(defender_pokemon) =
                 defender_player.team[defender_player.active_pokemon_index].as_ref()
             {
-                let move_data = MoveData::get_move_data(move_used)
-                    .expect("Move data should exist for the executing move");
+                let move_data = match MoveData::get_move_data(move_used) {
+                    Ok(data) => data,
+                    Err(_) => {
+                        // If we can't get move data, fail the action silently
+                        return;
+                    }
+                };
 
                 if defender_pokemon.is_fainted() {
                     // Target has fainted. Only allow non-offensive moves (e.g., self-buffs).
@@ -420,14 +425,20 @@ pub fn execute_attack_hit(
 
     // 2. Calculation: Delegate ALL game logic to the pure calculator function.
     //    This single call determines everything that should happen as a result of the attack.
-    let commands = calculate_attack_outcome(
+    let commands = match calculate_attack_outcome(
         battle_state,
         attacker_index,
         defender_index,
         move_used,
         hit_number,
         rng,
-    );
+    ) {
+        Ok(commands) => commands,
+        Err(e) => {
+            eprintln!("Error calculating attack outcome: {:?}", e);
+            return;
+        }
+    };
 
     // 3. Execution: Pass the resulting list of commands to the executor bridge.
     //    This step applies all the calculated state changes and emits all events.

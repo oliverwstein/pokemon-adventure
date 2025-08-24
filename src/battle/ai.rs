@@ -1,6 +1,7 @@
 //! A module for defining AI behaviors for battle opponents.
 
 use crate::battle::state::BattleState;
+use crate::errors::BattleResult;
 use crate::move_data::{MoveCategory, MoveData};
 use crate::player::PlayerAction;
 
@@ -23,9 +24,9 @@ impl ScoringAI {
         let opponent_index = 1 - player_index;
 
         match action {
-            PlayerAction::UseMove { move_index } => {
-                self.score_move(*move_index, player_index, opponent_index, state)
-            }
+            PlayerAction::UseMove { move_index } => self
+                .score_move(*move_index, player_index, opponent_index, state)
+                .unwrap_or(0.0),
             PlayerAction::SwitchPokemon { team_index } => {
                 self.score_switch(*team_index, player_index, opponent_index, state)
             }
@@ -39,17 +40,23 @@ impl ScoringAI {
         player_index: usize,
         opponent_index: usize,
         state: &BattleState,
-    ) -> f32 {
+    ) -> BattleResult<f32> {
         let player = &state.players[player_index];
         let opponent = &state.players[opponent_index];
-        let attacker = player.active_pokemon().unwrap();
+        let attacker = match player.active_pokemon() {
+            Some(p) => p,
+            None => return Ok(0.0), // Cannot score if there is no attacker.
+        };
         let defender = match opponent.active_pokemon() {
             Some(p) => p,
-            None => return 0.0, // Cannot score if there is no target.
+            None => return Ok(0.0), // Cannot score if there is no target.
         };
 
-        let move_instance = attacker.moves[move_index].as_ref().unwrap();
-        let move_data = MoveData::get_move_data(move_instance.move_).unwrap();
+        let move_instance = match attacker.moves[move_index].as_ref() {
+            Some(m) => m,
+            None => return Ok(0.0), // Cannot score a move that doesn't exist.
+        };
+        let move_data = MoveData::get_move_data(move_instance.move_)?;
 
         // --- Step 1: Calculate the Core Damage Score ---
         // This score is based on the move's potential to deal direct damage.
@@ -70,7 +77,7 @@ impl ScoringAI {
 
             // If the opponent is immune, this is a terrible move.
             if effectiveness < 0.1 {
-                return -1.0;
+                return Ok(-1.0);
             }
 
             // Factor in STAB (Same-Type Attack Bonus).
@@ -83,7 +90,8 @@ impl ScoringAI {
 
             // Factor in the attacker's normalized effective power.
             let effective_stat =
-                crate::battle::stats::effective_attack(attacker, player, move_instance.move_);
+                crate::battle::stats::effective_attack(attacker, player, move_instance.move_)
+                    .unwrap_or(0);
             let level_scalar = (attacker.level as f32 * 2.0).max(1.0);
             let normalized_power = effective_stat as f32 / level_scalar;
 
@@ -138,7 +146,7 @@ impl ScoringAI {
 
         // Don't use a Status move if it has no utility (e.g., trying to boost a maxed stat).
         if move_data.category == MoveCategory::Status && utility_score < 1.0 {
-            return -1.0;
+            return Ok(-1.0);
         }
 
         // Factor in accuracy for any move that targets the opponent.
@@ -151,7 +159,7 @@ impl ScoringAI {
         let random_factor = 1.0 + (rand::random::<f32>() * 0.1 - 0.05); // +/- 5%
         final_score *= random_factor;
 
-        final_score
+        Ok(final_score)
     }
 
     fn score_switch(

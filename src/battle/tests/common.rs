@@ -1,4 +1,5 @@
 use crate::battle::state::{BattleState, TurnRng};
+use crate::errors::BattleResult;
 use crate::moves::Move;
 use crate::player::BattlePlayer;
 use crate::pokemon::{PokemonInst, StatusCondition};
@@ -53,8 +54,13 @@ impl TestPokemonBuilder {
 
     /// Builds the `PokemonInst`.
     pub fn build(self) -> PokemonInst {
-        let species_data = crate::pokemon::get_species_data(self.species)
-            .unwrap_or_else(|| panic!("Failed to load species data for {:?}", self.species));
+        let species_data = match crate::pokemon::get_species_data(self.species) {
+            Ok(data) => data,
+            Err(err) => panic!(
+                "Failed to load species data for {:?}: {}",
+                self.species, err
+            ),
+        };
 
         let mut pokemon = PokemonInst::new(
             self.species,
@@ -93,4 +99,29 @@ pub fn create_test_battle(p1_pokemon: PokemonInst, p2_pokemon: PokemonInst) -> B
 /// Useful for tests where the specific RNG outcome is not important, preventing panics from exhaustion.
 pub fn predictable_rng() -> TurnRng {
     TurnRng::new_for_test(vec![50; 100]) // Provide a generous buffer of RNG values
+}
+
+/// Helper function to assert that a Result is Ok and return the value.
+/// Provides clear error messages in tests when functions unexpectedly fail.
+pub fn assert_ok<T>(result: BattleResult<T>) -> T {
+    match result {
+        Ok(value) => value,
+        Err(err) => panic!("Expected Ok but got error: {}", err),
+    }
+}
+
+/// Helper function to assert that a boolean Result is Ok and true.
+/// Useful for testing boolean-returning battle functions.
+pub fn assert_ok_true(result: BattleResult<bool>) -> bool {
+    let value = assert_ok(result);
+    assert!(value, "Expected true but got false");
+    value
+}
+
+/// Helper function to assert that a boolean Result is Ok and false.
+/// Useful for testing boolean-returning battle functions.
+pub fn assert_ok_false(result: BattleResult<bool>) -> bool {
+    let value = assert_ok(result);
+    assert!(!value, "Expected false but got true");
+    value
 }

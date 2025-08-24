@@ -1,4 +1,5 @@
 use crate::battle::conditions::PokemonCondition;
+use crate::errors::{SpeciesDataError, SpeciesDataResult};
 use crate::moves::Move;
 use crate::species::Species;
 use serde::{Deserialize, Serialize};
@@ -8,10 +9,25 @@ use std::{collections::HashMap, fmt};
 use crate::move_data::{MoveData, get_compiled_species_data};
 
 /// Get species data for a specific species from the compiled data
-pub fn get_species_data(species: Species) -> Option<PokemonSpecies> {
+pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
     let compiled_data = get_compiled_species_data();
     let index = species.pokedex_number() as usize - 1; // 0-indexed
-    compiled_data[index].clone()
+
+    // Check bounds to prevent index out of bounds
+    if index >= compiled_data.len() {
+        return Err(SpeciesDataError::InvalidSpeciesReference);
+    }
+
+    compiled_data[index]
+        .clone()
+        .ok_or(SpeciesDataError::SpeciesNotFound(species))
+}
+
+/// Get species data for a specific species from the compiled data (legacy version that panics)
+/// This function is deprecated - use get_species_data() instead
+#[deprecated(note = "Use get_species_data() instead for proper error handling")]
+pub fn get_species_data_unchecked(species: Species) -> Option<PokemonSpecies> {
+    get_species_data(species).ok()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -121,9 +137,11 @@ impl PokemonType {
             (Rock, _) => 1.0,
 
             // Ghost
-            (Ghost, Normal) | (Ghost, Psychic) => 0.0,
+            (Ghost, Normal) => 0.0,
             (Ghost, Ghost) => 2.0,
+            (Ghost, Psychic) => 0.5,
             (Ghost, _) => 1.0,
+            
 
             // Dragon
             (Dragon, Dragon) => 2.0,
@@ -301,14 +319,14 @@ impl Learnset {
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
-        let max_pp = MoveData::get_move_max_pp(move_);
+        let max_pp = MoveData::get_move_max_pp(move_).unwrap_or(30); // fallback to 30 PP
 
         MoveInstance { move_, pp: max_pp }
     }
 
     /// Get the max PP for this move
     pub fn max_pp(&self) -> u8 {
-        MoveData::get_move_max_pp(self.move_)
+        MoveData::get_move_max_pp(self.move_).unwrap_or(30) // fallback to 30 PP
     }
 
     /// Use the move (decrease PP)
@@ -333,7 +351,7 @@ impl fmt::Display for MoveInstance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Fetch the move's static data using the `Move` enum variant.
         // This call might return None if a move is invalid, so we must handle it.
-        if let Some(move_data) = MoveData::get_move_data(self.move_) {
+        if let Ok(move_data) = MoveData::get_move_data(self.move_) {
             // The move data was found, so we can format it nicely.
             write!(
                 f,
@@ -509,8 +527,15 @@ impl PokemonInst {
     }
 
     /// Get the species data for this Pokemon instance.
-    pub fn get_species_data(&self) -> Option<PokemonSpecies> {
+    pub fn get_species_data(&self) -> SpeciesDataResult<PokemonSpecies> {
         get_species_data(self.species)
+    }
+
+    /// Get species data (legacy version)
+    /// This function is deprecated - use get_species_data() instead
+    #[deprecated(note = "Use get_species_data() instead for proper error handling")]
+    pub fn get_species_data_unchecked(&self) -> Option<PokemonSpecies> {
+        self.get_species_data().ok()
     }
 
     /// Get the current types, accounting for Transform and Conversion conditions.
@@ -531,7 +556,7 @@ impl PokemonInst {
             .find(|c| matches!(c, PokemonCondition::Transformed { .. }))
         {
             if let PokemonCondition::Transformed { target } = p_cond {
-                if let Some(target_species_data) = get_species_data(target.species) {
+                if let Ok(target_species_data) = get_species_data(target.species) {
                     return target_species_data.types.clone();
                 }
             }

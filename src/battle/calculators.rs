@@ -2,6 +2,7 @@ use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
+use crate::errors::BattleResult;
 use crate::move_data::MoveData;
 use crate::moves::Move;
 use crate::player::PlayerAction;
@@ -16,7 +17,7 @@ pub fn calculate_attack_outcome(
     move_used: Move,
     hit_number: u8,
     rng: &mut TurnRng,
-) -> Vec<BattleCommand> {
+) -> BattleResult<Vec<BattleCommand>> {
     let mut commands = Vec::new();
 
     let attacker_player = &state.players[attacker_index];
@@ -25,7 +26,7 @@ pub fn calculate_attack_outcome(
     let (attacker_pokemon, defender_pokemon) =
         match validate_pokemon_participation(attacker_player, defender_player) {
             Ok(pokemon) => pokemon,
-            Err(error_command) => return vec![error_command],
+            Err(error_command) => return Ok(vec![error_command]),
         };
 
     // Emit MoveUsed event for the first hit of any move attempt.
@@ -37,7 +38,7 @@ pub fn calculate_attack_outcome(
         }));
     }
 
-    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used)?;
 
     // --- NEW LOGIC START ---
     // First, check for any special move effects that might skip the normal attack sequence.
@@ -51,7 +52,7 @@ pub fn calculate_attack_outcome(
                 // This is a special move like ChargeUp, Fly, Rest, etc.
                 // We return ONLY its commands and stop all further processing.
                 commands.extend(special_commands);
-                return commands;
+                return Ok(commands);
             }
             crate::move_data::EffectResult::Continue(effect_commands) => {
                 // This is a regular secondary effect (like Burn or StatChange).
@@ -70,7 +71,7 @@ pub fn calculate_attack_outcome(
         defender_player,
         move_used,
         rng,
-    );
+    )?;
 
     if hit_result {
         let hit_commands = handle_successful_hit(
@@ -82,7 +83,7 @@ pub fn calculate_attack_outcome(
             defender_index,
             move_used,
             rng,
-        );
+        )?;
         commands.extend(hit_commands.clone());
 
         // Add the regular effect commands that we collected earlier.
@@ -119,7 +120,7 @@ pub fn calculate_attack_outcome(
         }
     }
 
-    commands
+    Ok(commands)
 }
 
 /// Validate that both Pokemon can participate in the attack
@@ -160,7 +161,7 @@ fn handle_successful_hit(
     defender_index: usize,
     move_used: Move,
     rng: &mut TurnRng,
-) -> Vec<BattleCommand> {
+) -> BattleResult<Vec<BattleCommand>> {
     let mut commands = Vec::new();
 
     // Emit hit event
@@ -171,7 +172,7 @@ fn handle_successful_hit(
     }));
 
     // Calculate type effectiveness and damage
-    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used)?;
     let type_adv_multiplier = calculate_and_emit_type_effectiveness(
         &move_data,
         defender_pokemon,
@@ -188,7 +189,7 @@ fn handle_successful_hit(
         type_adv_multiplier,
         rng,
         &mut commands,
-    );
+    )?;
 
     // Handle damage application and conditions
     if damage > 0 {
@@ -209,10 +210,10 @@ fn handle_successful_hit(
             defender_index,
             move_used,
             &mut commands,
-        );
+        )?;
     }
 
-    commands
+    Ok(commands)
 }
 
 /// Calculate type effectiveness and emit event if significant
@@ -232,7 +233,7 @@ fn calculate_and_emit_type_effectiveness(
         crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
 
     // Emit type effectiveness event if significant
-    if (type_adv_multiplier - 1.0).abs() > 0.1 {
+    if (type_adv_multiplier - 1.0).abs() > 0.1 && (type_adv_multiplier == 0.0 || move_data.power.is_some()) {
         commands.push(BattleCommand::EmitEvent(
             BattleEvent::AttackTypeEffectiveness {
                 multiplier: type_adv_multiplier,
@@ -253,13 +254,13 @@ fn calculate_move_damage(
     type_adv_multiplier: f64,
     rng: &mut TurnRng,
     commands: &mut Vec<BattleCommand>,
-) -> u16 {
+) -> BattleResult<u16> {
     let theoretical_damage = if let Some(special_damage) =
         crate::battle::stats::calculate_special_attack_damage(
             move_used,
             attacker_pokemon,
             defender_pokemon,
-        ) {
+        )? {
         // Special damage move
         if type_adv_multiplier > 0.1 {
             special_damage
@@ -268,7 +269,7 @@ fn calculate_move_damage(
         }
     } else {
         // Normal damage move - check for critical hit first
-        let is_critical = move_is_critical_hit(attacker_pokemon, attacker_player, move_used, rng);
+        let is_critical = move_is_critical_hit(attacker_pokemon, attacker_player, move_used, rng)?;
 
         if is_critical {
             commands.push(BattleCommand::EmitEvent(BattleEvent::CriticalHit {
@@ -287,11 +288,11 @@ fn calculate_move_damage(
             move_used,
             is_critical,
             rng,
-        )
+        )?
     };
 
     // Cap damage to defender's current HP to get actual damage that will be dealt
-    theoretical_damage.min(defender_pokemon.current_hp())
+    Ok(theoretical_damage.min(defender_pokemon.current_hp()))
 }
 
 /// Handle damage application, including substitute protection
@@ -378,7 +379,7 @@ fn handle_damage_triggered_conditions(
     defender_index: usize,
     move_used: Move,
     commands: &mut Vec<BattleCommand>,
-) {
+) -> BattleResult<()> {
     // Only trigger if damage wasn't absorbed by substitute
     let damage_absorbed_by_substitute = defender_player
         .active_pokemon_conditions
@@ -386,10 +387,10 @@ fn handle_damage_triggered_conditions(
         .any(|condition| matches!(condition, PokemonCondition::Substitute { .. }));
 
     if damage_absorbed_by_substitute {
-        return;
+        return Ok(());
     }
 
-    let move_data = MoveData::get_move_data(move_used).expect("Move data must exist");
+    let move_data = MoveData::get_move_data(move_used)?;
     let attacker_target = PlayerTarget::from_index(attacker_index);
     let defender_target = PlayerTarget::from_index(defender_index);
 
@@ -406,6 +407,7 @@ fn handle_damage_triggered_conditions(
         );
         commands.extend(condition_commands);
     }
+    Ok(())
 }
 
 /// Other Calculations
@@ -773,7 +775,7 @@ pub fn calculate_action_prevention(
     }
 
     // Check for Nightmare effect - move fails unless target is asleep
-    if let Some(move_data) = MoveData::get_move_data(move_used) {
+    if let Ok(move_data) = MoveData::get_move_data(move_used) {
         for effect in &move_data.effects {
             if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
                 // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
@@ -864,6 +866,7 @@ pub fn calculate_forfeit_commands(player_index: usize) -> Vec<BattleCommand> {
 mod tests {
     use super::*;
     use crate::battle::state::{BattleState, TurnRng};
+    use crate::battle::tests::common::assert_ok;
     use crate::moves::Move;
     use crate::player::BattlePlayer;
     use crate::pokemon::PokemonInst;
@@ -943,7 +946,14 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed, MoveHit, and DealDamage commands at minimum
         assert!(commands.len() >= 3);
@@ -972,7 +982,14 @@ mod tests {
         let state = create_test_battle_state();
         let mut rng = TurnRng::new_for_test(vec![100]); // High value should force miss
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed and MoveMissed events
         assert_eq!(commands.len(), 2);
@@ -995,7 +1012,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![50]);
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should fail with PokemonFainted
         assert_eq!(commands.len(), 1);
@@ -1015,7 +1039,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![50]);
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should fail with NoEnemyPresent
         assert_eq!(commands.len(), 1);
@@ -1035,7 +1066,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have MoveUsed, MoveHit, and substitute-related commands
         assert!(commands.len() >= 3);
@@ -1071,7 +1109,14 @@ mod tests {
 
         let mut rng = TurnRng::new_for_test(vec![1, 99, 50, 50, 50]); // Hit + no critical hit + damage calculation values
 
-        let commands = calculate_attack_outcome(&state, 0, 1, Move::Tackle, 0, &mut rng);
+        let commands = assert_ok(calculate_attack_outcome(
+            &state,
+            0,
+            1,
+            Move::Tackle,
+            0,
+            &mut rng,
+        ));
 
         // Should have substitute removal command (which auto-generates the StatusRemoved event)
         assert!(

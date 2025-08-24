@@ -36,10 +36,32 @@ echo '{"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "ge
 ### Configuration for Claude Code
 
 **Option 1: Using Claude CLI (Recommended)**
+
+First, ensure the MCP server binary is built:
 ```bash
 cd pokemon-adventure
-claude mcp add pokemon-adventure --cwd $(pwd) -- cargo run --bin pokemon-adventure-mcp
+cargo build --bin pokemon-adventure-mcp --release
 ```
+
+Then configure the MCP server. There are three approaches that work:
+
+**Method A: Using pre-built binary (Most Reliable)**
+```bash
+claude mcp add pokemon-adventure "/full/path/to/pokemon-adventure/target/release/pokemon-adventure-mcp"
+```
+
+**Method B: Using cargo with directory change**
+```bash
+claude mcp add pokemon-adventure "cd /full/path/to/pokemon-adventure && cargo run --bin pokemon-adventure-mcp --release"
+```
+
+**Method C: Using cargo from correct directory**
+```bash
+cd pokemon-adventure
+claude mcp add pokemon-adventure "cargo run --bin pokemon-adventure-mcp --release"
+```
+
+Replace `/full/path/to/pokemon-adventure` with the actual absolute path to your pokemon-adventure directory.
 
 **Option 2: Manual Configuration**
 
@@ -75,15 +97,53 @@ claude mcp list
 
 Should show:
 ```
-pokemon-adventure: cargo run --bin pokemon-adventure-mcp - ✓ Connected
+pokemon-adventure: /path/to/pokemon-adventure/target/release/pokemon-adventure-mcp - ✓ Connected
 ```
 
-If the connection fails:
-1. Ensure the working directory (`cwd`) is correct and absolute
-2. Verify the binary builds successfully with `cargo build --bin pokemon-adventure-mcp`
-3. Check that Rust and Cargo are in the PATH
-4. The binary must have execute permissions
-5. Restart Claude Code completely after configuration changes
+## Troubleshooting Connection Issues
+
+If the connection shows `✗ Failed to connect`, try these solutions:
+
+### Common Issues and Solutions
+
+1. **Binary not found**: 
+   - Verify the binary exists: `ls -la target/release/pokemon-adventure-mcp`
+   - Build it first: `cargo build --bin pokemon-adventure-mcp --release`
+
+2. **Wrong binary name**:
+   - The correct binary name is `pokemon-adventure-mcp` (not `mcp_client_server`)
+   - Check available binaries: `cargo build --bin pokemon-adventure-mcp 2>&1 | grep "Available bin targets"`
+
+3. **Working directory issues**:
+   - Use absolute paths in the configuration
+   - Method A (pre-built binary) avoids working directory issues entirely
+
+4. **Cargo command not found**:
+   - Ensure Rust and Cargo are installed and in PATH
+   - Use Method A (pre-built binary) to avoid cargo dependencies
+
+5. **Connection timeout**:
+   - The MCP server needs proper JSON-RPC initialization
+   - Direct binary execution (Method A) is most reliable
+
+### Verification Steps
+
+After successful configuration, test the connection:
+```bash
+# Check server status
+claude mcp list
+
+# Get server details
+claude mcp get pokemon-adventure
+
+# Should show "✓ Connected" status
+```
+
+If still having issues:
+1. Remove and re-add the server: `claude mcp remove pokemon-adventure`
+2. Use Method A (pre-built binary) for most reliable connection
+3. Ensure the pokemon-adventure directory has proper permissions
+4. Restart Claude Code completely after configuration changes
 
 ## Available Tools
 

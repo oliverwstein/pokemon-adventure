@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pokemon-adventure": {
+      "type": "stdio",
+      "command": "/Users/Alex/Development/pokemon-adventure-app/pokemon-adventure/target/release/pokemon-adventure-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}

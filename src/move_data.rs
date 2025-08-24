@@ -13,41 +13,8 @@ mod status_effects;
 // Include the compiled move data
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum MoveCategory {
-    Physical,
-    Special,
-    Other,
-    Status,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum StatType {
-    Hp,
-    Atk,
-    Def,
-    SpAtk,
-    SpDef,
-    Spe,
-    Acc,
-    Eva,
-    Crit,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Target {
-    User,
-    Target,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum StatusType {
-    Sleep,
-    Poison,
-    Burn,
-    Freeze,
-    Paralysis,
-}
+// Re-export move-related types from the schema crate
+pub use pokemon_adventure_schema::{MoveCategory, StatType, Target, StatusType};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MoveEffect {
@@ -372,6 +339,8 @@ impl MoveData {
 }
 
 // Helper function to parse Move enum from string
+// FromStr implementation moved to schema crate to avoid orphan rule violations
+/*
 impl std::str::FromStr for Move {
     type Err = String;
 
@@ -561,3 +530,4 @@ impl std::str::FromStr for Move {
         }
     }
 }
+*/

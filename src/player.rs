@@ -82,13 +82,6 @@ impl From<crate::move_data::StatType> for StatType {
             MoveDataStat::Acc => Self::Accuracy,
             MoveDataStat::Eva => Self::Evasion,
             MoveDataStat::Crit => Self::Focus,
-            // The `Hp` variant in move_data::StatType is not used for stat stages,
-            // so we can ignore it here. The compiler will warn us if we miss any.
-            MoveDataStat::Hp => {
-                // This case should ideally not be hit in stat stage logic.
-                // We'll default to Attack and maybe log a warning in a real app.
-                Self::Attack
-            }
         }
     }
 }

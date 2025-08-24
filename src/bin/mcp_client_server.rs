@@ -4,6 +4,7 @@
 //! that exposes the Pokemon Adventure battle engine for LLM interaction.
 
 use std::borrow::Cow;
+use std::future::Future;
 
 use pokemon_adventure::mcp_interface::*;
 use rmcp::{

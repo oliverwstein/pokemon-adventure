@@ -1,44 +1,8 @@
-use crate::move_data::{MoveCategory, MoveData};
+use crate::move_data::MoveData;
 
-use super::{MoveEffect, StatType, Target};
+use super::MoveEffect;
 use std::fmt;
 
-impl fmt::Display for Target {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Target::User => write!(f, "user's"),
-            Target::Target => write!(f, "target's"),
-        }
-    }
-}
-
-impl fmt::Display for StatType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
-            StatType::Hp => "HP",
-            StatType::Atk => "Attack",
-            StatType::Def => "Defense",
-            StatType::SpAtk => "Special Attack",
-            StatType::SpDef => "Special Defense",
-            StatType::Spe => "Speed",
-            StatType::Acc => "Accuracy",
-            StatType::Eva => "Evasion",
-            StatType::Crit => "Critical Hit Ratio",
-        };
-        write!(f, "{}", name)
-    }
-}
-
-impl fmt::Display for MoveCategory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MoveCategory::Physical => write!(f, "Physical"),
-            MoveCategory::Special => write!(f, "Special"),
-            MoveCategory::Other => write!(f, "Other"),
-            MoveCategory::Status => write!(f, "Status"),
-        }
-    }
-}
 
 impl fmt::Display for MoveEffect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

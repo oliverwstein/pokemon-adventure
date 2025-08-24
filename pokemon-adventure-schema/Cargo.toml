@@ -1,0 +1,13 @@
+[package]
+name = "pokemon-adventure-schema"
+version = "0.1.0"
+edition = "2021"
+description = "Shared schema definitions for Pokemon Adventure battle system"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+postcard = { version = "1.0", features = ["alloc"] }
+
+[lib]
+name = "pokemon_adventure_schema"
+path = "src/lib.rs"

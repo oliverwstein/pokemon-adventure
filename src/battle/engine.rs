@@ -7,7 +7,7 @@ use crate::battle::calculators::{
     calculate_forced_action_commands, calculate_forfeit_commands, calculate_switch_commands,
 };
 use crate::battle::commands::{
-    BattleCommand, PlayerTarget, execute_command, execute_command_batch,
+    execute_command, execute_command_batch, BattleCommand, PlayerTarget,
 };
 use crate::battle::conditions::*;
 use crate::battle::state::{

@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::battle::state::BattleState;
 use crate::player::PlayerAction;
-use crate::{Move, battle::stats::effective_speed, move_data::MoveData};
+use crate::{battle::stats::effective_speed, move_data::MoveData, Move};
 /// Internal action types for the action stack
 /// These represent atomic actions that can be executed during battle resolution
 #[derive(Debug, Clone)]

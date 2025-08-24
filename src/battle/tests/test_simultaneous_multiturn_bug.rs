@@ -3,7 +3,7 @@ mod tests {
     use crate::battle::conditions::PokemonConditionType;
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::battle::state::BattleState;
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_player, predictable_rng};
+    use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::{PlayerAction, PlayerType};
     use crate::species::Species;

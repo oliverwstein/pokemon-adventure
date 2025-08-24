@@ -3,7 +3,6 @@ use crate::move_data::MoveData;
 use super::MoveEffect;
 use std::fmt;
 
-
 impl fmt::Display for MoveEffect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

@@ -5,7 +5,7 @@ mod tests {
     use crate::battle::engine::execute_battle_action;
     use crate::battle::state::{ActionFailureReason, BattleEvent, EventBus, TurnRng};
     use crate::battle::tests::common::{
-        TestPokemonBuilder, create_test_battle, create_test_player,
+        create_test_battle, create_test_player, TestPokemonBuilder,
     };
     use crate::moves::Move;
     use crate::pokemon::StatusCondition;
@@ -169,11 +169,10 @@ mod tests {
                     ..
                 }
             ));
-            assert!(
-                !bus.events()
-                    .iter()
-                    .any(|e| matches!(e, BattleEvent::ActionFailed { .. }))
-            );
+            assert!(!bus
+                .events()
+                .iter()
+                .any(|e| matches!(e, BattleEvent::ActionFailed { .. })));
         }
     }
 
@@ -467,11 +466,10 @@ mod tests {
         } else {
             assert!(bus.len() >= 1);
             assert!(matches!(bus.events()[0], BattleEvent::MoveUsed { .. }));
-            assert!(
-                !bus.events()
-                    .iter()
-                    .any(|e| matches!(e, BattleEvent::ActionFailed { .. }))
-            );
+            assert!(!bus
+                .events()
+                .iter()
+                .any(|e| matches!(e, BattleEvent::ActionFailed { .. })));
         }
     }
 
@@ -507,10 +505,8 @@ mod tests {
         let events = bus.events();
         assert!(events.len() >= 1);
         assert!(matches!(events[0], BattleEvent::MoveUsed { .. }));
-        assert!(
-            !events
-                .iter()
-                .any(|e| matches!(e, BattleEvent::ActionFailed { .. }))
-        );
+        assert!(!events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::ActionFailed { .. })));
     }
 }

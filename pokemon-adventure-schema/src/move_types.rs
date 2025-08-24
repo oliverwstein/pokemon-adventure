@@ -20,7 +20,7 @@ impl fmt::Display for MoveCategory {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StatType {
     Atk,
     Def,
@@ -42,7 +42,7 @@ impl fmt::Display for StatType {
             StatType::Spe => write!(f, "Speed"),
             StatType::Acc => write!(f, "Accuracy"),
             StatType::Eva => write!(f, "Evasion"),
-            StatType::Crit => write!(f, "Critical"),
+            StatType::Crit => write!(f, "Focus"),
         }
     }
 }

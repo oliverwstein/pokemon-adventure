@@ -3,7 +3,7 @@ mod tests {
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::{BattleEvent, BattleState};
     use crate::battle::tests::common::{
-        TestPokemonBuilder, create_test_battle, create_test_player, predictable_rng,
+        create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder,
     };
     use crate::moves::Move;
     use crate::player::{PlayerAction, StatType};
@@ -22,14 +22,14 @@ mod tests {
 
         // Set initial stat stages for both players
         let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
-        player1.set_stat_stage(StatType::Attack, 2);
-        player1.set_stat_stage(StatType::Defense, -1);
-        player1.set_stat_stage(StatType::Speed, 3);
+        player1.set_stat_stage(StatType::Atk, 2);
+        player1.set_stat_stage(StatType::Def, -1);
+        player1.set_stat_stage(StatType::Spe, 3);
 
         let mut player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
-        player2.set_stat_stage(StatType::Attack, -2);
-        player2.set_stat_stage(StatType::SpecialAttack, 1);
-        player2.set_stat_stage(StatType::Accuracy, -3);
+        player2.set_stat_stage(StatType::Atk, -2);
+        player2.set_stat_stage(StatType::SpAtk, 1);
+        player2.set_stat_stage(StatType::Acc, -3);
 
         let mut battle_state = BattleState::new("test".to_string(), player1, player2);
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Haze
@@ -121,7 +121,7 @@ mod tests {
             .build();
 
         let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
-        player1.set_stat_stage(StatType::Attack, 1);
+        player1.set_stat_stage(StatType::Atk, 1);
         let player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
 
         let mut battle_state = BattleState::new("test".to_string(), player1, player2);
@@ -146,7 +146,7 @@ mod tests {
                 e,
                 BattleEvent::StatStageChanged {
                     target: Species::Koffing,
-                    stat: StatType::Attack,
+                    stat: StatType::Atk,
                     old_stage: 1,
                     new_stage: 0
                 }

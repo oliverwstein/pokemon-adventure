@@ -3,7 +3,7 @@ mod tests {
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::battle::state::{ActionFailureReason, BattleEvent, GameState};
     use crate::battle::tests::common::{
-        TestPokemonBuilder, create_test_battle, create_test_player, predictable_rng,
+        create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder,
     };
     use crate::moves::Move;
     use crate::player::PlayerAction;
@@ -100,12 +100,10 @@ mod tests {
 
         // Assert
         event_bus.print_debug_with_message("Events for test_battle_with_fainting:");
-        assert!(
-            battle_state.players[1]
-                .active_pokemon()
-                .unwrap()
-                .is_fainted()
-        );
+        assert!(battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .is_fainted());
         let faint_event_found = event_bus.events().iter().any(|e| {
             matches!(
                 e,

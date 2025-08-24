@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::battle::state::{BattleEvent, TurnRng};
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle};
+    use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::species::Species;
     use pretty_assertions::assert_eq;

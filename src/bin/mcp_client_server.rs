@@ -18,7 +18,8 @@ use tokio::io::{stdin, stdout};
 #[derive(Debug, Clone)]
 pub struct PokemonAdventureService {
     tool_router: ToolRouter<PokemonAdventureService>,
-    battle_state: std::sync::Arc<std::sync::Mutex<Option<pokemon_adventure::battle::state::BattleState>>>,
+    battle_state:
+        std::sync::Arc<std::sync::Mutex<Option<pokemon_adventure::battle::state::BattleState>>>,
 }
 
 // Tool request structures
@@ -179,16 +180,16 @@ impl ServerHandler for PokemonAdventureService {}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     eprintln!("Pokemon Adventure MCP Server (SDK version) starting...");
-    
+
     let service = PokemonAdventureService::new();
     let transport = (stdin(), stdout());
-    
+
     eprintln!("Starting MCP server with transport...");
     let server = service.serve(transport).await?;
-    
+
     eprintln!("Server running, waiting for shutdown...");
     let quit_reason = server.waiting().await?;
-    
+
     eprintln!("Pokemon Adventure MCP Server exiting: {:?}", quit_reason);
     Ok(())
 }

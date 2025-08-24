@@ -38,8 +38,8 @@ pub fn effective_attack(
 
     // Apply stat stage modifiers
     let attack_stat = match move_data.category {
-        MoveCategory::Physical => StatType::Attack,
-        MoveCategory::Special => StatType::SpecialAttack,
+        MoveCategory::Physical => StatType::Atk,
+        MoveCategory::Special => StatType::SpAtk,
         MoveCategory::Status => return Ok(0),
         MoveCategory::Other => return Ok(0),
     };
@@ -97,8 +97,8 @@ pub fn effective_defense(
 
     // Apply stat stage modifiers
     let defense_stat = match move_data.category {
-        MoveCategory::Physical => StatType::Defense,
-        MoveCategory::Special => StatType::SpecialDefense,
+        MoveCategory::Physical => StatType::Def,
+        MoveCategory::Special => StatType::SpDef,
         MoveCategory::Status => return Ok(0),
         MoveCategory::Other => return Ok(0),
     };
@@ -161,7 +161,7 @@ pub fn effective_speed(pokemon: &PokemonInst, player: &BattlePlayer) -> u16 {
     };
 
     // Apply stat stage modifiers
-    let stage = player.get_stat_stage(StatType::Speed);
+    let stage = player.get_stat_stage(StatType::Spe);
     let mut multiplied_speed = apply_stat_stage_multiplier(base_speed, stage);
 
     // Apply paralysis (quarter speed)
@@ -202,7 +202,7 @@ pub fn move_is_critical_hit(
     }
 
     // Check for Focus Energy stat stage (increases crit ratio)
-    let focus_stage = attacker_player.get_stat_stage(StatType::Focus);
+    let focus_stage = attacker_player.get_stat_stage(StatType::Crit);
     if focus_stage > 0 {
         crit_ratio = crit_ratio.saturating_add(focus_stage as u8);
     }
@@ -251,8 +251,8 @@ pub fn move_hits(
     }
 
     // Calculate adjusted stages: attacker's accuracy - defender's evasion
-    let accuracy_stage = attacker_player.get_stat_stage(StatType::Accuracy);
-    let evasion_stage = defender_player.get_stat_stage(StatType::Evasion);
+    let accuracy_stage = attacker_player.get_stat_stage(StatType::Acc);
+    let evasion_stage = defender_player.get_stat_stage(StatType::Eva);
     let adjusted_stage = (accuracy_stage - evasion_stage).clamp(-6, 6);
 
     // Calculate stage multiplier
@@ -453,7 +453,8 @@ mod tests {
         assert!((apply_accuracy_stage_multiplier(1) - 4.0 / 3.0).abs() < 0.001); // +1: 133%
         assert!((apply_accuracy_stage_multiplier(-1) - 3.0 / 4.0).abs() < 0.001); // -1: 75%
         assert!((apply_accuracy_stage_multiplier(6) - 3.0).abs() < 0.001); // +6: 300%
-        assert!((apply_accuracy_stage_multiplier(-6) - 1.0 / 3.0).abs() < 0.001); // -6: 33%
+        assert!((apply_accuracy_stage_multiplier(-6) - 1.0 / 3.0).abs() < 0.001);
+        // -6: 33%
     }
 
     #[test]
@@ -608,7 +609,7 @@ mod tests {
         ));
 
         // Test with Focus Energy stat stage
-        player.set_stat_stage(StatType::Focus, 2);
+        player.set_stat_stage(StatType::Crit, 2);
         let mut rng_focus = crate::battle::state::TurnRng::new_for_test(vec![20, 20, 20]);
         assert_ok_true(move_is_critical_hit(
             &pokemon,

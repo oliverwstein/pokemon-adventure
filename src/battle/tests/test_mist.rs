@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::{BattleEvent, BattleState};
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_player, predictable_rng};
+    use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::{PlayerAction, StatType, TeamCondition};
     use crate::species::Species;
@@ -120,7 +120,7 @@ mod tests {
             .print_debug_with_message("Events for test_mist_allows_self_targeting_stat_increases:");
 
         assert_eq!(
-            battle_state.players[0].get_stat_stage(StatType::Attack),
+            battle_state.players[0].get_stat_stage(StatType::Atk),
             2,
             "Attack should be raised by Swords Dance"
         );
@@ -225,7 +225,7 @@ mod tests {
         // Assert - Turn 2
         bus2.print_debug_with_message("Events for test_mist_expires_normally (Turn 2):");
         assert_eq!(
-            battle_state.players[1].get_stat_stage(StatType::Attack),
+            battle_state.players[1].get_stat_stage(StatType::Atk),
             -1,
             "Growl should now lower Attack"
         );

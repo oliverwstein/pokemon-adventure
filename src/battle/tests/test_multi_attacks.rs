@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::{BattleEvent, BattleState, GameState, TurnRng};
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_player};
+    use crate::battle::tests::common::{create_test_player, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::PlayerAction;
     use crate::species::Species;

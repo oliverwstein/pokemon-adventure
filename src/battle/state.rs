@@ -441,12 +441,22 @@ impl BattleEvent {
     fn format_condition(condition: &PokemonCondition) -> String {
         // Convert condition types to human-readable names
         match condition.get_type() {
-            crate::battle::conditions::PokemonConditionType::Confused => "became confused".to_string(),
-            crate::battle::conditions::PokemonConditionType::Exhausted => "became exhausted".to_string(),
-            crate::battle::conditions::PokemonConditionType::Trapped => "became trapped".to_string(),
+            crate::battle::conditions::PokemonConditionType::Confused => {
+                "became confused".to_string()
+            }
+            crate::battle::conditions::PokemonConditionType::Exhausted => {
+                "became exhausted".to_string()
+            }
+            crate::battle::conditions::PokemonConditionType::Trapped => {
+                "became trapped".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Flinched => "flinched".to_string(),
-            crate::battle::conditions::PokemonConditionType::Rampaging => "is rampaging".to_string(),
-            crate::battle::conditions::PokemonConditionType::Disabled => "had its move disabled".to_string(),
+            crate::battle::conditions::PokemonConditionType::Rampaging => {
+                "is rampaging".to_string()
+            }
+            crate::battle::conditions::PokemonConditionType::Disabled => {
+                "had its move disabled".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Biding => "began biding".to_string(),
             crate::battle::conditions::PokemonConditionType::Teleported => {
                 "moved in a blink".to_string()
@@ -454,12 +464,16 @@ impl BattleEvent {
             crate::battle::conditions::PokemonConditionType::Countering => {
                 "prepared to counter".to_string()
             }
-            crate::battle::conditions::PokemonConditionType::Charging => "began charging".to_string(),
+            crate::battle::conditions::PokemonConditionType::Charging => {
+                "began charging".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Underground => {
                 "went underground".to_string()
             }
             crate::battle::conditions::PokemonConditionType::InAir => "flew up high".to_string(),
-            crate::battle::conditions::PokemonConditionType::Substitute => "created a substitute".to_string(),
+            crate::battle::conditions::PokemonConditionType::Substitute => {
+                "created a substitute".to_string()
+            }
             crate::battle::conditions::PokemonConditionType::Seeded => "was seeded".to_string(),
             crate::battle::conditions::PokemonConditionType::Converted => {
                 "changed type".to_string()
@@ -467,7 +481,9 @@ impl BattleEvent {
             crate::battle::conditions::PokemonConditionType::Transformed => {
                 "transformed".to_string()
             }
-            crate::battle::conditions::PokemonConditionType::Enraged => "entered a rage".to_string(),
+            crate::battle::conditions::PokemonConditionType::Enraged => {
+                "entered a rage".to_string()
+            }
         }
     }
 
@@ -553,14 +569,14 @@ impl BattleEvent {
 
     fn format_stat_type(stat: &StatType) -> String {
         match stat {
-            StatType::Attack => "Attack".to_string(),
-            StatType::Defense => "Defense".to_string(),
-            StatType::Speed => "Speed".to_string(),
-            StatType::SpecialAttack => "Special Attack".to_string(),
-            StatType::SpecialDefense => "Special Defense".to_string(),
-            StatType::Accuracy => "accuracy".to_string(),
-            StatType::Evasion => "evasiveness".to_string(),
-            StatType::Focus => "critical hit ratio".to_string(),
+            StatType::Atk => "Attack".to_string(),
+            StatType::Def => "Defense".to_string(),
+            StatType::Spe => "Speed".to_string(),
+            StatType::SpAtk => "Special Attack".to_string(),
+            StatType::SpDef => "Special Defense".to_string(),
+            StatType::Acc => "accuracy".to_string(),
+            StatType::Eva => "evasiveness".to_string(),
+            StatType::Crit => "critical hit ratio".to_string(),
         }
     }
 
@@ -606,7 +622,7 @@ mod event_formatting_tests {
     use super::*;
     use crate::moves::Move;
     use crate::player::BattlePlayer;
-    use crate::pokemon::{PokemonInst, StatusCondition, get_species_data};
+    use crate::pokemon::{get_species_data, PokemonInst, StatusCondition};
     use crate::species::Species;
 
     fn create_test_battle_state() -> BattleState {

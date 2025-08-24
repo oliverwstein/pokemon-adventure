@@ -4,12 +4,12 @@
 // postcard for efficient serialization.
 
 // Re-export the main types
-pub use species::*;
+pub use move_types::*;
 pub use moves::*;
 pub use pokemon_types::*;
-pub use move_types::*;
+pub use species::*;
 
-pub mod species;
+pub mod move_types;
 pub mod moves;
 pub mod pokemon_types;
-pub mod move_types;
+pub mod species;

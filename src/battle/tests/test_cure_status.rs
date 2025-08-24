@@ -2,7 +2,7 @@
 mod tests {
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::BattleEvent;
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle, predictable_rng};
+    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::PlayerAction;
     use crate::pokemon::StatusCondition;

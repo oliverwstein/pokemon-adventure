@@ -41,4 +41,3 @@ pub fn display_species_detailed(species: Species, f: &mut fmt::Formatter<'_>) ->
         }
     }
 }
-

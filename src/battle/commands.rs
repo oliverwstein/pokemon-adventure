@@ -936,7 +936,7 @@ mod tests {
         let result = execute_command_batch(
             vec![BattleCommand::ChangeStatStage {
                 target: PlayerTarget::Player1,
-                stat: StatType::Attack,
+                stat: StatType::Atk,
                 delta: 2,
             }],
             &mut state,
@@ -945,7 +945,7 @@ mod tests {
         );
 
         assert!(result.is_ok());
-        assert_eq!(state.players[0].get_stat_stage(StatType::Attack), 2);
+        assert_eq!(state.players[0].get_stat_stage(StatType::Atk), 2);
     }
 
     #[test]

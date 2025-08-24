@@ -233,7 +233,9 @@ fn calculate_and_emit_type_effectiveness(
         crate::battle::stats::get_type_effectiveness(move_data.move_type, &defender_types);
 
     // Emit type effectiveness event if significant
-    if (type_adv_multiplier - 1.0).abs() > 0.1 && (type_adv_multiplier == 0.0 || move_data.power.is_some()) {
+    if (type_adv_multiplier - 1.0).abs() > 0.1
+        && (type_adv_multiplier == 0.0 || move_data.power.is_some())
+    {
         commands.push(BattleCommand::EmitEvent(
             BattleEvent::AttackTypeEffectiveness {
                 multiplier: type_adv_multiplier,
@@ -403,7 +405,7 @@ fn handle_damage_triggered_conditions(
             defender_pokemon.species,
             move_data.category,
             defender_pokemon.current_hp(),
-            defender_player.get_stat_stage(crate::player::StatType::Attack),
+            defender_player.get_stat_stage(crate::player::StatType::Atk),
         );
         commands.extend(condition_commands);
     }
@@ -968,11 +970,9 @@ mod tests {
         ));
 
         // Should have DealDamage command (last command after any events)
-        assert!(
-            commands
-                .iter()
-                .any(|cmd| matches!(cmd, BattleCommand::DealDamage { .. }))
-        );
+        assert!(commands
+            .iter()
+            .any(|cmd| matches!(cmd, BattleCommand::DealDamage { .. })));
 
         // May have type effectiveness or critical hit events
     }
@@ -1094,11 +1094,9 @@ mod tests {
         )));
 
         // Should have condition update commands (RemoveCondition and possibly AddCondition if substitute survives)
-        assert!(
-            commands
-                .iter()
-                .any(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. }))
-        );
+        assert!(commands
+            .iter()
+            .any(|cmd| matches!(cmd, BattleCommand::RemoveCondition { .. })));
     }
 
     #[test]
@@ -1119,11 +1117,9 @@ mod tests {
         ));
 
         // Should have substitute removal command (which auto-generates the StatusRemoved event)
-        assert!(
-            commands
-                .iter()
-                .any(|cmd| matches!(cmd, BattleCommand::RemoveSpecificCondition { .. }))
-        );
+        assert!(commands
+            .iter()
+            .any(|cmd| matches!(cmd, BattleCommand::RemoveSpecificCondition { .. })));
 
         // Should only have RemoveSpecificCondition (no AddCondition since substitute is destroyed)
         let remove_condition_count = commands

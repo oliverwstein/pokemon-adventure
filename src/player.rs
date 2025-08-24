@@ -57,34 +57,8 @@ impl fmt::Display for TeamCondition {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum StatType {
-    Attack,
-    Defense,
-    Speed,
-    SpecialAttack,
-    SpecialDefense,
-    Accuracy,
-    Evasion,
-    Focus,
-}
-
-impl From<crate::move_data::StatType> for StatType {
-    fn from(stat: crate::move_data::StatType) -> Self {
-        use crate::move_data::StatType as MoveDataStat;
-
-        match stat {
-            MoveDataStat::Atk => Self::Attack,
-            MoveDataStat::Def => Self::Defense,
-            MoveDataStat::SpAtk => Self::SpecialAttack,
-            MoveDataStat::SpDef => Self::SpecialDefense,
-            MoveDataStat::Spe => Self::Speed,
-            MoveDataStat::Acc => Self::Accuracy,
-            MoveDataStat::Eva => Self::Evasion,
-            MoveDataStat::Crit => Self::Focus,
-        }
-    }
-}
+// Re-export StatType from the schema crate
+pub use pokemon_adventure_schema::StatType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerType {

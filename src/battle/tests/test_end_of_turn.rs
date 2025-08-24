@@ -4,7 +4,7 @@ mod tests {
     use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
     use crate::battle::engine::{execute_battle_action, resolve_turn};
     use crate::battle::state::{BattleEvent, EventBus, TurnRng};
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_battle, predictable_rng};
+    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::PlayerAction;
     use crate::pokemon::StatusCondition;
@@ -188,12 +188,10 @@ mod tests {
 
         // Assert
         event_bus.print_debug_with_message("Events for test_status_damage_causes_fainting:");
-        assert!(
-            battle_state.players[0]
-                .active_pokemon()
-                .unwrap()
-                .is_fainted()
-        );
+        assert!(battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .is_fainted());
         assert!(event_bus.events().iter().any(|e| matches!(
             e,
             BattleEvent::PokemonFainted {

@@ -3,7 +3,7 @@ mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::{BattleEvent, BattleState};
-    use crate::battle::tests::common::{TestPokemonBuilder, create_test_player, predictable_rng};
+    use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::moves::Move;
     use crate::player::PlayerAction;
     use crate::species::Species;
@@ -115,12 +115,10 @@ mod tests {
                 ..
             }
         )));
-        assert!(
-            battle_state.players[0]
-                .active_pokemon_conditions
-                .values()
-                .any(|c| matches!(c, PokemonCondition::Trapped { turns_remaining: 1 }))
-        );
+        assert!(battle_state.players[0]
+            .active_pokemon_conditions
+            .values()
+            .any(|c| matches!(c, PokemonCondition::Trapped { turns_remaining: 1 })));
     }
 
     #[test]

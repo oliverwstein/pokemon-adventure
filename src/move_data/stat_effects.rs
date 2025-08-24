@@ -22,17 +22,7 @@ impl MoveEffect {
             let target_player = &state.players[target_index];
 
             if let Some(target_pokemon) = target_player.active_pokemon() {
-                let player_stat = match stat {
-                    StatType::Atk => crate::player::StatType::Attack,
-                    StatType::Def => crate::player::StatType::Defense,
-                    StatType::SpAtk => crate::player::StatType::SpecialAttack,
-                    StatType::SpDef => crate::player::StatType::SpecialDefense,
-                    StatType::Spe => crate::player::StatType::Speed,
-                    StatType::Acc => crate::player::StatType::Accuracy,
-                    StatType::Eva => crate::player::StatType::Evasion,
-                    StatType::Crit => crate::player::StatType::Focus,
-                    _ => return commands, // Skip unsupported stats
-                };
+                let player_stat = *stat;
 
                 // Check if Mist prevents this stat change
                 let is_enemy_move = target_index != context.attacker_index;
@@ -82,11 +72,11 @@ impl MoveEffect {
             let attacker_player = &state.players[context.attacker_index];
             if let Some(_attacker_pokemon) = attacker_player.active_pokemon() {
                 let stats_to_raise = [
-                    crate::player::StatType::Attack,
-                    crate::player::StatType::Defense,
-                    crate::player::StatType::SpecialAttack,
-                    crate::player::StatType::SpecialDefense,
-                    crate::player::StatType::Speed,
+                    crate::player::StatType::Atk,
+                    crate::player::StatType::Def,
+                    crate::player::StatType::SpAtk,
+                    crate::player::StatType::SpDef,
+                    crate::player::StatType::Spe,
                 ];
 
                 for stat in &stats_to_raise {
@@ -126,14 +116,14 @@ impl MoveEffect {
                 let player = &state.players[player_index];
                 if let Some(_pokemon) = player.active_pokemon() {
                     let all_stats = [
-                        crate::player::StatType::Attack,
-                        crate::player::StatType::Defense,
-                        crate::player::StatType::SpecialAttack,
-                        crate::player::StatType::SpecialDefense,
-                        crate::player::StatType::Speed,
-                        crate::player::StatType::Accuracy,
-                        crate::player::StatType::Evasion,
-                        crate::player::StatType::Focus,
+                        crate::player::StatType::Atk,
+                        crate::player::StatType::Def,
+                        crate::player::StatType::SpAtk,
+                        crate::player::StatType::SpDef,
+                        crate::player::StatType::Spe,
+                        crate::player::StatType::Acc,
+                        crate::player::StatType::Eva,
+                        crate::player::StatType::Crit,
                     ];
 
                     for stat in &all_stats {

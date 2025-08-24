@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 
 // Include the compiled species data
-use crate::move_data::{MoveData, get_compiled_species_data};
+use crate::move_data::{get_compiled_species_data, MoveData};
 
 /// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
@@ -32,7 +32,6 @@ pub fn get_species_data_unchecked(species: Species) -> Option<PokemonSpecies> {
 
 // Re-export PokemonType from the schema crate
 pub use pokemon_adventure_schema::PokemonType;
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Item {

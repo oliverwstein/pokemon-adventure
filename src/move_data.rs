@@ -14,7 +14,7 @@ mod status_effects;
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
 // Re-export move-related types from the schema crate
-pub use pokemon_adventure_schema::{MoveCategory, StatType, Target, StatusType};
+pub use pokemon_adventure_schema::{MoveCategory, StatType, StatusType, Target};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MoveEffect {

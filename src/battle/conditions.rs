@@ -178,7 +178,7 @@ impl PokemonCondition {
                 if defender_stat_stage != new_stage {
                     commands.push(BattleCommand::ChangeStatStage {
                         target: defender_target,
-                        stat: StatType::Attack,
+                        stat: StatType::Atk,
                         delta: 1,
                     });
                 }

@@ -10,7 +10,7 @@ test = false
 
 [[bin]]
 name = "pokemon-adventure-mcp"
-path = "src/bin/mcp_server.rs"
+path = "src/bin/mcp_client_server.rs"
 test = false
 
 [lib]

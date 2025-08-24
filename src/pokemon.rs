@@ -1,7 +1,7 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::errors::{SpeciesDataError, SpeciesDataResult};
-use crate::moves::Move;
 use crate::species::Species;
+use pokemon_adventure_schema::Move;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 

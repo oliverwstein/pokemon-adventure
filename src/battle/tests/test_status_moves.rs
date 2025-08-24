@@ -4,10 +4,10 @@ mod tests {
     use crate::battle::engine::execute_attack_hit;
     use crate::battle::state::{BattleEvent, EventBus, TurnRng};
     use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
-    use crate::moves::Move;
     use crate::player::StatType;
     use crate::pokemon::StatusCondition;
     use crate::species::Species;
+    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
 
     #[test]

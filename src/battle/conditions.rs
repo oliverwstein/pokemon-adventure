@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     battle::commands::{BattleCommand, PlayerTarget},
-    moves::Move,
     player::StatType,
     pokemon::{PokemonInst, PokemonType},
 };
+use pokemon_adventure_schema::Move;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PokemonCondition {
     Flinched,

@@ -438,10 +438,10 @@ impl MoveEffect {
 
         let defender_player = &state.players[context.defender_index];
         if let Some(mirrored_move) = defender_player.last_move {
-            if mirrored_move == crate::moves::Move::MirrorMove {
+            if mirrored_move == pokemon_adventure_schema::Move::MirrorMove {
                 let commands = vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
                     reason: ActionFailureReason::MoveFailedToExecute {
-                        move_used: crate::moves::Move::MirrorMove,
+                        move_used: pokemon_adventure_schema::Move::MirrorMove,
                     },
                 })];
                 return EffectResult::Skip(commands);
@@ -475,7 +475,7 @@ impl MoveEffect {
 
         EffectResult::Skip(vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
             reason: ActionFailureReason::MoveFailedToExecute {
-                move_used: crate::moves::Move::MirrorMove,
+                move_used: pokemon_adventure_schema::Move::MirrorMove,
             },
         })])
     }
@@ -490,7 +490,7 @@ impl MoveEffect {
         use crate::battle::action_stack::BattleAction;
         use crate::battle::commands::BattleCommand;
         use crate::battle::state::BattleEvent;
-        use crate::moves::Move;
+        use pokemon_adventure_schema::Move;
 
         let all_moves: &[Move] = &[
             Move::Pound,

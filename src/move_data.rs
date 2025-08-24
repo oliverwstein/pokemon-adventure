@@ -1,7 +1,7 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::errors::{MoveDataError, MoveDataResult};
-use crate::moves::Move;
 use crate::pokemon::PokemonType;
+use pokemon_adventure_schema::Move;
 use serde::{Deserialize, Serialize};
 
 // helper modules
@@ -85,7 +85,7 @@ pub enum MoveEffect {
 pub struct EffectContext {
     pub attacker_index: usize,
     pub defender_index: usize,
-    pub move_used: crate::moves::Move,
+    pub move_used: pokemon_adventure_schema::Move,
 }
 
 /// Result of applying a move effect, controlling execution flow
@@ -101,7 +101,7 @@ impl EffectContext {
     pub fn new(
         attacker_index: usize,
         defender_index: usize,
-        move_used: crate::moves::Move,
+        move_used: pokemon_adventure_schema::Move,
     ) -> Self {
         Self {
             attacker_index,

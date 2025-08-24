@@ -4,8 +4,8 @@ use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRn
 use crate::battle::stats::{move_hits, move_is_critical_hit};
 use crate::errors::BattleResult;
 use crate::move_data::MoveData;
-use crate::moves::Move;
 use crate::player::PlayerAction;
+use pokemon_adventure_schema::Move;
 
 /// Calculate the outcome of an attack attempt
 ///
@@ -869,10 +869,10 @@ mod tests {
     use super::*;
     use crate::battle::state::{BattleState, TurnRng};
     use crate::battle::tests::common::assert_ok;
-    use crate::moves::Move;
     use crate::player::BattlePlayer;
     use crate::pokemon::PokemonInst;
     use crate::species::Species;
+    use pokemon_adventure_schema::Move;
     use std::collections::HashMap;
 
     fn create_test_battle_state() -> BattleState {

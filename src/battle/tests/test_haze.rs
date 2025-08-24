@@ -5,9 +5,9 @@ mod tests {
     use crate::battle::tests::common::{
         create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder,
     };
-    use crate::moves::Move;
     use crate::player::{PlayerAction, StatType};
     use crate::species::Species;
+    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
 
     #[test]

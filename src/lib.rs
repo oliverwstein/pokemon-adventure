@@ -8,7 +8,6 @@ pub mod battle;
 pub mod errors;
 pub mod mcp_interface;
 pub mod move_data;
-pub mod moves;
 pub mod player;
 pub mod pokemon;
 pub mod prefab_teams;
@@ -21,7 +20,7 @@ pub use errors::{
     BattleEngineError, BattleResult, MoveDataError, MoveDataResult, SpeciesDataError,
     SpeciesDataResult,
 };
-pub use moves::Move;
 pub use player::{BattlePlayer, PlayerAction, StatType};
 pub use pokemon::{get_species_data, PokemonInst};
+pub use pokemon_adventure_schema::Move;
 pub use species::Species;

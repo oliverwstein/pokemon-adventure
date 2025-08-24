@@ -1,9 +1,9 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::errors::BattleResult;
 use crate::move_data::{MoveCategory, MoveData};
-use crate::moves::Move;
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
+use pokemon_adventure_schema::Move;
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(
@@ -526,7 +526,7 @@ mod tests {
             assert_ok(effective_attack(
                 &pokemon,
                 &player,
-                crate::moves::Move::Tackle
+                pokemon_adventure_schema::Move::Tackle
             )),
             40
         );
@@ -536,7 +536,7 @@ mod tests {
             assert_ok(effective_attack(
                 &pokemon,
                 &player,
-                crate::moves::Move::Ember
+                pokemon_adventure_schema::Move::Ember
             )),
             80
         );
@@ -547,7 +547,7 @@ mod tests {
             assert_ok(effective_attack(
                 &pokemon,
                 &player,
-                crate::moves::Move::Tackle
+                pokemon_adventure_schema::Move::Tackle
             )),
             80
         );
@@ -555,7 +555,7 @@ mod tests {
             assert_ok(effective_attack(
                 &pokemon,
                 &player,
-                crate::moves::Move::Ember
+                pokemon_adventure_schema::Move::Ember
             )),
             80
         );
@@ -595,7 +595,7 @@ mod tests {
         assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
-            crate::moves::Move::Tackle,
+            pokemon_adventure_schema::Move::Tackle,
             &mut rng_low,
         ));
 
@@ -604,7 +604,7 @@ mod tests {
         assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
-            crate::moves::Move::Tackle,
+            pokemon_adventure_schema::Move::Tackle,
             &mut rng_high,
         ));
 
@@ -614,7 +614,7 @@ mod tests {
         assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
-            crate::moves::Move::Tackle,
+            pokemon_adventure_schema::Move::Tackle,
             &mut rng_focus,
         ));
 
@@ -623,7 +623,7 @@ mod tests {
         assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
-            crate::moves::Move::Growl,
+            pokemon_adventure_schema::Move::Growl,
             &mut rng_status,
         ));
     }
@@ -676,7 +676,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                crate::moves::Move::Tackle
+                pokemon_adventure_schema::Move::Tackle
             )),
             40,
             "Burn should halve physical attack: 80/2=40"
@@ -685,7 +685,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                crate::moves::Move::Ember
+                pokemon_adventure_schema::Move::Ember
             )),
             80,
             "Burn should NOT affect special attack"
@@ -706,7 +706,7 @@ mod tests {
             assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
-                crate::moves::Move::Tackle
+                pokemon_adventure_schema::Move::Tackle
             )),
             80,
             "Paralysis should NOT affect attack"
@@ -715,7 +715,7 @@ mod tests {
             assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
-                crate::moves::Move::ThunderPunch
+                pokemon_adventure_schema::Move::ThunderPunch
             )),
             80,
             "Paralysis should NOT affect special attack"
@@ -729,7 +729,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                crate::moves::Move::Tackle
+                pokemon_adventure_schema::Move::Tackle
             )),
             80
         );

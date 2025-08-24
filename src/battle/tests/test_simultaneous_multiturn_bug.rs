@@ -4,9 +4,9 @@ mod tests {
     use crate::battle::engine::{collect_npc_actions, resolve_turn};
     use crate::battle::state::BattleState;
     use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
-    use crate::moves::Move;
     use crate::player::{PlayerAction, PlayerType};
     use crate::species::Species;
+    use pokemon_adventure_schema::Move;
 
     #[test]
     fn test_simultaneous_multiturn_moves_resolve_correctly() {

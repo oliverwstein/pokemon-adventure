@@ -1,6 +1,6 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
-use crate::moves::Move;
 use crate::pokemon::PokemonInst;
+use pokemon_adventure_schema::Move;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;

@@ -1,9 +1,9 @@
 use crate::battle::action_stack::{ActionStack, BattleAction};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus};
-use crate::moves::Move;
 use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
+use pokemon_adventure_schema::Move;
 
 /// Player target for commands - provides type safety over raw indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

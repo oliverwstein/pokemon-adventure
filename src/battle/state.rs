@@ -277,10 +277,8 @@ impl BattleEvent {
             // === Condition Events ===
             BattleEvent::StatusApplied { target, status } => {
                 let target_name = Self::format_species_name(*target);
-                // TODO: "was affected by" is generic; the preamble should vary by condition,
-                // with a string for applying, removing, etc.
                 Some(format!(
-                    "{} was affected by {}!",
+                    "{} {}!",
                     target_name,
                     Self::format_condition(status)
                 ))
@@ -443,33 +441,33 @@ impl BattleEvent {
     fn format_condition(condition: &PokemonCondition) -> String {
         // Convert condition types to human-readable names
         match condition.get_type() {
-            crate::battle::conditions::PokemonConditionType::Confused => "confusion".to_string(),
-            crate::battle::conditions::PokemonConditionType::Exhausted => "exhaustion".to_string(),
-            crate::battle::conditions::PokemonConditionType::Trapped => "trapping".to_string(),
-            crate::battle::conditions::PokemonConditionType::Flinched => "flinching".to_string(),
-            crate::battle::conditions::PokemonConditionType::Rampaging => "rampage".to_string(),
-            crate::battle::conditions::PokemonConditionType::Disabled => "disable".to_string(),
-            crate::battle::conditions::PokemonConditionType::Biding => "bide".to_string(),
+            crate::battle::conditions::PokemonConditionType::Confused => "became confused".to_string(),
+            crate::battle::conditions::PokemonConditionType::Exhausted => "became exhausted".to_string(),
+            crate::battle::conditions::PokemonConditionType::Trapped => "became trapped".to_string(),
+            crate::battle::conditions::PokemonConditionType::Flinched => "flinched".to_string(),
+            crate::battle::conditions::PokemonConditionType::Rampaging => "is rampaging".to_string(),
+            crate::battle::conditions::PokemonConditionType::Disabled => "had its move disabled".to_string(),
+            crate::battle::conditions::PokemonConditionType::Biding => "began biding".to_string(),
             crate::battle::conditions::PokemonConditionType::Teleported => {
-                "teleportation".to_string()
+                "moved in a blink".to_string()
             }
             crate::battle::conditions::PokemonConditionType::Countering => {
-                "counter stance".to_string()
+                "prepared to counter".to_string()
             }
-            crate::battle::conditions::PokemonConditionType::Charging => "charging".to_string(),
+            crate::battle::conditions::PokemonConditionType::Charging => "began charging".to_string(),
             crate::battle::conditions::PokemonConditionType::Underground => {
-                "underground".to_string()
+                "went underground".to_string()
             }
-            crate::battle::conditions::PokemonConditionType::InAir => "in air".to_string(),
-            crate::battle::conditions::PokemonConditionType::Substitute => "substitute".to_string(),
-            crate::battle::conditions::PokemonConditionType::Seeded => "leech seed".to_string(),
+            crate::battle::conditions::PokemonConditionType::InAir => "flew up high".to_string(),
+            crate::battle::conditions::PokemonConditionType::Substitute => "created a substitute".to_string(),
+            crate::battle::conditions::PokemonConditionType::Seeded => "was seeded".to_string(),
             crate::battle::conditions::PokemonConditionType::Converted => {
-                "type conversion".to_string()
+                "changed type".to_string()
             }
             crate::battle::conditions::PokemonConditionType::Transformed => {
-                "transformation".to_string()
+                "transformed".to_string()
             }
-            crate::battle::conditions::PokemonConditionType::Enraged => "rage".to_string(),
+            crate::battle::conditions::PokemonConditionType::Enraged => "entered a rage".to_string(),
         }
     }
 

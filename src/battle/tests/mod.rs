@@ -9,6 +9,7 @@ mod test_end_of_turn;
 mod test_fainting;
 mod test_haze;
 mod test_heal;
+mod test_immunity;
 mod test_metronome;
 mod test_mist;
 mod test_multi_attacks;

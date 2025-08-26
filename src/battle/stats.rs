@@ -316,6 +316,12 @@ pub fn get_type_effectiveness(attack_type: PokemonType, defense_types: &[Pokemon
         .product()
 }
 
+pub fn is_immune(attack_type: PokemonType, defense_types: &[PokemonType]) -> bool {
+    defense_types
+        .iter()
+        .any(|&def_type| PokemonType::type_effectiveness(attack_type, def_type) == 0.0)
+}
+
 /// Formula: ((((2 * Level / 5 + 2) * Power * STAB * A / D) / 50 + 2) * CRIT * TYPE_ADV * RAND * MODIFIERS)
 pub fn calculate_attack_damage(
     attacker: &PokemonInst,
@@ -379,10 +385,10 @@ pub fn calculate_attack_damage(
     let final_damage_float =
         base_damage * crit_multiplier * type_adv_multiplier * random_multiplier * other_modifiers;
 
-    // 7. Convert to integer and ensure damage is at least 1.
-    let final_damage = final_damage_float.round() as u16;
+    // 7. Convert to integer and ensure damage is at least 1 unless the pokemon is immune.
+    let final_damage = final_damage_float.ceil() as u16;
 
-    Ok(final_damage.max(1))
+    Ok(final_damage.max(0))
 }
 
 pub fn calculate_special_attack_damage(

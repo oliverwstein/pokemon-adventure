@@ -264,6 +264,96 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_explosion_against_immune_target_still_faints_user() {
+        // Arrange - Electrode using Explosion against Gengar (Ghost-type immune to Normal moves)
+        let p1_pokemon = TestPokemonBuilder::new(Species::Electrode, 50)
+            .with_moves(vec![Move::Explosion])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Gengar, 50)
+            .with_moves(vec![Move::Lick])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
+
+        let original_gengar_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
+
+        // Assert
+        event_bus
+            .print_debug_with_message("Events for test_explosion_against_immune_target_still_faints_user:");
+        
+        // The move should be used
+        let move_used = event_bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::MoveUsed {
+                    player_index: 0,
+                    move_used: Move::Explosion,
+                    ..
+                }
+            )
+        });
+        assert!(move_used, "Explosion should be used even against immune target");
+        
+        // Electrode should still faint from the self-destruct effect
+        assert!(
+            battle_state.players[0]
+                .active_pokemon()
+                .unwrap()
+                .is_fainted(),
+            "Electrode should faint from Explosion even when target is immune"
+        );
+        
+        // Check that faint event occurred for Electrode
+        let electrode_faint_event = event_bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::PokemonFainted {
+                    player_index: 0,
+                    pokemon: Species::Electrode,
+                    ..
+                }
+            )
+        });
+        assert!(
+            electrode_faint_event,
+            "Faint event should occur for Electrode even when target is immune"
+        );
+        
+        // Gengar should take no damage due to immunity
+        let final_gengar_hp = battle_state.players[1]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        assert_eq!(
+            final_gengar_hp, original_gengar_hp,
+            "Gengar should take no damage from Explosion due to type immunity"
+        );
+
+        // Check that no damage event occurred for Gengar
+        let damage_event = event_bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::DamageDealt {
+                    target: Species::Gengar,
+                    ..
+                }
+            )
+        });
+        assert!(
+            !damage_event,
+            "No damage event should occur for Gengar due to type immunity"
+        );
+    }
+
     // --- Unit Tests for Special Condition Effects ---
 
     #[test]

@@ -6,7 +6,6 @@ use super::EffectContext;
 use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::state::{BattleState, TurnRng};
 
-
 // These functions are `pub(super)` to be visible only to the parent `mod.rs`.
 
 /// Apply heal effect (targets user).
@@ -52,7 +51,7 @@ pub(super) fn apply_ante_effect(
     if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
         let pokemon_level = attacker_pokemon.level as u32;
         let ante_amount = pokemon_level * 2;
-        
+
         commands.push(BattleCommand::AddAnte {
             target: PlayerTarget::from_index(context.attacker_index),
             amount: ante_amount,
@@ -92,7 +91,9 @@ pub(super) fn apply_drain_effect(
     if heal_amount > 0 {
         let attacker_player = &state.players[context.attacker_index];
         if let Some(attacker_pokemon) = attacker_player.active_pokemon() {
-            if !attacker_pokemon.is_fainted() && attacker_pokemon.current_hp() < attacker_pokemon.max_hp() {
+            if !attacker_pokemon.is_fainted()
+                && attacker_pokemon.current_hp() < attacker_pokemon.max_hp()
+            {
                 commands.push(BattleCommand::HealPokemon {
                     target: PlayerTarget::from_index(context.attacker_index),
                     amount: heal_amount,

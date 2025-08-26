@@ -1,8 +1,10 @@
 //! A module for defining AI behaviors for battle opponents.
 
+use schema::{MoveCategory, MoveEffect, Target};
+
 use crate::battle::state::BattleState;
 use crate::errors::BattleResult;
-use crate::move_data::{MoveCategory, get_move_data};
+use crate::move_data::get_move_data;
 use crate::player::PlayerAction;
 
 /// A trait for any system that can decide on a battle action.
@@ -104,8 +106,8 @@ impl ScoringAI {
         for effect in &move_data.effects {
             match effect {
                 // Self-buffs are valuable if the stat isn't maxed out.
-                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance)
-                    if *target == crate::move_data::Target::User && *stages > 0 =>
+                MoveEffect::StatChange(target, stat_type, stages, chance)
+                    if *target == Target::User && *stages > 0 =>
                 {
                     let current_stage = player.get_stat_stage(stat_type.clone().into());
                     if current_stage < 6 {
@@ -115,8 +117,8 @@ impl ScoringAI {
                     }
                 }
                 // Opponent debuffs are valuable if the stat isn't minimized.
-                crate::move_data::MoveEffect::StatChange(target, stat_type, stages, chance)
-                    if *target == crate::move_data::Target::Target && *stages < 0 =>
+                MoveEffect::StatChange(target, stat_type, stages, chance)
+                    if *target == Target::Target && *stages < 0 =>
                 {
                     let opponent_stage = opponent.get_stat_stage(stat_type.clone().into());
                     if opponent_stage > -6 {
@@ -124,17 +126,17 @@ impl ScoringAI {
                     }
                 }
                 // Inflicting a status is very valuable, but only if the opponent is healthy.
-                crate::move_data::MoveEffect::Sedate(chance)
-                | crate::move_data::MoveEffect::Paralyze(chance)
-                | crate::move_data::MoveEffect::Poison(chance)
-                | crate::move_data::MoveEffect::Burn(chance)
-                | crate::move_data::MoveEffect::Freeze(chance) => {
+                MoveEffect::Sedate(chance)
+                | MoveEffect::Paralyze(chance)
+                | MoveEffect::Poison(chance)
+                | MoveEffect::Burn(chance)
+                | MoveEffect::Freeze(chance) => {
                     if defender.status.is_none() {
                         utility_score += 45.0 * (*chance as f32 / 100.0);
                     }
                 }
                 // Flinching is also good.
-                crate::move_data::MoveEffect::Flinch(chance) => {
+                MoveEffect::Flinch(chance) => {
                     utility_score += 30.0 * (*chance as f32 / 100.0);
                 }
                 _ => {} // Other effects can be added here (e.g., Heal, LeechSeed)

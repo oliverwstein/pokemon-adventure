@@ -7,11 +7,10 @@ mod tests {
         create_test_battle, create_test_player, predictable_rng, TestPokemonBuilder,
     };
     use crate::player::PlayerAction;
-    use crate::pokemon::PokemonType;
     use crate::species::Species;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
-    use schema::Move;
+    use schema::{Move, PokemonType};
 
     // --- Integration Tests for Multi-Turn and Forced Moves ---
 

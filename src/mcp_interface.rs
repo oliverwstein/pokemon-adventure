@@ -5,7 +5,7 @@
 
 use crate::battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
 use crate::battle::state::{BattleState, GameState, TurnRng};
-use crate::move_data::{get_move_data};
+use crate::move_data::get_move_data;
 use crate::player::{PlayerAction, PlayerType};
 use crate::prefab_teams;
 use crate::{BattlePlayer, Move, Species};

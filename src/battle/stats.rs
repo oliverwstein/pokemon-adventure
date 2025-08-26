@@ -1,9 +1,9 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::errors::BattleResult;
-use crate::move_data::{MoveCategory, get_move_data};
+use crate::move_data::get_move_data;
 use crate::player::{BattlePlayer, StatType};
-use crate::pokemon::{PokemonInst, PokemonType};
-use schema::Move;
+use crate::pokemon::PokemonInst;
+use schema::{Move, MoveCategory, MoveEffect, PokemonType};
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(
@@ -106,7 +106,7 @@ pub fn effective_defense(
     let stage = player.get_stat_stage(defense_stat);
     let mut multiplied_defense = apply_stat_stage_multiplier(base_defense, stage);
     for effect in &move_data.effects {
-        if let crate::move_data::MoveEffect::IgnoreDef(percentage) = effect {
+        if let MoveEffect::IgnoreDef(percentage) = effect {
             // The percentage is how much of the defense to ignore.
             // For example, IgnoreDef(50) means 50% is ignored, so the final defense is multiplied by 0.5.
             let remaining_defense_factor = 1.0 - (*percentage as f64 / 100.0);
@@ -196,7 +196,7 @@ pub fn move_is_critical_hit(
 
     // Check for moves with increased critical hit ratio
     for effect in &move_data.effects {
-        if let crate::move_data::MoveEffect::Crit(ratio_boost) = effect {
+        if let MoveEffect::Crit(ratio_boost) = effect {
             crit_ratio = crit_ratio.saturating_add(*ratio_boost);
         }
     }
@@ -399,7 +399,7 @@ pub fn calculate_special_attack_damage(
 
     for effect in &move_data.effects {
         match effect {
-            crate::move_data::MoveEffect::OHKO => {
+            MoveEffect::OHKO => {
                 // OHKO moves fail if the attacker's level is less than the defender's.
                 // Otherwise, they deal damage equal to the target's current HP.
                 if attacker_level < defender_level {
@@ -408,15 +408,15 @@ pub fn calculate_special_attack_damage(
                     return Ok(Some(defender.current_hp()));
                 }
             }
-            crate::move_data::MoveEffect::SuperFang(_) => {
+            MoveEffect::SuperFang(_) => {
                 // Super Fang deals damage equal to half of the opponent's current HP.
                 return Ok(Some((defender.current_hp() / 2).max(1)));
             }
-            crate::move_data::MoveEffect::LevelDamage => {
+            MoveEffect::LevelDamage => {
                 // Deals damage equal to the user's level.
                 return Ok(Some(attacker_level));
             }
-            crate::move_data::MoveEffect::SetDamage(fixed_damage) => {
+            MoveEffect::SetDamage(fixed_damage) => {
                 // Deals a fixed amount of damage.
                 return Ok(Some(*fixed_damage));
             }

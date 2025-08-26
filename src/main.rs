@@ -4,7 +4,7 @@ use pokemon_adventure::battle::engine::{
     collect_npc_actions, ready_for_turn_resolution, resolve_turn,
 };
 use pokemon_adventure::battle::state::{BattleState, EventBus, GameState, TurnRng};
-use pokemon_adventure::move_data::{get_move_data};
+use pokemon_adventure::move_data::get_move_data;
 use pokemon_adventure::player::{PlayerAction, PlayerType};
 use pokemon_adventure::prefab_teams::{self, PrefabTeam};
 use pokemon_adventure::{BattlePlayer, Move};

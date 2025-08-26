@@ -1,12 +1,14 @@
 use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
+use crate::battle::move_effects::{
+    BattleMoveDataExt, BattleMoveEffectExt, EffectContext, EffectResult,
+};
 use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
 use crate::errors::BattleResult;
-use crate::move_data::{get_move_data};
-use crate::battle::move_effects::{BattleMoveEffectExt, BattleMoveDataExt, EffectContext, EffectResult};
+use crate::move_data::get_move_data;
 use crate::player::PlayerAction;
-use schema::Move;
+use schema::{Move, MoveCategory, MoveData, MoveEffect};
 
 /// Calculate the outcome of an attack attempt
 ///
@@ -219,13 +221,13 @@ fn handle_successful_hit(
 
 /// Calculate type effectiveness and emit event if significant
 fn calculate_and_emit_type_effectiveness(
-    move_data: &crate::move_data::MoveData,
+    move_data: &MoveData,
     defender_pokemon: &crate::pokemon::PokemonInst,
     defender_player: &crate::player::BattlePlayer,
     commands: &mut Vec<BattleCommand>,
 ) -> f64 {
     // Status moves don't have type effectiveness
-    if matches!(move_data.category, crate::move_data::MoveCategory::Status) {
+    if matches!(move_data.category, MoveCategory::Status) {
         return 1.0;
     }
 
@@ -780,7 +782,7 @@ pub fn calculate_action_prevention(
     // Check for Nightmare effect - move fails unless target is asleep
     if let Ok(move_data) = get_move_data(move_used) {
         for effect in &move_data.effects {
-            if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
+            if matches!(effect, MoveEffect::Nightmare) {
                 // Get the target (enemy) index - if we're player 0, target is 1, and vice versa
                 let target_index = if player_index == 0 { 1 } else { 0 };
                 let target_player = &battle_state.players[target_index];

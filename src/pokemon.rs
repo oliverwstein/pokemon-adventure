@@ -1,7 +1,7 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::errors::{SpeciesDataError, SpeciesDataResult};
 use crate::species::Species;
-use schema::Move;
+use schema::{BaseStats, Learnset, Move, PokemonSpecies, PokemonType};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -10,22 +10,17 @@ use crate::move_data::{get_compiled_species_data, get_move_data, get_move_max_pp
 
 /// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
-    let compiled_data = get_compiled_species_data();
-    let index = species.pokedex_number() as usize - 1; // 0-indexed
+    // get_compiled_species_data() now returns &'static [Option<PokemonSpecies>]
+    let compiled_data_slice = get_compiled_species_data();
+    let index = species.pokedex_number() as usize - 1;
 
-    // Check bounds to prevent index out of bounds
-    if index >= compiled_data.len() {
-        return Err(SpeciesDataError::InvalidSpeciesReference);
-    }
-
-    compiled_data[index]
-        .clone()
-        .ok_or(SpeciesDataError::SpeciesNotFound(species))
+    // The idiomatic and safe way to access an element that might be out of bounds.
+    compiled_data_slice
+        .get(index) // This returns an `Option<&Option<PokemonSpecies>>`.
+        .and_then(|option_species| option_species.as_ref()) // This unwraps the outer Option and converts `&Option<T>` to `Option<&T>`.
+        .cloned() // This converts `Option<&PokemonSpecies>` to `Option<PokemonSpecies>` by cloning the data.
+        .ok_or(SpeciesDataError::SpeciesNotFound(species)) // If we have `None` at any point, return our custom error.
 }
-
-// Re-export types from the schema crate
-pub use schema::{PokemonType, PokemonSpecies, BaseStats, Learnset, EvolutionData, EvolutionMethod, Item};
-
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub enum StatusCondition {
@@ -115,7 +110,6 @@ impl From<[u16; 6]> for CurrentStats {
         }
     }
 }
-
 
 impl MoveInstance {
     /// Create a new move instance with max PP

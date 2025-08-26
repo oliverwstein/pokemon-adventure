@@ -34,7 +34,6 @@ impl fmt::Display for PlayerAction {
     }
 }
 
-
 // Re-export types from the schema crate
 pub use schema::{StatType, TeamCondition};
 

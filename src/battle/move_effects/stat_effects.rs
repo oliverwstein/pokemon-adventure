@@ -82,7 +82,8 @@ pub(super) fn apply_raise_all_stats_effect(
 
         for stat in &stats_to_raise {
             let old_stage = attacker_player.get_stat_stage(*stat);
-            if old_stage < 6 { // Only raise if not already maxed out
+            if old_stage < 6 {
+                // Only raise if not already maxed out
                 commands.push(BattleCommand::ChangeStatStage {
                     target: PlayerTarget::from_index(context.attacker_index),
                     stat: *stat,
@@ -111,8 +112,14 @@ pub(super) fn apply_haze_effect(
         let player = &state.players[player_index];
         if player.active_pokemon().is_some() {
             let all_stats = [
-                StatType::Atk, StatType::Def, StatType::SpAtk, StatType::SpDef,
-                StatType::Spe, StatType::Acc, StatType::Eva, StatType::Crit,
+                StatType::Atk,
+                StatType::Def,
+                StatType::SpAtk,
+                StatType::SpDef,
+                StatType::Spe,
+                StatType::Acc,
+                StatType::Eva,
+                StatType::Crit,
             ];
 
             for stat in &all_stats {

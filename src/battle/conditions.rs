@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     battle::commands::{BattleCommand, PlayerTarget},
     player::StatType,
-    pokemon::{PokemonInst, PokemonType},
+    pokemon::PokemonInst,
 };
-use schema::Move;
+use schema::{Move, MoveCategory, PokemonType};
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PokemonCondition {
     Flinched,
@@ -129,7 +129,7 @@ impl PokemonCondition {
         attacker_target: PlayerTarget,
         defender_target: PlayerTarget,
         _defender_pokemon_species: crate::species::Species,
-        move_category: crate::move_data::MoveCategory,
+        move_category: MoveCategory,
         defender_current_hp: u16,
         defender_stat_stage: i8,
     ) -> Vec<BattleCommand> {
@@ -140,9 +140,7 @@ impl PokemonCondition {
             PokemonCondition::Countering { .. } => {
                 let defender_will_faint = damage >= defender_current_hp;
 
-                if matches!(move_category, crate::move_data::MoveCategory::Physical)
-                    && !defender_will_faint
-                {
+                if matches!(move_category, MoveCategory::Physical) && !defender_will_faint {
                     let counter_damage = damage * 2;
                     commands.push(BattleCommand::DealDamage {
                         target: attacker_target,

@@ -10,14 +10,14 @@ pub use pokemon_types::*;
 pub use species::*;
 
 // Re-export data structures
+pub use battle_data::*;
 pub use move_data::*;
 pub use species_data::*;
-pub use battle_data::*;
 
+pub mod battle_data;
+pub mod move_data;
 pub mod move_types;
 pub mod moves;
 pub mod pokemon_types;
 pub mod species;
-pub mod move_data;
 pub mod species_data;
-pub mod battle_data;

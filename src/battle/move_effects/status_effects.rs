@@ -5,8 +5,8 @@ use super::EffectContext;
 use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::conditions::PokemonCondition;
 use crate::battle::state::{BattleState, TurnRng};
-use crate::pokemon::{PokemonType, StatusCondition};
-use schema::{StatusType, Target};
+use crate::pokemon::StatusCondition;
+use schema::{PokemonType, StatusType, Target};
 
 // --- STANDALONE HELPER FUNCTIONS ---
 
@@ -20,7 +20,11 @@ pub(super) fn apply_burn_effect(
     let target_player = &state.players[context.defender_index];
 
     if let Some(target_pokemon) = target_player.active_pokemon() {
-        if target_pokemon.status.is_some() || target_pokemon.get_current_types(target_player).contains(&PokemonType::Fire) {
+        if target_pokemon.status.is_some()
+            || target_pokemon
+                .get_current_types(target_player)
+                .contains(&PokemonType::Fire)
+        {
             return commands;
         }
 
@@ -44,7 +48,11 @@ pub(super) fn apply_paralyze_effect(
     let target_player = &state.players[context.defender_index];
 
     if let Some(target_pokemon) = target_player.active_pokemon() {
-        if target_pokemon.status.is_some() || target_pokemon.get_current_types(target_player).contains(&PokemonType::Electric) {
+        if target_pokemon.status.is_some()
+            || target_pokemon
+                .get_current_types(target_player)
+                .contains(&PokemonType::Electric)
+        {
             return commands;
         }
 
@@ -68,7 +76,11 @@ pub(super) fn apply_freeze_effect(
     let target_player = &state.players[context.defender_index];
 
     if let Some(target_pokemon) = target_player.active_pokemon() {
-        if target_pokemon.status.is_some() || target_pokemon.get_current_types(target_player).contains(&PokemonType::Ice) {
+        if target_pokemon.status.is_some()
+            || target_pokemon
+                .get_current_types(target_player)
+                .contains(&PokemonType::Ice)
+        {
             return commands;
         }
 
@@ -92,7 +104,11 @@ pub(super) fn apply_poison_effect(
     let target_player = &state.players[context.defender_index];
 
     if let Some(target_pokemon) = target_player.active_pokemon() {
-        if target_pokemon.status.is_some() || target_pokemon.get_current_types(target_player).contains(&PokemonType::Poison) {
+        if target_pokemon.status.is_some()
+            || target_pokemon
+                .get_current_types(target_player)
+                .contains(&PokemonType::Poison)
+        {
             return commands;
         }
 
@@ -142,7 +158,10 @@ pub(super) fn apply_flinch_effect(
     if rng.next_outcome("Apply Flinch Effect") > chance {
         return commands;
     }
-    if state.players[context.defender_index].active_pokemon().is_some() {
+    if state.players[context.defender_index]
+        .active_pokemon()
+        .is_some()
+    {
         commands.push(BattleCommand::AddCondition {
             target: PlayerTarget::from_index(context.defender_index),
             condition: PokemonCondition::Flinched,
@@ -182,7 +201,10 @@ pub(super) fn apply_trap_effect(
     rng: &mut TurnRng,
 ) -> Vec<BattleCommand> {
     let mut commands = Vec::new();
-    if state.players[context.defender_index].active_pokemon().is_none() {
+    if state.players[context.defender_index]
+        .active_pokemon()
+        .is_none()
+    {
         return commands;
     }
 
@@ -205,7 +227,10 @@ pub(super) fn apply_seed_effect(
     rng: &mut TurnRng,
 ) -> Vec<BattleCommand> {
     let mut commands = Vec::new();
-    if state.players[context.defender_index].active_pokemon().is_none() {
+    if state.players[context.defender_index]
+        .active_pokemon()
+        .is_none()
+    {
         return commands;
     }
 
@@ -225,16 +250,17 @@ pub(super) fn apply_exhaust_effect(
     rng: &mut TurnRng,
 ) -> Vec<BattleCommand> {
     let mut commands = Vec::new();
-    if state.players[context.attacker_index].active_pokemon().is_none() {
+    if state.players[context.attacker_index]
+        .active_pokemon()
+        .is_none()
+    {
         return commands;
     }
 
     if rng.next_outcome("Apply Exhaust Check") <= chance {
         commands.push(BattleCommand::AddCondition {
             target: PlayerTarget::from_index(context.attacker_index),
-            condition: PokemonCondition::Exhausted {
-                turns_remaining: 2,
-            },
+            condition: PokemonCondition::Exhausted { turns_remaining: 2 },
         });
     }
     commands

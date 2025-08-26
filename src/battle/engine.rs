@@ -13,9 +13,9 @@ use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
 };
-use crate::move_data::{get_move_data};
+use crate::move_data::get_move_data;
 use crate::player::PlayerAction;
-use schema::Move;
+use schema::{Move, MoveCategory};
 
 pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerAction)> {
     let ai_brain = ScoringAI::new();
@@ -348,16 +348,14 @@ pub fn execute_battle_action(
                 if defender_pokemon.is_fainted() {
                     // Target has fainted. Only allow non-offensive moves (e.g., self-buffs).
                     match move_data.category {
-                        crate::move_data::MoveCategory::Physical
-                        | crate::move_data::MoveCategory::Special
-                        | crate::move_data::MoveCategory::Other => {
+                        MoveCategory::Physical | MoveCategory::Special | MoveCategory::Other => {
                             // This is an offensive move against a fainted target. It fails.
                             bus.push(BattleEvent::ActionFailed {
                                 reason: crate::battle::state::ActionFailureReason::NoEnemyPresent,
                             });
                             return;
                         }
-                        crate::move_data::MoveCategory::Status => {
+                        MoveCategory::Status => {
                             // This is a status move, it can proceed even if the opponent is fainted.
                         }
                     }
@@ -373,15 +371,15 @@ pub fn execute_battle_action(
                     if type_adv_multiplier < 0.01 {
                         // Check for 0.0 immunity
                         match move_data.category {
-                            crate::move_data::MoveCategory::Physical
-                            | crate::move_data::MoveCategory::Special
-                            | crate::move_data::MoveCategory::Other => {
+                            MoveCategory::Physical
+                            | MoveCategory::Special
+                            | MoveCategory::Other => {
                                 // This is an offensive action against an immune target. It fails.
                                 // Announce the immunity and stop the action.
                                 bus.push(BattleEvent::AttackTypeEffectiveness { multiplier: 0.0 });
                                 return;
                             }
-                            crate::move_data::MoveCategory::Status => {
+                            MoveCategory::Status => {
                                 // Status moves don't target the enemy, so they aren't affected by immunity.
                             }
                         }

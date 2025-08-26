@@ -8,15 +8,13 @@ mod stat_effects;
 mod status_effects;
 
 // --- 2. IMPORTS ---
-use schema::{Move, MoveEffect, Target};
 use crate::battle::action_stack::BattleAction;
 use crate::battle::commands::BattleCommand;
 use crate::battle::conditions::PokemonCondition;
 use crate::battle::state::{BattleState, TurnRng};
+use schema::{Move, MoveEffect, Target};
 // Bring the standalone helper functions from our private modules into scope.
-use self::{
-    damage_effects::*, special_effects::*, stat_effects::*, status_effects::*,
-};
+use self::{damage_effects::*, special_effects::*, stat_effects::*, status_effects::*};
 
 // --- 3. BATTLE-SPECIFIC DATA STRUCTURES ---
 // These are defined here as they are the "public" types for this module.
@@ -29,7 +27,11 @@ pub struct EffectContext {
 
 impl EffectContext {
     pub fn new(attacker_index: usize, defender_index: usize, move_used: Move) -> Self {
-        Self { attacker_index, defender_index, move_used }
+        Self {
+            attacker_index,
+            defender_index,
+            move_used,
+        }
     }
 
     pub fn target_index(&self, target: &Target) -> usize {
@@ -50,22 +52,46 @@ pub enum EffectResult {
 // These are the public contracts for the rest of the battle engine to use.
 
 pub trait BattleMoveEffectExt {
-    fn apply_multi_hit_continuation(&self, context: &EffectContext, rng: &mut TurnRng, hit_number: u8) -> Option<BattleCommand>;
-    fn apply(&self, context: &EffectContext, state: &BattleState, rng: &mut TurnRng) -> EffectResult;
+    fn apply_multi_hit_continuation(
+        &self,
+        context: &EffectContext,
+        rng: &mut TurnRng,
+        hit_number: u8,
+    ) -> Option<BattleCommand>;
+    fn apply(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+        rng: &mut TurnRng,
+    ) -> EffectResult;
 }
 
 // Minimal change: Also include the BattleMoveDataExt trait here for cohesion.
 use schema::MoveData;
 pub trait BattleMoveDataExt {
-    fn apply_damage_based_effects(&self, context: &EffectContext, state: &BattleState, damage_dealt: u16) -> Vec<BattleCommand>;
-    fn apply_miss_based_effects(&self, context: &EffectContext, state: &BattleState) -> Vec<BattleCommand>;
+    fn apply_damage_based_effects(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+        damage_dealt: u16,
+    ) -> Vec<BattleCommand>;
+    fn apply_miss_based_effects(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+    ) -> Vec<BattleCommand>;
 }
 
 // --- 5. THE LEAN IMPLEMENTATIONS ---
 // These blocks satisfy the compiler but delegate all the work.
 
 impl BattleMoveEffectExt for MoveEffect {
-    fn apply(&self, context: &EffectContext, state: &BattleState, rng: &mut TurnRng) -> EffectResult {
+    fn apply(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+        rng: &mut TurnRng,
+    ) -> EffectResult {
         let defender_has_substitute = state.players[context.defender_index]
             .active_pokemon_conditions
             .values()
@@ -93,25 +119,57 @@ impl BattleMoveEffectExt for MoveEffect {
             Self::Rampage => apply_rampage_special(context, state, rng),
             Self::Rage(_) => apply_rage_special(context, state),
             Self::Explode => apply_explode_special(context, state),
-            Self::Burn(chance) => EffectResult::Continue(apply_burn_effect(*chance, context, state, rng)),
-            Self::Paralyze(chance) => EffectResult::Continue(apply_paralyze_effect(*chance, context, state, rng)),
-            Self::Freeze(chance) => EffectResult::Continue(apply_freeze_effect(*chance, context, state, rng)),
-            Self::Poison(chance) => EffectResult::Continue(apply_poison_effect(*chance, context, state, rng)),
-            Self::Sedate(chance) => EffectResult::Continue(apply_sedate_effect(*chance, context, state, rng)),
-            Self::Flinch(chance) => EffectResult::Continue(apply_flinch_effect(*chance, context, state, rng)),
-            Self::Confuse(chance) => EffectResult::Continue(apply_confuse_effect(*chance, context, state, rng)),
-            Self::Trap(chance) => EffectResult::Continue(apply_trap_effect(*chance, context, state, rng)),
-            Self::Seed(chance) => EffectResult::Continue(apply_seed_effect(*chance, context, state, rng)),
-            Self::Exhaust(chance) => EffectResult::Continue(apply_exhaust_effect(*chance, context, state, rng)),
+            Self::Burn(chance) => {
+                EffectResult::Continue(apply_burn_effect(*chance, context, state, rng))
+            }
+            Self::Paralyze(chance) => {
+                EffectResult::Continue(apply_paralyze_effect(*chance, context, state, rng))
+            }
+            Self::Freeze(chance) => {
+                EffectResult::Continue(apply_freeze_effect(*chance, context, state, rng))
+            }
+            Self::Poison(chance) => {
+                EffectResult::Continue(apply_poison_effect(*chance, context, state, rng))
+            }
+            Self::Sedate(chance) => {
+                EffectResult::Continue(apply_sedate_effect(*chance, context, state, rng))
+            }
+            Self::Flinch(chance) => {
+                EffectResult::Continue(apply_flinch_effect(*chance, context, state, rng))
+            }
+            Self::Confuse(chance) => {
+                EffectResult::Continue(apply_confuse_effect(*chance, context, state, rng))
+            }
+            Self::Trap(chance) => {
+                EffectResult::Continue(apply_trap_effect(*chance, context, state, rng))
+            }
+            Self::Seed(chance) => {
+                EffectResult::Continue(apply_seed_effect(*chance, context, state, rng))
+            }
+            Self::Exhaust(chance) => {
+                EffectResult::Continue(apply_exhaust_effect(*chance, context, state, rng))
+            }
             Self::StatChange(target, stat, stages, chance) => EffectResult::Continue(
                 apply_stat_change_effect(target, stat, *stages, *chance, context, state, rng),
             ),
-            Self::RaiseAllStats(chance) => EffectResult::Continue(apply_raise_all_stats_effect(*chance, context, state, rng)),
-            Self::Heal(percentage) => EffectResult::Continue(apply_heal_effect(*percentage, context, state)),
-            Self::Haze(chance) => EffectResult::Continue(apply_haze_effect(*chance, context, state, rng)),
-            Self::CureStatus(target, status_type) => EffectResult::Continue(apply_cure_status_effect(target, status_type, context, state)),
-            Self::SetTeamCondition(condition, turns) => EffectResult::Continue(apply_team_condition_effect(condition, *turns, context)),
-            Self::Ante(chance) => EffectResult::Continue(apply_ante_effect(*chance, context, state, rng)),
+            Self::RaiseAllStats(chance) => {
+                EffectResult::Continue(apply_raise_all_stats_effect(*chance, context, state, rng))
+            }
+            Self::Heal(percentage) => {
+                EffectResult::Continue(apply_heal_effect(*percentage, context, state))
+            }
+            Self::Haze(chance) => {
+                EffectResult::Continue(apply_haze_effect(*chance, context, state, rng))
+            }
+            Self::CureStatus(target, status_type) => EffectResult::Continue(
+                apply_cure_status_effect(target, status_type, context, state),
+            ),
+            Self::SetTeamCondition(condition, turns) => {
+                EffectResult::Continue(apply_team_condition_effect(condition, *turns, context))
+            }
+            Self::Ante(chance) => {
+                EffectResult::Continue(apply_ante_effect(*chance, context, state, rng))
+            }
             _ => EffectResult::Continue(Vec::new()),
         }
     }
@@ -149,12 +207,28 @@ impl BattleMoveEffectExt for MoveEffect {
 // This logic lives here now as a standalone helper function.
 fn is_blocked_by_substitute(effect: &MoveEffect) -> bool {
     match effect {
-        MoveEffect::Heal(_) | MoveEffect::Exhaust(_) | MoveEffect::RaiseAllStats(_) | MoveEffect::Rest(_) |
-        MoveEffect::Rage(_) | MoveEffect::Substitute | MoveEffect::Transform | MoveEffect::Conversion |
-        MoveEffect::Counter | MoveEffect::Bide(_) | MoveEffect::Explode | MoveEffect::Reckless(_) |
-        MoveEffect::MirrorMove | MoveEffect::Metronome | MoveEffect::Recoil(_) | MoveEffect::Drain(_) |
-        MoveEffect::Crit(_) | MoveEffect::IgnoreDef(_) | MoveEffect::Priority(_) | MoveEffect::MultiHit(_, _) |
-        MoveEffect::Haze(_) | MoveEffect::SetTeamCondition(..) => false,
+        MoveEffect::Heal(_)
+        | MoveEffect::Exhaust(_)
+        | MoveEffect::RaiseAllStats(_)
+        | MoveEffect::Rest(_)
+        | MoveEffect::Rage(_)
+        | MoveEffect::Substitute
+        | MoveEffect::Transform
+        | MoveEffect::Conversion
+        | MoveEffect::Counter
+        | MoveEffect::Bide(_)
+        | MoveEffect::Explode
+        | MoveEffect::Reckless(_)
+        | MoveEffect::MirrorMove
+        | MoveEffect::Metronome
+        | MoveEffect::Recoil(_)
+        | MoveEffect::Drain(_)
+        | MoveEffect::Crit(_)
+        | MoveEffect::IgnoreDef(_)
+        | MoveEffect::Priority(_)
+        | MoveEffect::MultiHit(_, _)
+        | MoveEffect::Haze(_)
+        | MoveEffect::SetTeamCondition(..) => false,
         MoveEffect::StatChange(target, ..) => matches!(target, Target::Target),
         MoveEffect::CureStatus(target, ..) => matches!(target, Target::Target),
         _ => true,
@@ -163,16 +237,28 @@ fn is_blocked_by_substitute(effect: &MoveEffect) -> bool {
 
 // The implementation for MoveDataExt also lives here.
 impl BattleMoveDataExt for MoveData {
-    fn apply_damage_based_effects(&self, context: &EffectContext, state: &BattleState, damage_dealt: u16) -> Vec<BattleCommand> {
+    fn apply_damage_based_effects(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+        damage_dealt: u16,
+    ) -> Vec<BattleCommand> {
         let mut all_commands = Vec::new();
         for effect in &self.effects {
-             if damage_dealt == 0 { continue; }
-             match effect {
+            if damage_dealt == 0 {
+                continue;
+            }
+            match effect {
                 MoveEffect::Recoil(percentage) => {
                     all_commands.extend(apply_recoil_effect(*percentage, context, damage_dealt));
                 }
                 MoveEffect::Drain(percentage) => {
-                    all_commands.extend(apply_drain_effect(*percentage, context, state, damage_dealt));
+                    all_commands.extend(apply_drain_effect(
+                        *percentage,
+                        context,
+                        state,
+                        damage_dealt,
+                    ));
                 }
                 _ => {}
             }
@@ -180,7 +266,11 @@ impl BattleMoveDataExt for MoveData {
         all_commands
     }
 
-    fn apply_miss_based_effects(&self, context: &EffectContext, state: &BattleState) -> Vec<BattleCommand> {
+    fn apply_miss_based_effects(
+        &self,
+        context: &EffectContext,
+        state: &BattleState,
+    ) -> Vec<BattleCommand> {
         let mut all_commands = Vec::new();
         for effect in &self.effects {
             match effect {

@@ -1,0 +1,2 @@
+
+# Bug 1: When a pokemon uses Explosion against a pokemon that is immune (such as Gengar), the move itself is skipped, so the self-destructing part doesn't happen and the move isn't even listed as being used.

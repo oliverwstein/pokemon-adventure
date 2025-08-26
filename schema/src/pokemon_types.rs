@@ -119,4 +119,8 @@ impl PokemonType {
             (Typeless, _) => 1.0,
         }
     }
+
+    pub fn is_immune(attacking: PokemonType, defending: PokemonType) -> bool {
+        Self::type_effectiveness(attacking, defending) == 0.0
+    }
 }

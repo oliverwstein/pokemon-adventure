@@ -359,31 +359,6 @@ pub fn execute_battle_action(
                             // This is a status move, it can proceed even if the opponent is fainted.
                         }
                     }
-                } else {
-                    // --- IMMUNITY CHECK ---
-                    // Target is not fainted, check for type immunity.
-                    let defender_types = defender_pokemon.get_current_types(defender_player);
-                    let type_adv_multiplier = crate::battle::stats::get_type_effectiveness(
-                        move_data.move_type,
-                        &defender_types,
-                    );
-
-                    if type_adv_multiplier < 0.01 {
-                        // Check for 0.0 immunity
-                        match move_data.category {
-                            MoveCategory::Physical
-                            | MoveCategory::Special
-                            | MoveCategory::Other => {
-                                // This is an offensive action against an immune target. It fails.
-                                // Announce the immunity and stop the action.
-                                bus.push(BattleEvent::AttackTypeEffectiveness { multiplier: 0.0 });
-                                return;
-                            }
-                            MoveCategory::Status => {
-                                // Status moves don't target the enemy, so they aren't affected by immunity.
-                            }
-                        }
-                    }
                 }
             }
 

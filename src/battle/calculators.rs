@@ -43,7 +43,6 @@ pub fn calculate_attack_outcome(
 
     let move_data = get_move_data(move_used)?;
 
-    // --- NEW LOGIC START ---
     // First, check for any special move effects that might skip the normal attack sequence.
     let context = EffectContext::new(attacker_index, defender_index, move_used);
     let mut regular_effect_commands = Vec::new();
@@ -64,7 +63,6 @@ pub fn calculate_attack_outcome(
             }
         }
     }
-    // --- NEW LOGIC END ---
 
     // If we've reached this point, no effect returned 'Skip', so we proceed with a normal attack.
     let hit_result = move_hits(
@@ -87,6 +85,8 @@ pub fn calculate_attack_outcome(
             move_used,
             rng,
         )?;
+        
+
         commands.extend(hit_commands.clone());
 
         // Add the regular effect commands that we collected earlier.

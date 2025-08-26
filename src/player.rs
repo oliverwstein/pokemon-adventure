@@ -4,7 +4,6 @@ use schema::Move;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use std::hash::Hash;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum PlayerAction {
@@ -35,30 +34,9 @@ impl fmt::Display for PlayerAction {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Copy)]
-pub enum TeamCondition {
-    Reflect,
-    LightScreen,
-    Mist,
-}
 
-impl fmt::Display for TeamCondition {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // We match on `self` to get the specific variant and write its
-        // human-readable name to the formatter.
-        let display_name = match self {
-            TeamCondition::Reflect => "Reflect",
-            TeamCondition::LightScreen => "Light Screen", // Use a space for better readability
-            TeamCondition::Mist => "Mist",
-        };
-
-        // The write! macro handles writing the string to the output.
-        write!(f, "{}", display_name)
-    }
-}
-
-// Re-export StatType from the schema crate
-pub use schema::StatType;
+// Re-export types from the schema crate
+pub use schema::{StatType, TeamCondition};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerType {

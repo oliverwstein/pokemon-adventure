@@ -13,7 +13,7 @@ use crate::battle::conditions::*;
 use crate::battle::state::{
     ActionFailureReason, BattleEvent, BattleState, EventBus, GameState, TurnRng,
 };
-use crate::move_data::MoveData;
+use crate::move_data::{get_move_data};
 use crate::player::PlayerAction;
 use schema::Move;
 
@@ -337,7 +337,7 @@ pub fn execute_battle_action(
             if let Some(defender_pokemon) =
                 defender_player.team[defender_player.active_pokemon_index].as_ref()
             {
-                let move_data = match MoveData::get_move_data(move_used) {
+                let move_data = match get_move_data(move_used) {
                     Ok(data) => data,
                     Err(_) => {
                         // If we can't get move data, fail the action silently

@@ -3,7 +3,8 @@ use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{ActionFailureReason, BattleEvent, BattleState, TurnRng};
 use crate::battle::stats::{move_hits, move_is_critical_hit};
 use crate::errors::BattleResult;
-use crate::move_data::MoveData;
+use crate::move_data::{get_move_data};
+use crate::battle::move_effects::{BattleMoveEffectExt, BattleMoveDataExt, EffectContext, EffectResult};
 use crate::player::PlayerAction;
 use schema::Move;
 
@@ -38,23 +39,23 @@ pub fn calculate_attack_outcome(
         }));
     }
 
-    let move_data = MoveData::get_move_data(move_used)?;
+    let move_data = get_move_data(move_used)?;
 
     // --- NEW LOGIC START ---
     // First, check for any special move effects that might skip the normal attack sequence.
-    let context = crate::move_data::EffectContext::new(attacker_index, defender_index, move_used);
+    let context = EffectContext::new(attacker_index, defender_index, move_used);
     let mut regular_effect_commands = Vec::new();
 
     for effect in &move_data.effects {
         let effect_result = effect.apply(&context, state, rng);
         match effect_result {
-            crate::move_data::EffectResult::Skip(special_commands) => {
+            EffectResult::Skip(special_commands) => {
                 // This is a special move like ChargeUp, Fly, Rest, etc.
                 // We return ONLY its commands and stop all further processing.
                 commands.extend(special_commands);
                 return Ok(commands);
             }
-            crate::move_data::EffectResult::Continue(effect_commands) => {
+            EffectResult::Continue(effect_commands) => {
                 // This is a regular secondary effect (like Burn or StatChange).
                 // We'll store its commands to be added later if the move hits.
                 regular_effect_commands.extend(effect_commands);
@@ -172,7 +173,7 @@ fn handle_successful_hit(
     }));
 
     // Calculate type effectiveness and damage
-    let move_data = MoveData::get_move_data(move_used)?;
+    let move_data = get_move_data(move_used)?;
     let type_adv_multiplier = calculate_and_emit_type_effectiveness(
         &move_data,
         defender_pokemon,
@@ -392,7 +393,7 @@ fn handle_damage_triggered_conditions(
         return Ok(());
     }
 
-    let move_data = MoveData::get_move_data(move_used)?;
+    let move_data = get_move_data(move_used)?;
     let attacker_target = PlayerTarget::from_index(attacker_index);
     let defender_target = PlayerTarget::from_index(defender_index);
 
@@ -777,7 +778,7 @@ pub fn calculate_action_prevention(
     }
 
     // Check for Nightmare effect - move fails unless target is asleep
-    if let Ok(move_data) = MoveData::get_move_data(move_used) {
+    if let Ok(move_data) = get_move_data(move_used) {
         for effect in &move_data.effects {
             if matches!(effect, crate::move_data::MoveEffect::Nightmare) {
                 // Get the target (enemy) index - if we're player 0, target is 1, and vice versa

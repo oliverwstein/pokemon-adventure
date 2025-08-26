@@ -2,7 +2,7 @@
 
 use crate::battle::state::BattleState;
 use crate::errors::BattleResult;
-use crate::move_data::{MoveCategory, MoveData};
+use crate::move_data::{MoveCategory, get_move_data};
 use crate::player::PlayerAction;
 
 /// A trait for any system that can decide on a battle action.
@@ -56,7 +56,7 @@ impl ScoringAI {
             Some(m) => m,
             None => return Ok(0.0), // Cannot score a move that doesn't exist.
         };
-        let move_data = MoveData::get_move_data(move_instance.move_)?;
+        let move_data = get_move_data(move_instance.move_)?;
 
         // --- Step 1: Calculate the Core Damage Score ---
         // This score is based on the move's potential to deal direct damage.

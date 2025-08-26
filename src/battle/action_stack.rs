@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::battle::state::BattleState;
 use crate::player::PlayerAction;
-use crate::{battle::stats::effective_speed, move_data::MoveData, Move};
+use crate::{battle::stats::effective_speed, move_data::{get_move_data}, Move};
 /// Internal action types for the action stack
 /// These represent atomic actions that can be executed during battle resolution
 #[derive(Debug, Clone)]
@@ -163,7 +163,7 @@ impl ActionStack {
                     .expect("Move must exist in queue");
 
                 let move_data =
-                    MoveData::get_move_data(move_instance.move_).expect("Move data must exist");
+                    get_move_data(move_instance.move_).expect("Move data must exist");
 
                 let speed = effective_speed(active_pokemon, player);
 

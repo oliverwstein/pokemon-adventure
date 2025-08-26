@@ -3,10 +3,10 @@ use crate::errors::{SpeciesDataError, SpeciesDataResult};
 use crate::species::Species;
 use schema::Move;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 // Include the compiled species data
-use crate::move_data::{get_compiled_species_data, MoveData};
+use crate::move_data::{get_compiled_species_data, get_move_data, get_move_max_pp};
 
 /// Get species data for a specific species from the compiled data
 pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
@@ -30,19 +30,9 @@ pub fn get_species_data_unchecked(species: Species) -> Option<PokemonSpecies> {
     get_species_data(species).ok()
 }
 
-// Re-export PokemonType from the schema crate
-pub use schema::PokemonType;
+// Re-export types from the schema crate
+pub use schema::{PokemonType, PokemonSpecies, BaseStats, Learnset, EvolutionData, EvolutionMethod, Item};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Item {
-    // Evolution stones
-    FireStone,
-    WaterStone,
-    ThunderStone,
-    LeafStone,
-    MoonStone,
-    // Add more items as needed
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Hash, Eq)]
 pub enum StatusCondition {
@@ -94,16 +84,6 @@ pub struct PokemonInst {
     pub status: Option<StatusCondition>,  // Status condition with optional parameter
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BaseStats {
-    pub hp: u8,
-    pub attack: u8,
-    pub defense: u8,
-    pub sp_attack: u8,
-    pub sp_defense: u8,
-    pub speed: u8,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct CurrentStats {
     pub hp: u16,
@@ -143,72 +123,18 @@ impl From<[u16; 6]> for CurrentStats {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Learnset {
-    pub level_up: HashMap<u8, Vec<Move>>, // level -> moves learned at that level
-    pub signature: Option<Move>,          // Evolution line signature move
-    pub can_learn: Vec<Move>,             // Moves learnable through tutoring/witnessing
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EvolutionMethod {
-    Level(u8),
-    Item(Item),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EvolutionData {
-    pub evolves_into: Species, // Species name
-    pub method: EvolutionMethod,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PokemonSpecies {
-    pub pokedex_number: u16,
-    pub name: String,
-    pub types: Vec<PokemonType>,
-    pub base_stats: BaseStats,
-    pub learnset: Learnset,
-    pub catch_rate: u8,
-    pub base_exp: u16,
-    pub description: String,
-    pub evolution_data: Option<EvolutionData>,
-}
-
-impl Learnset {
-    #[allow(dead_code)]
-    pub fn learns_at_level(&self, level: u8) -> Option<&Vec<Move>> {
-        self.level_up.get(&level)
-    }
-
-    #[allow(dead_code)]
-    pub fn can_learn_move(&self, move_: Move) -> bool {
-        // Check if move is in signature, level-up, or can_learn lists
-        if self.signature == Some(move_) {
-            return true;
-        }
-
-        for moves in self.level_up.values() {
-            if moves.contains(&move_) {
-                return true;
-            }
-        }
-
-        self.can_learn.contains(&move_)
-    }
-}
 
 impl MoveInstance {
     /// Create a new move instance with max PP
     pub fn new(move_: Move) -> Self {
-        let max_pp = MoveData::get_move_max_pp(move_).unwrap_or(30); // fallback to 30 PP
+        let max_pp = get_move_max_pp(move_).unwrap_or(30); // fallback to 30 PP
 
         MoveInstance { move_, pp: max_pp }
     }
 
     /// Get the max PP for this move
     pub fn max_pp(&self) -> u8 {
-        MoveData::get_move_max_pp(self.move_).unwrap_or(30) // fallback to 30 PP
+        get_move_max_pp(self.move_).unwrap_or(30) // fallback to 30 PP
     }
 
     /// Use the move (decrease PP)
@@ -233,7 +159,7 @@ impl fmt::Display for MoveInstance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Fetch the move's static data using the `Move` enum variant.
         // This call might return None if a move is invalid, so we must handle it.
-        if let Ok(move_data) = MoveData::get_move_data(self.move_) {
+        if let Ok(move_data) = get_move_data(self.move_) {
             // The move data was found, so we can format it nicely.
             write!(
                 f,

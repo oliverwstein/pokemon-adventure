@@ -4,7 +4,7 @@ use pokemon_adventure::battle::engine::{
     collect_npc_actions, ready_for_turn_resolution, resolve_turn,
 };
 use pokemon_adventure::battle::state::{BattleState, EventBus, GameState, TurnRng};
-use pokemon_adventure::move_data::MoveData;
+use pokemon_adventure::move_data::{get_move_data};
 use pokemon_adventure::player::{PlayerAction, PlayerType};
 use pokemon_adventure::prefab_teams::{self, PrefabTeam};
 use pokemon_adventure::{BattlePlayer, Move};
@@ -187,7 +187,7 @@ fn get_player_action(battle_state: &BattleState, switch_only: bool) -> PlayerAct
                     for (i, move_slot) in active_pokemon.moves.iter().enumerate() {
                         if let Some(move_instance) = move_slot {
                             // Fetch move data to compare names
-                            if let Ok(move_data) = MoveData::get_move_data(move_instance.move_) {
+                            if let Ok(move_data) = get_move_data(move_instance.move_) {
                                 if move_data.name.eq_ignore_ascii_case(&move_name) {
                                     return PlayerAction::UseMove { move_index: i };
                                 }
@@ -277,7 +277,7 @@ fn handle_lookup_command(args: &[&str]) {
     match move_name.parse::<Move>() {
         Ok(move_enum) => {
             // The parse was successful, now get the associated data.
-            if let Ok(move_data) = MoveData::get_move_data(move_enum) {
+            if let Ok(move_data) = get_move_data(move_enum) {
                 // We found the data, so print it using its Display implementation.
                 println!("\n--- Move Details ---");
                 println!("{}", move_data);

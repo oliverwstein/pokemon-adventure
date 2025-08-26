@@ -5,7 +5,7 @@
 
 use crate::battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
 use crate::battle::state::{BattleState, GameState, TurnRng};
-use crate::move_data::MoveData;
+use crate::move_data::{get_move_data};
 use crate::player::{PlayerAction, PlayerType};
 use crate::prefab_teams;
 use crate::{BattlePlayer, Move, Species};
@@ -176,7 +176,7 @@ pub fn handle_lookup_move_command(move_name: &str) -> String {
 
     match move_name.parse::<Move>() {
         Ok(move_enum) => {
-            if let Ok(move_data) = MoveData::get_move_data(move_enum) {
+            if let Ok(move_data) = get_move_data(move_enum) {
                 format!("--- Move Details ---\n{}", move_data)
             } else {
                 format!("Could not find details for the move '{}'.", move_name)
@@ -213,7 +213,7 @@ pub fn execute_move_action(
     if let Some(active_pokemon) = player.active_pokemon() {
         for (i, move_slot) in active_pokemon.moves.iter().enumerate() {
             if let Some(move_instance) = move_slot {
-                if let Ok(move_data) = MoveData::get_move_data(move_instance.move_) {
+                if let Ok(move_data) = get_move_data(move_instance.move_) {
                     if move_data.name.eq_ignore_ascii_case(move_name) {
                         let action = PlayerAction::UseMove { move_index: i };
                         return execute_player_action(battle_state, action);

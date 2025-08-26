@@ -1,6 +1,6 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::errors::BattleResult;
-use crate::move_data::{MoveCategory, MoveData};
+use crate::move_data::{MoveCategory, get_move_data};
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
 use schema::Move;
@@ -11,7 +11,7 @@ pub fn effective_attack(
     player: &BattlePlayer,
     move_: Move,
 ) -> BattleResult<u16> {
-    let move_data = MoveData::get_move_data(move_)?;
+    let move_data = get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
     let base_attack = if let Some(transform_condition) = player
@@ -70,7 +70,7 @@ pub fn effective_defense(
     player: &BattlePlayer,
     move_: Move,
 ) -> BattleResult<u16> {
-    let move_data = MoveData::get_move_data(move_)?;
+    let move_data = get_move_data(move_)?;
 
     // Check if transformed - use target Pokemon's base stats
     let base_defense = if let Some(transform_condition) = player
@@ -184,7 +184,7 @@ pub fn move_is_critical_hit(
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> BattleResult<bool> {
-    let move_data = MoveData::get_move_data(move_)?;
+    let move_data = get_move_data(move_)?;
 
     // Status moves cannot be critical hits (with very rare exceptions)
     if matches!(move_data.category, MoveCategory::Status) {
@@ -235,7 +235,7 @@ pub fn move_hits(
     move_: Move,
     rng: &mut crate::battle::state::TurnRng,
 ) -> BattleResult<bool> {
-    let move_data = MoveData::get_move_data(move_)?;
+    let move_data = get_move_data(move_)?;
 
     // If move has no accuracy value, it never misses (like Swift)
     let Some(base_accuracy) = move_data.accuracy else {
@@ -326,7 +326,7 @@ pub fn calculate_attack_damage(
     is_critical: bool,
     rng: &mut crate::battle::state::TurnRng,
 ) -> BattleResult<u16> {
-    let move_data = MoveData::get_move_data(move_used)?;
+    let move_data = get_move_data(move_used)?;
 
     // 1. Get Power from move data. If no power, no damage.
     let Some(power) = move_data.power else {
@@ -390,7 +390,7 @@ pub fn calculate_special_attack_damage(
     _attacker: &PokemonInst,
     defender: &PokemonInst,
 ) -> BattleResult<Option<u16>> {
-    let move_data = MoveData::get_move_data(move_used)?;
+    let move_data = get_move_data(move_used)?;
 
     // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
     // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.

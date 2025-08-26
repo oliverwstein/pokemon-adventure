@@ -1,7 +1,80 @@
-use crate::move_data::MoveData;
-
-use super::MoveEffect;
+use crate::{MoveCategory, PokemonType, StatType, StatusType, Target, TeamCondition};
+use serde::{Deserialize, Serialize};
 use std::fmt;
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MoveData {
+    pub name: String,
+    pub move_type: PokemonType,
+    pub power: Option<u8>, // None for no damage moves
+    pub category: MoveCategory,
+    pub accuracy: Option<u8>, // None for sure-hit moves
+    pub max_pp: u8,
+    pub effects: Vec<MoveEffect>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum MoveEffect {
+    // Basic effects
+    Flinch(u8),   // chance %
+    Burn(u8),     // chance %
+    Freeze(u8),   // chance %
+    Paralyze(u8), // chance %
+    Poison(u8),   // chance %
+    Sedate(u8),   // chance % (sleep)
+    Confuse(u8),  // chance %
+
+    // Stat changes
+    StatChange(Target, StatType, i8, u8), // target, stat, stages, chance %
+    RaiseAllStats(u8),                    // chance %
+
+    // Damage modifiers
+    Recoil(u8),     // % of damage dealt
+    Drain(u8),      // % of damage healed
+    Crit(u8),       // increased crit ratio
+    IgnoreDef(u8),  // chance % to ignore defense
+    SuperFang(u8),  // chance % to halve HP
+    SetDamage(u16), // fixed damage
+    LevelDamage,    // damage = user level
+
+    // Multi-hit
+    MultiHit(u8, u8), // min hits, % chance of continuation
+
+    // Status and conditions
+    Trap(u8),     // chance % to trap
+    Exhaust(u8),  // chance % to exhaust (skip next turn)
+    Priority(i8), // move priority modifier
+    ChargeUp,     // charge for 1 turn
+    InAir,        // go in air (avoid ground moves)
+    Underground,  // go underground
+    Teleport(u8), // chance % to teleport away
+
+    // Special mechanics
+    OHKO,         // one-hit KO
+    Explode,      // user faints
+    Reckless(u8), // recoil if miss, chance %
+    Transform,    // copy target's appearance/stats
+    Conversion,   // change user's type
+    Disable(u8),  // disable target's last move, chance %
+    Counter,      // return double physical damage
+    MirrorMove,   // copy target's last move
+    Metronome,    // random move
+    Substitute,   // create substitute with 25% HP
+    Rest(u8),     // sleep for X turns, full heal
+    Bide(u8),     // store damage for X turns
+    Rage(u8),     // chance % to enter rage mode
+    Rampage,      // rampage
+
+    // Field effects
+    Haze(u8), // remove all stat changes, chance %
+    SetTeamCondition(TeamCondition, u8),
+    Seed(u8),  // leech seed effect, chance %
+    Nightmare, // only works on sleeping targets
+
+    // Utility
+    Heal(u8),                       // heal % of max HP
+    CureStatus(Target, StatusType), // cure specific status
+    Ante(u8), // percent chance to gain money equal to 2x level (Pay Day effect)
+}
 
 impl fmt::Display for MoveEffect {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -212,14 +285,14 @@ impl fmt::Display for MoveEffect {
 
             // --- FIELD AND TEAM EFFECTS ---
             MoveEffect::SetTeamCondition(cond, _) => match cond {
-                // Assuming the enum is at crate::player::TeamCondition
-                crate::player::TeamCondition::Reflect => {
+                // Now we refer to `TeamCondition` directly, as it's part of the same crate.
+                TeamCondition::Reflect => {
                     write!(f, "Reduces damage from physical attacks for several turns.")
-                }
-                crate::player::TeamCondition::LightScreen => {
+                },
+                TeamCondition::LightScreen => {
                     write!(f, "Reduces damage from special attacks for several turns.")
-                }
-                crate::player::TeamCondition::Mist => {
+                },
+                TeamCondition::Mist => {
                     write!(
                         f,
                         "Protects the user's team from having their stats lowered."

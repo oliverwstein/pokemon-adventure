@@ -5,8 +5,8 @@ mod tests {
     use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
+    use schema::Move;
 
     #[test]
     fn test_recover_heals_damaged_pokemon() {

@@ -7,8 +7,8 @@ mod tests {
     };
     use crate::player::{PlayerAction, StatType};
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
+    use schema::Move;
 
     #[test]
     fn test_haze_clears_all_stat_changes_both_players() {

@@ -22,5 +22,5 @@ pub use errors::{
 };
 pub use player::{BattlePlayer, PlayerAction, StatType};
 pub use pokemon::{get_species_data, PokemonInst};
-pub use pokemon_adventure_schema::Move;
+pub use schema::Move;
 pub use species::Species;

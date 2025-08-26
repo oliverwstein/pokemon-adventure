@@ -1,7 +1,7 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::errors::{SpeciesDataError, SpeciesDataResult};
 use crate::species::Species;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 
@@ -31,7 +31,7 @@ pub fn get_species_data_unchecked(species: Species) -> Option<PokemonSpecies> {
 }
 
 // Re-export PokemonType from the schema crate
-pub use pokemon_adventure_schema::PokemonType;
+pub use schema::PokemonType;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Item {

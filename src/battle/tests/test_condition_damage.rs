@@ -6,9 +6,9 @@ mod tests {
     use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
+    use schema::Move;
 
     #[test]
     fn test_leech_seed_damage_and_healing() {

@@ -3,7 +3,7 @@ use crate::errors::BattleResult;
 use crate::player::BattlePlayer;
 use crate::pokemon::{PokemonInst, StatusCondition};
 use crate::species::Species;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 
 /// A builder for creating test Pokemon instances with common defaults.
 ///

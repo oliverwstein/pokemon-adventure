@@ -15,7 +15,7 @@ use crate::battle::state::{
 };
 use crate::move_data::MoveData;
 use crate::player::PlayerAction;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 
 pub fn collect_npc_actions(battle_state: &BattleState) -> Vec<(usize, PlayerAction)> {
     let ai_brain = ScoringAI::new();

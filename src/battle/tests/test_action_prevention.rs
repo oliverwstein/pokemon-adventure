@@ -9,9 +9,9 @@ mod tests {
     };
     use crate::pokemon::StatusCondition;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
+    use schema::Move;
 
     #[test]
     fn test_sleep_prevents_action() {

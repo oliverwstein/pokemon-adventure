@@ -1,7 +1,7 @@
 use crate::player::BattlePlayer;
 use crate::pokemon::PokemonInst;
 use crate::species::Species;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use serde::{Deserialize, Serialize};
 
 /// A predefined team configuration for guest battles

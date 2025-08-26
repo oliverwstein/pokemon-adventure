@@ -7,8 +7,8 @@ mod tests {
     use crate::player::StatType;
     use crate::pokemon::StatusCondition;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
+    use schema::Move;
 
     #[test]
     fn test_swords_dance_raises_attack() {

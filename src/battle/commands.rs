@@ -3,7 +3,7 @@ use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus};
 use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 
 /// Player target for commands - provides type safety over raw indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

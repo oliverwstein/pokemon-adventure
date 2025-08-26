@@ -5,9 +5,9 @@ mod tests {
     use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
+    use schema::Move;
 
     #[test]
     fn test_metronome_selects_and_uses_a_random_move() {

@@ -3,7 +3,7 @@ use std::fmt;
 use crate::battle::conditions::PokemonCondition;
 use crate::player::{BattlePlayer, PlayerAction, StatType, TeamCondition};
 use crate::species::Species;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
@@ -623,7 +623,7 @@ mod event_formatting_tests {
     use crate::player::BattlePlayer;
     use crate::pokemon::{get_species_data, PokemonInst, StatusCondition};
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
+    use schema::Move;
 
     fn create_test_battle_state() -> BattleState {
         let pikachu_data = get_species_data(Species::Pikachu).expect("Failed to load Pikachu data");

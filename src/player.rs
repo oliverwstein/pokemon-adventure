@@ -1,6 +1,6 @@
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::pokemon::PokemonInst;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
@@ -58,7 +58,7 @@ impl fmt::Display for TeamCondition {
 }
 
 // Re-export StatType from the schema crate
-pub use pokemon_adventure_schema::StatType;
+pub use schema::StatType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerType {

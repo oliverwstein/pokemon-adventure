@@ -1,5 +1,5 @@
 use crate::species::Species;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use std::fmt;
 
 /// Main error type for the Pokemon Adventure battle engine

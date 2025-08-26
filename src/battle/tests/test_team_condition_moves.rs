@@ -5,9 +5,9 @@ mod tests {
     use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::player::{PlayerAction, TeamCondition};
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
+    use schema::Move;
 
     #[rstest]
     #[case("Reflect", Move::Reflect, TeamCondition::Reflect)]

@@ -5,8 +5,8 @@ mod tests {
     use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use rstest::rstest;
+    use schema::Move;
 
     #[rstest]
     #[case(

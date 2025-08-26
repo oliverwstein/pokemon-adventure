@@ -1,7 +1,7 @@
 use std::fmt;
 
 // Re-export the Species enum from the schema crate
-pub use pokemon_adventure_schema::Species;
+pub use schema::Species;
 
 use crate::get_species_data;
 

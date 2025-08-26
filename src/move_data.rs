@@ -1,7 +1,7 @@
 use crate::battle::conditions::PokemonCondition;
 use crate::errors::{MoveDataError, MoveDataResult};
 use crate::pokemon::PokemonType;
-use pokemon_adventure_schema::Move;
+use schema::Move;
 use serde::{Deserialize, Serialize};
 
 // helper modules
@@ -14,7 +14,7 @@ mod status_effects;
 include!(concat!(env!("OUT_DIR"), "/generated_data.rs"));
 
 // Re-export move-related types from the schema crate
-pub use pokemon_adventure_schema::{MoveCategory, StatType, StatusType, Target};
+pub use schema::{MoveCategory, StatType, StatusType, Target};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum MoveEffect {
@@ -85,7 +85,7 @@ pub enum MoveEffect {
 pub struct EffectContext {
     pub attacker_index: usize,
     pub defender_index: usize,
-    pub move_used: pokemon_adventure_schema::Move,
+    pub move_used: schema::Move,
 }
 
 /// Result of applying a move effect, controlling execution flow
@@ -98,11 +98,7 @@ pub enum EffectResult {
 }
 
 impl EffectContext {
-    pub fn new(
-        attacker_index: usize,
-        defender_index: usize,
-        move_used: pokemon_adventure_schema::Move,
-    ) -> Self {
+    pub fn new(attacker_index: usize, defender_index: usize, move_used: schema::Move) -> Self {
         Self {
             attacker_index,
             defender_index,

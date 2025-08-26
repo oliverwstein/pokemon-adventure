@@ -7,7 +7,7 @@ use crate::{
     player::StatType,
     pokemon::{PokemonInst, PokemonType},
 };
-use pokemon_adventure_schema::Move;
+use schema::Move;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PokemonCondition {
     Flinched,

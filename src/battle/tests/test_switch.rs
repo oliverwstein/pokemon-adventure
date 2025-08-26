@@ -5,8 +5,8 @@ mod tests {
     use crate::battle::state::{BattleEvent, EventBus, TurnRng};
     use crate::battle::tests::common::{create_test_player, TestPokemonBuilder};
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
     use pretty_assertions::assert_eq;
+    use schema::Move;
 
     #[test]
     fn test_switch_event_shows_correct_pokemon() {

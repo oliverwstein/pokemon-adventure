@@ -3,7 +3,7 @@ use crate::errors::BattleResult;
 use crate::move_data::{MoveCategory, MoveData};
 use crate::player::{BattlePlayer, StatType};
 use crate::pokemon::{PokemonInst, PokemonType};
-use pokemon_adventure_schema::Move;
+use schema::Move;
 
 /// Calculate effective attack stat including stat stages, conditions, and other modifiers
 pub fn effective_attack(
@@ -523,40 +523,24 @@ mod tests {
 
         // Burn should halve physical attack: 80 / 2 = 40
         assert_eq!(
-            assert_ok(effective_attack(
-                &pokemon,
-                &player,
-                pokemon_adventure_schema::Move::Tackle
-            )),
+            assert_ok(effective_attack(&pokemon, &player, schema::Move::Tackle)),
             40
         );
 
         // Burn should NOT affect special attacks
         assert_eq!(
-            assert_ok(effective_attack(
-                &pokemon,
-                &player,
-                pokemon_adventure_schema::Move::Ember
-            )),
+            assert_ok(effective_attack(&pokemon, &player, schema::Move::Ember)),
             80
         );
 
         // Test without burn
         pokemon.status = None;
         assert_eq!(
-            assert_ok(effective_attack(
-                &pokemon,
-                &player,
-                pokemon_adventure_schema::Move::Tackle
-            )),
+            assert_ok(effective_attack(&pokemon, &player, schema::Move::Tackle)),
             80
         );
         assert_eq!(
-            assert_ok(effective_attack(
-                &pokemon,
-                &player,
-                pokemon_adventure_schema::Move::Ember
-            )),
+            assert_ok(effective_attack(&pokemon, &player, schema::Move::Ember)),
             80
         );
     }
@@ -595,7 +579,7 @@ mod tests {
         assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
-            pokemon_adventure_schema::Move::Tackle,
+            schema::Move::Tackle,
             &mut rng_low,
         ));
 
@@ -604,7 +588,7 @@ mod tests {
         assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
-            pokemon_adventure_schema::Move::Tackle,
+            schema::Move::Tackle,
             &mut rng_high,
         ));
 
@@ -614,7 +598,7 @@ mod tests {
         assert_ok_true(move_is_critical_hit(
             &pokemon,
             &player,
-            pokemon_adventure_schema::Move::Tackle,
+            schema::Move::Tackle,
             &mut rng_focus,
         ));
 
@@ -623,7 +607,7 @@ mod tests {
         assert_ok_false(move_is_critical_hit(
             &pokemon,
             &player,
-            pokemon_adventure_schema::Move::Growl,
+            schema::Move::Growl,
             &mut rng_status,
         ));
     }
@@ -676,7 +660,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                pokemon_adventure_schema::Move::Tackle
+                schema::Move::Tackle
             )),
             40,
             "Burn should halve physical attack: 80/2=40"
@@ -685,7 +669,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                pokemon_adventure_schema::Move::Ember
+                schema::Move::Ember
             )),
             80,
             "Burn should NOT affect special attack"
@@ -706,7 +690,7 @@ mod tests {
             assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
-                pokemon_adventure_schema::Move::Tackle
+                schema::Move::Tackle
             )),
             80,
             "Paralysis should NOT affect attack"
@@ -715,7 +699,7 @@ mod tests {
             assert_ok(effective_attack(
                 &paralyzed_pokemon,
                 &player,
-                pokemon_adventure_schema::Move::ThunderPunch
+                schema::Move::ThunderPunch
             )),
             80,
             "Paralysis should NOT affect special attack"
@@ -729,7 +713,7 @@ mod tests {
             assert_ok(effective_attack(
                 &burned_pokemon,
                 &player,
-                pokemon_adventure_schema::Move::Tackle
+                schema::Move::Tackle
             )),
             80
         );

@@ -62,7 +62,7 @@ fn generate_move_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Error>
 
     writeln!(
         f,
-        "pub fn get_compiled_move_data() -> std::collections::HashMap<pokemon_adventure_schema::Move, crate::move_data::MoveData> {{"
+        "pub fn get_compiled_move_data() -> std::collections::HashMap<schema::Move, crate::move_data::MoveData> {{"
     )?;
     writeln!(f, "    let mut map = std::collections::HashMap::new();")?;
 
@@ -70,7 +70,7 @@ fn generate_move_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Error>
         // Use raw string literal with a unique delimiter to avoid conflicts
         writeln!(
             f,
-            "    map.insert(pokemon_adventure_schema::Move::{}, ron::from_str(r####\"{}\"####).unwrap());",
+            "    map.insert(schema::Move::{}, ron::from_str(r####\"{}\"####).unwrap());",
             move_variant, ron_content
         )?;
     }
@@ -116,7 +116,7 @@ fn generate_species_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Err
     for (species_variant, ron_content) in species {
         writeln!(
             f,
-            "    data[pokemon_adventure_schema::Species::{}.pokedex_number() as usize - 1] = Some(ron::from_str(r####\"{}\"####).unwrap());",
+            "    data[schema::Species::{}.pokedex_number() as usize - 1] = Some(ron::from_str(r####\"{}\"####).unwrap());",
             species_variant, ron_content
         )?;
     }

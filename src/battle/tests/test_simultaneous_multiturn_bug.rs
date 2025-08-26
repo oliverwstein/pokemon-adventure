@@ -6,7 +6,7 @@ mod tests {
     use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
     use crate::player::{PlayerAction, PlayerType};
     use crate::species::Species;
-    use pokemon_adventure_schema::Move;
+    use schema::Move;
 
     #[test]
     fn test_simultaneous_multiturn_moves_resolve_correctly() {

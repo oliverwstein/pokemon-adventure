@@ -3,10 +3,10 @@ MoveData(
     move_type: Normal,
     power: Some(20),
     category: Special,
-    accuracy: Some(100),
+    accuracy: None,
     max_pp: 10,
     effects: [
-        Flinch(50),
-        StatChange(User, Atk, 1, 20),
+        Flinch(10),
+        StatChange(User, Atk, 1, 50),
     ],
 )

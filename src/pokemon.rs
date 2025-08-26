@@ -23,13 +23,6 @@ pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
         .ok_or(SpeciesDataError::SpeciesNotFound(species))
 }
 
-/// Get species data for a specific species from the compiled data (legacy version that panics)
-/// This function is deprecated - use get_species_data() instead
-#[deprecated(note = "Use get_species_data() instead for proper error handling")]
-pub fn get_species_data_unchecked(species: Species) -> Option<PokemonSpecies> {
-    get_species_data(species).ok()
-}
-
 // Re-export types from the schema crate
 pub use schema::{PokemonType, PokemonSpecies, BaseStats, Learnset, EvolutionData, EvolutionMethod, Item};
 
@@ -337,13 +330,6 @@ impl PokemonInst {
     /// Get the species data for this Pokemon instance.
     pub fn get_species_data(&self) -> SpeciesDataResult<PokemonSpecies> {
         get_species_data(self.species)
-    }
-
-    /// Get species data (legacy version)
-    /// This function is deprecated - use get_species_data() instead
-    #[deprecated(note = "Use get_species_data() instead for proper error handling")]
-    pub fn get_species_data_unchecked(&self) -> Option<PokemonSpecies> {
-        self.get_species_data().ok()
     }
 
     /// Get the current types, accounting for Transform and Conversion conditions.

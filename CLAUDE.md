@@ -25,8 +25,10 @@ This is a comprehensive Rust implementation of a Pokemon text adventure battle s
   - Stat stages: ±6 modification system with accurate multipliers
   - Team conditions: Reflect, Light Screen, Mist for advanced strategy
 - **Species System** (`src/species.rs`): Complete Gen 1 Pokemon roster with 151 species enumeration
-- **Prefab Teams** (`src/prefab_teams.rs`): Balanced team compositions for API integration
-  - 3 starter teams: Venusaur, Blastoise, Charizard with strategic movesets
+- **Team System** (`src/teams.rs`): Flexible RON-based team management with build-time compilation
+  - Demo teams: Venusaur, Blastoise, Charizard with strategic movesets (level 60, balanced)
+  - Support for both specified movesets and learnset-based auto-generation
+  - Extensible team creation system using RON data files
 
 ### Key Design Patterns
 
@@ -65,11 +67,23 @@ The system uses RON (Rusty Object Notation) for human-readable data files with c
 - **Priority System**: Move priority values for speed-based turn order resolution
 - **Target Selection**: Self, opponent, user's team, opponent's team targeting modes
 
+### Team Data (`data/teams/`)
+- **RON Team Templates**: Human-readable team definitions with flexible move specification
+- **Demo Teams**: Pre-balanced teams in `data/teams/demo/` (Venusaur, Blastoise, Charizard)
+  - Level 60 Pokemon with curated movesets for balanced competitive play
+  - Exact preservation of strategic move combinations from original system
+- **Flexible Move System**: Teams can specify exact moves or use auto-generated learnset moves
+  - `moves: Some([SleepPowder, SolarBeam, PetalDance, Earthquake])` - specified moves
+  - `moves: None` - automatically use the last 4 moves learned by level from learnset
+- **Extensible Structure**: Easy addition of new teams through RON file creation
+- **Recursive Processing**: Build system processes team files in subdirectories for organization
+
 ### Compile-Time Optimization
-- **Build Script Integration**: `build.rs` processes all RON files during compilation
-- **Generated Code**: Creates Rust source with embedded data structures
+- **Build Script Integration**: `build.rs` processes all RON files (Pokemon, moves, teams) during compilation
+- **Generated Code**: Creates Rust source with embedded data structures for all game data
+- **Postcard Serialization**: Binary serialization of team, move, and species data for minimal runtime overhead
 - **Zero Runtime Cost**: No file I/O or parsing during battle execution
-- **Type Safety**: Compile-time verification of all Pokemon/move references
+- **Type Safety**: Compile-time verification of all Pokemon/move/team references
 - **Hot Path Optimization**: Critical battle data pre-computed and inlined
 
 ## Testing Strategy
@@ -293,10 +307,13 @@ The testing framework uses modern Rust testing practices for maintainability and
 
 ## Development & Testing
 
-- **138 Comprehensive Tests**: Full coverage including new command-based architecture validation
+- **211+ Comprehensive Tests**: Full coverage including command-based architecture and team system validation
 - **Pure Function Testing**: Calculator functions tested independently of state mutation
 - **Command Execution Testing**: Atomic command testing with automatic event validation
 - **Integration Test Examples**: Complete battle scenarios demonstrating system capabilities
+- **Team System Testing**: RON-based team loading, template processing, and compatibility validation
+- **RSTest Framework**: Parametric testing with descriptive case names for confusion damage, stat modifications
+- **Special Damage Move Testing**: Comprehensive coverage of SuperFang, Dragon Rage, Sonic Boom, level-based damage
 - **Deterministic RNG**: Predictable random outcomes for reliable testing
 - **Modular Architecture**: Perfect separation between calculation (`calculators.rs`) and execution (`engine.rs`)
 - **Type-Safe Conditions**: HashMap-based condition system with proper `Hash`/`Eq` implementations
@@ -313,4 +330,30 @@ The testing framework uses modern Rust testing practices for maintainability and
 - **Type-Safe**: Compile-time prevention of invalid Pokemon/move combinations
 - **Deterministic Testing**: Reproducible battle outcomes for comprehensive test coverage
 
-This system provides a robust, well-tested foundation for Pokemon battle mechanics with authentic Gen 1 accuracy, elegant Command-Execution architecture, and room for expansion into advanced features like abilities, held items, and additional generations.
+## System Evolution & Architecture Migration
+
+### RON-Based Team System Migration (Recent)
+The system recently underwent a significant architectural improvement, migrating from hardcoded team definitions to a flexible, data-driven approach:
+
+**Previous System**: Hardcoded teams in `prefab_teams.rs` with fixed move assignments
+**Current System**: RON-based team templates with build-time compilation and flexible move specification
+
+**Key Improvements**:
+- **Data-Driven Teams**: Team definitions moved to human-readable RON files in `data/teams/`
+- **Flexible Move Assignment**: Teams can use curated movesets or auto-generated learnset moves
+- **Extensibility**: New teams easily added without code changes
+- **Compile-Time Optimization**: Team data embedded in binary via postcard serialization
+- **Backward Compatibility**: All existing team functions preserved (`get_venusaur_team()`, etc.)
+
+**Migration Details**:
+- Created `src/teams.rs` module replacing `src/prefab_teams.rs`
+- Updated `build.rs` with team data generation and serialization
+- Preserved exact move combinations from original hardcoded teams
+- Updated `mcp_interface.rs` and `main.rs` to use new team system
+- All 211 tests passing with complete functionality preservation
+
+This architectural evolution maintains the system's performance characteristics while significantly improving maintainability and extensibility for team management.
+
+---
+
+This system provides a robust, well-tested foundation for Pokemon battle mechanics with authentic Gen 1 accuracy, elegant Command-Execution architecture, modern RON-based data management, and room for expansion into advanced features like abilities, held items, and additional generations.

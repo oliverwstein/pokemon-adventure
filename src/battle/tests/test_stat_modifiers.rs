@@ -37,7 +37,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case("P1 Attack increase (Swords Dance)", Move::SwordsDance, Move::Tackle, true)]
+    #[case(
+        "P1 Attack increase (Swords Dance)",
+        Move::SwordsDance,
+        Move::Tackle,
+        true
+    )]
     #[case("P2 Defense decrease (Tail Whip)", Move::TailWhip, Move::Tackle, true)]
     #[case("P1 Attack decrease (Growl)", Move::Tackle, Move::Growl, false)]
     #[case("P2 Defense increase (Harden)", Move::Tackle, Move::Harden, false)]
@@ -54,7 +59,7 @@ mod tests {
         let p2_baseline = TestPokemonBuilder::new(Species::Geodude, 20)
             .with_moves(vec![Move::Tackle])
             .build();
-        
+
         let baseline_damage = get_damage_from_turn(
             p1_baseline,
             p2_baseline,
@@ -76,7 +81,7 @@ mod tests {
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 1 });
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 1 });
         let setup_event_bus = resolve_turn(&mut battle_state, predictable_rng());
-        
+
         // Debug: Print setup events to see what stat changes occurred
         setup_event_bus.print_debug_with_message(&format!(
             "Setup events for test_physical_stat_modifiers_affect_damage [{}]:",
@@ -123,9 +128,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case("Accuracy decrease causes miss", -1, 0, 75, true)]   // -1 accuracy stage, 75 roll should miss Slam (75% base)
-    #[case("Evasion increase causes miss", 0, 1, 75, true)]    // +1 evasion stage, 75 roll should miss Slam
-    #[case("No modifiers, move hits", 0, 0, 75, false)]        // No modifiers, 75 roll should hit Slam
+    #[case("Accuracy decrease causes miss", -1, 0, 75, true)] // -1 accuracy stage, 75 roll should miss Slam (75% base)
+    #[case("Evasion increase causes miss", 0, 1, 75, true)] // +1 evasion stage, 75 roll should miss Slam
+    #[case("No modifiers, move hits", 0, 0, 75, false)] // No modifiers, 75 roll should hit Slam
     fn test_accuracy_evasion_modifiers(
         #[case] desc: &str,
         #[case] accuracy_stage: i8,
@@ -164,17 +169,31 @@ mod tests {
             desc
         ));
 
-        let slam_hit = event_bus
-            .events()
-            .iter()
-            .any(|e| matches!(e, BattleEvent::MoveHit { move_used: Move::Slam, .. }));
-        let slam_missed = event_bus
-            .events()
-            .iter()
-            .any(|e| matches!(e, BattleEvent::MoveMissed { move_used: Move::Slam, .. }));
+        let slam_hit = event_bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::MoveHit {
+                    move_used: Move::Slam,
+                    ..
+                }
+            )
+        });
+        let slam_missed = event_bus.events().iter().any(|e| {
+            matches!(
+                e,
+                BattleEvent::MoveMissed {
+                    move_used: Move::Slam,
+                    ..
+                }
+            )
+        });
 
         if expect_miss {
-            assert!(slam_missed && !slam_hit, "[{}] Slam should have missed", desc);
+            assert!(
+                slam_missed && !slam_hit,
+                "[{}] Slam should have missed",
+                desc
+            );
         } else {
             assert!(slam_hit && !slam_missed, "[{}] Slam should have hit", desc);
         }
@@ -215,7 +234,9 @@ mod tests {
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 1 }); // Agility
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
         let bus2 = resolve_turn(&mut battle_state, predictable_rng());
-        bus2.print_debug_with_message("Events for test_speed_modifier_changes_turn_order (Turn 2 - Agility):");
+        bus2.print_debug_with_message(
+            "Events for test_speed_modifier_changes_turn_order (Turn 2 - Agility):",
+        );
 
         // Act - Turn 3: Test new turn order
         battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 }); // Tackle
@@ -232,8 +253,12 @@ mod tests {
             .collect();
 
         // Assert
-        bus1.print_debug_with_message("Events for test_speed_modifier_changes_turn_order (Turn 1):");
-        bus3.print_debug_with_message("Events for test_speed_modifier_changes_turn_order (Turn 3):");
+        bus1.print_debug_with_message(
+            "Events for test_speed_modifier_changes_turn_order (Turn 1):",
+        );
+        bus3.print_debug_with_message(
+            "Events for test_speed_modifier_changes_turn_order (Turn 3):",
+        );
 
         assert_eq!(
             move_order3,

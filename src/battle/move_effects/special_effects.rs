@@ -352,10 +352,11 @@ fn is_excluded_from_metronome(move_: Move) -> bool {
         Ok(data) => data,
         Err(_) => return true, // Exclude moves we can't get data for
     };
-    
+
     // Check for move effects that should be excluded from Metronome
     move_data.effects.iter().any(|effect| {
-        matches!(effect,
+        matches!(
+            effect,
             schema::MoveEffect::Metronome |           // Can't call itself
             schema::MoveEffect::MirrorMove |          // Meta-moves
             schema::MoveEffect::Transform |           // Transformation moves
@@ -364,8 +365,8 @@ fn is_excluded_from_metronome(move_: Move) -> bool {
             schema::MoveEffect::Underground |         // Semi-invulnerable moves
             schema::MoveEffect::Teleport(_) |         // Escape moves
             schema::MoveEffect::Counter |             // Reactive moves
-            schema::MoveEffect::Bide(_)               // Charging moves
-            // Add other exclusions as needed
+            schema::MoveEffect::Bide(_) // Charging moves
+                                        // Add other exclusions as needed
         )
     })
 }
@@ -376,24 +377,21 @@ pub(super) fn apply_metronome_special(
     rng: &mut TurnRng,
 ) -> EffectResult {
     let total_moves = Move::count();
-    
+
     let rng1 = rng.next_outcome("Metronome Move Select 1") as usize;
     let rng2 = rng.next_outcome("Metronome Move Select 2") as usize;
-    
+
     // Calculate multiplier to ensure we have sufficient range
     let multiplier = (total_moves / 100) + 1;
     let combined_range = rng1 * multiplier + rng2;
     let start_index = combined_range % total_moves;
-    
+
     // Find the first valid move using elegant iterator chaining
     let selected_move = (0..total_moves)
-        .cycle()                    // Infinite repeating sequence
-        .skip(start_index)          // Start from our random position  
-        .take(total_moves)          // Only check each move once
-        .find_map(|index| {
-            Move::from_index(index)
-                .filter(|&mov| !is_excluded_from_metronome(mov))
-        });
+        .cycle() // Infinite repeating sequence
+        .skip(start_index) // Start from our random position
+        .take(total_moves) // Only check each move once
+        .find_map(|index| Move::from_index(index).filter(|&mov| !is_excluded_from_metronome(mov)));
 
     if let Some(selected_move) = selected_move {
         if let Some(attacker_pokemon) = state.players[context.attacker_index].active_pokemon() {
@@ -414,7 +412,7 @@ pub(super) fn apply_metronome_special(
             return EffectResult::Skip(commands);
         }
     }
-    
+
     EffectResult::Continue(Vec::new())
 }
 

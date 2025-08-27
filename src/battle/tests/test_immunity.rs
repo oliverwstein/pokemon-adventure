@@ -88,7 +88,10 @@ mod tests {
             let no_effect_event = event_bus.events().iter().any(|e| {
                 matches!(e, BattleEvent::AttackTypeEffectiveness { multiplier } if *multiplier < 0.01)
             });
-            assert!(no_effect_event, "The 'no effect' event should have been emitted for the immune interaction");
+            assert!(
+                no_effect_event,
+                "The 'no effect' event should have been emitted for the immune interaction"
+            );
         }
     }
 }

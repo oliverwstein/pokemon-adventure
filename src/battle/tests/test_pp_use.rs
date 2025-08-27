@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::battle::engine::resolve_turn;
-    use crate::battle::state::{BattleEvent};
+    use crate::battle::state::BattleEvent;
     use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
@@ -28,10 +28,7 @@ mod tests {
         let _ = resolve_turn(&mut battle_state, predictable_rng());
 
         // Assert
-        let final_pp = battle_state.players[0]
-            .active_pokemon()
-            .unwrap()
-            .moves[0]
+        let final_pp = battle_state.players[0].active_pokemon().unwrap().moves[0]
             .as_ref()
             .unwrap()
             .pp;

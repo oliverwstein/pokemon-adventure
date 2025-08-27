@@ -385,9 +385,7 @@ impl BattleEvent {
             }
 
             // === Battle Economy Events ===
-            BattleEvent::AnteIncreased {  .. } => {
-                Some(format!("Coins scattered around!"))
-            }
+            BattleEvent::AnteIncreased { .. } => Some(format!("Coins scattered around!")),
 
             // === Battle End Events ===
             BattleEvent::PlayerDefeated { player_index } => {

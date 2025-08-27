@@ -91,7 +91,6 @@ pub fn calculate_attack_outcome(
             move_used,
             rng,
         )?;
-        
 
         commands.extend(hit_commands.clone());
 

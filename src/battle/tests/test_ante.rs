@@ -82,7 +82,8 @@ mod tests {
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 }); // Splash
 
         // Use an RNG roll of 100. For an effect with `chance: 100`, this should still succeed.
-        let test_rng = TurnRng::new_for_test(vec![50, 100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
+        let test_rng =
+            TurnRng::new_for_test(vec![50, 100, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]);
 
         // Act
         let event_bus = resolve_turn(&mut battle_state, test_rng);

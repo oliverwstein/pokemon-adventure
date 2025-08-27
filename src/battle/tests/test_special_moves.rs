@@ -287,9 +287,10 @@ mod tests {
         let event_bus = resolve_turn(&mut battle_state, predictable_rng());
 
         // Assert
-        event_bus
-            .print_debug_with_message("Events for test_explosion_against_immune_target_still_faints_user:");
-        
+        event_bus.print_debug_with_message(
+            "Events for test_explosion_against_immune_target_still_faints_user:",
+        );
+
         // The move should be used
         let move_used = event_bus.events().iter().any(|e| {
             matches!(
@@ -301,8 +302,11 @@ mod tests {
                 }
             )
         });
-        assert!(move_used, "Explosion should be used even against immune target");
-        
+        assert!(
+            move_used,
+            "Explosion should be used even against immune target"
+        );
+
         // Electrode should still faint from the self-destruct effect
         assert!(
             battle_state.players[0]
@@ -311,7 +315,7 @@ mod tests {
                 .is_fainted(),
             "Electrode should faint from Explosion even when target is immune"
         );
-        
+
         // Check that faint event occurred for Electrode
         let electrode_faint_event = event_bus.events().iter().any(|e| {
             matches!(
@@ -327,7 +331,7 @@ mod tests {
             electrode_faint_event,
             "Faint event should occur for Electrode even when target is immune"
         );
-        
+
         // Gengar should take no damage due to immunity
         let final_gengar_hp = battle_state.players[1]
             .active_pokemon()

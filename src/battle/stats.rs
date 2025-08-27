@@ -393,15 +393,12 @@ pub fn calculate_attack_damage(
 
 pub fn calculate_special_attack_damage(
     move_used: Move,
-    _attacker: &PokemonInst,
+    attacker: &PokemonInst,
     defender: &PokemonInst,
 ) -> BattleResult<Option<u16>> {
     let move_data = get_move_data(move_used)?;
-
-    // For now, we assume a fixed level for all battle calculations, consistent with the standard formula.
-    // TODO: When/if PokemonInst gets a `level` field, this should be changed to `attacker.level`.
-    let attacker_level: u16 = 50;
-    let defender_level: u16 = 50;
+    let attacker_level: u16 = attacker.level.into();
+    let defender_level: u16 = defender.level.into();
 
     for effect in &move_data.effects {
         match effect {

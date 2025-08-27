@@ -1,0 +1,37 @@
+TeamTemplate(
+    id: "demo_blastoise",
+    name: "Blastoise Team",
+    description: "Balanced team featuring Blastoise with excellent type diversity and control options",
+    pokemon: [
+        PokemonTemplate(
+            species: Blastoise,
+            level: 60,
+            moves: Some([HydroPump, IceBeam, Earthquake, Bide]),
+        ),
+        PokemonTemplate(
+            species: Dragonite,
+            level: 60,
+            moves: Some([BodySlam, Earthquake, Thunderclap, Outrage]),
+        ),
+        PokemonTemplate(
+            species: Dodrio,
+            level: 60,
+            moves: Some([TriAttack, DrillPeck, Toxic, Whirlwind]),
+        ),
+        PokemonTemplate(
+            species: Magneton,
+            level: 60,
+            moves: Some([ChargeBeam, Discharge, ThunderWave, TriAttack]),
+        ),
+        PokemonTemplate(
+            species: Exeggutor,
+            level: 60,
+            moves: Some([Perplex, EggBomb, Rest, Hypnosis]),
+        ),
+        PokemonTemplate(
+            species: Gengar,
+            level: 60,
+            moves: Some([Hypnosis, DreamEater, ShadowBall, PoisonGas]),
+        ),
+    ],
+)

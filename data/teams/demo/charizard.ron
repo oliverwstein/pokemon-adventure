@@ -1,0 +1,37 @@
+TeamTemplate(
+    id: "demo_charizard",
+    name: "Charizard Team",
+    description: "Aggressive team featuring Charizard with high offensive potential and versatility",
+    pokemon: [
+        PokemonTemplate(
+            species: Charizard,
+            level: 60,
+            moves: Some([Fly, FireSpin, AncientPower, Outrage]),
+        ),
+        PokemonTemplate(
+            species: Starmie,
+            level: 60,
+            moves: Some([Perplex, IceBeam, Recover, Bubblebeam]),
+        ),
+        PokemonTemplate(
+            species: Raichu,
+            level: 60,
+            moves: Some([Lightning, QuickAttack, Substitute, DoubleTeam]),
+        ),
+        PokemonTemplate(
+            species: Machamp,
+            level: 60,
+            moves: Some([RockSlide, Earthquake, Submission, ThunderPunch]),
+        ),
+        PokemonTemplate(
+            species: Weezing,
+            level: 60,
+            moves: Some([Explosion, PoisonGas, Toxic, Haze]),
+        ),
+        PokemonTemplate(
+            species: Dugtrio,
+            level: 60,
+            moves: Some([Earthquake, RockSlide, Fissure, DoubleTeam]),
+        ),
+    ],
+)

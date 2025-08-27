@@ -1,0 +1,37 @@
+TeamTemplate(
+    id: "demo_venusaur",
+    name: "Venusaur Team",
+    description: "Elite team featuring Venusaur with diverse type coverage and strategic options",
+    pokemon: [
+        PokemonTemplate(
+            species: Venusaur,
+            level: 60,
+            moves: Some([SleepPowder, SolarBeam, PetalDance, Earthquake]),
+        ),
+        PokemonTemplate(
+            species: Arcanine,
+            level: 60,
+            moves: Some([RockSlide, Roar, Flamethrower, QuickAttack]),
+        ),
+        PokemonTemplate(
+            species: Lapras,
+            level: 60,
+            moves: Some([Blizzard, Surf, Reflect, Substitute]),
+        ),
+        PokemonTemplate(
+            species: Nidoking,
+            level: 60,
+            moves: Some([PoisonJab, Submission, Earthquake, Thunderclap]),
+        ),
+        PokemonTemplate(
+            species: Hitmonlee,
+            level: 60,
+            moves: Some([HighJumpKick, Submission, MegaKick, FocusEnergy]),
+        ),
+        PokemonTemplate(
+            species: Snorlax,
+            level: 60,
+            moves: Some([BodySlam, Counter, Rest, Perplex]),
+        ),
+    ],
+)

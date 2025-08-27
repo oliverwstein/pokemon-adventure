@@ -379,8 +379,6 @@ impl BattleEvent {
 
             // === Action Failure Events ===
             BattleEvent::ActionFailed { reason } => {
-                // Todo: this needs to note the pokemon that is the subject of the failed action
-                // Who used the move, who was confused, etc.
                 Self::format_action_failure_reason(reason) // Some failures should be silent
             }
 

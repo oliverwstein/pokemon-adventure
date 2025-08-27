@@ -7,45 +7,51 @@ use crate::battle::engine::{collect_npc_actions, ready_for_turn_resolution, reso
 use crate::battle::state::{BattleState, GameState, TurnRng};
 use crate::move_data::get_move_data;
 use crate::player::{PlayerAction, PlayerType};
-use crate::prefab_teams;
+use crate::teams;
 use crate::{BattlePlayer, Move, Species};
 
-/// Returns formatted text displaying available prefab teams
+/// Returns formatted text displaying available demo teams
 pub fn get_available_teams_display() -> String {
-    let teams = prefab_teams::get_prefab_teams();
+    let team_ids = teams::get_demo_team_ids();
     let mut output = String::from("Available Teams:\n");
-    for (i, team) in teams.iter().enumerate() {
-        output.push_str(&format!(
-            "  {}. {} - {}\n",
-            i + 1,
-            team.name,
-            team.description
-        ));
+
+    for (i, team_id) in team_ids.iter().enumerate() {
+        if let Some(team_info) = teams::get_team_info(team_id) {
+            output.push_str(&format!(
+                "  {}. {} - {}\n",
+                i + 1,
+                team_info.name,
+                team_info.description
+            ));
+        }
     }
     output
 }
 
 /// Creates a new battle with the specified team choice and returns initial battle text
 pub fn create_battle(team_choice: usize) -> Result<(BattleState, String), String> {
-    let teams = prefab_teams::get_prefab_teams();
-    if team_choice == 0 || team_choice > teams.len() {
+    let team_ids = teams::get_demo_team_ids();
+    if team_choice == 0 || team_choice > team_ids.len() {
         return Err(format!(
             "Invalid team choice. Please choose 1-{}",
-            teams.len()
+            team_ids.len()
         ));
     }
 
-    let player_team = &teams[team_choice - 1];
-    let mut human_player = prefab_teams::create_battle_player_from_prefab(
-        &player_team.id,
+    let player_team_id = &team_ids[team_choice - 1];
+    let player_team_info = teams::get_team_info(player_team_id)
+        .ok_or_else(|| format!("Team info not found for {}", player_team_id))?;
+
+    let mut human_player = teams::create_battle_player_from_team(
+        player_team_id,
         "human_player".to_string(),
         "Player".to_string(),
     )
     .map_err(|e| format!("Failed to create player team: {}", e))?;
     human_player.player_type = PlayerType::Human;
 
-    let mut npc_player = prefab_teams::create_battle_player_from_prefab(
-        "charizard_team",
+    let mut npc_player = teams::create_battle_player_from_team(
+        "demo_charizard",
         "npc_opponent".to_string(),
         "AI Trainer".to_string(),
     )
@@ -56,7 +62,7 @@ pub fn create_battle(team_choice: usize) -> Result<(BattleState, String), String
 
     let intro_text = format!(
         "🔥 Welcome to the Pokémon Adventure Battle Engine! 🔥\n\nYou chose the {}!\n\n💥 A wild trainer challenges you to a battle! 💥\nYou sent out {}!\n{} sends out {}!",
-        player_team.name,
+        player_team_info.name,
         battle_state.players[0]
             .active_pokemon()
             .map(|p| p.name.as_str())

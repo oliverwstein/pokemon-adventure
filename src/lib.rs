@@ -14,8 +14,8 @@ pub mod mcp_interface;
 pub mod move_data;
 pub mod player;
 pub mod pokemon;
-pub mod prefab_teams;
 pub mod species;
+pub mod teams;
 
 // --- PUBLIC API RE-EXPORTS ---
 // This section defines the public-facing API of the `pokemon-adventure` crate,

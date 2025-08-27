@@ -6,7 +6,7 @@ use pokemon_adventure::battle::engine::{
 use pokemon_adventure::battle::state::{BattleState, EventBus, GameState, TurnRng};
 use pokemon_adventure::move_data::get_move_data;
 use pokemon_adventure::player::{PlayerAction, PlayerType};
-use pokemon_adventure::prefab_teams::{self, PrefabTeam};
+use pokemon_adventure::teams;
 use pokemon_adventure::{BattlePlayer, Move};
 
 /// The main entry point for the text-based battle game.
@@ -14,9 +14,9 @@ fn main() {
     println!("🔥 Welcome to the Pokémon Adventure Battle Engine! 🔥");
 
     // --- Battle Setup ---
-    let player_team = select_player_team();
-    let mut human_player = prefab_teams::create_battle_player_from_prefab(
-        &player_team.id,
+    let player_team_id = select_player_team();
+    let mut human_player = teams::create_battle_player_from_team(
+        &player_team_id,
         "human_player".to_string(),
         "Player".to_string(),
     )
@@ -24,8 +24,8 @@ fn main() {
     human_player.player_type = PlayerType::Human;
 
     // For this demo, the NPC always uses the Charizard team.
-    let mut npc_player = prefab_teams::create_battle_player_from_prefab(
-        "charizard_team",
+    let mut npc_player = teams::create_battle_player_from_team(
+        "demo_charizard",
         "npc_opponent".to_string(),
         "AI Trainer".to_string(),
     )
@@ -101,12 +101,19 @@ fn run_game_loop(battle_state: &mut BattleState) {
     }
 }
 
-/// Prompts the human player to select a prefab team.
-fn select_player_team() -> PrefabTeam {
-    let teams = prefab_teams::get_prefab_teams();
+/// Prompts the human player to select a demo team.
+fn select_player_team() -> String {
+    let team_ids = teams::get_demo_team_ids();
     println!("\nPlease choose your team:");
-    for (i, team) in teams.iter().enumerate() {
-        println!("  {}. {} - {}", i + 1, team.name, team.description);
+    for (i, team_id) in team_ids.iter().enumerate() {
+        if let Some(team_info) = teams::get_team_info(team_id) {
+            println!(
+                "  {}. {} - {}",
+                i + 1,
+                team_info.name,
+                team_info.description
+            );
+        }
     }
 
     loop {
@@ -116,12 +123,12 @@ fn select_player_team() -> PrefabTeam {
         io::stdin().read_line(&mut choice).unwrap();
 
         match choice.trim().parse::<usize>() {
-            Ok(n) if n > 0 && n <= teams.len() => {
-                return teams[n - 1].clone();
+            Ok(n) if n > 0 && n <= team_ids.len() => {
+                return team_ids[n - 1].clone();
             }
             _ => println!(
                 "Invalid selection. Please enter a number from 1 to {}.",
-                teams.len()
+                team_ids.len()
             ),
         }
     }

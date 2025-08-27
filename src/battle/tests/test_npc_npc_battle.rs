@@ -3,23 +3,23 @@ mod tests {
     use crate::battle::engine::{collect_npc_actions, ready_for_turn_resolution, resolve_turn};
     use crate::battle::state::{BattleState, GameState, TurnRng};
     use crate::player::PlayerType;
-    use crate::prefab_teams::create_battle_player_from_prefab;
+    use crate::teams::create_battle_player_from_team;
     use pretty_assertions::assert_ne;
 
     #[test]
     fn test_full_npc_battle_completes_without_crashing() {
         // Arrange: Set up a full battle using prefab teams.
         // This serves as a high-level integration test for the entire engine.
-        let mut player1 = create_battle_player_from_prefab(
-            "venusaur_team",
+        let mut player1 = create_battle_player_from_team(
+            "demo_venusaur",
             "npc_trainer_1".to_string(),
             "AI Trainer Red".to_string(),
         )
         .expect("Failed to create Player 1");
         player1.player_type = PlayerType::NPC;
 
-        let mut player2 = create_battle_player_from_prefab(
-            "charizard_team",
+        let mut player2 = create_battle_player_from_team(
+            "demo_charizard",
             "npc_trainer_2".to_string(),
             "AI Trainer Blue".to_string(),
         )

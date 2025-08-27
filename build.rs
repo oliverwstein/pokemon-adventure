@@ -171,18 +171,24 @@ fn generate_species_data(
 /// and writes a Rust function that loads this data as a static HashMap.
 fn generate_team_data(out_dir: &str, f: &mut fs::File) -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=data/teams");
-    
+
     // First, we need to write the data structures
     writeln!(f, "// Team data structures")?;
-    writeln!(f, "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]")?;
+    writeln!(
+        f,
+        "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]"
+    )?;
     writeln!(f, "pub struct PokemonTemplate {{")?;
     writeln!(f, "    pub species: schema::Species,")?;
     writeln!(f, "    pub level: u8,")?;
     writeln!(f, "    pub moves: Option<Vec<schema::Move>>,")?;
     writeln!(f, "}}")?;
     writeln!(f)?;
-    
-    writeln!(f, "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]")?;
+
+    writeln!(
+        f,
+        "#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]"
+    )?;
     writeln!(f, "pub struct TeamTemplate {{")?;
     writeln!(f, "    pub id: String,")?;
     writeln!(f, "    pub name: String,")?;
@@ -197,23 +203,35 @@ fn generate_team_data(out_dir: &str, f: &mut fs::File) -> Result<(), Box<dyn std
     // Recursively process team files
     collect_team_files(&data_path, &mut teams_map)?;
 
-    // Serialize the entire map to a binary file  
+    // Serialize the entire map to a binary file
     let postcard_bytes = postcard::to_allocvec(&teams_map)?;
     let dest_path = Path::new(out_dir).join("compiled_teams.postcard");
     fs::write(dest_path, postcard_bytes)?;
 
     // Write the Rust function that will load these bytes at compile time
-    writeln!(f, "pub fn get_compiled_team_data() -> std::collections::HashMap<String, TeamTemplate> {{")?;
-    writeln!(f, "    let bytes = include_bytes!(concat!(env!(\"OUT_DIR\"), \"/compiled_teams.postcard\"));")?;
-    writeln!(f, "    postcard::from_bytes(bytes).expect(\"Failed to deserialize team data\")")?;
+    writeln!(
+        f,
+        "pub fn get_compiled_team_data() -> std::collections::HashMap<String, TeamTemplate> {{"
+    )?;
+    writeln!(
+        f,
+        "    let bytes = include_bytes!(concat!(env!(\"OUT_DIR\"), \"/compiled_teams.postcard\"));"
+    )?;
+    writeln!(
+        f,
+        "    postcard::from_bytes(bytes).expect(\"Failed to deserialize team data\")"
+    )?;
     writeln!(f, "}}")?;
     writeln!(f)?;
-    
+
     Ok(())
 }
 
 /// Recursively collect team files from directories
-fn collect_team_files(dir: &Path, teams_map: &mut HashMap<String, TeamTemplate>) -> Result<(), Box<dyn std::error::Error>> {
+fn collect_team_files(
+    dir: &Path,
+    teams_map: &mut HashMap<String, TeamTemplate>,
+) -> Result<(), Box<dyn std::error::Error>> {
     for entry in fs::read_dir(dir)? {
         let path = entry?.path();
         if path.is_dir() {
@@ -223,7 +241,7 @@ fn collect_team_files(dir: &Path, teams_map: &mut HashMap<String, TeamTemplate>)
             let content = fs::read_to_string(&path)?;
             let team_data: TeamTemplate = ron::from_str(&content)
                 .map_err(|e| format!("Failed to parse team file {:?}: {}", path, e))?;
-            
+
             // Use the team's id as the key
             let team_id = team_data.id.clone();
             teams_map.insert(team_id, team_data);
@@ -231,4 +249,3 @@ fn collect_team_files(dir: &Path, teams_map: &mut HashMap<String, TeamTemplate>)
     }
     Ok(())
 }
-

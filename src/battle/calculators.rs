@@ -48,6 +48,14 @@ pub fn calculate_attack_outcome(
     let mut regular_effect_commands = Vec::new();
     let mut ensured_effect_commands = Vec::new();
 
+    let hit_result = move_hits(
+        attacker_pokemon,
+        defender_pokemon,
+        attacker_player,
+        defender_player,
+        move_used,
+        rng,
+    )?;
     for effect in &move_data.effects {
         let effect_result = effect.apply(&context, state, rng);
         match effect_result {
@@ -71,14 +79,6 @@ pub fn calculate_attack_outcome(
     }
 
     // If we've reached this point, no effect returned 'Skip', so we proceed with a normal attack.
-    let hit_result = move_hits(
-        attacker_pokemon,
-        defender_pokemon,
-        attacker_player,
-        defender_player,
-        move_used,
-        rng,
-    )?;
 
     if hit_result {
         let hit_commands = handle_successful_hit(

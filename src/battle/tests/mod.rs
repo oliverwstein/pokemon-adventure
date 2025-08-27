@@ -16,6 +16,7 @@ mod test_multi_attacks;
 mod test_nightmare;
 mod test_npc_npc_battle;
 mod test_reckless;
+mod test_pp_use;
 mod test_reflect_lightscreen;
 mod test_resolve_turn;
 mod test_rest;

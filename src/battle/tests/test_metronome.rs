@@ -152,7 +152,7 @@ mod tests {
         let rng1 = tackle_index / multiplier;
         let rng2 = tackle_index % multiplier;
         
-        let test_rng = TurnRng::new_for_test(vec![50, 50, rng1 as u8, rng2 as u8, 50, 50, 50]);
+        let test_rng = TurnRng::new_for_test(vec![50, 50, 50, rng1 as u8, rng2 as u8, 50, 50, 50]);
 
         // Act
         let event_bus = resolve_turn(&mut battle_state, test_rng);

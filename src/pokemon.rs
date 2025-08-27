@@ -307,6 +307,10 @@ impl PokemonInst {
 
     /// Decrement PP for a known move.
     pub fn use_move(&mut self, move_to_use: Move) -> Result<(), UseMoveError> {
+        // Add a guard clause for special moves that do not use PP and are not in the moveset.
+        if matches!(move_to_use, Move::Struggle | Move::HittingItself) {
+            return Ok(());
+        }
         for move_slot in self.moves.iter_mut() {
             if let Some(move_instance) = move_slot {
                 if move_instance.move_ == move_to_use {

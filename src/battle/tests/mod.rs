@@ -22,6 +22,7 @@ mod test_rest;
 mod test_simultaneous_multiturn_bug;
 mod test_special_moves;
 mod test_status_moves;
+mod test_stat_modifiers;
 mod test_switch;
 mod test_team_condition_expiry;
 mod test_team_condition_moves;

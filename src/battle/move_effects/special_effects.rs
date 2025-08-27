@@ -345,40 +345,76 @@ pub(super) fn apply_mirror_move_special(
     })])
 }
 
+/// Checks if a move should be excluded from Metronome selection
+fn is_excluded_from_metronome(move_: Move) -> bool {
+    // Get move data to check for excluded effects
+    let move_data = match crate::move_data::get_move_data(move_) {
+        Ok(data) => data,
+        Err(_) => return true, // Exclude moves we can't get data for
+    };
+    
+    // Check for move effects that should be excluded from Metronome
+    move_data.effects.iter().any(|effect| {
+        matches!(effect,
+            schema::MoveEffect::Metronome |           // Can't call itself
+            schema::MoveEffect::MirrorMove |          // Meta-moves
+            schema::MoveEffect::Transform |           // Transformation moves
+            schema::MoveEffect::ChargeUp |            // Multi-turn setup moves
+            schema::MoveEffect::InAir |               // Semi-invulnerable moves
+            schema::MoveEffect::Underground |         // Semi-invulnerable moves
+            schema::MoveEffect::Teleport(_) |         // Escape moves
+            schema::MoveEffect::Counter |             // Reactive moves
+            schema::MoveEffect::Bide(_)               // Charging moves
+            // Add other exclusions as needed
+        )
+    })
+}
+
 pub(super) fn apply_metronome_special(
     context: &EffectContext,
     state: &BattleState,
     rng: &mut TurnRng,
 ) -> EffectResult {
-    // This is a simplified list. A full implementation would need a comprehensive, static list of all possible moves.
-    let all_moves: &[Move] = &[
-        Move::Tackle,
-        Move::Ember,
-        Move::WaterGun,
-        Move::VineWhip,
-        Move::ThunderPunch,
-    ];
-    let random_index =
-        (rng.next_outcome("Generate Metronome Move Select") as usize) % all_moves.len();
-    let selected_move = all_moves[random_index];
+    let total_moves = Move::count();
+    
+    let rng1 = rng.next_outcome("Metronome Move Select 1") as usize;
+    let rng2 = rng.next_outcome("Metronome Move Select 2") as usize;
+    
+    // Calculate multiplier to ensure we have sufficient range
+    let multiplier = (total_moves / 100) + 1;
+    let combined_range = rng1 * multiplier + rng2;
+    let start_index = combined_range % total_moves;
+    
+    // Find the first valid move using elegant iterator chaining
+    let selected_move = (0..total_moves)
+        .cycle()                    // Infinite repeating sequence
+        .skip(start_index)          // Start from our random position  
+        .take(total_moves)          // Only check each move once
+        .find_map(|index| {
+            Move::from_index(index)
+                .filter(|&mov| !is_excluded_from_metronome(mov))
+        });
 
-    if let Some(attacker_pokemon) = state.players[context.attacker_index].active_pokemon() {
-        let metronome_action = BattleAction::AttackHit {
-            attacker_index: context.attacker_index,
-            defender_index: context.defender_index,
-            move_used: selected_move,
-            hit_number: 1,
-        };
-        let commands = vec![
-            BattleCommand::EmitEvent(BattleEvent::MoveUsed {
-                player_index: context.attacker_index,
-                pokemon: attacker_pokemon.species,
+    if let Some(selected_move) = selected_move {
+        if let Some(attacker_pokemon) = state.players[context.attacker_index].active_pokemon() {
+            let metronome_action = BattleAction::AttackHit {
+                attacker_index: context.attacker_index,
+                defender_index: context.defender_index,
                 move_used: selected_move,
-            }),
-            BattleCommand::PushAction(metronome_action),
-        ];
-        return EffectResult::Skip(commands);
+                hit_number: 1,
+            };
+            let commands = vec![
+                BattleCommand::EmitEvent(BattleEvent::MoveUsed {
+                    player_index: context.attacker_index,
+                    pokemon: attacker_pokemon.species,
+                    move_used: selected_move,
+                }),
+                BattleCommand::PushAction(metronome_action),
+            ];
+            return EffectResult::Skip(commands);
+        }
     }
+    
     EffectResult::Continue(Vec::new())
 }
 

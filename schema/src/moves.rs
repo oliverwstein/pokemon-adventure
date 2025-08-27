@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use strum::{EnumCount, FromRepr};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumCount, FromRepr)]
 pub enum Move {
     // Normal Type
     Pound,
@@ -211,6 +212,18 @@ pub enum Move {
     // Typeless
     Struggle,
     HittingItself,
+}
+
+impl Move {
+    /// Returns the total number of moves
+    pub fn count() -> usize {
+        Self::COUNT
+    }
+
+    /// Returns a move by its index (0-based)
+    pub fn from_index(index: usize) -> Option<Move> {
+        Self::from_repr(index)
+    }
 }
 
 impl std::str::FromStr for Move {

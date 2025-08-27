@@ -140,7 +140,19 @@ mod tests {
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
         // This specific RNG seed will cause Metronome to select Tackle.
-        let test_rng = TurnRng::new_for_test(vec![50, 50, 14, 50, 50, 50, 50]);
+        // Calculate the index of Tackle and derive RNG values to target it
+        let total_moves = Move::count();
+        let tackle_index = (0..total_moves)
+            .find(|&i| Move::from_index(i) == Some(Move::Tackle))
+            .expect("Tackle should exist in the move list");
+        
+        // With multiplier = (total_moves / 100) + 1, we need combined_range % total_moves = tackle_index
+        // Use rng1 and rng2 such that rng1 * multiplier + rng2 = tackle_index
+        let multiplier = (total_moves / 100) + 1;
+        let rng1 = tackle_index / multiplier;
+        let rng2 = tackle_index % multiplier;
+        
+        let test_rng = TurnRng::new_for_test(vec![50, 50, rng1 as u8, rng2 as u8, 50, 50, 50]);
 
         // Act
         let event_bus = resolve_turn(&mut battle_state, test_rng);

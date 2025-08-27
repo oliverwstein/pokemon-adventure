@@ -21,6 +21,7 @@ mod test_reflect_lightscreen;
 mod test_resolve_turn;
 mod test_rest;
 mod test_simultaneous_multiturn_bug;
+mod test_special_damage_moves;
 mod test_special_moves;
 mod test_stat_modifiers;
 mod test_status_application;

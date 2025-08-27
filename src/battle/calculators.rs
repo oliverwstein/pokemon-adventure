@@ -46,6 +46,7 @@ pub fn calculate_attack_outcome(
     // First, check for any special move effects that might skip the normal attack sequence.
     let context = EffectContext::new(attacker_index, defender_index, move_used);
     let mut regular_effect_commands = Vec::new();
+    let mut ensured_effect_commands = Vec::new();
 
     for effect in &move_data.effects {
         let effect_result = effect.apply(&context, state, rng);
@@ -60,6 +61,11 @@ pub fn calculate_attack_outcome(
                 // This is a regular secondary effect (like Burn or StatChange).
                 // We'll store its commands to be added later if the move hits.
                 regular_effect_commands.extend(effect_commands);
+            }
+            EffectResult::Ensured(effect_commands) => {
+                // This effect always happens regardless of hit/miss/immunity.
+                // We'll store its commands to be added at the very end.
+                ensured_effect_commands.extend(effect_commands);
             }
         }
     }
@@ -89,8 +95,14 @@ pub fn calculate_attack_outcome(
 
         commands.extend(hit_commands.clone());
 
-        // Add the regular effect commands that we collected earlier.
-        commands.extend(regular_effect_commands);
+        // Check if the target is immune to the move's type
+        let defender_types = defender_pokemon.get_current_types(defender_player);
+        let is_immune = crate::battle::stats::is_immune(move_data.move_type, &defender_types);
+
+        // Only add regular effect commands if the move wasn't immune
+        if !is_immune {
+            commands.extend(regular_effect_commands);
+        }
 
         let damage = hit_commands
             .iter()
@@ -122,6 +134,9 @@ pub fn calculate_attack_outcome(
             break;
         }
     }
+
+    // Always add ensured effects at the end, regardless of hit/miss/immunity
+    commands.extend(ensured_effect_commands);
 
     Ok(commands)
 }

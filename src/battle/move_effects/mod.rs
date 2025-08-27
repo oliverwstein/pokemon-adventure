@@ -46,6 +46,7 @@ impl EffectContext {
 pub enum EffectResult {
     Continue(Vec<BattleCommand>),
     Skip(Vec<BattleCommand>),
+    Ensured(Vec<BattleCommand>), // Always happens regardless of hit/miss/immunity
 }
 
 // --- 4. THE PUBLIC EXTENSION TRAIT (AND BATTLEDATAEXT) ---

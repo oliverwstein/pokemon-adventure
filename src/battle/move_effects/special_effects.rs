@@ -231,9 +231,9 @@ pub(super) fn apply_explode_special(context: &EffectContext, state: &BattleState
             target: PlayerTarget::from_index(context.attacker_index),
             amount: attacker_pokemon.current_hp(),
         }];
-        return EffectResult::Continue(commands);
+        return EffectResult::Ensured(commands);
     }
-    EffectResult::Continue(Vec::new())
+    EffectResult::Ensured(Vec::new())
 }
 
 pub(super) fn apply_bide_special(

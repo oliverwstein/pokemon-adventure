@@ -4,7 +4,7 @@
 mod tests {
     use crate::battle::engine::resolve_turn;
     use crate::battle::state::BattleEvent;
-    use crate::battle::tests::common::{create_test_battle, predictable_rng, TestPokemonBuilder};
+    use crate::battle::tests::common::{create_test_battle, TestPokemonBuilder};
     use crate::player::PlayerAction;
     use crate::species::Species;
     use rstest::rstest;
@@ -42,7 +42,9 @@ mod tests {
         battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
 
         // Act
-        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
+        // Use low RNG values to ensure secondary effects trigger when expected
+        let test_rng = crate::battle::state::TurnRng::new_for_test(vec![5, 5, 5, 5, 5, 5, 5, 5]);
+        let event_bus = resolve_turn(&mut battle_state, test_rng);
 
         // Assert
         event_bus.print_debug_with_message(&format!(

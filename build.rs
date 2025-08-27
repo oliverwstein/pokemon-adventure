@@ -30,9 +30,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // --- Data Generation ---
     generate_move_data(&out_dir, &mut code_file)?;
     generate_species_data(&out_dir, &mut code_file)?;
-    // We'll keep prefab_teams as-is for now, as it's not a performance bottleneck.
-    generate_prefab_teams_data(&mut code_file)?;
-
     println!(
         "Generated postcard data and loader functions at: {}",
         out_dir
@@ -149,37 +146,5 @@ fn generate_species_data(
     writeln!(f, "    Box::leak(boxed_slice)")?;
     writeln!(f, "}}")?;
     writeln!(f)?;
-    Ok(())
-}
-
-/// This function remains unchanged as it handles non-performance-critical data.
-fn generate_prefab_teams_data(f: &mut fs::File) -> Result<(), Box<dyn std::error::Error>> {
-    println!("cargo:rerun-if-changed=data/prefab_teams");
-    let data_path = Path::new("data/prefab_teams");
-    let mut teams = Vec::new();
-
-    if data_path.exists() {
-        for entry in fs::read_dir(data_path)? {
-            let path = entry?.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("ron") {
-                let content = fs::read_to_string(&path)?;
-                let team_name = path.file_stem().unwrap().to_str().unwrap();
-                teams.push((team_name.to_string(), content));
-            }
-        }
-    }
-    teams.sort_by(|a, b| a.0.cmp(&b.0));
-
-    writeln!(f, "pub fn get_compiled_prefab_teams() -> std::collections::HashMap<&'static str, &'static str> {{")?;
-    writeln!(f, "    let map = std::collections::HashMap::new();")?;
-    for (team_name, ron_content) in teams {
-        writeln!(
-            f,
-            "    map.insert(\"{}\", r####\"{}\"####);",
-            team_name, ron_content
-        )?;
-    }
-    writeln!(f, "    map")?;
-    writeln!(f, "}}")?;
     Ok(())
 }

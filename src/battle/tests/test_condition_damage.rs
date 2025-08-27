@@ -2,9 +2,9 @@
 mod tests {
     use crate::battle::conditions::PokemonCondition;
     use crate::battle::engine::resolve_turn;
-    use crate::battle::state::{BattleEvent, BattleState};
+    use crate::battle::state::{BattleEvent, BattleState, TurnRng};
     use crate::battle::tests::common::{create_test_player, predictable_rng, TestPokemonBuilder};
-    use crate::player::PlayerAction;
+    use crate::player::{PlayerAction, StatType, TeamCondition};
     use crate::species::Species;
     use pretty_assertions::assert_eq;
     use rstest::rstest;
@@ -336,5 +336,98 @@ mod tests {
             heal_event_found,
             "Should have PokemonHealed event for the actual amount healed (1 HP)"
         );
+    }
+
+    #[rstest]
+    #[case("baseline", None, None, None)]
+    #[case("attack +2 stages", Some((StatType::Atk, 2)), None, None)]
+    #[case("attack -2 stages", Some((StatType::Atk, -2)), None, None)]
+    #[case("defense +2 stages", Some((StatType::Def, 2)), None, None)]
+    #[case("defense -2 stages", Some((StatType::Def, -2)), None, None)]
+    #[case("special attack +2 stages (no effect)", Some((StatType::SpAtk, 2)), None, None)]
+    #[case("with reflect (reduces damage)", None, Some(TeamCondition::Reflect), None)]
+    #[case("with light screen (no effect)", None, Some(TeamCondition::LightScreen), None)]
+    fn test_confusion_damage_modification(
+        #[case] description: &str,
+        #[case] stat_modification: Option<(StatType, i8)>,
+        #[case] team_condition: Option<TeamCondition>,
+        #[case] _unused: Option<()>,
+    ) {
+        // Arrange - Create a Pokemon that will hit itself due to confusion
+        let p1_pokemon = TestPokemonBuilder::new(Species::Machop, 25)
+            .with_moves(vec![Move::Tackle])
+            .build();
+        let p2_pokemon = TestPokemonBuilder::new(Species::Geodude, 25)
+            .with_moves(vec![Move::Splash])
+            .build();
+
+        let mut player1 = create_test_player("p1", "Player 1", vec![p1_pokemon]);
+        
+        // Apply stat modifications if specified
+        if let Some((stat_type, stages)) = stat_modification {
+            player1.set_stat_stage(stat_type, stages);
+        }
+        
+        // Add team conditions if specified
+        if let Some(condition) = team_condition {
+            player1.add_team_condition(condition, 5); // 5 turns duration
+        }
+        
+        // Add confusion to player 1's Pokemon
+        player1.add_condition(PokemonCondition::Confused { turns_remaining: 2 });
+        
+        let player2 = create_test_player("p2", "Player 2", vec![p2_pokemon]);
+        let mut battle_state = BattleState::new("test".to_string(), player1, player2);
+
+        let initial_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        
+        // Set up actions - both players try to use moves
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+
+        // Act - Use RNG values that will cause confusion self-hit (low roll < 50 = hit self)
+        let event_bus = resolve_turn(&mut battle_state, TurnRng::new_for_test(vec![25; 10]));
+
+        // Assert
+        event_bus.print_debug_with_message(&format!(
+            "Events for confusion damage test: {}", description
+        ));
+        
+        let final_hp = battle_state.players[0].active_pokemon().unwrap().current_hp();
+        let damage_taken = initial_hp - final_hp;
+        
+        // Should have self-damage from confusion
+        assert!(damage_taken > 0, "Pokemon should have taken confusion self-damage");
+        
+        // Should see action failed event due to confusion
+        assert!(event_bus.events().iter().any(|e| matches!(
+            e,
+            BattleEvent::ActionFailed {
+                reason: crate::battle::state::ActionFailureReason::IsConfused { .. }
+            }
+        )), "Should have ActionFailed event for confusion");
+        
+        // Should see self-hit event
+        assert!(event_bus.events().iter().any(|e| matches!(
+            e,
+            BattleEvent::MoveHit {
+                move_used: Move::HittingItself,
+                attacker: Species::Machop,
+                defender: Species::Machop,
+                ..
+            }
+        )), "Should have MoveHit event for confusion self-damage");
+        
+        // Should see damage dealt event
+        assert!(event_bus.events().iter().any(|e| matches!(
+            e,
+            BattleEvent::DamageDealt {
+                target: Species::Machop,
+                damage,
+                ..
+            } if *damage == damage_taken
+        )), "Should have DamageDealt event for confusion self-damage");
+
+        println!("Test case '{}': Damage taken = {}", description, damage_taken);
     }
 }

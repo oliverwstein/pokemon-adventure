@@ -356,12 +356,21 @@ impl BattleCommand {
             // Commands that emit manual events via EmitEvent should pass through
             BattleCommand::EmitEvent(event) => vec![event.clone()],
 
+            BattleCommand::AddAnte { target, amount } => {
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                vec![BattleEvent::AnteIncreased {
+                    player_index,
+                    amount: *amount,
+                    new_total: player.get_ante(),
+                }]
+            }
+
             // Commands that don't generate automatic events
             BattleCommand::SetGameState(_)
             | BattleCommand::IncrementTurnNumber
             | BattleCommand::ClearActionQueue
             | BattleCommand::SetLastMove { .. }
-            | BattleCommand::AddAnte { .. }
             | BattleCommand::ClearPlayerState { .. }
             | BattleCommand::PushAction(_) => vec![],
         }

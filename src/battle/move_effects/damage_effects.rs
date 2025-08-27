@@ -53,7 +53,7 @@ pub(super) fn apply_ante_effect(
         let ante_amount = pokemon_level * 2;
 
         commands.push(BattleCommand::AddAnte {
-            target: PlayerTarget::from_index(context.attacker_index),
+            target: PlayerTarget::from_index(context.defender_index),
             amount: ante_amount,
         });
     }

@@ -385,8 +385,8 @@ impl BattleEvent {
             }
 
             // === Battle Economy Events ===
-            BattleEvent::AnteIncreased { amount, .. } => {
-                Some(format!("Gained ${} from Pay Day!", amount))
+            BattleEvent::AnteIncreased {  .. } => {
+                Some(format!("Coins scattered around!"))
             }
 
             // === Battle End Events ===

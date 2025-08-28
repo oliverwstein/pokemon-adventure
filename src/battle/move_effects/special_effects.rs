@@ -146,14 +146,52 @@ pub(super) fn apply_substitute_special(
     context: &EffectContext,
     state: &BattleState,
 ) -> EffectResult {
+    // Get the attacker's active Pokémon instance.
     if let Some(attacker_pokemon) = state.players[context.attacker_index].active_pokemon() {
-        let substitute_hp = (attacker_pokemon.max_hp() / 4).max(1) as u8;
-        let commands = vec![BattleCommand::AddCondition {
-            target: PlayerTarget::from_index(context.attacker_index),
-            condition: PokemonCondition::Substitute { hp: substitute_hp },
-        }];
+        let attacker_target = PlayerTarget::from_index(context.attacker_index);
+
+        // Calculate the HP cost, which is 25% of the user's max HP.
+        let hp_cost = (attacker_pokemon.max_hp() / 4).max(1);
+
+        // ---  FAILURE CONDITION CHECK ---
+        // Check if the user has enough HP to create the substitute.
+        // The move fails if the HP cost is greater than or equal to the user's current HP.
+        if hp_cost >= attacker_pokemon.current_hp() {
+            // If the move fails, emit a failure event and stop.
+            let commands = vec![BattleCommand::EmitEvent(BattleEvent::ActionFailed {
+                reason: ActionFailureReason::MoveFailedToExecute {
+                    move_used: context.move_used,
+                },
+            })];
+            // Using `Skip` ensures that no other effects or damage calculations proceed.
+            return EffectResult::Skip(commands);
+        }
+
+        // --- SUCCESSFUL EXECUTION ---
+        // The user has enough HP, so the move can proceed.
+
+        // The substitute's HP is equal to the HP cost paid by the user.
+        let substitute_hp = hp_cost as u8;
+
+        // Create the list of commands to execute.
+        let commands = vec![
+            // 1. Deal damage to the user to pay the HP cost.
+            BattleCommand::DealDamage {
+                target: attacker_target,
+                amount: hp_cost,
+            },
+            // 2. Add the Substitute condition to the user.
+            BattleCommand::AddCondition {
+                target: attacker_target,
+                condition: PokemonCondition::Substitute { hp: substitute_hp },
+            },
+        ];
+
+        // `Skip` is appropriate here because using Substitute is the entire action for the turn.
         return EffectResult::Skip(commands);
     }
+
+    // If there is no active Pokémon, the move does nothing.
     EffectResult::Continue(Vec::new())
 }
 

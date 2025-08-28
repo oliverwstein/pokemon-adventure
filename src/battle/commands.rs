@@ -8,9 +8,9 @@ use schema::Move;
 /// Source of fainting for context-aware handling
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FaintingSource {
-    Damage,           // Direct damage from attacks
-    StatusDamage,     // Damage from status conditions (burn, poison)
-    ConditionDamage,  // Damage from active conditions (Leech Seed)
+    Damage,          // Direct damage from attacks
+    StatusDamage,    // Damage from status conditions (burn, poison)
+    ConditionDamage, // Damage from active conditions (Leech Seed)
 }
 
 /// Player target for commands - provides type safety over raw indices
@@ -203,250 +203,257 @@ impl BattleCommand {
     pub fn emit_events(&self, state: &BattleState) -> Vec<BattleEvent> {
         match self {
             BattleCommand::DealDamage { target, amount } => {
-                        emit_damage_events(*target, *amount, state, None, None)
-                    }
+                emit_damage_events(*target, *amount, state, None, None)
+            }
             BattleCommand::DealStatusDamage {
-                        target,
-                        status,
-                        amount,
-                    } => emit_damage_events(*target, *amount, state, Some(*status), None),
+                target,
+                status,
+                amount,
+            } => emit_damage_events(*target, *amount, state, Some(*status), None),
             BattleCommand::DealConditionDamage {
-                        target,
-                        condition,
-                        amount,
-                    } => {
-                        emit_damage_events(*target, *amount, state, None, Some(condition.clone()))
-                    }
+                target,
+                condition,
+                amount,
+            } => emit_damage_events(*target, *amount, state, None, Some(condition.clone())),
             BattleCommand::HealPokemon { target, amount } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            if *amount > 0 {
-                                vec![BattleEvent::PokemonHealed {
-                                    target: pokemon.species,
-                                    amount: *amount,
-                                    new_hp: pokemon.current_hp(),
-                                }]
-                            } else {
-                                vec![]
-                            }
-                        } else {
-                            vec![]
-                        }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    if *amount > 0 {
+                        vec![BattleEvent::PokemonHealed {
+                            target: pokemon.species,
+                            amount: *amount,
+                            new_hp: pokemon.current_hp(),
+                        }]
+                    } else {
+                        vec![]
                     }
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::SetPokemonStatus { target, status } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            // Don't emit status application events for fainted Pokemon
-                            if pokemon.is_fainted() {
-                                vec![]
-                            } else {
-                                vec![BattleEvent::PokemonStatusApplied {
-                                    target: pokemon.species,
-                                    status: *status,
-                                }]
-                            }
-                        } else {
-                            vec![]
-                        }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    // Don't emit status application events for fainted Pokemon
+                    if pokemon.is_fainted() {
+                        vec![]
+                    } else {
+                        vec![BattleEvent::PokemonStatusApplied {
+                            target: pokemon.species,
+                            status: *status,
+                        }]
                     }
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::CurePokemonStatus { target, status } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            vec![BattleEvent::PokemonStatusRemoved {
-                                target: pokemon.species,
-                                status: *status,
-                            }]
-                        } else {
-                            vec![]
-                        }
-                    }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    vec![BattleEvent::PokemonStatusRemoved {
+                        target: pokemon.species,
+                        status: *status,
+                    }]
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::UsePP { .. } => {
-                        // PP usage is silent - no events emitted
-                        vec![]
-                    }
+                // PP usage is silent - no events emitted
+                vec![]
+            }
             BattleCommand::ChangeStatStage {
-                        target,
-                        stat,
-                        delta,
-                    } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            let new_stage = player.get_stat_stage(*stat);
-                            vec![BattleEvent::StatStageChanged {
-                                target: pokemon.species,
-                                stat: *stat,
-                                old_stage: new_stage - delta,
-                                new_stage,
-                            }]
-                        } else {
-                            vec![]
-                        }
-                    }
+                target,
+                stat,
+                delta,
+            } => {
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    let new_stage = player.get_stat_stage(*stat);
+                    vec![BattleEvent::StatStageChanged {
+                        target: pokemon.species,
+                        stat: *stat,
+                        old_stage: new_stage - delta,
+                        new_stage,
+                    }]
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::AddCondition { target, condition } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            // Don't emit condition application events for fainted Pokemon
-                            if pokemon.is_fainted() {
-                                vec![]
-                            } else {
-                                vec![BattleEvent::StatusApplied {
-                                    target: pokemon.species,
-                                    status: condition.clone(),
-                                }]
-                            }
-                        } else {
-                            vec![]
-                        }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    // Don't emit condition application events for fainted Pokemon
+                    if pokemon.is_fainted() {
+                        vec![]
+                    } else {
+                        vec![BattleEvent::StatusApplied {
+                            target: pokemon.species,
+                            status: condition.clone(),
+                        }]
                     }
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::RemoveCondition {
-                        target,
-                        condition_type,
-                    } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            // Find the actual condition being removed
-                            if let Some(actual_condition) =
-                                player.active_pokemon_conditions.get(condition_type)
-                            {
-                                vec![BattleEvent::StatusRemoved {
-                                    target: pokemon.species,
-                                    status: actual_condition.clone(),
-                                }]
-                            } else {
-                                vec![]
-                            }
-                        } else {
-                            vec![]
-                        }
+                target,
+                condition_type,
+            } => {
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    // Find the actual condition being removed
+                    if let Some(actual_condition) =
+                        player.active_pokemon_conditions.get(condition_type)
+                    {
+                        vec![BattleEvent::StatusRemoved {
+                            target: pokemon.species,
+                            status: actual_condition.clone(),
+                        }]
+                    } else {
+                        vec![]
                     }
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::RemoveSpecificCondition { target, condition } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            vec![BattleEvent::StatusRemoved {
-                                target: pokemon.species,
-                                status: condition.clone(),
-                            }]
-                        } else {
-                            vec![]
-                        }
-                    }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    vec![BattleEvent::StatusRemoved {
+                        target: pokemon.species,
+                        status: condition.clone(),
+                    }]
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::AddTeamCondition {
-                        target, condition, ..
-                    } => {
-                        let player_index = target.to_index();
-                        vec![BattleEvent::TeamConditionApplied {
-                            player_index,
-                            condition: *condition,
-                        }]
-                    }
+                target, condition, ..
+            } => {
+                let player_index = target.to_index();
+                vec![BattleEvent::TeamConditionApplied {
+                    player_index,
+                    condition: *condition,
+                }]
+            }
             BattleCommand::AttemptCatch {
-                        player_index,
-                        target_pokemon,
-                    } => {
-                        // Catch events are handled by the catch command logic
-                        // The success event is emitted after the Pokemon is added to the team
-                        vec![BattleEvent::CatchSucceeded {
-                            player_index: *player_index,
-                            pokemon: *target_pokemon,
-                        }]
-                    }
+                player_index,
+                target_pokemon,
+            } => {
+                // Catch events are handled by the catch command logic
+                // The success event is emitted after the Pokemon is added to the team
+                vec![BattleEvent::CatchSucceeded {
+                    player_index: *player_index,
+                    pokemon: *target_pokemon,
+                }]
+            }
             BattleCommand::SwitchPokemon {
-                        target: _,
-                        new_pokemon_index: _,
-                    } => {
-                        // Switch events are manually emitted by calculate_switch_commands
-                        // before the state change to capture the correct old/new Pokemon
-                        vec![]
-                    }
+                target: _,
+                new_pokemon_index: _,
+            } => {
+                // Switch events are manually emitted by calculate_switch_commands
+                // before the state change to capture the correct old/new Pokemon
+                vec![]
+            }
             BattleCommand::UpdateStatusProgress { target: _ } => {
-                        // This command can potentially cure a status, so we need to check if we should emit a removed event
-                        // However, the actual determination happens during state change, so we return empty here
-                        // The state change function will emit the appropriate event if needed
-                        vec![]
-                    }
+                // This command can potentially cure a status, so we need to check if we should emit a removed event
+                // However, the actual determination happens during state change, so we return empty here
+                // The state change function will emit the appropriate event if needed
+                vec![]
+            }
             BattleCommand::TickPokemonCondition {
-                        target: _,
-                        condition: _,
-                    } => {
-                        // Ticking conditions doesn't generate damage events - only DealConditionDamage does
-                        vec![]
-                    }
+                target: _,
+                condition: _,
+            } => {
+                // Ticking conditions doesn't generate damage events - only DealConditionDamage does
+                vec![]
+            }
             BattleCommand::ExpirePokemonCondition { target, condition } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
-                            vec![BattleEvent::ConditionExpired {
-                                target: pokemon.species,
-                                condition: condition.clone(),
-                            }]
-                        } else {
-                            vec![]
-                        }
-                    }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                if let Some(pokemon) = player.team[player.active_pokemon_index].as_ref() {
+                    vec![BattleEvent::ConditionExpired {
+                        target: pokemon.species,
+                        condition: condition.clone(),
+                    }]
+                } else {
+                    vec![]
+                }
+            }
             BattleCommand::TickTeamCondition {
-                        target: _,
-                        condition: _,
-                    } => {
-                        // let player_index = target.to_index();
-                        // Team conditions don't usually emit tick events, but this is where we'd add them
-                        vec![]
-                    }
+                target: _,
+                condition: _,
+            } => {
+                // let player_index = target.to_index();
+                // Team conditions don't usually emit tick events, but this is where we'd add them
+                vec![]
+            }
             BattleCommand::ExpireTeamCondition { target, condition } => {
-                        let player_index = target.to_index();
-                        vec![BattleEvent::TeamConditionExpired {
-                            player_index,
-                            condition: *condition,
-                        }]
-                    }
+                let player_index = target.to_index();
+                vec![BattleEvent::TeamConditionExpired {
+                    player_index,
+                    condition: *condition,
+                }]
+            }
             BattleCommand::QueueForcedAction { .. } => {
-                        // Queuing actions doesn't generate events
-                        vec![]
-                    }
+                // Queuing actions doesn't generate events
+                vec![]
+            }
             BattleCommand::EmitEvent(event) => vec![event.clone()],
             BattleCommand::AddAnte { target, amount } => {
-                        let player_index = target.to_index();
-                        let player = &state.players[player_index];
-                        vec![BattleEvent::AnteIncreased {
-                            player_index,
-                            amount: *amount,
-                            new_total: player.get_ante(),
-                        }]
-                    }
+                let player_index = target.to_index();
+                let player = &state.players[player_index];
+                vec![BattleEvent::AnteIncreased {
+                    player_index,
+                    amount: *amount,
+                    new_total: player.get_ante(),
+                }]
+            }
             BattleCommand::SetGameState(_)
-                    | BattleCommand::IncrementTurnNumber
-                    | BattleCommand::ClearActionQueue
-                    | BattleCommand::SetLastMove { .. }
-                    | BattleCommand::ClearPlayerState { .. }
-                    | BattleCommand::PushAction(_) => vec![],
-            BattleCommand::HandlePokemonFainted { target} => {
+            | BattleCommand::IncrementTurnNumber
+            | BattleCommand::ClearActionQueue
+            | BattleCommand::SetLastMove { .. }
+            | BattleCommand::ClearPlayerState { .. }
+            | BattleCommand::PushAction(_) => vec![],
+            BattleCommand::HandlePokemonFainted { target } => {
                 let player_index = target.to_index();
                 let pokemon = state.players[player_index].active_pokemon();
-                vec![
-                BattleEvent::PokemonFainted { player_index: player_index, pokemon: pokemon.unwrap().species },
-                ]
+                vec![BattleEvent::PokemonFainted {
+                    player_index: player_index,
+                    pokemon: pokemon.unwrap().species,
+                }]
             }
             BattleCommand::AwardExperience { recipients } => {
                 // Generate ExperienceGained events for each recipient
-                recipients.iter().filter_map(|(target, pokemon_index, amount)| {
-                    let player_index = target.to_index();
-                    if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
-                        Some(BattleEvent::ExperienceGained {
-                            pokemon: pokemon.species,
-                            amount: *amount,
-                        })
-                    } else {
-                        None
-                    }
-                }).collect()
+                recipients
+                    .iter()
+                    .filter_map(|(target, pokemon_index, amount)| {
+                        let player_index = target.to_index();
+                        if let Some(pokemon) =
+                            state.players[player_index].team[*pokemon_index].as_ref()
+                        {
+                            Some(BattleEvent::ExperienceGained {
+                                pokemon: pokemon.species,
+                                amount: *amount,
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
             }
-            BattleCommand::LevelUpPokemon { target, pokemon_index } => {
+            BattleCommand::LevelUpPokemon {
+                target,
+                pokemon_index,
+            } => {
                 let player_index = target.to_index();
                 if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
                     vec![BattleEvent::LevelUp {
@@ -458,7 +465,12 @@ impl BattleCommand {
                     vec![]
                 }
             }
-            BattleCommand::LearnMove { target, pokemon_index, move_, replace_index } => {
+            BattleCommand::LearnMove {
+                target,
+                pokemon_index,
+                move_,
+                replace_index,
+            } => {
                 let player_index = target.to_index();
                 if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
                     if let Some(slot_index) = replace_index {
@@ -486,7 +498,11 @@ impl BattleCommand {
                     vec![]
                 }
             }
-            BattleCommand::EvolvePokemon { target, pokemon_index, new_species } => {
+            BattleCommand::EvolvePokemon {
+                target,
+                pokemon_index,
+                new_species,
+            } => {
                 let player_index = target.to_index();
                 if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
                     vec![BattleEvent::EvolutionCompleted {
@@ -497,7 +513,11 @@ impl BattleCommand {
                     vec![]
                 }
             }
-            BattleCommand::DistributeEffortValues { target, pokemon_index, stats } => {
+            BattleCommand::DistributeEffortValues {
+                target,
+                pokemon_index,
+                stats,
+            } => {
                 let player_index = target.to_index();
                 if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
                     vec![BattleEvent::EffortValuesGained {
@@ -508,10 +528,13 @@ impl BattleCommand {
                     vec![]
                 }
             }
-            BattleCommand::UpdateBattleParticipation { active_p0: _, active_p1: _ } => {
+            BattleCommand::UpdateBattleParticipation {
+                active_p0: _,
+                active_p1: _,
+            } => {
                 // Participation tracking is internal - no events needed
                 vec![]
-            },
+            }
         }
     }
 }
@@ -572,7 +595,7 @@ pub fn execute_command_batch(
         // It is a stack.
         pending_commands.extend(additional_commands);
     }
-    
+
     Ok(())
 }
 
@@ -606,7 +629,7 @@ fn execute_deal_damage_command(
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
         let did_faint = pokemon.take_damage(amount);
         if did_faint {
-            Ok(vec![BattleCommand::HandlePokemonFainted {target}])
+            Ok(vec![BattleCommand::HandlePokemonFainted { target }])
         } else {
             Ok(vec![])
         }
@@ -644,251 +667,265 @@ fn execute_state_change(
     state: &mut BattleState,
     action_stack: &mut ActionStack,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
-
     // Handle commands that don't generate additional commands
     match command {
         BattleCommand::EmitEvent(_) => {
-                        // This should not reach here due to early return above
-                        unreachable!("EmitEvent should be handled before execute_state_change")
-            }
-        BattleCommand::HandlePokemonFainted { target} => {
+            // This should not reach here due to early return above
+            unreachable!("EmitEvent should be handled before execute_state_change")
+        }
+        BattleCommand::HandlePokemonFainted { target } => {
             let mut commands = vec![];
-            
+
             // Clear conditions for fainted Pokemon
             commands.push(BattleCommand::ClearPlayerState { target: *target });
-            
+
             // TODO: Add progression rewards calculation here
             // For now, just clear state
-            
+
             return Ok(commands);
         }
         BattleCommand::DealDamage { target, amount } => {
-                return execute_deal_damage_command(*target, *amount, state)
-            }
+            return execute_deal_damage_command(*target, *amount, state)
+        }
         BattleCommand::HealPokemon { target, amount } => {
-                return execute_pokemon_command(*target, state, |pokemon, _| {
-                    pokemon.heal(*amount);
-                    Ok(())
-                })
-            }
+            return execute_pokemon_command(*target, state, |pokemon, _| {
+                pokemon.heal(*amount);
+                Ok(())
+            })
+        }
         BattleCommand::SetPokemonStatus { target, status } => {
-                return execute_pokemon_command(*target, state, |pokemon, _| {
-                    // Don't apply status to Pokemon that already have a status
-                    if pokemon.status.is_some() {
-                        Ok(())
-                    } else {
-                        pokemon.status = Some(*status);
-                        Ok(())
-                    }
-                })
-            }
-        BattleCommand::CurePokemonStatus { target, status: _ } => {
-                return execute_pokemon_command(*target, state, |pokemon, _| {
-                    pokemon.status = None;
+            return execute_pokemon_command(*target, state, |pokemon, _| {
+                // Don't apply status to Pokemon that already have a status
+                if pokemon.status.is_some() {
                     Ok(())
-                })
-            }
-        BattleCommand::UsePP { target, move_used } => {
-                return execute_pokemon_command(*target, state, |pokemon, _| {
-                    pokemon
-                        .use_move(*move_used)
-                        .map_err(|_| ExecutionError::NoPokemon)
-                })
-            }
-        BattleCommand::ChangeStatStage {
-                target,
-                stat,
-                delta,
-            } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                let current_stage = player.get_stat_stage(*stat);
-                let new_stage = (current_stage + delta).clamp(-6, 6);
-                player.set_stat_stage(*stat, new_stage);
-            }
-        BattleCommand::AddCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                // Don't apply conditions to fainted Pokemon
-                if let Some(pokemon) = player.active_pokemon() {
-                    if !pokemon.is_fainted() {
-                        player.add_condition(condition.clone());
-                    }
-                }
-            }
-        BattleCommand::RemoveCondition {
-                target,
-                condition_type,
-            } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player.active_pokemon_conditions.remove(condition_type);
-            }
-        BattleCommand::RemoveSpecificCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player
-                    .active_pokemon_conditions
-                    .remove(&condition.get_type());
-            }
-        BattleCommand::AddTeamCondition {
-                target,
-                condition,
-                turns,
-            } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player.add_team_condition(*condition, *turns);
-            }
-        BattleCommand::SetLastMove { target, move_used } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player.last_move = Some(*move_used);
-            }
-        BattleCommand::SwitchPokemon {
-                target,
-                new_pokemon_index,
-            } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                if *new_pokemon_index < player.team.len() && player.team[*new_pokemon_index].is_some() {
-                    player.active_pokemon_index = *new_pokemon_index;
-                    return Ok(vec![]);
                 } else {
-                    return Err(ExecutionError::InvalidPokemonIndex);
-                }
-            }
-        BattleCommand::AttemptCatch {
-                player_index,
-                target_pokemon,
-            } => return execute_attempt_catch(*player_index, *target_pokemon, state),
-        BattleCommand::AddAnte { target, amount } => {
-                let player_index = target.to_index();
-                state.players[player_index].add_ante(*amount);
-            }
-        BattleCommand::SetGameState(new_state) => {
-                state.game_state = *new_state;
-            }
-        BattleCommand::IncrementTurnNumber => {
-                state.turn_number += 1;
-            }
-        BattleCommand::ClearActionQueue => {
-                state.action_queue = [None, None];
-            }
-        BattleCommand::PushAction(action) => {
-                action_stack.push_front(action.clone());
-            }
-        BattleCommand::ClearPlayerState { target } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player.clear_active_pokemon_state();
-            }
-        BattleCommand::DealStatusDamage {
-                target,
-                status: _,
-                amount,
-            } => {
-                return execute_deal_damage_command(*target, *amount, state)
-            }
-        BattleCommand::DealConditionDamage {
-                target,
-                condition: _,
-                amount,
-            } => {
-                return execute_deal_damage_command(*target, *amount, state)
-            }
-        BattleCommand::UpdateStatusProgress { target } => {
-                return execute_pokemon_command(*target, state, |pokemon, _| {
-                    let (should_cure, _status_changed) = pokemon.update_status_progress();
-                    if should_cure {
-                        // Status cured - this will be detected by emit_events() when it checks the pokemon's status
-                    }
+                    pokemon.status = Some(*status);
                     Ok(())
-                })
+                }
+            });
+        }
+        BattleCommand::CurePokemonStatus { target, status: _ } => {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
+                pokemon.status = None;
+                Ok(())
+            })
+        }
+        BattleCommand::UsePP { target, move_used } => {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
+                pokemon
+                    .use_move(*move_used)
+                    .map_err(|_| ExecutionError::NoPokemon)
+            })
+        }
+        BattleCommand::ChangeStatStage {
+            target,
+            stat,
+            delta,
+        } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            let current_stage = player.get_stat_stage(*stat);
+            let new_stage = (current_stage + delta).clamp(-6, 6);
+            player.set_stat_stage(*stat, new_stage);
+        }
+        BattleCommand::AddCondition { target, condition } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            // Don't apply conditions to fainted Pokemon
+            if let Some(pokemon) = player.active_pokemon() {
+                if !pokemon.is_fainted() {
+                    player.add_condition(condition.clone());
+                }
             }
+        }
+        BattleCommand::RemoveCondition {
+            target,
+            condition_type,
+        } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.active_pokemon_conditions.remove(condition_type);
+        }
+        BattleCommand::RemoveSpecificCondition { target, condition } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player
+                .active_pokemon_conditions
+                .remove(&condition.get_type());
+        }
+        BattleCommand::AddTeamCondition {
+            target,
+            condition,
+            turns,
+        } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.add_team_condition(*condition, *turns);
+        }
+        BattleCommand::SetLastMove { target, move_used } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.last_move = Some(*move_used);
+        }
+        BattleCommand::SwitchPokemon {
+            target,
+            new_pokemon_index,
+        } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            if *new_pokemon_index < player.team.len() && player.team[*new_pokemon_index].is_some() {
+                player.active_pokemon_index = *new_pokemon_index;
+                return Ok(vec![]);
+            } else {
+                return Err(ExecutionError::InvalidPokemonIndex);
+            }
+        }
+        BattleCommand::AttemptCatch {
+            player_index,
+            target_pokemon,
+        } => return execute_attempt_catch(*player_index, *target_pokemon, state),
+        BattleCommand::AddAnte { target, amount } => {
+            let player_index = target.to_index();
+            state.players[player_index].add_ante(*amount);
+        }
+        BattleCommand::SetGameState(new_state) => {
+            state.game_state = *new_state;
+        }
+        BattleCommand::IncrementTurnNumber => {
+            state.turn_number += 1;
+        }
+        BattleCommand::ClearActionQueue => {
+            state.action_queue = [None, None];
+        }
+        BattleCommand::PushAction(action) => {
+            action_stack.push_front(action.clone());
+        }
+        BattleCommand::ClearPlayerState { target } => {
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.clear_active_pokemon_state();
+        }
+        BattleCommand::DealStatusDamage {
+            target,
+            status: _,
+            amount,
+        } => return execute_deal_damage_command(*target, *amount, state),
+        BattleCommand::DealConditionDamage {
+            target,
+            condition: _,
+            amount,
+        } => return execute_deal_damage_command(*target, *amount, state),
+        BattleCommand::UpdateStatusProgress { target } => {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
+                let (should_cure, _status_changed) = pokemon.update_status_progress();
+                if should_cure {
+                    // Status cured - this will be detected by emit_events() when it checks the pokemon's status
+                }
+                Ok(())
+            });
+        }
         BattleCommand::TickPokemonCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
 
-                // Apply tick effect for this specific condition
-                if let Some(existing_condition) = player
-                    .active_pokemon_conditions
-                    .get_mut(&condition.get_type())
-                {
-                    // Apply condition-specific tick behavior
-                    match existing_condition {
-                        crate::battle::conditions::PokemonCondition::Confused { turns_remaining } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        crate::battle::conditions::PokemonCondition::Exhausted { turns_remaining } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        crate::battle::conditions::PokemonCondition::Trapped { turns_remaining } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        crate::battle::conditions::PokemonCondition::Rampaging { turns_remaining } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        crate::battle::conditions::PokemonCondition::Disabled {
-                            turns_remaining,
-                            ..
-                        } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        crate::battle::conditions::PokemonCondition::Biding {
-                            turns_remaining, ..
-                        } => {
-                            *turns_remaining = turns_remaining.saturating_sub(1);
-                        }
-                        _ => {} // Other conditions don't have turns to tick
+            // Apply tick effect for this specific condition
+            if let Some(existing_condition) = player
+                .active_pokemon_conditions
+                .get_mut(&condition.get_type())
+            {
+                // Apply condition-specific tick behavior
+                match existing_condition {
+                    crate::battle::conditions::PokemonCondition::Confused { turns_remaining } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
                     }
+                    crate::battle::conditions::PokemonCondition::Exhausted { turns_remaining } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
+                    }
+                    crate::battle::conditions::PokemonCondition::Trapped { turns_remaining } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
+                    }
+                    crate::battle::conditions::PokemonCondition::Rampaging { turns_remaining } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
+                    }
+                    crate::battle::conditions::PokemonCondition::Disabled {
+                        turns_remaining,
+                        ..
+                    } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
+                    }
+                    crate::battle::conditions::PokemonCondition::Biding {
+                        turns_remaining, ..
+                    } => {
+                        *turns_remaining = turns_remaining.saturating_sub(1);
+                    }
+                    _ => {} // Other conditions don't have turns to tick
                 }
             }
+        }
         BattleCommand::ExpirePokemonCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player
-                    .active_pokemon_conditions
-                    .remove(&condition.get_type());
-            }
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player
+                .active_pokemon_conditions
+                .remove(&condition.get_type());
+        }
         BattleCommand::TickTeamCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
 
-                // Decrement turns for this specific team condition
-                if let Some(turns) = player.team_conditions.get_mut(condition) {
-                    *turns = turns.saturating_sub(1);
-                }
+            // Decrement turns for this specific team condition
+            if let Some(turns) = player.team_conditions.get_mut(condition) {
+                *turns = turns.saturating_sub(1);
             }
+        }
         BattleCommand::ExpireTeamCondition { target, condition } => {
-                let player_index = target.to_index();
-                let player = &mut state.players[player_index];
-                player.team_conditions.remove(condition);
-            }
+            let player_index = target.to_index();
+            let player = &mut state.players[player_index];
+            player.team_conditions.remove(condition);
+        }
         BattleCommand::QueueForcedAction { target, action } => {
-                let player_index = target.to_index();
-                state.action_queue[player_index] = Some(action.clone());
-            }
+            let player_index = target.to_index();
+            state.action_queue[player_index] = Some(action.clone());
+        }
         BattleCommand::AwardExperience { recipients: _ } => {
-                // TODO: Implement experience awarding
-            }
-        BattleCommand::LevelUpPokemon { target: _, pokemon_index: _ } => {
-                // TODO: Implement level up logic
-            }
-        BattleCommand::LearnMove { target: _, pokemon_index: _, move_: _, replace_index: _ } => {
-                // TODO: Implement move learning logic
-            }
-        BattleCommand::EvolvePokemon { target: _, pokemon_index: _, new_species: _ } => {
-                // TODO: Implement evolution logic
-            }
-        BattleCommand::DistributeEffortValues { target: _, pokemon_index: _, stats: _ } => {
-                // TODO: Implement EV distribution logic
-            }
-        BattleCommand::UpdateBattleParticipation { active_p0: _, active_p1: _ } => {
-                // TODO: Update battle participation tracker
-            }
+            // TODO: Implement experience awarding
+        }
+        BattleCommand::LevelUpPokemon {
+            target: _,
+            pokemon_index: _,
+        } => {
+            // TODO: Implement level up logic
+        }
+        BattleCommand::LearnMove {
+            target: _,
+            pokemon_index: _,
+            move_: _,
+            replace_index: _,
+        } => {
+            // TODO: Implement move learning logic
+        }
+        BattleCommand::EvolvePokemon {
+            target: _,
+            pokemon_index: _,
+            new_species: _,
+        } => {
+            // TODO: Implement evolution logic
+        }
+        BattleCommand::DistributeEffortValues {
+            target: _,
+            pokemon_index: _,
+            stats: _,
+        } => {
+            // TODO: Implement EV distribution logic
+        }
+        BattleCommand::UpdateBattleParticipation {
+            active_p0: _,
+            active_p1: _,
+        } => {
+            // TODO: Update battle participation tracker
+        }
     }
-    
+
     // All commands that don't generate additional commands return empty vec
     Ok(vec![])
 }

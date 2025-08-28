@@ -2,7 +2,21 @@ use crate::species::Species;
 use crate::errors::SpeciesDataResult;
 use schema::BaseStats;
 
+// Constants for reward calculations
+const BASE_EXP_MULTIPLIER: f32 = 0.3;
+const EVOLUTION_PENALTY: f32 = -0.1;
+const HIGH_STAT_BONUS: f32 = 0.02;
+const HIGH_STAT_THRESHOLD: u8 = 100;
+
+// BST thresholds for EV yield
+const BST_LOW_THRESHOLD: u16 = 300;
+const BST_HIGH_THRESHOLD: u16 = 500;
+const EV_YIELD_LOW: u8 = 1;
+const EV_YIELD_MEDIUM: u8 = 2;
+const EV_YIELD_HIGH: u8 = 3;
+
 /// Individual stat types that correspond to BaseStats fields
+/// Internal use only
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Stat {
     Hp,
@@ -96,10 +110,10 @@ impl RewardCalculator {
         let species_data = crate::get_species_data(species)?;
         
         let bst = species_data.base_stats.total();
-        let evol_modifier = if species_data.evolution_data.is_some() { -0.1 } else { 0.0 };
+        let evol_modifier = if species_data.evolution_data.is_some() { EVOLUTION_PENALTY } else { 0.0 };
         let stat_modifier = self.calculate_stat_modifier(&species_data.base_stats);
         
-        let multiplier = 0.3 + evol_modifier + stat_modifier;
+        let multiplier = BASE_EXP_MULTIPLIER + evol_modifier + stat_modifier;
         Ok((bst as f32 * multiplier) as u32)
     }
     
@@ -112,9 +126,9 @@ impl RewardCalculator {
         let bst = species_data.base_stats.total();
         
         let total_evs = match bst {
-            0..300 => 1,
-            300..500 => 2,
-            _ => 3,
+            0..BST_LOW_THRESHOLD => EV_YIELD_LOW,
+            BST_LOW_THRESHOLD..BST_HIGH_THRESHOLD => EV_YIELD_MEDIUM,
+            _ => EV_YIELD_HIGH,
         };
         
         let highest_stats = self.find_highest_base_stats(&species_data.base_stats);
@@ -132,10 +146,10 @@ impl RewardCalculator {
             base_stats.speed,
         ]
         .iter()
-        .filter(|&&stat| stat >= 100)
+        .filter(|&&stat| stat >= HIGH_STAT_THRESHOLD)
         .count();
         
-        high_stats as f32 * 0.02
+        high_stats as f32 * HIGH_STAT_BONUS
     }
     
     /// Find which base stats are tied for highest value

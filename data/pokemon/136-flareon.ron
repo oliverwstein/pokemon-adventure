@@ -9,6 +9,7 @@ PokemonSpecies(
         sp_attack: 95,
         sp_defense: 110,
         speed: 65,
+    experience_group: MediumFast,
     ),
     learnset: (
         level_up: {

@@ -14,6 +14,7 @@ pub mod mcp_interface;
 pub mod move_data;
 pub mod player;
 pub mod pokemon;
+pub mod progression;
 pub mod species;
 pub mod teams;
 

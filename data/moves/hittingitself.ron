@@ -1,0 +1,9 @@
+MoveData(
+    name: "Hit Itself",
+    move_type: Typeless,
+    power: Some(40),
+    category: Physical,
+    accuracy: None,
+    max_pp: 0,
+    effects: [],
+)

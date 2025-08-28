@@ -356,4 +356,61 @@ This architectural evolution maintains the system's performance characteristics 
 
 ---
 
+## Code Style & Development Patterns
+
+### Architectural Philosophy
+The codebase follows consistent architectural principles that prioritize maintainability, type safety, and testability:
+
+- **Pure Function Design**: Battle logic functions are pure, returning command lists without side effects
+- **Centralized State Mutation**: Only designated command executors modify battle state, ensuring consistency
+- **Event-Driven Architecture**: All actions generate events through a centralized `EventBus` for comprehensive logging
+- **Builder Pattern Usage**: Test utilities use fluent builder APIs (`TestPokemonBuilder`) for clear, composable test setup
+
+### Code Style Conventions
+
+**Documentation Standards**:
+- Comprehensive `///` doc comments on public APIs with usage examples
+- Inline explanations for complex battle mechanics and calculations
+- Clear module-level documentation explaining architectural decisions
+
+**Error Handling Patterns**:
+- Custom error enums (`SpeciesDataError`, `UseMoveError`) with descriptive variants
+- Consistent `Result<T, E>` return patterns throughout the codebase
+- Graceful degradation for data loading failures with fallback behaviors
+
+**Type Safety & Validation**:
+- Heavy use of enums for domain concepts (`Species`, `Move`, `StatusCondition`)
+- Compile-time validation of Pokemon/move/team references through schema types
+- `Hash` and `Eq` trait implementations for type-safe HashMap keys
+
+**Testing Framework**:
+- `rstest` crate for parametric testing with `#[case]` attributes
+- Descriptive test case names explaining expected behavior
+- Comprehensive event validation through pattern matching
+- Deterministic RNG with `TurnRng` oracle pattern for reproducible outcomes
+
+**Formatting & Display**:
+- Consistent `fmt::Display` implementations with aligned tabular output
+- `LABEL_WIDTH` constants for proper text alignment in battle logs
+- Human-readable event formatting with context-aware messaging
+
+**Data Management**:
+- RON (Rusty Object Notation) for human-readable configuration files
+- Compile-time data embedding via `build.rs` and postcard serialization
+- Zero-runtime-cost data access through static function interfaces
+- Modular schema definitions in separate `schema` crate for build script compatibility
+
+### Development Workflow Patterns
+
+**Command-Execution Separation**:
+- Calculation functions (`calculators.rs`) return command lists without mutation
+- Execution functions (`commands.rs`) apply state changes and emit events
+- Clear separation between "what to do" (commands) and "doing it" (execution)
+
+**Testing Organization**:
+- Feature-based test file organization (`test_fainting.rs`, `test_special_moves.rs`)
+- Common test utilities in `tests/common.rs` with builder patterns
+- Both unit tests (individual methods) and integration tests (full battles) in same files
+- Event bus integration for detailed battle flow debugging
+
 This system provides a robust, well-tested foundation for Pokemon battle mechanics with authentic Gen 1 accuracy, elegant Command-Execution architecture, modern RON-based data management, and room for expansion into advanced features like abilities, held items, and additional generations.

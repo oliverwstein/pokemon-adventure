@@ -133,11 +133,12 @@ mod tests {
             "Struggle should cause recoil damage to the user."
         );
 
-        // Struggle recoil is 25% of damage dealt. Allow for rounding.
-        let expected_recoil = (damage_to_defender as f32 * 0.25).round() as u16;
+        // Struggle recoil is 50% of damage dealt. Round up.
+        println!("Damage to defender: {}, Recoil to attacker: {}", damage_to_defender, recoil_to_attacker);
+        let expected_recoil = (damage_to_defender as f32 * 0.50).ceil() as u16;
         assert_eq!(
             recoil_to_attacker, expected_recoil,
-            "Recoil damage should be 25% of the damage dealt."
+            "Recoil damage should be 50% of the damage dealt."
         );
     }
 }

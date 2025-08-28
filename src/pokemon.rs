@@ -62,7 +62,7 @@ pub struct PokemonInst {
     pub name: String,     // Species name if no nickname
     pub species: Species, // Species enum for type-safe lookup
     pub level: u8,        // Pokemon's level (1-100)
-    pub curr_exp: u8,     // Only really relevant for single-player
+    pub curr_exp: u32,    // Only really relevant for single-player
     curr_hp: u16,         // Current HP (private, use methods to access)
     pub ivs: [u8; 6],     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
     pub evs: [u8; 6],     // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
@@ -232,7 +232,7 @@ impl PokemonInst {
     pub fn new_for_test(
         species: Species,
         level: u8,
-        curr_exp: u8,
+        curr_exp: u32,
         curr_hp: u16,
         ivs: [u8; 6],
         evs: [u8; 6],

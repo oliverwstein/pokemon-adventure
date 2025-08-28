@@ -9,7 +9,7 @@ use std::fmt;
 use crate::move_data::{get_compiled_species_data, get_move_data, get_move_max_pp};
 
 /// Get species data for a specific species from the compiled data
-pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
+pub fn get_species_data(species: Species) -> SpeciesDataResult<&'static PokemonSpecies> {
     // get_compiled_species_data() now returns &'static [Option<PokemonSpecies>]
     let compiled_data_slice = get_compiled_species_data();
     let index = species.pokedex_number() as usize - 1;
@@ -18,7 +18,6 @@ pub fn get_species_data(species: Species) -> SpeciesDataResult<PokemonSpecies> {
     compiled_data_slice
         .get(index) // This returns an `Option<&Option<PokemonSpecies>>`.
         .and_then(|option_species| option_species.as_ref()) // This unwraps the outer Option and converts `&Option<T>` to `Option<&T>`.
-        .cloned() // This converts `Option<&PokemonSpecies>` to `Option<PokemonSpecies>` by cloning the data.
         .ok_or(SpeciesDataError::SpeciesNotFound(species)) // If we have `None` at any point, return our custom error.
 }
 
@@ -326,7 +325,7 @@ impl PokemonInst {
     }
 
     /// Get the species data for this Pokemon instance.
-    pub fn get_species_data(&self) -> SpeciesDataResult<PokemonSpecies> {
+    pub fn get_species_data(&self) -> SpeciesDataResult<&'static PokemonSpecies> {
         get_species_data(self.species)
     }
 
@@ -355,7 +354,7 @@ impl PokemonInst {
         }
 
         self.get_species_data()
-            .map(|data| data.types)
+            .map(|data| data.types.clone())
             .unwrap_or_default()
     }
 

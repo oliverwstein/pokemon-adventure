@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 73,
         sp_defense: 115,
         speed: 67,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Pound, Hypnosis, Disable],

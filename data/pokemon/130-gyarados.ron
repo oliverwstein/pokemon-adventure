@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 60,
         sp_defense: 100,
         speed: 81,
-    experience_group: Slow,
     ),
+    experience_group: Slow,
     learnset: (
         level_up: {
             1: [Thrash],

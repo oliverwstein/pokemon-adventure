@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 25,
         sp_defense: 25,
         speed: 30,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Harden],

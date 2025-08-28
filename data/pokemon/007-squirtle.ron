@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 50,
         sp_defense: 64,
         speed: 43,
-    experience_group: MediumSlow,
     ),
+    experience_group: MediumSlow,
     learnset: (
         level_up: {
             1: [Tackle, TailWhip],

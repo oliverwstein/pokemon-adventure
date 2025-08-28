@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 50,
         sp_defense: 50,
         speed: 90,
-    experience_group: MediumSlow,
     ),
+    experience_group: MediumSlow,
     learnset: (
         level_up: {
             1: [Bubblebeam, Hypnosis, WaterGun],

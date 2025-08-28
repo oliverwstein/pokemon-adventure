@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 65,
         sp_defense: 79,
         speed: 80,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Wrap, Leer, PoisonSting],

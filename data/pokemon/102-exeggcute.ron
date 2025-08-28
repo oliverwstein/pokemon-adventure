@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 60,
         sp_defense: 45,
         speed: 40,
-    experience_group: Slow,
     ),
+    experience_group: Slow,
     learnset: (
         level_up: {
             1: [Barrage, Hypnosis],

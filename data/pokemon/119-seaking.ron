@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 65,
         sp_defense: 80,
         speed: 68,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Peck, TailWhip, Supersonic],

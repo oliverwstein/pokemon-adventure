@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 154,
         sp_defense: 90,
         speed: 130,
-    experience_group: Slow,
     ),
+    experience_group: Slow,
     learnset: (
         level_up: {
             1: [Confusion, Disable, Perplex, Recover],

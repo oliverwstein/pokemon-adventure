@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 20,
         sp_defense: 20,
         speed: 50,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [PoisonSting, StringShot],

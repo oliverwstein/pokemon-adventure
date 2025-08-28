@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 65,
         sp_defense: 65,
         speed: 115,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Scratch, Growl, Bite, Screech],

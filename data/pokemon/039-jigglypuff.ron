@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 45,
         sp_defense: 25,
         speed: 20,
-    experience_group: Fast,
     ),
+    experience_group: Fast,
     learnset: (
         level_up: {
             1: [Sing],

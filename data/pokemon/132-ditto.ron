@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 48,
         sp_defense: 48,
         speed: 48,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Transform],

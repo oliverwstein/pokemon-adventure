@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 31,
         sp_defense: 31,
         speed: 70,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [Peck, Growl],

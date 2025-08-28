@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 65,
         sp_defense: 75,
         speed: 90,
-    experience_group: MediumFast,
     ),
+    experience_group: MediumFast,
     learnset: (
         level_up: {
             1: [LeechLife, Screech, Supersonic],

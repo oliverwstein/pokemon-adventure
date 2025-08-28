@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 70,
         sp_defense: 90,
         speed: 70,
-    experience_group: MediumSlow,
     ),
+    experience_group: MediumSlow,
     learnset: (
         level_up: {
             1: [Hypnosis, WaterGun, Doubleslap, BodySlam],

@@ -9,8 +9,8 @@ PokemonSpecies(
         sp_attack: 85,
         sp_defense: 45,
         speed: 55,
-    experience_group: MediumSlow,
     ),
+    experience_group: MediumSlow,
     learnset: (
         level_up: {
             1: [VineWhip, Growth, Wrap],

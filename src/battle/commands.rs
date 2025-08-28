@@ -101,6 +101,10 @@ pub enum BattleCommand {
         target: PlayerTarget,
         new_pokemon_index: usize,
     },
+    AttemptCatch {
+        player_index: usize,
+        target_pokemon: crate::species::Species,
+    },
     ClearPlayerState {
         target: PlayerTarget,
     },
@@ -298,6 +302,17 @@ impl BattleCommand {
                 vec![BattleEvent::TeamConditionApplied {
                     player_index,
                     condition: *condition,
+                }]
+            }
+            BattleCommand::AttemptCatch {
+                player_index,
+                target_pokemon,
+            } => {
+                // Catch events are handled by the catch command logic
+                // The success event is emitted after the Pokemon is added to the team
+                vec![BattleEvent::CatchSucceeded {
+                    player_index: *player_index,
+                    pokemon: *target_pokemon,
                 }]
             }
             BattleCommand::SwitchPokemon {
@@ -609,6 +624,10 @@ fn execute_state_change(
                 Err(ExecutionError::InvalidPokemonIndex)
             }
         }
+        BattleCommand::AttemptCatch {
+            player_index,
+            target_pokemon,
+        } => execute_attempt_catch(*player_index, *target_pokemon, state),
         BattleCommand::AddAnte { target, amount } => {
             let player_index = target.to_index();
             state.players[player_index].add_ante(*amount);
@@ -744,6 +763,40 @@ fn execute_state_change(
             Ok(())
         }
     }
+}
+
+/// Execute a catch attempt command - adds the caught Pokemon to the player's team
+fn execute_attempt_catch(
+    player_index: usize,
+    target_pokemon: crate::species::Species,
+    state: &mut BattleState,
+) -> Result<(), ExecutionError> {
+    // Find the next empty slot in the player's team
+    let player = &mut state.players[player_index];
+    for i in 0..6 {
+        if player.team[i].is_none() {
+            // Create a new Pokemon instance of the caught species
+            // We'll use level 25 for now - this could be made configurable
+            let species_data = match crate::pokemon::get_species_data(target_pokemon) {
+                Ok(data) => data,
+                Err(_) => return Err(ExecutionError::NoPokemon),
+            };
+
+            let caught_pokemon = crate::pokemon::PokemonInst::new(
+                target_pokemon,
+                &species_data,
+                25, // Default level for wild Pokemon
+                None,
+                None,
+            );
+
+            player.team[i] = Some(caught_pokemon);
+            return Ok(());
+        }
+    }
+
+    // Team is full - this should have been caught by validation, but handle it gracefully
+    Err(ExecutionError::InvalidPokemonIndex)
 }
 
 #[cfg(test)]

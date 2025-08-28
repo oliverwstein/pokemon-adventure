@@ -1,6 +1,7 @@
 pub mod common;
 mod test_action_prevention;
 mod test_ante;
+mod test_catch;
 mod test_condition_damage;
 mod test_critical_hits;
 mod test_cure_status;

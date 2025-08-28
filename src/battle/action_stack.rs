@@ -18,6 +18,9 @@ pub enum BattleAction {
         target_pokemon_index: usize,
     },
 
+    /// Player attempts to catch the opponent's active Pokemon
+    CatchAttempt { player_index: usize },
+
     /// Execute a single hit of a move (for multi-hit moves, multiple actions are pushed)
     AttackHit {
         attacker_index: usize,
@@ -156,6 +159,20 @@ impl ActionStack {
                     speed: 0,
                 }
             }
+            PlayerAction::Catch => {
+                let player = &battle_state.players[player_index];
+                let speed = if let Some(active_pokemon) = player.active_pokemon() {
+                    effective_speed(active_pokemon, player)
+                } else {
+                    0 // Fallback if no active pokemon
+                };
+
+                ActionPriority {
+                    action_priority: 3, // Medium priority, after switch but before moves
+                    move_priority: 0,
+                    speed,
+                }
+            }
             PlayerAction::UseMove { move_index } => {
                 let player = &battle_state.players[player_index];
                 let active_pokemon = player.active_pokemon().expect("Active pokemon must exist");
@@ -198,6 +215,7 @@ impl ActionStack {
                 player_index,
                 target_pokemon_index: *team_index,
             },
+            PlayerAction::Catch => BattleAction::CatchAttempt { player_index },
             PlayerAction::UseMove { move_index } => {
                 let player = &battle_state.players[player_index];
                 let active_pokemon = player

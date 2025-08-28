@@ -32,6 +32,7 @@ impl ScoringAI {
             PlayerAction::SwitchPokemon { team_index } => {
                 self.score_switch(*team_index, player_index, opponent_index, state)
             }
+            PlayerAction::Catch => -2000.0, // AI should never try to catch - this is for player only.
             PlayerAction::Forfeit => -1000.0, // Never choose to forfeit unless it's the only option.
         }
     }

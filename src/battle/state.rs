@@ -168,6 +168,22 @@ pub enum BattleEvent {
         new_total: u32,
     },
 
+    // Catch Events
+    CatchAttempted {
+        player_index: usize,
+        pokemon: Species,
+        catch_rate: f32,
+    },
+    CatchSucceeded {
+        player_index: usize,
+        pokemon: Species,
+    },
+    CatchFailed {
+        player_index: usize,
+        pokemon: Species,
+        reason: CatchFailureReason,
+    },
+
     // Battle End
     PlayerDefeated {
         player_index: usize,
@@ -384,6 +400,52 @@ impl BattleEvent {
 
             // === Battle Economy Events ===
             BattleEvent::AnteIncreased { .. } => Some(format!("Coins scattered around!")),
+
+            // === Catch Events ===
+            BattleEvent::CatchAttempted {
+                player_index,
+                pokemon,
+                catch_rate,
+            } => {
+                let player_name = &battle_state.players[*player_index].player_name;
+                let pokemon_name = Self::format_species_name(*pokemon);
+                let rate_desc =
+                    crate::battle::catch::calculation::get_catch_rate_description(*catch_rate);
+                Some(format!(
+                    "{} threw a Poké Ball at {}! (Catch rate: {})",
+                    player_name, pokemon_name, rate_desc
+                ))
+            }
+            BattleEvent::CatchSucceeded {
+                player_index,
+                pokemon,
+            } => {
+                let _player_name = &battle_state.players[*player_index].player_name;
+                let pokemon_name = Self::format_species_name(*pokemon);
+                Some(format!("Gotcha! {} was caught!", pokemon_name))
+            }
+            BattleEvent::CatchFailed {
+                pokemon, reason, ..
+            } => {
+                let pokemon_name = Self::format_species_name(*pokemon);
+                match reason {
+                    CatchFailureReason::RollFailed { .. } => {
+                        Some(format!("Oh no! {} broke free!", pokemon_name))
+                    }
+                    CatchFailureReason::InvalidBattleType { .. } => {
+                        Some("You cannot use that here!".to_string())
+                    }
+                    CatchFailureReason::NoTargetPokemon => {
+                        Some("There's no Pokémon to catch!".to_string())
+                    }
+                    CatchFailureReason::TeamFull => {
+                        Some("Your party is full! You cannot catch more Pokémon!".to_string())
+                    }
+                    CatchFailureReason::TargetFainted { .. } => {
+                        Some("You can't catch a fainted Pokémon!".to_string())
+                    }
+                }
+            }
 
             // === Battle End Events ===
             BattleEvent::PlayerDefeated { player_index } => {
@@ -823,6 +885,15 @@ pub enum ActionFailureReason {
     NoPPRemaining { move_used: Move },
     PokemonFainted, // When the acting Pokemon or target is fainted
     MoveFailedToExecute { move_used: Move },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum CatchFailureReason {
+    InvalidBattleType { battle_type: BattleType },
+    NoTargetPokemon,
+    TeamFull,
+    TargetFainted { pokemon: Species },
+    RollFailed { catch_rate: f32 },
 }
 
 /// Event bus for collecting and managing battle events.

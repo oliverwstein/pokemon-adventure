@@ -632,13 +632,12 @@ mod event_formatting_tests {
         let player1 = BattlePlayer::new("p1".to_string(), "Player 1".to_string(), vec![pikachu]);
         let player2 = BattlePlayer::new("p2".to_string(), "Player 2".to_string(), vec![charmander]);
 
-        BattleState {
-            battle_id: "test".to_string(),
-            players: [player1, player2],
-            turn_number: 1,
-            game_state: GameState::TurnInProgress,
-            action_queue: [None, None],
-        }
+        let mut battle_state = BattleState::new("test".to_string(), player1, player2);
+
+        // 2. Explicitly set any fields that differ from the constructor's defaults.
+        // In this case, the original code required GameState::TurnInProgress.
+        battle_state.game_state = GameState::TurnInProgress;
+        battle_state
     }
 
     #[test]
@@ -959,12 +958,25 @@ impl TurnRng {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+pub enum BattleType {
+    /// Competitive battle, no EXP or other rewards.
+    Tournament,
+    /// Standard battle against another trainer, awards EXP.
+    Trainer,
+    /// Encounter with a wild Pokémon, awards EXP and allows catching.
+    Wild,
+    /// Safari Zone encounter with unique actions.
+    Safari,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BattleState {
     pub battle_id: String,
     pub players: [BattlePlayer; 2],
     pub turn_number: u32,
     pub game_state: GameState,
+    pub battle_type: BattleType,
     pub action_queue: [Option<PlayerAction>; 2],
 }
 
@@ -975,6 +987,7 @@ impl BattleState {
             players: [player1, player2],
             turn_number: 1,
             game_state: GameState::WaitingForActions,
+            battle_type: BattleType::Tournament,
             action_queue: [None, None],
         }
     }

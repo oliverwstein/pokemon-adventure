@@ -134,7 +134,10 @@ mod tests {
         );
 
         // Struggle recoil is 50% of damage dealt. Round up.
-        println!("Damage to defender: {}, Recoil to attacker: {}", damage_to_defender, recoil_to_attacker);
+        println!(
+            "Damage to defender: {}, Recoil to attacker: {}",
+            damage_to_defender, recoil_to_attacker
+        );
         let expected_recoil = (damage_to_defender as f32 * 0.50).ceil() as u16;
         assert_eq!(
             recoil_to_attacker, expected_recoil,

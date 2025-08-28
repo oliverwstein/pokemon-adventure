@@ -34,7 +34,7 @@ impl BaseStats {
             self.speed,
         ]
         .iter()
-        .map(|&stat| u16::from(stat)) 
+        .map(|&stat| u16::from(stat))
         .sum()
     }
 }
@@ -74,7 +74,7 @@ impl ExperienceGroup {
     /// Uses unified formula: A × n³ + B × n² × sin(C × n)
     pub fn exp_for_level(self, level: u8) -> u32 {
         let n = level as f64;
-        
+
         let (a, b, c) = match self {
             ExperienceGroup::Fast => (0.8, 0.0, 0.0),
             ExperienceGroup::MediumFast => (1.0, 0.0, 0.0),
@@ -83,12 +83,16 @@ impl ExperienceGroup {
             ExperienceGroup::Fluctuating => (1.0, 0.3, 0.5),
             ExperienceGroup::Erratic => (1.1, 0.2, 0.1),
         };
-        
+
         let base = a * n.powi(3);
-        let fluctuation = if b != 0.0 { b * n.powi(2) * (c * n).sin() } else { 0.0 };
+        let fluctuation = if b != 0.0 {
+            b * n.powi(2) * (c * n).sin()
+        } else {
+            0.0
+        };
         (base + fluctuation).max(0.0) as u32
     }
-    
+
     /// Calculate what level a Pokemon should be based on total experience
     pub fn calculate_level_from_exp(self, total_exp: u32) -> u8 {
         // Linear search - could optimize with binary search if needed
@@ -107,8 +111,6 @@ impl ExperienceGroup {
         let next_level_exp = self.exp_for_level(current_level + 1);
         total_exp >= next_level_exp
     }
-
-    
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

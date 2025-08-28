@@ -59,7 +59,7 @@ pub struct EvolutionData {
 }
 
 /// Experience groups that determine leveling speed and curves
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ExperienceGroup {
     Fast,
     MediumFast,
@@ -120,6 +120,7 @@ pub struct PokemonSpecies {
     pub learnset: Learnset,
     pub catch_rate: u8,
     pub base_exp: u16,
+    pub experience_group: ExperienceGroup,
     pub description: String,
     pub evolution_data: Option<EvolutionData>,
 }

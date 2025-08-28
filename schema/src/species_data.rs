@@ -23,6 +23,22 @@ pub struct BaseStats {
     pub speed: u8,
 }
 
+impl BaseStats {
+    pub fn total(&self) -> u16 {
+        [
+            self.hp,
+            self.attack,
+            self.defense,
+            self.sp_attack,
+            self.sp_defense,
+            self.speed,
+        ]
+        .iter()
+        .map(|&stat| u16::from(stat)) 
+        .sum()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Learnset {
     pub level_up: HashMap<u8, Vec<Move>>, // level -> moves learned at that level

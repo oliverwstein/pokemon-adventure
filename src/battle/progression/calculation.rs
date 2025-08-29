@@ -85,62 +85,11 @@ pub fn calculate_progression_commands(
     }
 
     // Add the experience award command if there are valid recipients
+    // The execute_award_experience function will handle generating LevelUpPokemon commands
     if !experience_recipients.is_empty() {
         commands.push(BattleCommand::AwardExperience {
             recipients: experience_recipients,
         });
-
-        // For each participant, check if they should level up, evolve, or learn moves
-        for &participant_index in &participants {
-            if let Some(pokemon) =
-                battle_state.players[1 - fainted_player_index].team[participant_index].as_ref()
-            {
-                if pokemon.current_hp() > 0 && pokemon.level < 100 {
-                    // Calculate new experience and potential level ups
-                    let new_exp = pokemon.curr_exp + exp_per_participant;
-                    let species_data = match crate::get_species_data(pokemon.species) {
-                        Ok(data) => data,
-                        Err(_) => continue,
-                    };
-
-                    let new_level = species_data
-                        .experience_group
-                        .calculate_level_from_exp(new_exp);
-
-                    // Generate level up commands for each level gained
-                    for level in (pokemon.level + 1)..=new_level {
-                        commands.push(BattleCommand::LevelUpPokemon {
-                            target: opposing_player,
-                            pokemon_index: participant_index,
-                        });
-
-                        // Check for moves learned at this level
-                        if let Ok(moves) = calculator.moves_learned_at_level(pokemon.species, level)
-                        {
-                            for move_ in moves {
-                                commands.push(BattleCommand::LearnMove {
-                                    target: opposing_player,
-                                    pokemon_index: participant_index,
-                                    move_,
-                                    replace_index: None, // Let the execution logic decide
-                                });
-                            }
-                        }
-
-                        // Check for evolution at this level
-                        if let Ok(Some(new_species)) =
-                            calculator.should_evolve(pokemon.species, level)
-                        {
-                            commands.push(BattleCommand::EvolvePokemon {
-                                target: opposing_player,
-                                pokemon_index: participant_index,
-                                new_species,
-                            });
-                        }
-                    }
-                }
-            }
-        }
     }
 
     commands

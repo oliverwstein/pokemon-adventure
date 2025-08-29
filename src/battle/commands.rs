@@ -772,13 +772,26 @@ fn execute_state_change(
             new_pokemon_index,
         } => {
             let player_index = target.to_index();
-            let player = &mut state.players[player_index];
-            if *new_pokemon_index < player.team.len() && player.team[*new_pokemon_index].is_some() {
-                player.active_pokemon_index = *new_pokemon_index;
-                return Ok(vec![]);
-            } else {
+
+            // --- State Validation ---
+            if *new_pokemon_index >= state.players[player_index].team.len() 
+                || state.players[player_index].team[*new_pokemon_index].is_none() 
+            {
                 return Err(ExecutionError::InvalidPokemonIndex);
             }
+            
+            // --- State Mutation ---
+            state.players[player_index].active_pokemon_index = *new_pokemon_index;
+
+            // --- Determine Final Field State & Record Participation ---
+            // Determine the final indices for P0 and P1
+            let p0_active_index = state.players[0].active_pokemon_index;
+            let p1_active_index = state.players[1].active_pokemon_index;
+            // Record participation in the tracker
+            state.participation_tracker.record_participation(p0_active_index, p1_active_index);
+
+            // --- Final Return ---
+            return Ok(vec![]);
         }
         BattleCommand::AttemptCatch {
             player_index,

@@ -332,6 +332,44 @@ impl PokemonInst {
         self.recalculate_stats();
     }
 
+    /// Evolve this Pokemon into a new species.
+    /// This changes the species and recalculates stats.
+    pub fn evolve(&mut self, new_species: Species) {
+        self.species = new_species;
+        self.recalculate_stats();
+    }
+
+    /// Add effort values to this Pokemon.
+    /// EVs are capped at 255 per stat and 510 total.
+    /// Recalculates stats after adding EVs.
+    pub fn add_evs(&mut self, ev_gains: [u8; 6]) {
+        let mut current_total: u16 = self.evs.iter().map(|&ev| ev as u16).sum();
+        
+        for i in 0..6 {
+            let new_ev = (self.evs[i] as u16 + ev_gains[i] as u16).min(255);
+            let ev_gain = new_ev - self.evs[i] as u16;
+            
+            // Check if adding this EV would exceed the 510 total limit
+            if current_total + ev_gain <= 510 {
+                self.evs[i] = new_ev as u8;
+                current_total += ev_gain;
+            } else {
+                // Add as many EVs as possible without exceeding the limit
+                let remaining_points = 510 - current_total;
+                let actual_gain = remaining_points.min(ev_gain);
+                self.evs[i] = (self.evs[i] as u16 + actual_gain) as u8;
+                current_total += actual_gain;
+                
+                // Stop if we've reached the limit
+                if current_total >= 510 {
+                    break;
+                }
+            }
+        }
+        
+        self.recalculate_stats();
+    }
+
     // The AwardExperience command handler will call this.
     // It does NOT calculate level ups. It only updates the number.
     // This must be used carefully to ensure the level and stats remain consistent.

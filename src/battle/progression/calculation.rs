@@ -2,7 +2,7 @@ use crate::battle::commands::{BattleCommand, PlayerTarget};
 use crate::battle::state::BattleType;
 use crate::progression::RewardCalculator;
 use crate::species::Species;
-use crate::BattleState;
+use crate::{BattleState, PlayerType};
 
 /// Calculate all progression commands that should be executed when a Pokemon faints
 /// This is the main integration point between battle system and progression system
@@ -17,6 +17,17 @@ pub fn calculate_progression_commands(
         BattleType::Tournament => return Vec::new(),
         BattleType::Trainer | BattleType::Wild | BattleType::Safari => {
             // These battle types award experience and progression rewards
+        }
+    }
+    // Only award rewards if the opponent of the fainted Pokemon is a human player
+    match battle_state.players[fainted_target.opponent().to_index()].player_type {
+        // When the player's Pokemon faints, the opposing NPC does not get rewards
+        PlayerType::NPC => {
+            // NPCs don't get rewards for fainting Pokemon
+            return Vec::new();
+        }
+        PlayerType::Human => {
+            // Human players get rewards for fainting Pokemon
         }
     }
 

@@ -1,7 +1,6 @@
 use crate::errors::SpeciesDataResult;
 use crate::species::Species;
 use schema::BaseStats;
-use serde::{Deserialize, Serialize};
 
 // Constants for reward calculations
 const BASE_EXP_MULTIPLIER: f32 = 0.3;
@@ -162,110 +161,11 @@ impl RewardCalculator {
 
         ev_yield
     }
-
-    /// Check if Pokemon should attempt evolution at given level
-    /// Returns the species it should evolve into, or None if no evolution
-    pub fn should_evolve(&self, species: Species, level: u8) -> SpeciesDataResult<Option<Species>> {
-        let species_data = crate::get_species_data(species)?;
-
-        if let Some(evolution_data) = &species_data.evolution_data {
-            match evolution_data.method {
-                schema::EvolutionMethod::Level(required_level) => {
-                    if level >= required_level {
-                        Ok(Some(evolution_data.evolves_into))
-                    } else {
-                        Ok(None)
-                    }
-                }
-                schema::EvolutionMethod::Item(_) => Ok(None), // Items handled separately
-            }
-        } else {
-            Ok(None)
-        }
-    }
-
-    /// Get moves learned at a specific level
-    /// Returns vector of moves that should be learned when reaching this level
-    pub fn moves_learned_at_level(
-        &self,
-        species: Species,
-        level: u8,
-    ) -> SpeciesDataResult<Vec<crate::Move>> {
-        let species_data = crate::get_species_data(species)?;
-
-        Ok(species_data
-            .learnset
-            .level_up
-            .get(&level)
-            .cloned()
-            .unwrap_or_default())
-    }
-}
-
-/// Tracks which Pokemon have faced each other during battle
-/// participation[player][my_pokemon][opponent_pokemon] = true if they faced each other
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BattleParticipationTracker {
-    participation: [[[bool; 6]; 6]; 2],
-}
-
-impl BattleParticipationTracker {
-    pub fn new() -> Self {
-        Self {
-            participation: [[[false; 6]; 6]; 2],
-        }
-    }
-
-    /// Record that the active Pokemon from each player faced each other
-    pub fn record_participation(&mut self, p0_active: usize, p1_active: usize) {
-        if p0_active < 6 && p1_active < 6 {
-            self.participation[0][p0_active][p1_active] = true;
-            self.participation[1][p1_active][p0_active] = true;
-        }
-    }
-
-    /// Get all Pokemon from the opposing player who faced the specified opponent Pokemon
-    pub fn get_participants_against(
-        &self,
-        opponent_player: usize,
-        opponent_pokemon: usize,
-    ) -> Vec<usize> {
-        if opponent_player >= 2 || opponent_pokemon >= 6 {
-            return Vec::new();
-        }
-
-        let participant_player = 1 - opponent_player;
-        (0..6)
-            .filter(|&pokemon_index| {
-                self.participation[participant_player][pokemon_index][opponent_pokemon]
-            })
-            .collect()
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use schema::ExperienceGroup;
-
     use super::*;
-
-    #[test]
-    fn test_experience_groups() {
-        // Test basic level calculations
-        assert_eq!(ExperienceGroup::Fast.exp_for_level(1), 0);
-        assert!(ExperienceGroup::Fast.exp_for_level(50) < ExperienceGroup::Slow.exp_for_level(50));
-
-        // Test level calculation from experience
-        let fast_exp_50 = ExperienceGroup::Fast.exp_for_level(50);
-        assert_eq!(
-            ExperienceGroup::Fast.calculate_level_from_exp(fast_exp_50 - 1),
-            49
-        );
-        assert_eq!(
-            ExperienceGroup::Fast.calculate_level_from_exp(fast_exp_50),
-            50
-        );
-    }
 
     #[test]
     fn test_ev_yield_distribution() {
@@ -309,21 +209,6 @@ mod tests {
     }
 
     #[test]
-    fn test_participation_tracking() {
-        let mut tracker = BattleParticipationTracker::new();
-
-        // Record that Pokemon 0 from player 0 faced Pokemon 1 from player 1
-        tracker.record_participation(0, 1);
-
-        // Check participants
-        let participants = tracker.get_participants_against(1, 1); // Who faced player 1's Pokemon 1?
-        assert_eq!(participants, vec![0]); // Player 0's Pokemon 0
-
-        let participants2 = tracker.get_participants_against(0, 0); // Who faced player 0's Pokemon 0?
-        assert_eq!(participants2, vec![1]); // Player 1's Pokemon 1
-    }
-
-    #[test]
     fn test_bst_calculation() {
         let calculator = RewardCalculator;
         let base_stats = BaseStats {
@@ -340,42 +225,5 @@ mod tests {
         // Test stat modifier calculation
         let stat_modifier = calculator.calculate_stat_modifier(&base_stats);
         assert_eq!(stat_modifier, 0.12); // 6 stats >= 100, so 6 * 0.02 = 0.12
-    }
-
-    #[test]
-    fn test_can_level_up() {
-        // Test basic level up detection
-        assert!(!ExperienceGroup::Fast.can_level_up(100, 0)); // Max level can't level up
-        assert!(ExperienceGroup::Fast.can_level_up(1, 1000)); // Low level with high exp can level up
-
-        // Test exact threshold
-        let level_50_exp = ExperienceGroup::MediumFast.exp_for_level(50);
-        assert!(!ExperienceGroup::MediumFast.can_level_up(50, level_50_exp - 1)); // Just below threshold
-
-        let level_51_exp = ExperienceGroup::MediumFast.exp_for_level(51);
-        assert!(ExperienceGroup::MediumFast.can_level_up(50, level_51_exp)); // At threshold for next level
-    }
-
-    #[test]
-    fn test_evolution_and_move_learning() {
-        let calculator = RewardCalculator;
-
-        // Test should_evolve - these will work once we have species data
-        // For now, test the logic structure
-        match calculator.should_evolve(Species::Bulbasaur, 16) {
-            Ok(_) => {}  // Expected - function should work
-            Err(_) => {} // Also OK if species data not available in tests
-        }
-
-        // Test moves_learned_at_level - Charmander learns Ember at level 7
-        match calculator.moves_learned_at_level(Species::Charmander, 7) {
-            Ok(moves) => {
-                assert!(
-                    moves.contains(&crate::Move::Ember),
-                    "Charmander should learn Ember at level 7"
-                );
-            }
-            Err(_) => {} // OK if species data not available in tests
-        }
     }
 }

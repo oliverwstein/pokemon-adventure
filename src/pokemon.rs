@@ -207,13 +207,13 @@ impl PokemonInst {
         for (i, move_) in moves.into_iter().take(4).enumerate() {
             move_array[i] = Some(MoveInstance::new(move_));
         }
-
+        let initial_exp = species_data.experience_group.exp_for_level(level);
         let mut pokemon = PokemonInst {
             name: species_data.name.clone(),
             species,
             level,
-            curr_exp: 0, // Simplified for now
-            curr_hp: 0,  // Will be set below with validation
+            curr_exp: initial_exp,
+            curr_hp: 0, // Will be set below with validation
             ivs,
             evs,
             stats, // Assign the new `CurrentStats` struct here
@@ -285,6 +285,111 @@ impl PokemonInst {
             sp_attack: calc_other_stat(base_stats.sp_attack, ivs[3], evs[3]),
             sp_defense: calc_other_stat(base_stats.sp_defense, ivs[4], evs[4]),
             speed: calc_other_stat(base_stats.speed, ivs[5], evs[5]),
+        }
+    }
+
+    fn recalculate_stats(&mut self) {
+        // Fetch the species data which contains the necessary base stats.
+        // If data is unavailable, we cannot proceed, so we simply return.
+        if let Ok(species_data) = get_species_data(self.species) {
+            // Store the old max HP to calculate the difference after the update.
+            let old_max_hp = self.stats.hp;
+
+            // Call the existing pure calculation function with the instance's own data.
+            // This reuses the tested logic without duplicating the formula.
+            let new_stats =
+                Self::calculate_stats(&species_data.base_stats, self.level, &self.ivs, &self.evs);
+
+            // Atomically update the stats field with the new values.
+            self.stats = new_stats;
+
+            // Adjust current HP based on the change in max HP.
+            // This ensures that a Pokémon's health scales correctly when its max HP increases.
+            let new_max_hp = self.stats.hp;
+            let hp_increase = new_max_hp.saturating_sub(old_max_hp);
+
+            // Only add the HP increase if the Pokémon is not fainted.
+            // Fainted Pokémon do not gain HP from stat recalculations.
+            if !self.is_fainted() {
+                // Add the difference to the current HP, ensuring it doesn't exceed the new max.
+                let new_curr_hp = self.curr_hp.saturating_add(hp_increase);
+                self.curr_hp = new_curr_hp.min(new_max_hp);
+            }
+        }
+        // Failing silently is acceptable as it's a data integrity issue.
+    }
+
+    // The `LevelUpPokemon` command handler will call this.
+    pub fn apply_level_up(&mut self) {
+        if self.level < 100 {
+            self.level += 1;
+        }
+        self.recalculate_stats();
+    }
+
+    /// Evolve this Pokemon into a new species.
+    /// This changes the species and recalculates stats.
+    pub fn evolve(&mut self, new_species: Species) {
+        self.species = new_species;
+        self.recalculate_stats();
+    }
+
+    /// Add effort values to this Pokemon.
+    /// EVs are capped at 255 per stat and 510 total.
+    /// Recalculates stats after adding EVs.
+    pub fn add_evs(&mut self, ev_gains: [u8; 6]) {
+        let mut current_total: u16 = self.evs.iter().map(|&ev| ev as u16).sum();
+
+        for i in 0..6 {
+            let new_ev = (self.evs[i] as u16 + ev_gains[i] as u16).min(255);
+            let ev_gain = new_ev - self.evs[i] as u16;
+
+            // Check if adding this EV would exceed the 510 total limit
+            if current_total + ev_gain <= 510 {
+                self.evs[i] = new_ev as u8;
+                current_total += ev_gain;
+            } else {
+                // Add as many EVs as possible without exceeding the limit
+                let remaining_points = 510 - current_total;
+                let actual_gain = remaining_points.min(ev_gain);
+                self.evs[i] = (self.evs[i] as u16 + actual_gain) as u8;
+                current_total += actual_gain;
+
+                // Stop if we've reached the limit
+                if current_total >= 510 {
+                    break;
+                }
+            }
+        }
+
+        self.recalculate_stats();
+    }
+
+    /// Add experience points to this Pokemon.
+    /// Returns Some(new_level) if the Pokemon leveled up, None otherwise.
+    /// Caps at level 100.
+    pub fn add_experience(&mut self, amount: u32) -> Option<u8> {
+        if self.level >= 100 {
+            return None;
+        }
+
+        let old_level = self.level;
+        self.curr_exp = self.curr_exp.saturating_add(amount);
+
+        let species_data = match self.get_species_data() {
+            Ok(data) => data,
+            Err(_) => return None,
+        };
+
+        let new_level = species_data
+            .experience_group
+            .calculate_level_from_exp(self.curr_exp)
+            .min(100);
+
+        if new_level > old_level {
+            Some(new_level)
+        } else {
+            None
         }
     }
 

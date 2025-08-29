@@ -1,4 +1,4 @@
-# Progression System Design Specification
+# Progression System Design Specification (Revised)
 
 ## Overview
 This document specifies the complete interface and implementation design for integrating Pokemon progression (experience, leveling, evolution, move learning) into the battle system.
@@ -7,16 +7,16 @@ This document specifies the complete interface and implementation design for int
 
 ### Existing Data Structures
 
-#### PokemonInst (src/pokemon.rs)
+#### `PokemonInst` (src/pokemon.rs)
 ```rust
 pub struct PokemonInst {
     pub name: String,
     pub species: Species,
     pub level: u8,
-    pub curr_exp: u32,           // ← Use this field (not "experience")
+    pub curr_exp: u32,           // ← Use this field for total experience
     curr_hp: u16,                // Private field
     pub ivs: [u8; 6],            // HP, ATK, DEF, SP.ATK, SP.DEF, SPD
-    pub evs: [u8; 6],            // ← Use this field (not "effort_values") 
+    pub evs: [u8; 6],            // ← Use this field for Effort Values
     pub stats: CurrentStats,
     pub moves: [Option<MoveInstance>; 4],  // ← Fixed array, not Vec<Move>
     pub status: Option<StatusCondition>,
@@ -24,27 +24,33 @@ pub struct PokemonInst {
 
 // Required methods that must exist or be added:
 impl PokemonInst {
-    // Existing method for stat calculation
     fn calculate_stats(base_stats: &BaseStats, level: u8, ivs: &[u8; 6], evs: &[u8; 6]) -> CurrentStats;
+
+    /// The primary public method for applying a single level-up.
+    /// Increments the level and triggers an internal stat recalculation.
+    pub fn apply_level_up(&mut self);
+
+    /// A simple, atomic mutator for adding experience points.
+    /// This only updates `curr_exp` and does not trigger level-ups directly.
+    pub fn add_experience(&mut self, amount: u32);
     
-    // Methods that need to be added:
-    pub fn can_level_up_with_exp(&self, species_data: &PokemonSpecies, new_exp: u32) -> Option<u8>;
-    pub fn apply_level_up(&mut self, species_data: &PokemonSpecies);
-    pub fn recalculate_stats_from_species(&mut self, species_data: &PokemonSpecies);
+    /// A private helper for recalculating stats, called internally by apply_level_up,
+    /// apply_evolution, etc., to ensure state consistency.
+    fn recalculate_stats(&mut self); 
 }
 ```
 
-#### BattleCommand Enum (src/battle/commands.rs)
+#### `BattleCommand` Enum (src/battle/commands.rs)
 ```rust
 pub enum BattleCommand {
-    // Existing progression commands - use these exact field names:
+    // Existing progression commands - use these exact variants and field names:
     AwardExperience {
         recipients: Vec<(PlayerTarget, usize, u32)>, // (player, pokemon_index, exp_amount)
     },
     LevelUpPokemon {
         target: PlayerTarget,
         pokemon_index: usize,
-        // Note: No new_level field - level is determined by experience
+        // Note: No new_level field. This command triggers a single level increase.
     },
     LearnMove {
         target: PlayerTarget,
@@ -62,32 +68,9 @@ pub enum BattleCommand {
         pokemon_index: usize,
         stats: [u8; 6],              // HP, Atk, Def, SpA, SpD, Spe
     },
-    UpdateBattleParticipation {
-        active_p0: usize,
-        active_p1: usize,
-    },
 }
 ```
 
-#### BattleState Modification (src/battle/state.rs)
-```rust
-pub struct BattleState {
-    // ... existing fields
-    
-    // Add this field for progression tracking:
-    pub participation_tracker: BattleParticipationTracker,
-}
-
-// Constructor update needed:
-impl BattleState {
-    pub fn new(battle_id: String, player1: BattlePlayer, player2: BattlePlayer) -> Self {
-        BattleState {
-            // ... existing field initialization
-            participation_tracker: BattleParticipationTracker::new(),
-        }
-    }
-}
-```
 
 ## Function Specifications
 
@@ -97,19 +80,24 @@ impl BattleState {
 pub fn calculate_progression_commands(
     fainted_target: PlayerTarget,      // Which player's Pokemon fainted
     fainted_species: Species,          // Species of fainted Pokemon
-    battle_state: &BattleState,        // Complete battle state for participant lookup
-    participation_tracker: &BattleParticipationTracker, // Who participated against this Pokemon
+    battle_state: &BattleState,        // Complete battle state for context
 ) -> Vec<BattleCommand> {
     // Implementation logic:
-    // 1. Use RewardCalculator::calculate_base_exp(fainted_species) -> Result<u32, _>
-    // 2. Use RewardCalculator::calculate_ev_yield(fainted_species) -> Result<EvYield, _>
-    // 3. Use participation_tracker.get_participants_against(player_index, pokemon_index) -> Vec<usize>
-    // 4. For each participant:
-    //    a. Generate AwardExperience command
-    //    b. Generate DistributeEffortValues command  
-    //    c. Check if new experience triggers level up using species_data.experience_group.can_level_up()
-    //    d. If level up: generate LevelUpPokemon + check moves/evolution at new level
-    // 5. Return Vec<BattleCommand>
+    // 1. Use RewardCalculator to get base experience and EV yield for the fainted Pokémon.
+    // 2. Use battle_state.participation_tracker to get a Vec<usize> of participants.
+    // 3. For each valid participant (not fainted, not max level):
+    //    a. Generate an AwardExperience command with the calculated share of XP.
+    //    b. Generate a DistributeEffortValues command with the full EV yield.
+    //    c. Calculate the Pokémon's new total experience.
+    //    d. Use species_data.experience_group to calculate the new level from the new total experience.
+    //    e. For each level gained (from old_level to new_level), generate a LevelUpPokemon command.
+    //       - After each hypothetical level up, check for new moves to learn or evolutions to trigger and generate those commands as well.
+    // 4. Return the complete Vec<BattleCommand>.
+
+    // Alternatively, we can revise add_experience to return a vector of the levels as u8s, 
+    // then execute_award_experience can return the LevelUp BattleCommands as appropriate.
+    // Then, execute_level_up_pokemon can similarly return the LearnMove and EvolvePokemon commands as appropriate.
+    // This approach would decentralize the calculations from calculate_progression_commands. 
 }
 ```
 
@@ -121,33 +109,32 @@ pub fn execute_award_experience(
     recipients: &[(PlayerTarget, usize, u32)],
     state: &mut BattleState,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
-    // Implementation: pokemon.curr_exp += exp_amount for each recipient
+    // Implementation: For each recipient, get a mutable reference to the Pokémon
+    // and call pokemon.add_experience(exp_amount). Returns an empty Vec.
 }
 
 pub fn execute_level_up_pokemon(
     target: PlayerTarget,
     pokemon_index: usize,
-    _unused_level: u8,              // Parameter exists but level calculated from experience
     state: &mut BattleState,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
     // Implementation:
-    // 1. Get species data: crate::get_species_data(pokemon.species)?
-    // 2. Calculate new level: species_data.experience_group.calculate_level_from_exp(pokemon.curr_exp)
-    // 3. Set pokemon.level = new_level
-    // 4. Call pokemon.recalculate_stats_from_species(&species_data)
+    // 1. Get a mutable reference to the Pokémon.
+    // 2. Call pokemon.apply_level_up(). Returns an empty Vec.
 }
 
 pub fn execute_learn_move(
     target: PlayerTarget,
     pokemon_index: usize,
-    move_: Move,                    // Note: parameter name is "move_"
+    move_: Move,
     replace_index: Option<usize>,
     state: &mut BattleState,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
     // Implementation:
-    // 1. Create MoveInstance::new(move_)
-    // 2. If replace_index.is_some(): pokemon.moves[index] = Some(move_instance)
-    // 3. Else: find first None slot in pokemon.moves[0..4], or replace pokemon.moves[3]
+    // 1. Create a new MoveInstance from `move_`.
+    // 2. If replace_index is Some(i), replace the move at pokemon.moves[i].
+    // 3. If replace_index is None, find the first empty (None) slot and place the move there.
+    // 4. (Optional) If no empty slot, default to replacing the last move, pokemon.moves[3].
 }
 
 pub fn execute_evolve_pokemon(
@@ -157,9 +144,10 @@ pub fn execute_evolve_pokemon(
     state: &mut BattleState,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
     // Implementation:
-    // 1. pokemon.species = new_species
-    // 2. Get new species data: crate::get_species_data(new_species)?
-    // 3. Call pokemon.recalculate_stats_from_species(&species_data)
+    // 1. Get a mutable reference to the Pokémon.
+    // 2. Set pokemon.species = new_species.
+    // 3. (Optional) Create a pokemon.apply_evolution() method that handles the species
+    //    change and internally calls the private `recalculate_stats()`.
 }
 
 pub fn execute_distribute_effort_values(
@@ -169,40 +157,29 @@ pub fn execute_distribute_effort_values(
     state: &mut BattleState,
 ) -> Result<Vec<BattleCommand>, ExecutionError> {
     // Implementation:
-    // 1. For i in 0..6: pokemon.evs[i] = pokemon.evs[i].saturating_add(stats[i]).min(255)
-    // 2. Enforce 510 total EV limit: if pokemon.evs.iter().sum() > 510, cap appropriately
-    // 3. Get species data and call pokemon.recalculate_stats_from_species(&species_data)
-}
-
-pub fn execute_update_battle_participation(
-    active_p0: usize,
-    active_p1: usize,
-    state: &mut BattleState,
-) -> Result<Vec<BattleCommand>, ExecutionError> {
-    // Implementation: state.participation_tracker.record_participation(active_p0, active_p1)
+    // 1. Get a mutable reference to the Pokémon.
+    // 2. Add the `stats` array to `pokemon.evs`, ensuring no single EV exceeds 255 and the total does not exceed 510.
+    // 3. Trigger a stat recalculation via the private `recalculate_stats()` method.
 }
 ```
 
 ## Integration Points
 
-### HandlePokemonFainted Integration
+### `HandlePokemonFainted` Integration
 ```rust
-// In src/battle/commands.rs, execute_state_change() function:
+// In src/battle/commands.rs, inside the execute_state_change() function:
 BattleCommand::HandlePokemonFainted { target } => {
     let mut commands = vec![];
     commands.push(BattleCommand::ClearPlayerState { target: *target });
     
-    // Get fainted Pokemon info
     let player_index = target.to_index();
     if let Some(fainted_pokemon) = state.players[player_index].active_pokemon() {
         let fainted_species = fainted_pokemon.species;
         
-        // Calculate and add progression rewards
         let progression_commands = crate::battle::progression::calculate_progression_commands(
             *target,
             fainted_species,
-            state,
-            &state.participation_tracker,  // Use the tracker from BattleState
+            state, // Pass the whole state, which contains the tracker
         );
         commands.extend(progression_commands);
     }
@@ -211,18 +188,21 @@ BattleCommand::HandlePokemonFainted { target } => {
 }
 ```
 
-### Battle Engine Integration
+### `SwitchPokemon` Command Integration
 ```rust
-// In src/battle/engine.rs, resolve_turn() or execute_battle_action():
-// Add participation tracking during each turn:
+// In src/battle/commands.rs, inside the execute_state_change() function:
+BattleCommand::SwitchPokemon { target, new_pokemon_index } => {
+    // ... validation and state mutation to update player.active_pokemon_index ...
+    
+    // After the switch, determine the new p0 and p1 active indices from the BattleState.
+    let p0_active_index = state.players[0].active_pokemon_index;
+    let p1_active_index = state.players[1].active_pokemon_index;
 
-fn update_participation_tracking(battle_state: &mut BattleState) {
-    let p0_active = battle_state.players[0].active_pokemon_index;
-    let p1_active = battle_state.players[1].active_pokemon_index;
-    battle_state.participation_tracker.record_participation(p0_active, p1_active);
+    // Record the new matchup. This is the sole integration point for tracking switches.
+    state.participation_tracker.record_participation(p0_active_index, p1_active_index);
+    
+    return Ok(vec![]);
 }
-
-// Call this function during turn resolution when both Pokemon are active
 ```
 
 ## Data Dependencies
@@ -239,9 +219,8 @@ species_data.evolution_data     // For evolution checks
 species_data.learnset.level_up  // For move learning
 ```
 
-### Experience Group Methods (schema crate)
-```rust
-// Methods that must exist on ExperienceGroup enum:
+### `ExperienceGroup` Methods (schema crate)
+The following methods on the `ExperienceGroup` enum are essential and are confirmed to exist in the `schema` crate.```rust
 impl ExperienceGroup {
     pub fn can_level_up(&self, current_level: u8, current_exp: u32) -> bool;
     pub fn calculate_level_from_exp(&self, exp: u32) -> u8;
@@ -264,20 +243,18 @@ pub enum ProgressionError {
 pub enum ExecutionError {
     NoPokemon,
     InvalidPokemonIndex,
-    InvalidMoveIndex,    // Add this variant if missing
+    InvalidMoveIndex,    // Ensure this variant exists
 }
 ```
 
 ## Call Flow Summary
 
 ```
-1. Pokemon faints → HandlePokemonFainted command
-2. HandlePokemonFainted → calculate_progression_commands()  
-3. calculate_progression_commands() → RewardCalculator + participation lookup
-4. Returns Vec<BattleCommand> with progression commands
-5. Commands executed via execute_award_experience(), execute_level_up_pokemon(), etc.
-6. Each execution function performs simple state mutations + stat recalculation
-7. Battle continues with updated Pokemon state
+1. Pokemon faints → `HandlePokemonFainted` command is generated.
+2. The `HandlePokemonFainted` handler calls `calculate_progression_commands()`.
+3. `calculate_progression_commands()` acts as the "brain," using `RewardCalculator` and the `participation_tracker` to determine all necessary rewards.
+4. It returns a complete `Vec<BattleCommand>` containing `[AwardExperience, DistributeEffortValues, LevelUpPokemon, LearnMove, EvolvePokemon, ...]`.
+5. The engine executes each of these commands in sequence.
+6. Each execution function performs a simple, atomic state mutation on the relevant `PokemonInst` and recalculates stats where necessary.
+7. The battle continues with the updated state of the participating Pokémon.
 ```
-
-This design ensures progression rewards are automatically applied when Pokemon faint, following the existing command-execution pattern while maintaining separation between calculation logic and state mutation.

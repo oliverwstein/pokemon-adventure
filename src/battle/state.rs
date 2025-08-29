@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::battle::conditions::PokemonCondition;
 use crate::player::{BattlePlayer, PlayerAction, StatType, TeamCondition};
+use crate::progression::BattleParticipationTracker;
 use crate::species::Species;
 use schema::Move;
 use serde::{Deserialize, Serialize};
@@ -1168,10 +1169,22 @@ pub struct BattleState {
     pub game_state: GameState,
     pub battle_type: BattleType,
     pub action_queue: [Option<PlayerAction>; 2],
+    pub participation_tracker: BattleParticipationTracker,
 }
 
 impl BattleState {
     pub fn new(id: String, player1: BattlePlayer, player2: BattlePlayer) -> Self {
+        // Create the initial tracker instance.
+        let mut participation_tracker = BattleParticipationTracker::new();
+
+        // Record the initial matchup between the starting active Pokémon.
+        // This correctly handles cases where a player might start with a non-zero index
+        // if their first Pokémon is fainted.
+        participation_tracker.record_participation(
+            player1.active_pokemon_index,
+            player2.active_pokemon_index,
+        );
+        
         Self {
             battle_id: id,
             players: [player1, player2],
@@ -1179,6 +1192,7 @@ impl BattleState {
             game_state: GameState::WaitingForActions,
             battle_type: BattleType::Tournament,
             action_queue: [None, None],
+            participation_tracker, // Assign the initialized tracker.
         }
     }
 }

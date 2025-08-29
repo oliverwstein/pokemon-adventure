@@ -207,12 +207,12 @@ impl PokemonInst {
         for (i, move_) in moves.into_iter().take(4).enumerate() {
             move_array[i] = Some(MoveInstance::new(move_));
         }
-
+        let initial_exp = species_data.experience_group.exp_for_level(level);
         let mut pokemon = PokemonInst {
             name: species_data.name.clone(),
             species,
             level,
-            curr_exp: 0, // Simplified for now
+            curr_exp: initial_exp,
             curr_hp: 0,  // Will be set below with validation
             ivs,
             evs,
@@ -285,6 +285,59 @@ impl PokemonInst {
             sp_attack: calc_other_stat(base_stats.sp_attack, ivs[3], evs[3]),
             sp_defense: calc_other_stat(base_stats.sp_defense, ivs[4], evs[4]),
             speed: calc_other_stat(base_stats.speed, ivs[5], evs[5]),
+        }
+    }
+
+    fn recalculate_stats(&mut self) {
+        // Fetch the species data which contains the necessary base stats.
+        // If data is unavailable, we cannot proceed, so we simply return.
+        if let Ok(species_data) = get_species_data(self.species) {
+            
+            // Store the old max HP to calculate the difference after the update.
+            let old_max_hp = self.stats.hp;
+
+            // Call the existing pure calculation function with the instance's own data.
+            // This reuses the tested logic without duplicating the formula.
+            let new_stats = Self::calculate_stats(
+                &species_data.base_stats,
+                self.level,
+                &self.ivs,
+                &self.evs,
+            );
+            
+            // Atomically update the stats field with the new values.
+            self.stats = new_stats;
+
+            // Adjust current HP based on the change in max HP.
+            // This ensures that a Pokémon's health scales correctly when its max HP increases.
+            let new_max_hp = self.stats.hp;
+            let hp_increase = new_max_hp.saturating_sub(old_max_hp);
+            
+            // Only add the HP increase if the Pokémon is not fainted.
+            // Fainted Pokémon do not gain HP from stat recalculations.
+            if !self.is_fainted() {
+                // Add the difference to the current HP, ensuring it doesn't exceed the new max.
+                let new_curr_hp = self.curr_hp.saturating_add(hp_increase);
+                self.curr_hp = new_curr_hp.min(new_max_hp);
+            }
+        }
+        // Failing silently is acceptable as it's a data integrity issue.
+    }
+
+    // The `LevelUpPokemon` command handler will call this.
+    pub fn apply_level_up(&mut self) {
+        if self.level < 100 {
+            self.level += 1;
+        }
+        self.recalculate_stats();
+    }
+
+    // The AwardExperience command handler will call this.
+    // It does NOT calculate level ups. It only updates the number.
+    // This must be used carefully to ensure the level and stats remain consistent.
+    pub fn add_experience(&mut self, amount: u32) {
+        if self.level < 100 {
+            self.curr_exp = self.curr_exp.saturating_add(amount);
         }
     }
 

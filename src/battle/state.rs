@@ -1180,11 +1180,9 @@ impl BattleState {
         // Record the initial matchup between the starting active Pokémon.
         // This correctly handles cases where a player might start with a non-zero index
         // if their first Pokémon is fainted.
-        participation_tracker.record_participation(
-            player1.active_pokemon_index,
-            player2.active_pokemon_index,
-        );
-        
+        participation_tracker
+            .record_participation(player1.active_pokemon_index, player2.active_pokemon_index);
+
         Self {
             battle_id: id,
             players: [player1, player2],

@@ -98,6 +98,7 @@ mod tests {
 
         let final_pokemon = battle_state.players[0].active_pokemon().unwrap();
         let final_player = &battle_state.players[0];
+        println!("Final Pokemon status: {:?}", final_pokemon.status);
 
         // Check final status and conditions
         assert!(

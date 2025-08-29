@@ -480,4 +480,98 @@ mod tests {
             "Active conditions should not be applied to a Pokémon behind a substitute"
         );
     }
+
+    #[rstest]
+    #[case("succeeds and lowers hp", 100, true)]
+    #[case("fails when hp is too low", 25, false)]
+    fn test_substitute_hp_cost_and_failure(
+        #[case] desc: &str,
+        #[case] initial_hp_percent: u16,
+        #[case] should_succeed: bool,
+    ) {
+        // Arrange
+        let mut p1_pokemon = TestPokemonBuilder::new(Species::Snorlax, 50)
+            .with_moves(vec![Move::Substitute])
+            .build();
+
+        // Set HP based on the test case's percentage
+        let max_hp = p1_pokemon.max_hp();
+        let initial_hp = (max_hp as u32 * initial_hp_percent as u32 / 100) as u16;
+        p1_pokemon.set_hp(initial_hp);
+
+        let p2_pokemon = TestPokemonBuilder::new(Species::Rattata, 5)
+            .with_moves(vec![Move::TailWhip])
+            .build();
+        let mut battle_state = create_test_battle(p1_pokemon, p2_pokemon);
+
+        let original_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        let hp_cost = battle_state.players[0].active_pokemon().unwrap().max_hp() / 4;
+
+        battle_state.action_queue[0] = Some(PlayerAction::UseMove { move_index: 0 });
+        battle_state.action_queue[1] = Some(PlayerAction::UseMove { move_index: 0 });
+
+        // Act
+        let event_bus = resolve_turn(&mut battle_state, predictable_rng());
+        event_bus.print_debug_with_message(&format!("Events for test_substitute [{}]", desc));
+
+        // Assert
+        let final_hp = battle_state.players[0]
+            .active_pokemon()
+            .unwrap()
+            .current_hp();
+        let has_substitute =
+            battle_state.players[0].has_condition_type(PokemonConditionType::Substitute);
+
+        if should_succeed {
+            assert_eq!(
+                final_hp,
+                original_hp - hp_cost,
+                "User's HP should be reduced by 25%"
+            );
+            assert!(has_substitute, "User should have the Substitute condition");
+
+            let substitute_created = event_bus.events().iter().any(|e| {
+                matches!(
+                    e,
+                    BattleEvent::StatusApplied {
+                        status: PokemonCondition::Substitute { .. },
+                        ..
+                    }
+                )
+            });
+            let damage_taken = event_bus.events().iter().any(
+                |e| matches!(e, BattleEvent::DamageDealt { damage, .. } if *damage == hp_cost),
+            );
+
+            assert!(
+                substitute_created,
+                "A StatusApplied event for Substitute should have been emitted"
+            );
+            assert!(
+                damage_taken,
+                "A DamageDealt event for the HP cost should have been emitted"
+            );
+        } else {
+            assert_eq!(
+                final_hp, original_hp,
+                "User's HP should not have changed on failure"
+            );
+            assert!(
+                !has_substitute,
+                "User should not have the Substitute condition on failure"
+            );
+
+            let move_failed = event_bus
+                .events()
+                .iter()
+                .any(|e| matches!(e, BattleEvent::ActionFailed { .. }));
+            assert!(
+                move_failed,
+                "An ActionFailed event should have been emitted"
+            );
+        }
+    }
 }

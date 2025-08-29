@@ -6,6 +6,7 @@ use crate::battle::calculators::{
     calculate_action_prevention, calculate_attack_outcome, calculate_end_turn_commands,
     calculate_forced_action_commands, calculate_forfeit_commands, calculate_switch_commands,
 };
+use crate::battle::catch::calculate_catch_commands;
 use crate::battle::commands::{
     execute_command, execute_command_batch, BattleCommand, PlayerTarget,
 };
@@ -217,6 +218,28 @@ pub fn execute_battle_action(
             let commands =
                 calculate_switch_commands(player_index, target_pokemon_index, battle_state);
             let _ = execute_command_batch(commands, battle_state, bus, &mut ActionStack::new());
+        }
+
+        BattleAction::CatchAttempt { player_index } => {
+            // Get the opponent's active Pokemon species
+            let opponent_index = 1 - player_index;
+            match battle_state.players[opponent_index].active_pokemon() {
+                Some(target_pokemon) => {
+                    let commands = calculate_catch_commands(
+                        player_index,
+                        target_pokemon.species,
+                        battle_state,
+                        rng,
+                    );
+                    let _ = execute_command_batch(commands, battle_state, bus, action_stack);
+                }
+                None => {
+                    // This should have been caught by validation, but emit a failure event if it happens
+                    bus.push(BattleEvent::ActionFailed {
+                        reason: ActionFailureReason::NoEnemyPresent,
+                    });
+                }
+            }
         }
 
         BattleAction::AttackHit {

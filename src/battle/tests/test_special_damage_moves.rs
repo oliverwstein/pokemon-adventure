@@ -322,10 +322,7 @@ mod tests {
 
         // Should NOT see type effectiveness event
         assert!(
-            !event_bus
-                .events()
-                .iter()
-                .any(|e| matches!(e, BattleEvent::AttackTypeEffectiveness { .. })),
+            !event_bus.contains(|e| matches!(e, BattleEvent::AttackTypeEffectiveness { .. })),
             "Dragon Rage should not show type effectiveness"
         );
     }
@@ -379,10 +376,7 @@ mod tests {
 
         // Should NOT see type effectiveness event
         assert!(
-            !event_bus
-                .events()
-                .iter()
-                .any(|e| matches!(e, BattleEvent::AttackTypeEffectiveness { .. })),
+            !event_bus.contains(|e| matches!(e, BattleEvent::AttackTypeEffectiveness { .. })),
             "Sonic Boom should not show type effectiveness"
         );
     }

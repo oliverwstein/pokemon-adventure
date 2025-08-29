@@ -13,6 +13,16 @@ pub enum GameState {
     WaitingForPlayer1Replacement, // Player 1 needs to send out a new Pokemon after faint
     WaitingForPlayer2Replacement, // Player 2 needs to send out a new Pokemon after faint
     WaitingForBothReplacements,   // Both players need to send out new Pokemon after faints
+    WaitingForMoveLearnChoice {
+        player_index: usize,
+        pokemon_index: usize,
+        new_move: Move,
+    }, // Player needs to choose which move to replace
+    WaitingForEvolutionChoice {
+        player_index: usize,
+        pokemon_index: usize,
+        new_species: Species,
+    }, // Player needs to confirm evolution
     Player1Win,
     Player2Win,
     Draw,
@@ -32,6 +42,20 @@ impl fmt::Display for GameState {
             }
             GameState::WaitingForBothReplacements => {
                 "Waiting for both players to select new Pokémon"
+            }
+            GameState::WaitingForMoveLearnChoice { player_index, .. } => {
+                if *player_index == 0 {
+                    "Player 1's Pokémon wants to learn a new move"
+                } else {
+                    "Player 2's Pokémon wants to learn a new move"
+                }
+            }
+            GameState::WaitingForEvolutionChoice { player_index, .. } => {
+                if *player_index == 0 {
+                    "Player 1's Pokémon is evolving!"
+                } else {
+                    "Player 2's Pokémon is evolving!"
+                }
             }
             GameState::Player1Win => "Battle Ended: Player 1 Wins!",
             GameState::Player2Win => "Battle Ended: Player 2 Wins!",
@@ -168,6 +192,59 @@ pub enum BattleEvent {
         new_total: u32,
     },
 
+    // Catch Events
+    CatchAttempted {
+        player_index: usize,
+        pokemon: Species,
+        catch_rate: f32,
+    },
+    CatchSucceeded {
+        player_index: usize,
+        pokemon: Species,
+    },
+    CatchFailed {
+        player_index: usize,
+        pokemon: Species,
+        reason: CatchFailureReason,
+    },
+
+    // Progression Events
+    ExperienceGained {
+        pokemon: Species,
+        amount: u32,
+    },
+    LevelUp {
+        pokemon: Species,
+        old_level: u8,
+        new_level: u8,
+    },
+    MoveLearnOpportunity {
+        pokemon: Species,
+        new_move: Move,
+        full_moveset: bool, // True if all 4 move slots are full
+    },
+    MoveReplaced {
+        pokemon: Species,
+        old_move: Move,
+        new_move: Move,
+    },
+    MoveLearned {
+        pokemon: Species,
+        new_move: Move,
+    },
+    EvolutionStarted {
+        pokemon: Species,
+        new_species: Species,
+    },
+    EvolutionCompleted {
+        old_species: Species,
+        new_species: Species,
+    },
+    EffortValuesGained {
+        pokemon: Species,
+        stats: [u8; 6], // HP, Atk, Def, SpA, SpD, Spe
+    },
+
     // Battle End
     PlayerDefeated {
         player_index: usize,
@@ -183,15 +260,12 @@ impl BattleEvent {
     /// Returns None for silent events that should not produce user-visible text.
     pub fn format(&self, battle_state: &BattleState) -> Option<String> {
         match self {
-            // === Turn Management Events ===
             BattleEvent::TurnStarted { turn_number } => {
                 Some(format!("=== Turn {} ===", turn_number))
             }
             BattleEvent::TurnEnded => {
                 None // Silent - turn ending is usually obvious from context
             }
-
-            // === Pokemon Switching Events ===
             BattleEvent::PokemonSwitched {
                 player_index,
                 old_pokemon,
@@ -205,8 +279,6 @@ impl BattleEvent {
                     Self::format_species_name(*new_pokemon)
                 ))
             }
-
-            // === Move Events ===
             BattleEvent::MoveUsed {
                 player_index,
                 pokemon,
@@ -229,8 +301,6 @@ impl BattleEvent {
                 None // Silent - hit is usually obvious from damage/effects
             }
             BattleEvent::CriticalHit { .. } => Some("A critical hit!".to_string()),
-
-            // === Damage and Healing Events ===
             BattleEvent::DamageDealt { target, damage, .. } => {
                 // We may need to add a "source" to this event
                 let target_name = Self::format_species_name(*target);
@@ -263,8 +333,6 @@ impl BattleEvent {
                 let pokemon_name = Self::format_species_name(*pokemon);
                 Some(format!("{} fainted!", pokemon_name))
             }
-
-            // === Type Effectiveness Events ===
             BattleEvent::AttackTypeEffectiveness { multiplier } => {
                 match *multiplier {
                     m if m > 1.0 => Some("It's super effective!".to_string()),
@@ -273,8 +341,6 @@ impl BattleEvent {
                     _ => None, // Normal effectiveness, no message
                 }
             }
-
-            // === Condition Events ===
             BattleEvent::StatusApplied { target, status } => {
                 let target_name = Self::format_species_name(*target);
                 Some(format!(
@@ -284,12 +350,7 @@ impl BattleEvent {
                 ))
             }
             BattleEvent::StatusRemoved { target, status } => {
-                let target_name = Self::format_species_name(*target);
-                Some(format!(
-                    "{} is no longer affected by {}!",
-                    target_name,
-                    Self::format_condition(status)
-                ))
+                Self::format_condition_expired(*target, status)
             }
             BattleEvent::StatusDamage {
                 target,
@@ -306,8 +367,6 @@ impl BattleEvent {
             BattleEvent::ConditionExpired { target, condition } => {
                 Self::format_condition_expired(*target, condition)
             }
-
-            // === Pokemon Status Events ===
             BattleEvent::PokemonStatusApplied { target, status } => {
                 let target_name = Self::format_species_name(*target);
                 Some(format!(
@@ -337,8 +396,6 @@ impl BattleEvent {
                     target_name, status_name, damage
                 ))
             }
-
-            // === Team Condition Events ===
             BattleEvent::TeamConditionApplied {
                 player_index,
                 condition,
@@ -353,8 +410,6 @@ impl BattleEvent {
                 let player_name = &battle_state.players[*player_index].player_name;
                 Some(format!("{}'s {} wore off.", player_name, condition))
             }
-
-            // === Stat Change Events ===
             BattleEvent::StatStageChanged {
                 target,
                 stat,
@@ -376,16 +431,54 @@ impl BattleEvent {
                 let target_name = Self::format_species_name(*target);
                 Some(format!("{}'s stats won't go any higher!", target_name))
             }
-
-            // === Action Failure Events ===
             BattleEvent::ActionFailed { reason } => {
                 Self::format_action_failure_reason(reason) // Some failures should be silent
             }
-
-            // === Battle Economy Events ===
             BattleEvent::AnteIncreased { .. } => Some(format!("Coins scattered around!")),
-
-            // === Battle End Events ===
+            BattleEvent::CatchAttempted {
+                player_index,
+                pokemon,
+                catch_rate,
+            } => {
+                let player_name = &battle_state.players[*player_index].player_name;
+                let pokemon_name = Self::format_species_name(*pokemon);
+                let rate_desc =
+                    crate::battle::catch::calculation::get_catch_rate_description(*catch_rate);
+                Some(format!(
+                    "{} threw a Poké Ball at {}! (Catch rate: {})",
+                    player_name, pokemon_name, rate_desc
+                ))
+            }
+            BattleEvent::CatchSucceeded {
+                player_index,
+                pokemon,
+            } => {
+                let _player_name = &battle_state.players[*player_index].player_name;
+                let pokemon_name = Self::format_species_name(*pokemon);
+                Some(format!("Gotcha! {} was caught!", pokemon_name))
+            }
+            BattleEvent::CatchFailed {
+                pokemon, reason, ..
+            } => {
+                let pokemon_name = Self::format_species_name(*pokemon);
+                match reason {
+                    CatchFailureReason::RollFailed { .. } => {
+                        Some(format!("Oh no! {} broke free!", pokemon_name))
+                    }
+                    CatchFailureReason::InvalidBattleType { .. } => {
+                        Some("You cannot use that here!".to_string())
+                    }
+                    CatchFailureReason::NoTargetPokemon => {
+                        Some("There's no Pokémon to catch!".to_string())
+                    }
+                    CatchFailureReason::TeamFull => {
+                        Some("Your party is full! You cannot catch more Pokémon!".to_string())
+                    }
+                    CatchFailureReason::TargetFainted { .. } => {
+                        Some("You can't catch a fainted Pokémon!".to_string())
+                    }
+                }
+            }
             BattleEvent::PlayerDefeated { player_index } => {
                 let player_name = &battle_state.players[*player_index].player_name;
                 Some(format!("{} is out of usable Pokémon!", player_name))
@@ -397,6 +490,78 @@ impl BattleEvent {
                 )),
                 None => Some("The battle ended in a draw!".to_string()),
             },
+            BattleEvent::ExperienceGained { pokemon, amount } => Some(format!(
+                "{} gained {} experience points!",
+                Self::format_species_name(*pokemon),
+                amount
+            )),
+            BattleEvent::LevelUp {
+                pokemon,
+                old_level: _,
+                new_level,
+            } => Some(format!(
+                "{} grew to level {}!",
+                Self::format_species_name(*pokemon),
+                new_level
+            )),
+            BattleEvent::MoveLearnOpportunity {
+                pokemon,
+                new_move,
+                full_moveset,
+            } => {
+                if *full_moveset {
+                    Some(format!(
+                        "{} wants to learn {} but already knows 4 moves!",
+                        Self::format_species_name(*pokemon),
+                        Self::format_move_name(*new_move)
+                    ))
+                } else {
+                    // Not sure if this should ever happen, because we also have BattleEvent::MoveLearned,
+                    // Which returns this too...
+                    Some(format!(
+                        "{} learned {}!",
+                        Self::format_species_name(*pokemon),
+                        Self::format_move_name(*new_move)
+                    ))
+                }
+            }
+            BattleEvent::MoveReplaced {
+                pokemon,
+                old_move,
+                new_move,
+            } => Some(format!(
+                "{} forgot {} and learned {}!",
+                Self::format_species_name(*pokemon),
+                Self::format_move_name(*old_move),
+                Self::format_move_name(*new_move)
+            )),
+            BattleEvent::MoveLearned { pokemon, new_move } => Some(format!(
+                "{} learned {}!",
+                Self::format_species_name(*pokemon),
+                Self::format_move_name(*new_move)
+            )),
+            BattleEvent::EvolutionStarted {
+                pokemon,
+                new_species,
+            } => Some(format!(
+                "{} is evolving into {}!",
+                Self::format_species_name(*pokemon),
+                Self::format_species_name(*new_species)
+            )),
+            BattleEvent::EvolutionCompleted {
+                old_species,
+                new_species,
+            } => Some(format!(
+                "{} evolved into {}!",
+                Self::format_species_name(*old_species),
+                Self::format_species_name(*new_species)
+            )),
+            BattleEvent::EffortValuesGained {
+                pokemon: _,
+                stats: _,
+            } => {
+                None // Silent - EV gain is usually not shown to the player
+            }
         }
     }
 
@@ -825,6 +990,15 @@ pub enum ActionFailureReason {
     MoveFailedToExecute { move_used: Move },
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum CatchFailureReason {
+    InvalidBattleType { battle_type: BattleType },
+    NoTargetPokemon,
+    TeamFull,
+    TargetFainted { pokemon: Species },
+    RollFailed { catch_rate: f32 },
+}
+
 /// Event bus for collecting and managing battle events.
 ///
 /// ## Usage Examples
@@ -907,6 +1081,22 @@ impl EventBus {
     /// Return the number of events in the bus.
     pub fn len(&self) -> usize {
         self.events.len()
+    }
+
+    #[allow(dead_code)]
+    pub fn contains<F>(&self, predicate: F) -> bool
+    where
+        F: FnMut(&BattleEvent) -> bool,
+    {
+        self.events.iter().any(predicate)
+    }
+
+    #[allow(dead_code)]
+    pub fn find_event<F>(&self, mut predicate: F) -> Option<&BattleEvent>
+    where
+        F: FnMut(&BattleEvent) -> bool,
+    {
+        self.events.iter().find(|&e| predicate(e))
     }
 }
 

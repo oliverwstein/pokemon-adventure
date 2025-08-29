@@ -1,6 +1,7 @@
 use crate::errors::SpeciesDataResult;
 use crate::species::Species;
 use schema::BaseStats;
+use serde::{Deserialize, Serialize};
 
 // Constants for reward calculations
 const BASE_EXP_MULTIPLIER: f32 = 0.3;
@@ -203,6 +204,7 @@ impl RewardCalculator {
 
 /// Tracks which Pokemon have faced each other during battle
 /// participation[player][my_pokemon][opponent_pokemon] = true if they faced each other
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BattleParticipationTracker {
     participation: [[[bool; 6]; 6]; 2],
 }

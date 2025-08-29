@@ -5,6 +5,14 @@ use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
 use schema::Move;
 
+/// Source of fainting for context-aware handling
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FaintingSource {
+    Damage,          // Direct damage from attacks
+    StatusDamage,    // Damage from status conditions (burn, poison)
+    ConditionDamage, // Damage from active conditions (Leech Seed)
+}
+
 /// Player target for commands - provides type safety over raw indices
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerTarget {
@@ -101,6 +109,10 @@ pub enum BattleCommand {
         target: PlayerTarget,
         new_pokemon_index: usize,
     },
+    AttemptCatch {
+        player_index: usize,
+        target_pokemon: crate::species::Species,
+    },
     ClearPlayerState {
         target: PlayerTarget,
     },
@@ -140,6 +152,40 @@ pub enum BattleCommand {
         action: PlayerAction,
     },
 
+    // Fainting Handler
+    HandlePokemonFainted {
+        target: PlayerTarget,
+    },
+
+    // Progression Commands
+    AwardExperience {
+        recipients: Vec<(PlayerTarget, usize, u32)>, // (player, pokemon_index, amount)
+    },
+    LevelUpPokemon {
+        target: PlayerTarget,
+        pokemon_index: usize,
+    },
+    LearnMove {
+        target: PlayerTarget,
+        pokemon_index: usize,
+        move_: Move,
+        replace_index: Option<usize>, // None = add to empty slot, Some(i) = replace slot i
+    },
+    EvolvePokemon {
+        target: PlayerTarget,
+        pokemon_index: usize,
+        new_species: crate::species::Species,
+    },
+    DistributeEffortValues {
+        target: PlayerTarget,
+        pokemon_index: usize,
+        stats: [u8; 6], // HP, Atk, Def, SpA, SpD, Spe
+    },
+    UpdateBattleParticipation {
+        active_p0: usize,
+        active_p1: usize,
+    },
+
     // Battle flow
     EmitEvent(BattleEvent),
     PushAction(BattleAction),
@@ -157,20 +203,18 @@ impl BattleCommand {
     pub fn emit_events(&self, state: &BattleState) -> Vec<BattleEvent> {
         match self {
             BattleCommand::DealDamage { target, amount } => {
-                emit_damage_and_faint_events(*target, *amount, state, None, None)
+                emit_damage_events(*target, *amount, state, None, None)
             }
             BattleCommand::DealStatusDamage {
                 target,
                 status,
                 amount,
-            } => emit_damage_and_faint_events(*target, *amount, state, Some(*status), None),
+            } => emit_damage_events(*target, *amount, state, Some(*status), None),
             BattleCommand::DealConditionDamage {
                 target,
                 condition,
                 amount,
-            } => {
-                emit_damage_and_faint_events(*target, *amount, state, None, Some(condition.clone()))
-            }
+            } => emit_damage_events(*target, *amount, state, None, Some(condition.clone())),
             BattleCommand::HealPokemon { target, amount } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -300,6 +344,17 @@ impl BattleCommand {
                     condition: *condition,
                 }]
             }
+            BattleCommand::AttemptCatch {
+                player_index,
+                target_pokemon,
+            } => {
+                // Catch events are handled by the catch command logic
+                // The success event is emitted after the Pokemon is added to the team
+                vec![BattleEvent::CatchSucceeded {
+                    player_index: *player_index,
+                    pokemon: *target_pokemon,
+                }]
+            }
             BattleCommand::SwitchPokemon {
                 target: _,
                 new_pokemon_index: _,
@@ -352,10 +407,7 @@ impl BattleCommand {
                 // Queuing actions doesn't generate events
                 vec![]
             }
-
-            // Commands that emit manual events via EmitEvent should pass through
             BattleCommand::EmitEvent(event) => vec![event.clone()],
-
             BattleCommand::AddAnte { target, amount } => {
                 let player_index = target.to_index();
                 let player = &state.players[player_index];
@@ -365,20 +417,130 @@ impl BattleCommand {
                     new_total: player.get_ante(),
                 }]
             }
-
-            // Commands that don't generate automatic events
             BattleCommand::SetGameState(_)
             | BattleCommand::IncrementTurnNumber
             | BattleCommand::ClearActionQueue
             | BattleCommand::SetLastMove { .. }
             | BattleCommand::ClearPlayerState { .. }
             | BattleCommand::PushAction(_) => vec![],
+            BattleCommand::HandlePokemonFainted { target } => {
+                let player_index = target.to_index();
+                let pokemon = state.players[player_index].active_pokemon();
+                vec![BattleEvent::PokemonFainted {
+                    player_index: player_index,
+                    pokemon: pokemon.unwrap().species,
+                }]
+            }
+            BattleCommand::AwardExperience { recipients } => {
+                // Generate ExperienceGained events for each recipient
+                recipients
+                    .iter()
+                    .filter_map(|(target, pokemon_index, amount)| {
+                        let player_index = target.to_index();
+                        if let Some(pokemon) =
+                            state.players[player_index].team[*pokemon_index].as_ref()
+                        {
+                            Some(BattleEvent::ExperienceGained {
+                                pokemon: pokemon.species,
+                                amount: *amount,
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            }
+            BattleCommand::LevelUpPokemon {
+                target,
+                pokemon_index,
+            } => {
+                let player_index = target.to_index();
+                if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
+                    vec![BattleEvent::LevelUp {
+                        pokemon: pokemon.species,
+                        old_level: pokemon.level.saturating_sub(1), // Approximate old level
+                        new_level: pokemon.level,
+                    }]
+                } else {
+                    vec![]
+                }
+            }
+            BattleCommand::LearnMove {
+                target,
+                pokemon_index,
+                move_,
+                replace_index,
+            } => {
+                let player_index = target.to_index();
+                if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
+                    if let Some(slot_index) = replace_index {
+                        // Replacing an existing move
+                        if let Some(old_move_inst) = &pokemon.moves[*slot_index] {
+                            vec![BattleEvent::MoveReplaced {
+                                pokemon: pokemon.species,
+                                old_move: old_move_inst.move_,
+                                new_move: *move_,
+                            }]
+                        } else {
+                            vec![BattleEvent::MoveLearned {
+                                pokemon: pokemon.species,
+                                new_move: *move_,
+                            }]
+                        }
+                    } else {
+                        // Learning in empty slot
+                        vec![BattleEvent::MoveLearned {
+                            pokemon: pokemon.species,
+                            new_move: *move_,
+                        }]
+                    }
+                } else {
+                    vec![]
+                }
+            }
+            BattleCommand::EvolvePokemon {
+                target,
+                pokemon_index,
+                new_species,
+            } => {
+                let player_index = target.to_index();
+                if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
+                    vec![BattleEvent::EvolutionCompleted {
+                        old_species: pokemon.species,
+                        new_species: *new_species,
+                    }]
+                } else {
+                    vec![]
+                }
+            }
+            BattleCommand::DistributeEffortValues {
+                target,
+                pokemon_index,
+                stats,
+            } => {
+                let player_index = target.to_index();
+                if let Some(pokemon) = state.players[player_index].team[*pokemon_index].as_ref() {
+                    vec![BattleEvent::EffortValuesGained {
+                        pokemon: pokemon.species,
+                        stats: *stats,
+                    }]
+                } else {
+                    vec![]
+                }
+            }
+            BattleCommand::UpdateBattleParticipation {
+                active_p0: _,
+                active_p1: _,
+            } => {
+                // Participation tracking is internal - no events needed
+                vec![]
+            }
         }
     }
 }
 
 /// Centralized function to emit damage events and check for fainting.
-fn emit_damage_and_faint_events(
+fn emit_damage_events(
     target: PlayerTarget,
     amount: u16,
     state: &BattleState,
@@ -411,14 +573,6 @@ fn emit_damage_and_faint_events(
                 remaining_hp: pokemon.current_hp(),
             });
         }
-
-        // 2. Check for fainting and add the event if necessary.
-        if pokemon.is_fainted() {
-            events.push(BattleEvent::PokemonFainted {
-                player_index,
-                pokemon: pokemon.species,
-            });
-        }
         return events;
     }
     vec![]
@@ -431,9 +585,17 @@ pub fn execute_command_batch(
     bus: &mut EventBus,
     action_stack: &mut ActionStack,
 ) -> Result<(), ExecutionError> {
-    for command in commands {
-        execute_command(command, state, bus, action_stack)?;
+    let mut pending_commands = commands;
+    pending_commands.reverse(); // Reverse for LIFO processing order
+    while let Some(command) = pending_commands.pop() {
+        let mut additional_commands = execute_command(command, state, bus, action_stack)?;
+        // Reverse any new commands before pushing them onto the stack.
+        additional_commands.reverse();
+        // Add new commands to the end for LIFO processing order
+        // It is a stack.
+        pending_commands.extend(additional_commands);
     }
+
     Ok(())
 }
 
@@ -442,30 +604,35 @@ fn execute_pokemon_command<F>(
     target: PlayerTarget,
     state: &mut BattleState,
     operation: F,
-) -> Result<(), ExecutionError>
+) -> Result<Vec<BattleCommand>, ExecutionError>
 where
     F: FnOnce(&mut crate::pokemon::PokemonInst, usize) -> Result<(), ExecutionError>,
 {
     let player_index = target.to_index();
     let player = &mut state.players[player_index];
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-        operation(pokemon, player_index)
+        operation(pokemon, player_index)?;
+        Ok(vec![])
     } else {
         Err(ExecutionError::NoPokemon)
     }
 }
 
-/// Helper function for DealDamage command state change only (no events)
-fn execute_deal_damage_command_state_only(
+/// Helper function for dealing damage that returns additional commands if the Pokemon faints
+fn execute_deal_damage_command(
     target: PlayerTarget,
     amount: u16,
     state: &mut BattleState,
-) -> Result<(), ExecutionError> {
+) -> Result<Vec<BattleCommand>, ExecutionError> {
     let player_index = target.to_index();
     let player = &mut state.players[player_index];
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
-        pokemon.take_damage(amount);
-        Ok(())
+        let did_faint = pokemon.take_damage(amount);
+        if did_faint {
+            Ok(vec![BattleCommand::HandlePokemonFainted { target }])
+        } else {
+            Ok(vec![])
+        }
     } else {
         Err(ExecutionError::NoPokemon)
     }
@@ -476,24 +643,22 @@ pub fn execute_command(
     state: &mut BattleState,
     bus: &mut EventBus,
     action_stack: &mut ActionStack,
-) -> Result<(), ExecutionError> {
+) -> Result<Vec<BattleCommand>, ExecutionError> {
     // Special handling for EmitEvent - just emit the event and return
     if let BattleCommand::EmitEvent(event) = &command {
         bus.push(event.clone());
-        return Ok(());
+        return Ok(vec![]);
     }
 
     // Execute the state change
-    let result = execute_state_change(&command, state, action_stack);
+    let additional_commands = execute_state_change(&command, state, action_stack)?;
 
-    // If successful, auto-emit events
-    if result.is_ok() {
-        for event in command.emit_events(state) {
-            bus.push(event);
-        }
+    // Auto-emit events
+    for event in command.emit_events(state) {
+        bus.push(event);
     }
 
-    result
+    Ok(additional_commands)
 }
 
 /// Execute the actual state change for a command
@@ -501,23 +666,35 @@ fn execute_state_change(
     command: &BattleCommand,
     state: &mut BattleState,
     action_stack: &mut ActionStack,
-) -> Result<(), ExecutionError> {
+) -> Result<Vec<BattleCommand>, ExecutionError> {
+    // Handle commands that don't generate additional commands
     match command {
         BattleCommand::EmitEvent(_) => {
             // This should not reach here due to early return above
             unreachable!("EmitEvent should be handled before execute_state_change")
         }
+        BattleCommand::HandlePokemonFainted { target } => {
+            let mut commands = vec![];
+
+            // Clear conditions for fainted Pokemon
+            commands.push(BattleCommand::ClearPlayerState { target: *target });
+
+            // TODO: Add progression rewards calculation here
+            // For now, just clear state
+
+            return Ok(commands);
+        }
         BattleCommand::DealDamage { target, amount } => {
-            execute_deal_damage_command_state_only(*target, *amount, state)
+            return execute_deal_damage_command(*target, *amount, state)
         }
         BattleCommand::HealPokemon { target, amount } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
                 pokemon.heal(*amount);
                 Ok(())
             })
         }
         BattleCommand::SetPokemonStatus { target, status } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
                 // Don't apply status to Pokemon that already have a status
                 if pokemon.status.is_some() {
                     Ok(())
@@ -525,16 +702,16 @@ fn execute_state_change(
                     pokemon.status = Some(*status);
                     Ok(())
                 }
-            })
+            });
         }
         BattleCommand::CurePokemonStatus { target, status: _ } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
                 pokemon.status = None;
                 Ok(())
             })
         }
         BattleCommand::UsePP { target, move_used } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
                 pokemon
                     .use_move(*move_used)
                     .map_err(|_| ExecutionError::NoPokemon)
@@ -550,7 +727,6 @@ fn execute_state_change(
             let current_stage = player.get_stat_stage(*stat);
             let new_stage = (current_stage + delta).clamp(-6, 6);
             player.set_stat_stage(*stat, new_stage);
-            Ok(())
         }
         BattleCommand::AddCondition { target, condition } => {
             let player_index = target.to_index();
@@ -561,7 +737,6 @@ fn execute_state_change(
                     player.add_condition(condition.clone());
                 }
             }
-            Ok(())
         }
         BattleCommand::RemoveCondition {
             target,
@@ -570,7 +745,6 @@ fn execute_state_change(
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.active_pokemon_conditions.remove(condition_type);
-            Ok(())
         }
         BattleCommand::RemoveSpecificCondition { target, condition } => {
             let player_index = target.to_index();
@@ -578,7 +752,6 @@ fn execute_state_change(
             player
                 .active_pokemon_conditions
                 .remove(&condition.get_type());
-            Ok(())
         }
         BattleCommand::AddTeamCondition {
             target,
@@ -588,13 +761,11 @@ fn execute_state_change(
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.add_team_condition(*condition, *turns);
-            Ok(())
         }
         BattleCommand::SetLastMove { target, move_used } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.last_move = Some(*move_used);
-            Ok(())
         }
         BattleCommand::SwitchPokemon {
             target,
@@ -604,76 +775,54 @@ fn execute_state_change(
             let player = &mut state.players[player_index];
             if *new_pokemon_index < player.team.len() && player.team[*new_pokemon_index].is_some() {
                 player.active_pokemon_index = *new_pokemon_index;
-                Ok(())
+                return Ok(vec![]);
             } else {
-                Err(ExecutionError::InvalidPokemonIndex)
+                return Err(ExecutionError::InvalidPokemonIndex);
             }
         }
+        BattleCommand::AttemptCatch {
+            player_index,
+            target_pokemon,
+        } => return execute_attempt_catch(*player_index, *target_pokemon, state),
         BattleCommand::AddAnte { target, amount } => {
             let player_index = target.to_index();
             state.players[player_index].add_ante(*amount);
-            Ok(())
         }
         BattleCommand::SetGameState(new_state) => {
             state.game_state = *new_state;
-            Ok(())
         }
         BattleCommand::IncrementTurnNumber => {
             state.turn_number += 1;
-            Ok(())
         }
         BattleCommand::ClearActionQueue => {
             state.action_queue = [None, None];
-            Ok(())
         }
         BattleCommand::PushAction(action) => {
             action_stack.push_front(action.clone());
-            Ok(())
         }
         BattleCommand::ClearPlayerState { target } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.clear_active_pokemon_state();
-            Ok(())
         }
         BattleCommand::DealStatusDamage {
             target,
             status: _,
             amount,
-        } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
-                let actual_damage = pokemon.take_damage(*amount);
-                // Note: We don't emit events here as they're handled by emit_events()
-                // The fainted check will be handled by the DealDamage-style logic in emit_events()
-                if actual_damage {
-                    // Pokemon fainted from status damage - this is handled by the event system
-                }
-                Ok(())
-            })
-        }
+        } => return execute_deal_damage_command(*target, *amount, state),
         BattleCommand::DealConditionDamage {
             target,
             condition: _,
             amount,
-        } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
-                let actual_damage = pokemon.take_damage(*amount);
-                // Note: We don't emit events here as they're handled by emit_events()
-                // The fainted check will be handled by the DealDamage-style logic in emit_events()
-                if actual_damage {
-                    // Pokemon fainted from status damage - this is handled by the event system
-                }
-                Ok(())
-            })
-        }
+        } => return execute_deal_damage_command(*target, *amount, state),
         BattleCommand::UpdateStatusProgress { target } => {
-            execute_pokemon_command(*target, state, |pokemon, _| {
+            return execute_pokemon_command(*target, state, |pokemon, _| {
                 let (should_cure, _status_changed) = pokemon.update_status_progress();
                 if should_cure {
                     // Status cured - this will be detected by emit_events() when it checks the pokemon's status
                 }
                 Ok(())
-            })
+            });
         }
         BattleCommand::TickPokemonCondition { target, condition } => {
             let player_index = target.to_index();
@@ -712,7 +861,6 @@ fn execute_state_change(
                     _ => {} // Other conditions don't have turns to tick
                 }
             }
-            Ok(())
         }
         BattleCommand::ExpirePokemonCondition { target, condition } => {
             let player_index = target.to_index();
@@ -720,7 +868,6 @@ fn execute_state_change(
             player
                 .active_pokemon_conditions
                 .remove(&condition.get_type());
-            Ok(())
         }
         BattleCommand::TickTeamCondition { target, condition } => {
             let player_index = target.to_index();
@@ -730,20 +877,91 @@ fn execute_state_change(
             if let Some(turns) = player.team_conditions.get_mut(condition) {
                 *turns = turns.saturating_sub(1);
             }
-            Ok(())
         }
         BattleCommand::ExpireTeamCondition { target, condition } => {
             let player_index = target.to_index();
             let player = &mut state.players[player_index];
             player.team_conditions.remove(condition);
-            Ok(())
         }
         BattleCommand::QueueForcedAction { target, action } => {
             let player_index = target.to_index();
             state.action_queue[player_index] = Some(action.clone());
-            Ok(())
+        }
+        BattleCommand::AwardExperience { recipients: _ } => {
+            // TODO: Implement experience awarding
+        }
+        BattleCommand::LevelUpPokemon {
+            target: _,
+            pokemon_index: _,
+        } => {
+            // TODO: Implement level up logic
+        }
+        BattleCommand::LearnMove {
+            target: _,
+            pokemon_index: _,
+            move_: _,
+            replace_index: _,
+        } => {
+            // TODO: Implement move learning logic
+        }
+        BattleCommand::EvolvePokemon {
+            target: _,
+            pokemon_index: _,
+            new_species: _,
+        } => {
+            // TODO: Implement evolution logic
+        }
+        BattleCommand::DistributeEffortValues {
+            target: _,
+            pokemon_index: _,
+            stats: _,
+        } => {
+            // TODO: Implement EV distribution logic
+        }
+        BattleCommand::UpdateBattleParticipation {
+            active_p0: _,
+            active_p1: _,
+        } => {
+            // TODO: Update battle participation tracker
         }
     }
+
+    // All commands that don't generate additional commands return empty vec
+    Ok(vec![])
+}
+
+/// Execute a catch attempt command - adds the caught Pokemon to the player's team
+fn execute_attempt_catch(
+    player_index: usize,
+    target_pokemon: crate::species::Species,
+    state: &mut BattleState,
+) -> Result<Vec<BattleCommand>, ExecutionError> {
+    // Find the next empty slot in the player's team
+    let player = &mut state.players[player_index];
+    for i in 0..6 {
+        if player.team[i].is_none() {
+            // Create a new Pokemon instance of the caught species
+            // We'll use level 25 for now - this could be made configurable
+            let species_data = match crate::pokemon::get_species_data(target_pokemon) {
+                Ok(data) => data,
+                Err(_) => return Err(ExecutionError::NoPokemon),
+            };
+
+            let caught_pokemon = crate::pokemon::PokemonInst::new(
+                target_pokemon,
+                &species_data,
+                25, // Default level for wild Pokemon
+                None,
+                None,
+            );
+
+            player.team[i] = Some(caught_pokemon);
+            return Ok(vec![]);
+        }
+    }
+
+    // Team is full - this should have been caught by validation, but handle it gracefully
+    Err(ExecutionError::InvalidPokemonIndex)
 }
 
 #[cfg(test)]

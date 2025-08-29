@@ -13,6 +13,9 @@ pub enum PlayerAction {
     // The index refers to the Pokémon's position (0-5) in the player's team.
     SwitchPokemon { team_index: usize },
 
+    // Attempt to catch the opponent's Pokemon (only allowed in Wild/Safari battles)
+    Catch,
+
     Forfeit,
 }
 impl fmt::Display for PlayerAction {
@@ -25,6 +28,10 @@ impl fmt::Display for PlayerAction {
             // Same for SwitchPokemon and team_index.
             PlayerAction::SwitchPokemon { team_index } => {
                 write!(f, "Switch Pokémon (index: {})", team_index)
+            }
+            // Catch action for Wild/Safari battles
+            PlayerAction::Catch => {
+                write!(f, "Catch")
             }
             // Forfeit is a simple, static string.
             PlayerAction::Forfeit => {
@@ -160,6 +167,10 @@ impl BattlePlayer {
                 } else {
                     return Err("No Pokémon in that team slot.".to_string());
                 }
+            }
+            PlayerAction::Catch => {
+                // Catch validation is handled by the catch module
+                // Here we just allow the action to proceed
             }
             PlayerAction::Forfeit => {
                 // Forfeiting is always a valid action.

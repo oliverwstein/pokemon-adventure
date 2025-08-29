@@ -169,10 +169,7 @@ mod tests {
                     ..
                 }
             ));
-            assert!(!bus
-                .events()
-                .iter()
-                .any(|e| matches!(e, BattleEvent::ActionFailed { .. })));
+            assert!(!bus.contains(|e| matches!(e, BattleEvent::ActionFailed { .. })));
         }
     }
 
@@ -465,11 +462,8 @@ mod tests {
             ));
         } else {
             assert!(bus.len() >= 1);
-            assert!(matches!(bus.events()[0], BattleEvent::MoveUsed { .. }));
-            assert!(!bus
-                .events()
-                .iter()
-                .any(|e| matches!(e, BattleEvent::ActionFailed { .. })));
+            assert!(bus.contains(|e| matches!(e, BattleEvent::MoveUsed { .. })));
+            assert!(!bus.contains(|e| matches!(e, BattleEvent::ActionFailed { .. })));
         }
     }
 

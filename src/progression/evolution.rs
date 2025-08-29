@@ -1,17 +1,18 @@
 use super::RewardCalculator;
 use crate::errors::SpeciesDataResult;
+use crate::pokemon::PokemonInst;
 use crate::species::Species;
 
 impl RewardCalculator {
-    /// Check if Pokemon should attempt evolution at given level
+    /// Check if Pokemon should attempt evolution at current level
     /// Returns the species it should evolve into, or None if no evolution
-    pub fn should_evolve(&self, species: Species, level: u8) -> SpeciesDataResult<Option<Species>> {
-        let species_data = crate::get_species_data(species)?;
+    pub fn should_evolve(&self, pokemon: &PokemonInst) -> SpeciesDataResult<Option<Species>> {
+        let species_data = crate::get_species_data(pokemon.species)?;
 
         if let Some(evolution_data) = &species_data.evolution_data {
             match evolution_data.method {
                 schema::EvolutionMethod::Level(required_level) => {
-                    if level >= required_level {
+                    if pokemon.level >= required_level {
                         Ok(Some(evolution_data.evolves_into))
                     } else {
                         Ok(None)
@@ -33,9 +34,17 @@ mod tests {
     fn test_evolution() {
         let calculator = RewardCalculator;
 
-        // Test should_evolve - these will work once we have species data
-        // For now, test the logic structure
-        match calculator.should_evolve(Species::Bulbasaur, 16) {
+        // Create a test Pokemon instance
+        let species_data = match crate::get_species_data(Species::Bulbasaur) {
+            Ok(data) => data,
+            Err(_) => return, // Skip test if species data not available
+        };
+
+        let pokemon =
+            crate::pokemon::PokemonInst::new(Species::Bulbasaur, species_data, 16, None, None);
+
+        // Test should_evolve with PokemonInst
+        match calculator.should_evolve(&pokemon) {
             Ok(_) => {}  // Expected - function should work
             Err(_) => {} // Also OK if species data not available in tests
         }

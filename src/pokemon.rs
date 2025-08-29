@@ -213,7 +213,7 @@ impl PokemonInst {
             species,
             level,
             curr_exp: initial_exp,
-            curr_hp: 0,  // Will be set below with validation
+            curr_hp: 0, // Will be set below with validation
             ivs,
             evs,
             stats, // Assign the new `CurrentStats` struct here
@@ -292,19 +292,14 @@ impl PokemonInst {
         // Fetch the species data which contains the necessary base stats.
         // If data is unavailable, we cannot proceed, so we simply return.
         if let Ok(species_data) = get_species_data(self.species) {
-            
             // Store the old max HP to calculate the difference after the update.
             let old_max_hp = self.stats.hp;
 
             // Call the existing pure calculation function with the instance's own data.
             // This reuses the tested logic without duplicating the formula.
-            let new_stats = Self::calculate_stats(
-                &species_data.base_stats,
-                self.level,
-                &self.ivs,
-                &self.evs,
-            );
-            
+            let new_stats =
+                Self::calculate_stats(&species_data.base_stats, self.level, &self.ivs, &self.evs);
+
             // Atomically update the stats field with the new values.
             self.stats = new_stats;
 
@@ -312,7 +307,7 @@ impl PokemonInst {
             // This ensures that a Pokémon's health scales correctly when its max HP increases.
             let new_max_hp = self.stats.hp;
             let hp_increase = new_max_hp.saturating_sub(old_max_hp);
-            
+
             // Only add the HP increase if the Pokémon is not fainted.
             // Fainted Pokémon do not gain HP from stat recalculations.
             if !self.is_fainted() {
@@ -344,11 +339,11 @@ impl PokemonInst {
     /// Recalculates stats after adding EVs.
     pub fn add_evs(&mut self, ev_gains: [u8; 6]) {
         let mut current_total: u16 = self.evs.iter().map(|&ev| ev as u16).sum();
-        
+
         for i in 0..6 {
             let new_ev = (self.evs[i] as u16 + ev_gains[i] as u16).min(255);
             let ev_gain = new_ev - self.evs[i] as u16;
-            
+
             // Check if adding this EV would exceed the 510 total limit
             if current_total + ev_gain <= 510 {
                 self.evs[i] = new_ev as u8;
@@ -359,14 +354,14 @@ impl PokemonInst {
                 let actual_gain = remaining_points.min(ev_gain);
                 self.evs[i] = (self.evs[i] as u16 + actual_gain) as u8;
                 current_total += actual_gain;
-                
+
                 // Stop if we've reached the limit
                 if current_total >= 510 {
                     break;
                 }
             }
         }
-        
+
         self.recalculate_stats();
     }
 

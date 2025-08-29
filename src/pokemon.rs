@@ -365,12 +365,31 @@ impl PokemonInst {
         self.recalculate_stats();
     }
 
-    // The AwardExperience command handler will call this.
-    // It does NOT calculate level ups. It only updates the number.
-    // This must be used carefully to ensure the level and stats remain consistent.
-    pub fn add_experience(&mut self, amount: u32) {
-        if self.level < 100 {
-            self.curr_exp = self.curr_exp.saturating_add(amount);
+    /// Add experience points to this Pokemon.
+    /// Returns Some(new_level) if the Pokemon leveled up, None otherwise.
+    /// Caps at level 100.
+    pub fn add_experience(&mut self, amount: u32) -> Option<u8> {
+        if self.level >= 100 {
+            return None;
+        }
+
+        let old_level = self.level;
+        self.curr_exp = self.curr_exp.saturating_add(amount);
+
+        let species_data = match self.get_species_data() {
+            Ok(data) => data,
+            Err(_) => return None,
+        };
+
+        let new_level = species_data
+            .experience_group
+            .calculate_level_from_exp(self.curr_exp)
+            .min(100);
+
+        if new_level > old_level {
+            Some(new_level)
+        } else {
+            None
         }
     }
 

@@ -181,10 +181,6 @@ pub enum BattleCommand {
         pokemon_index: usize,
         stats: [u8; 6], // HP, Atk, Def, SpA, SpD, Spe
     },
-    UpdateBattleParticipation {
-        active_p0: usize,
-        active_p1: usize,
-    },
 
     // Battle flow
     EmitEvent(BattleEvent),
@@ -196,6 +192,7 @@ pub enum BattleCommand {
 pub enum ExecutionError {
     NoPokemon,
     InvalidPokemonIndex,
+    InvalidMoveIndex,
 }
 
 impl BattleCommand {
@@ -528,13 +525,6 @@ impl BattleCommand {
                     vec![]
                 }
             }
-            BattleCommand::UpdateBattleParticipation {
-                active_p0: _,
-                active_p1: _,
-            } => {
-                // Participation tracking is internal - no events needed
-                vec![]
-            }
         }
     }
 }
@@ -679,8 +669,19 @@ fn execute_state_change(
             // Clear conditions for fainted Pokemon
             commands.push(BattleCommand::ClearPlayerState { target: *target });
 
-            // TODO: Add progression rewards calculation here
-            // For now, just clear state
+            // Calculate progression rewards
+            let player_index = target.to_index();
+            if let Some(fainted_pokemon) = state.players[player_index].active_pokemon() {
+                let fainted_species = fainted_pokemon.species;
+
+                let progression_commands =
+                    crate::battle::progression::calculate_progression_commands(
+                        *target,
+                        fainted_species,
+                        state,
+                    );
+                commands.extend(progression_commands);
+            }
 
             return Ok(commands);
         }
@@ -774,12 +775,12 @@ fn execute_state_change(
             let player_index = target.to_index();
 
             // --- State Validation ---
-            if *new_pokemon_index >= state.players[player_index].team.len() 
-                || state.players[player_index].team[*new_pokemon_index].is_none() 
+            if *new_pokemon_index >= state.players[player_index].team.len()
+                || state.players[player_index].team[*new_pokemon_index].is_none()
             {
                 return Err(ExecutionError::InvalidPokemonIndex);
             }
-            
+
             // --- State Mutation ---
             state.players[player_index].active_pokemon_index = *new_pokemon_index;
 
@@ -788,7 +789,9 @@ fn execute_state_change(
             let p0_active_index = state.players[0].active_pokemon_index;
             let p1_active_index = state.players[1].active_pokemon_index;
             // Record participation in the tracker
-            state.participation_tracker.record_participation(p0_active_index, p1_active_index);
+            state
+                .participation_tracker
+                .record_participation(p0_active_index, p1_active_index);
 
             // --- Final Return ---
             return Ok(vec![]);
@@ -900,42 +903,56 @@ fn execute_state_change(
             let player_index = target.to_index();
             state.action_queue[player_index] = Some(action.clone());
         }
-        BattleCommand::AwardExperience { recipients: _ } => {
-            // TODO: Implement experience awarding
+        BattleCommand::AwardExperience { recipients } => {
+            return crate::battle::progression::execute_award_experience(recipients, state);
         }
         BattleCommand::LevelUpPokemon {
-            target: _,
-            pokemon_index: _,
+            target,
+            pokemon_index,
         } => {
-            // TODO: Implement level up logic
+            return crate::battle::progression::execute_level_up_pokemon(
+                *target,
+                *pokemon_index,
+                state,
+            );
         }
         BattleCommand::LearnMove {
-            target: _,
-            pokemon_index: _,
-            move_: _,
-            replace_index: _,
+            target,
+            pokemon_index,
+            move_,
+            replace_index,
         } => {
-            // TODO: Implement move learning logic
+            return crate::battle::progression::execute_learn_move(
+                *target,
+                *pokemon_index,
+                *move_,
+                *replace_index,
+                state,
+            );
         }
         BattleCommand::EvolvePokemon {
-            target: _,
-            pokemon_index: _,
-            new_species: _,
+            target,
+            pokemon_index,
+            new_species,
         } => {
-            // TODO: Implement evolution logic
+            return crate::battle::progression::execute_evolve_pokemon(
+                *target,
+                *pokemon_index,
+                *new_species,
+                state,
+            );
         }
         BattleCommand::DistributeEffortValues {
-            target: _,
-            pokemon_index: _,
-            stats: _,
+            target,
+            pokemon_index,
+            stats,
         } => {
-            // TODO: Implement EV distribution logic
-        }
-        BattleCommand::UpdateBattleParticipation {
-            active_p0: _,
-            active_p1: _,
-        } => {
-            // TODO: Update battle participation tracker
+            return crate::battle::progression::execute_distribute_effort_values(
+                *target,
+                *pokemon_index,
+                *stats,
+                state,
+            );
         }
     }
 

@@ -15,8 +15,8 @@ PokemonSpecies(
         level_up: {
             1: [Tackle, TailWhip],
             8: [Bubble],
-            15: [WaterGun],
-            22: [Bite],
+            16: [Bite],
+            22: [Bubblebeam],
             28: [Withdraw],
             35: [SkullBash],
             42: [HydroPump],

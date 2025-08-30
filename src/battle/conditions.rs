@@ -174,7 +174,7 @@ impl PokemonCondition {
                 let new_stage = (defender_stat_stage + 1).min(6); // Cap at +6
 
                 if defender_stat_stage != new_stage {
-                    commands.push(BattleCommand::ChangeStatStage {
+                    commands.push(BattleCommand::ModifyStatStage {
                         target: defender_target,
                         stat: StatType::Atk,
                         delta: 1,

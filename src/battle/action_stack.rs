@@ -1,13 +1,14 @@
 use std::collections::VecDeque;
 
 use schema::MoveEffect;
+use serde::{Deserialize, Serialize};
 
 use crate::battle::state::BattleState;
 use crate::player::PlayerAction;
 use crate::{battle::stats::effective_speed, move_data::get_move_data, Move};
 /// Internal action types for the action stack
 /// These represent atomic actions that can be executed during battle resolution
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BattleAction {
     /// Player forfeits the battle
     Forfeit { player_index: usize },

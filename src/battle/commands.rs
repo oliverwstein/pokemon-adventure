@@ -1,9 +1,10 @@
-use crate::battle::action_stack::{ActionStack, BattleAction};
+use crate::battle::action_stack::ActionStack;
 use crate::battle::conditions::{PokemonCondition, PokemonConditionType};
 use crate::battle::state::{BattleEvent, BattleState, EventBus};
 use crate::player::{PlayerAction, StatType, TeamCondition};
 use crate::pokemon::StatusCondition;
 use schema::Move;
+use serde::{Deserialize, Serialize};
 
 /// Source of fainting for context-aware handling
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,7 +15,7 @@ pub enum FaintingSource {
 }
 
 /// Player target for commands - provides type safety over raw indices
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerTarget {
     Player1,
     Player2,
@@ -45,15 +46,11 @@ impl PlayerTarget {
     }
 }
 
-/// Atomic commands representing final state changes
-#[derive(Debug, Clone)]
+/// Main battle command enum - flattened for ergonomic usage
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum BattleCommand {
-    // Direct state changes
-    SetGameState(crate::battle::state::GameState),
-    IncrementTurnNumber,
-    ClearActionQueue,
-
-    // Pokemon modifications
+    // === POKEMON COMMANDS ===
+    // Commands that modify Pokemon directly - minimal data packets
     DealDamage {
         target: PlayerTarget,
         amount: u16,
@@ -74,50 +71,6 @@ pub enum BattleCommand {
         target: PlayerTarget,
         move_used: Move,
     },
-    // Player state changes
-    ChangeStatStage {
-        target: PlayerTarget,
-        stat: StatType,
-        delta: i8,
-    },
-    AddCondition {
-        target: PlayerTarget,
-        condition: PokemonCondition,
-    },
-    RemoveCondition {
-        target: PlayerTarget,
-        condition_type: PokemonConditionType,
-    },
-    RemoveSpecificCondition {
-        target: PlayerTarget,
-        condition: PokemonCondition,
-    },
-    AddTeamCondition {
-        target: PlayerTarget,
-        condition: TeamCondition,
-        turns: u8,
-    },
-    AddAnte {
-        target: PlayerTarget,
-        amount: u32,
-    },
-    SetLastMove {
-        target: PlayerTarget,
-        move_used: Move,
-    },
-    SwitchPokemon {
-        target: PlayerTarget,
-        new_pokemon_index: usize,
-    },
-    AttemptCatch {
-        player_index: usize,
-        target_pokemon: crate::species::Species,
-    },
-    ClearPlayerState {
-        target: PlayerTarget,
-    },
-
-    // Pokemon status progress and condition effects
     DealStatusDamage {
         target: PlayerTarget,
         status: StatusCondition,
@@ -139,6 +92,35 @@ pub enum BattleCommand {
         target: PlayerTarget,
         condition: PokemonCondition,
     },
+
+    // === PLAYER COMMANDS ===
+    // Commands that modify player/team state - minimal data packets
+    SwitchPokemon {
+        target: PlayerTarget,
+        new_pokemon_index: usize,
+    },
+    ModifyStatStage {
+        target: PlayerTarget,
+        stat: StatType,
+        delta: i8,
+    },
+    AddCondition {
+        target: PlayerTarget,
+        condition: PokemonCondition,
+    },
+    RemoveCondition {
+        target: PlayerTarget,
+        condition_type: PokemonConditionType,
+    },
+    RemoveSpecificCondition {
+        target: PlayerTarget,
+        condition: PokemonCondition,
+    },
+    AddTeamCondition {
+        target: PlayerTarget,
+        condition: TeamCondition,
+        turns: u8,
+    },
     TickTeamCondition {
         target: PlayerTarget,
         condition: TeamCondition,
@@ -147,19 +129,41 @@ pub enum BattleCommand {
         target: PlayerTarget,
         condition: TeamCondition,
     },
+    AddAnte {
+        target: PlayerTarget,
+        amount: u32,
+    },
+    SetLastMove {
+        target: PlayerTarget,
+        move_used: Move,
+    },
+    ClearPlayerState {
+        target: PlayerTarget,
+    },
+    AttemptCatch {
+        player_index: usize,
+        target_pokemon: crate::species::Species,
+    },
     QueueForcedAction {
         target: PlayerTarget,
         action: PlayerAction,
     },
 
-    // Fainting Handler
-    HandlePokemonFainted {
+    // === STATE COMMANDS ===
+    // Commands that control game flow and state - minimal data packets
+    SetGameState(crate::battle::state::GameState),
+    IncrementTurnNumber,
+    ClearActionQueue,
+    EmitEvent(crate::battle::state::BattleEvent),
+    HandleFainted {
         target: PlayerTarget,
     },
+    PushAction(crate::battle::action_stack::BattleAction),
 
-    // Progression Commands
+    // === PROGRESSION COMMANDS ===
+    // Progression commands - minimal data packets
     AwardExperience {
-        recipients: Vec<(PlayerTarget, usize, u32)>, // (player, pokemon_index, amount)
+        recipients: Vec<(PlayerTarget, usize, u32)>,
     },
     LevelUpPokemon {
         target: PlayerTarget,
@@ -169,7 +173,7 @@ pub enum BattleCommand {
         target: PlayerTarget,
         pokemon_index: usize,
         move_: Move,
-        replace_index: Option<usize>, // None = add to empty slot, Some(i) = replace slot i
+        replace_index: Option<usize>,
     },
     EvolvePokemon {
         target: PlayerTarget,
@@ -179,12 +183,8 @@ pub enum BattleCommand {
     DistributeEffortValues {
         target: PlayerTarget,
         pokemon_index: usize,
-        stats: [u8; 6], // HP, Atk, Def, SpA, SpD, Spe
+        stats: [u8; 6],
     },
-
-    // Battle flow
-    EmitEvent(BattleEvent),
-    PushAction(BattleAction),
 }
 
 /// Error types for command execution
@@ -262,7 +262,7 @@ impl BattleCommand {
                 // PP usage is silent - no events emitted
                 vec![]
             }
-            BattleCommand::ChangeStatStage {
+            BattleCommand::ModifyStatStage {
                 target,
                 stat,
                 delta,
@@ -420,7 +420,7 @@ impl BattleCommand {
             | BattleCommand::SetLastMove { .. }
             | BattleCommand::ClearPlayerState { .. }
             | BattleCommand::PushAction(_) => vec![],
-            BattleCommand::HandlePokemonFainted { target } => {
+            BattleCommand::HandleFainted { target } => {
                 let player_index = target.to_index();
                 let pokemon = state.players[player_index].active_pokemon();
                 vec![BattleEvent::PokemonFainted {
@@ -619,7 +619,7 @@ fn execute_deal_damage_command(
     if let Some(pokemon) = player.team[player.active_pokemon_index].as_mut() {
         let did_faint = pokemon.take_damage(amount);
         if did_faint {
-            Ok(vec![BattleCommand::HandlePokemonFainted { target }])
+            Ok(vec![BattleCommand::HandleFainted { target }])
         } else {
             Ok(vec![])
         }
@@ -663,7 +663,7 @@ fn execute_state_change(
             // This should not reach here due to early return above
             unreachable!("EmitEvent should be handled before execute_state_change")
         }
-        BattleCommand::HandlePokemonFainted { target } => {
+        BattleCommand::HandleFainted { target } => {
             let mut commands = vec![];
 
             // Clear conditions for fainted Pokemon
@@ -718,7 +718,7 @@ fn execute_state_change(
                     .map_err(|_| ExecutionError::NoPokemon)
             })
         }
-        BattleCommand::ChangeStatStage {
+        BattleCommand::ModifyStatStage {
             target,
             stat,
             delta,
@@ -1191,7 +1191,7 @@ mod tests {
         let mut action_stack = ActionStack::new();
 
         let result = execute_command_batch(
-            vec![BattleCommand::ChangeStatStage {
+            vec![BattleCommand::ModifyStatStage {
                 target: PlayerTarget::Player1,
                 stat: StatType::Atk,
                 delta: 2,

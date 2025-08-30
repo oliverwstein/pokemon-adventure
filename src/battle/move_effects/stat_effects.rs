@@ -47,7 +47,7 @@ pub(super) fn apply_stat_change_effect(
             let new_stage = (old_stage + stages).clamp(-6, 6);
 
             if old_stage != new_stage {
-                commands.push(BattleCommand::ChangeStatStage {
+                commands.push(BattleCommand::ModifyStatStage {
                     target: PlayerTarget::from_index(target_index),
                     stat: *stat,
                     delta: new_stage - old_stage,
@@ -84,7 +84,7 @@ pub(super) fn apply_raise_all_stats_effect(
             let old_stage = attacker_player.get_stat_stage(*stat);
             if old_stage < 6 {
                 // Only raise if not already maxed out
-                commands.push(BattleCommand::ChangeStatStage {
+                commands.push(BattleCommand::ModifyStatStage {
                     target: PlayerTarget::from_index(context.attacker_index),
                     stat: *stat,
                     delta: 1,
@@ -125,7 +125,7 @@ pub(super) fn apply_haze_effect(
             for stat in &all_stats {
                 let current_stage = player.get_stat_stage(*stat);
                 if current_stage != 0 {
-                    commands.push(BattleCommand::ChangeStatStage {
+                    commands.push(BattleCommand::ModifyStatStage {
                         target: PlayerTarget::from_index(player_index),
                         stat: *stat,
                         delta: -current_stage, // Reset to 0

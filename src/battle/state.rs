@@ -1,5 +1,6 @@
 use std::fmt;
 
+use crate::battle::commands::BattleCommand;
 use crate::battle::conditions::PokemonCondition;
 use crate::player::{BattlePlayer, PlayerAction, StatType, TeamCondition};
 use crate::progression::BattleParticipationTracker;
@@ -66,7 +67,7 @@ impl fmt::Display for GameState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum BattleEvent {
     // Turn Management
     TurnStarted {
@@ -1170,6 +1171,8 @@ pub struct BattleState {
     pub battle_type: BattleType,
     pub action_queue: [Option<PlayerAction>; 2],
     pub participation_tracker: BattleParticipationTracker,
+    /// Persistent command stack for step-by-step execution
+    pub command_stack: Vec<BattleCommand>,
 }
 
 impl BattleState {
@@ -1191,6 +1194,7 @@ impl BattleState {
             battle_type: BattleType::Tournament,
             action_queue: [None, None],
             participation_tracker, // Assign the initialized tracker.
+            command_stack: Vec::new(),
         }
     }
 }

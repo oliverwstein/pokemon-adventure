@@ -108,6 +108,8 @@ fn test_catch_commands(
     let commands = calculate_catch_commands(0, Species::Charmander, &battle_state, &mut rng);
 
     if should_succeed {
+        use crate::battle::commands::BattleCommand;
+
         assert_eq!(
             commands.len(),
             2,
@@ -119,9 +121,7 @@ fn test_catch_commands(
         assert!(
             matches!(
                 &commands[0],
-                crate::battle::commands::BattleCommand::EmitEvent(
-                    BattleEvent::CatchAttempted { .. }
-                )
+                BattleCommand::EmitEvent(BattleEvent::CatchAttempted { .. })
             ),
             "{}: First command should be CatchAttempted",
             description
@@ -129,15 +129,14 @@ fn test_catch_commands(
 
         // Second should be AttemptCatch command
         assert!(
-            matches!(
-                &commands[1],
-                crate::battle::commands::BattleCommand::AttemptCatch { .. }
-            ),
+            matches!(&commands[1], BattleCommand::AttemptCatch { .. }),
             "{}: Second command should be AttemptCatch",
             description
         );
     } else if battle_type == BattleType::Wild && team_size < 6 {
         // Failed roll case
+
+        use crate::battle::commands::BattleCommand;
         assert_eq!(
             commands.len(),
             2,
@@ -148,13 +147,15 @@ fn test_catch_commands(
         assert!(
             matches!(
                 &commands[1],
-                crate::battle::commands::BattleCommand::EmitEvent(BattleEvent::CatchFailed { .. })
+                BattleCommand::EmitEvent(BattleEvent::CatchFailed { .. })
             ),
             "{}: Second command should be CatchFailed",
             description
         );
     } else {
         // Validation failure case
+
+        use crate::battle::commands::BattleCommand;
         assert_eq!(
             commands.len(),
             1,
@@ -165,7 +166,7 @@ fn test_catch_commands(
         assert!(
             matches!(
                 &commands[0],
-                crate::battle::commands::BattleCommand::EmitEvent(BattleEvent::CatchFailed { .. })
+                BattleCommand::EmitEvent(BattleEvent::CatchFailed { .. })
             ),
             "{}: Should have immediate CatchFailed",
             description

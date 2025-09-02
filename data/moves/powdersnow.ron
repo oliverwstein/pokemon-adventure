@@ -1,0 +1,11 @@
+MoveData(
+    name: "Powder Snow",
+    move_type: Ice,
+    power: Some(40),
+    category: Special,
+    accuracy: Some(100),
+    max_pp: 25,
+    effects: [
+        Freeze(10),
+    ],
+)

@@ -55,7 +55,7 @@ pub enum BattleAction {
     ThrowBall { ball: PokeballType }, // Wild and Safari battles only
 
     EndTurn,
-    EndBattle {BattleResolution},
+    EndBattle {outcome: BattleResolution},
     // Everything else that can happen in a battle, generically
     // For offensive moves that can miss
     StrikeAction {player_index: bool, team_index: usize, target_team_index: usize, use_move: Move},
@@ -83,7 +83,7 @@ pub enum BattleAction {
     ApplyTeamCondition {player_index: bool, condition: TeamCondition {..}},
 }
 
-pub enum BattleResolution {Player1Wins, Player2Wins, Draw, Forfeit}
+pub enum BattleResolution {Player1Wins, Player2Wins, Draw}
 ```
 
 ## Converting BattleCommands to BattleActions
@@ -97,10 +97,10 @@ It can require one or both players to provide input.
 - `OfferMove` only ever applies to one player, and accepts only `ChooseMoveToForget`
 - `OfferEvolution` only ever applies to one player, and accepts only `EvolutionResponse`
 
-- If a command is required for a player with `PlayerType::NPC`, call the generator to get the command and use the result.
-- If a command is missing or invalid for a player with `PlayerType::Human`:
+- If a command is missing for any player (Human or NPC):
     1. the `GameState` is set to `AwaitingInput`
     2. a copy of the inciting `BattleAction` is put back on the stack
+- External systems (BattleRunner) provide commands via UI for humans or AI for NPCs
 
 Note that the PFSM must be designed such that there are never 'outdated' BattleCommands in `battle_commands`. Consequently, care must be paid with the situations where actions are requested from both players. 
 - A weird edge case might involve confusion:
@@ -113,44 +113,117 @@ This situation is pre-empted by guaranteeing that, whenever both players have Ba
 There is a related edge case wherein the player could overwrite the move they have queued. 
 In the actual Pokemon games, this created an edge case where the pokemon would use the new move instead, because the cached action specified the move_index rather than the actual move. Our system faithfully reflects that silly edge case by having DoMove take the move_index rather than the Move itself.
 
-## BattleActions and running the Battle.
-```rust
-// An external Runner struct drives the battle - anything that follows the contract can create and run a battle.
-fn advance_battle(battle: &mut Battle events: &mut EventBus) -> Option<BattleResolution> {
-    let mut game_state = GameState::Advancing;
+## Battle FSM Terminal Interface
 
-    while game_state == GameState::Advancing {
-        game_state = battle.advance(&mut events);
-        // Here, the UI would process the new events in the bus
-    }
-    // The loop exits when game_state becomes AwaitingInput or a battle end state.
-    // The key detail is that the battle runs until it is AwaitingInput or it is over.
-    match current_state {
-            GameState::AwaitingInput => {
-                // The battle paused for input. It is not over.
-                None 
-            },
-            GameState::BattleOver(resolution) => {
-                // The battle finished. Return the outcome.
-                Some(resolution)
-            },
-            GameState::Advancing => unreachable!(), // The loop condition prevents this.
-        }
+The Battle FSM provides a clean terminal interface with three core methods:
+
+```rust
+pub struct Battle {
+    pub battle_type: BattleType, // Tournament, Trainer, Wild, Safari
+    pub players: [BattlePlayer; 2],
+    pub battle_commands: [Option<BattleCommand>; 2],
+    pub action_stack: Vec<BattleAction>, // LIFO Stack
+    pub turn: u8,
 }
 
-// In the `impl Battle` block
-pub fn advance(&mut self, events: &mut EventBus) -> GameState {
-    // Pop an action. If the stack is empty, the battle has concluded.
-    if let Some(action) = self.action_stack.pop() {
-        // Execute the action, passing a mutable reference to the entire battle
-        // so that the action can modify it.
-        match action.execute(self, events) {
-            Ok(next_state) => next_state,
-            Err(_) => GameState::Draw, // Or some other error state
+impl Battle {
+    pub fn new(battle_type: BattleType, players: [BattlePlayer; 2]) -> Self {
+        let mut battle = Battle {
+            battle_type,
+            players,
+            battle_commands: [None, None],
+            action_stack: Vec::new(),
+        };
+        
+        // Initialize with first action
+        battle.action_stack.push(BattleAction::RequestBattleCommands);
+        battle
+    }
+
+    pub fn advance(&mut self, events: &mut EventBus) -> GameState {
+        // Pop an action. If the stack is empty, this shouldn't happen - generate emergency EndBattle
+        if let Some(action) = self.action_stack.pop() {
+            // Execute the action, passing a mutable reference to the entire battle
+            // so that the action can modify it.
+            match action.execute(self, events) {
+                Ok(next_state) => next_state,
+                Err(_) => GameState::AwaitingInput, // Or some other error state
+            }
+        } else {
+            // Stack should never be empty - this is an error condition
+            // Generate emergency EndBattle and set to AwaitingInput
+            self.action_stack.push(BattleAction::EndBattle { outcome: BattleResolution::Draw });
+            GameState::AwaitingInput
         }
-    } else {
-        // The stack should only be empty when the battle is over.
-        determine_final_gamestate(&self.players)
+    }
+
+    pub fn submit_commands(&mut self, commands: [Option<BattleCommand>; 2]) -> Result<(), BattleError> {
+        // Validate and update battle_commands array
+        // This method provides commands to satisfy InputRequest requirements
+        self.battle_commands = commands;
+        Ok(())
+    }
+
+    pub fn get_input_request(&self) -> Option<InputRequest> {
+        // The action that paused the engine is the last one pushed onto the stack.
+        let waiting_action = self.action_stack.last()?; // Return None if the stack is empty.
+
+        match waiting_action {
+            BattleAction::RequestBattleCommands => {
+                // Find which human player, if any, still needs to provide a command.
+                for i in 0..2 {
+                    if self.players[i].player_type == PlayerType::Human && self.battle_commands[i].is_none() {
+                        return Some(InputRequest::ForTurnActions { player_index: i });
+                    }
+                }
+                None // Should not happen if state is AwaitingInput, but good to be safe.
+            }
+
+            BattleAction::RequestNextPokemon { p1, p2 } => {
+                // Check the specific players flagged as needing replacements
+                if *p1 && self.players[0].player_type == PlayerType::Human && self.battle_commands[0].is_none() {
+                    return Some(InputRequest::ForNextPokemon { player_index: 0 });
+                }
+                if *p2 && self.players[1].player_type == PlayerType::Human && self.battle_commands[1].is_none() {
+                    return Some(InputRequest::ForNextPokemon { player_index: 1 });
+                }
+                None // Neither flagged player is a human who needs to act right now.
+            }
+
+            BattleAction::OfferMove { player_index, team_index, new_move } => {
+                // Check if the specified player is a human needing to act.
+                if self.players[*player_index].player_type == PlayerType::Human && self.battle_commands[*player_index].is_none() {
+                    return Some(InputRequest::ForMoveToForget {
+                        player_index: *player_index,
+                        team_index: *team_index,
+                        new_move: *new_move,
+                    });
+                }
+                None
+            }
+
+            BattleAction::OfferEvolution { player_index, team_index, species } => {
+                // Check if the specified player is a human needing to act.
+                if self.players[*player_index].player_type == PlayerType::Human && self.battle_commands[*player_index].is_none() {
+                    return Some(InputRequest::ForEvolution {
+                        player_index: *player_index,
+                        team_index: *team_index,
+                        new_species: *species,
+                    });
+                }
+                None
+            }
+
+            BattleAction::EndBattle { outcome } => {
+                // Battle is complete - provide the resolution to external systems
+                Some(InputRequest::ForBattleComplete { 
+                    resolution: *outcome 
+                })
+            }
+
+            // For any other action, the engine should not be waiting for input.
+            _ => None,
+        }
     }
 }
 
@@ -165,65 +238,9 @@ impl BattleAction {
     }
 }
 
-// In the `impl Battle` block
-// In the `impl Battle` block
-pub fn get_input_request(&self) -> Option<InputRequest> {
-    // The action that paused the engine is the last one pushed onto the stack.
-    let waiting_action = self.action_stack.last()?; // Return None if the stack is empty.
-
-    match waiting_action {
-        BattleAction::RequestBattleCommands => {
-            // Find which human player, if any, still needs to provide a command.
-            for i in 0..2 {
-                if self.players[i].player_type == PlayerType::Human && self.battle_commands[i].is_none() {
-                    return Some(InputRequest::ForTurnActions { player_index: i });
-                }
-            }
-            None // Should not happen if state is AwaitingInput, but good to be safe.
-        }
-
-        BattleAction::RequestNextPokemon { p1, p2 } => {
-            // Check if player 1 is a human who needs to act.
-            for i in 0..2 {
-                if self.players[i].player_type == PlayerType::Human && self.battle_commands[i].is_none() {
-                    return Some(InputRequest::ForNextPokemon { player_index: i });
-                }
-            }
-            None  // Should not happen if state is AwaitingInput, but good to be safe.
-        }
-
-        BattleAction::OfferMove { player_index, team_index, new_move } => {
-            // Check if the specified player is a human needing to act.
-            if self.players[*player_index].player_type == PlayerType::Human && self.battle_commands[*player_index].is_none() {
-                return Some(InputRequest::ForMoveToForget {
-                    player_index: *player_index,
-                    team_index: *team_index,
-                    new_move: *new_move,
-                });
-            }
-            None
-        }
-
-        BattleAction::OfferEvolution { player_index, team_index, species } => {
-            // Check if the specified player is a human needing to act.
-            if self.players[*player_index].player_type == PlayerType::Human && self.battle_commands[*player_index].is_none() {
-                return Some(InputRequest::ForEvolution {
-                    player_index: *player_index,
-                    team_index: *team_index,
-                    new_species: *species,
-                });
-            }
-            None
-        }
-
-        // For any other action, the engine should not be waiting for input.
-        _ => None,
-    }
-}
-
-/// A request from the battle engine for a specific piece of input from a human player.
-/// This is the primary contract between the engine and the UI when the GameState is AwaitingInput.
-/// It is a handshake to the BattleActions that require input.
+/// A request from the battle engine for a specific piece of input from a player.
+/// This is the primary contract between the engine and external systems when the GameState is AwaitingInput.
+/// External systems provide commands via UI (humans) or AI (NPCs). It is a handshake to the BattleActions that require input.
 #[derive(Debug, Clone)]
 pub enum InputRequest {
     /// The engine is waiting for a player to choose their primary action for the turn.
@@ -249,21 +266,43 @@ pub enum InputRequest {
         team_index: usize,
         new_species: Species,
     },
+
+    /// A Pokémon battle has concluded with the given resolution.
+    ForBattleComplete { // For EndBattle
+        resolution: BattleResolution,
+    },
 }
 
 impl InputRequest {
     /// A convenient helper method to get the relevant player index from any request type.
-    pub fn player_index(&self) -> usize {
+    /// Returns None for battle completion since no specific player is involved.
+    pub fn player_index(&self) -> Option<usize> {
         match self {
-            InputRequest::ForTurnActions { player_index } => *player_index,
-            InputRequest::ForNextPokemon { player_index, .. } => *player_index,
-            InputRequest::ForMoveToForget { player_index, .. } => *player_index,
-            InputRequest::ForEvolution { player_index, .. } => *player_index,
+            InputRequest::ForTurnActions { player_index } => Some(*player_index),
+            InputRequest::ForNextPokemon { player_index, .. } => Some(*player_index),
+            InputRequest::ForMoveToForget { player_index, .. } => Some(*player_index),
+            InputRequest::ForEvolution { player_index, .. } => Some(*player_index),
+            InputRequest::ForBattleComplete { .. } => None,
         }
     }
 }
 
 ```
+
+## Battle Lifecycle
+
+The Battle FSM operates as a pure terminal interface:
+
+1. **External systems** create a Battle instance and initialize it with `RequestBattleCommands` on the action stack
+2. **External systems** call `advance()` repeatedly until `GameState::AwaitingInput` is returned
+3. **When AwaitingInput**: External systems use `get_input_request()` to determine what input is needed
+4. **Input provision**: External systems call `submit_commands()` to provide the required commands:
+   - For human players: Commands obtained via UI interaction
+   - For NPC players: Commands generated by AI systems (AI modules are part of Battle crate but called by external systems)
+5. **Resume**: Return to step 2 until battle completes
+
+**Battle Completion**: When `EndBattle` action executes, the battle is complete. The FSM sets `GameState::AwaitingInput` to prevent further advancement, and external systems can read the final `BattleResolution` from the `InputRequest::ForBattleComplete`.
+
 The `BattleAction` enum implements `execute()` for each `BattleAction`, which takes the Battle struct and can mutate `players`, `battle_commands`, and `action_stack`, and returns a GameState.
 
 ### Starting a Battle
@@ -278,8 +317,7 @@ When `RequestBattleCommands` executes, it orchestrates the collection of player 
 
 For each player without a command:
 - If the player has a forced move (e.g., locked into Solar Beam), the corresponding command is generated automatically
-- If the player is an NPC, the AI module is called to generate a command immediately
-- If the player is human and has no forced move, their slot remains empty
+- If either player (Human or NPC) lacks a command, their slot remains empty
 
 **Phase 2: Resolution**
 
@@ -300,12 +338,10 @@ If both command slots are filled:
 - Clear both command slots
 - **Continue in `Advancing` state**
 
-If any command slot remains empty (human input needed):
-<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
-
+If any command slot remains empty (input needed):
 - **Push `RequestBattleCommands` back onto the stack**
 - **Transition to `AwaitingInput` state**
-- Wait for external input
+- Wait for external input (UI for humans, AI for NPCs)
 
 You're right - players should be able to forfeit when asked for a replacement. Here's the corrected version:
 
@@ -317,8 +353,7 @@ When `RequestNextPokemon` executes, it manages Pokemon replacement after faintin
 
 For each player flagged as needing a replacement:
 - If the player has no remaining conscious Pokemon, mark them as unable to switch
-- If the player is an NPC with conscious Pokemon, the AI module generates a `SwitchPokemon` command immediately
-- If the player is human, their slot remains empty pending input
+- If the player (Human or NPC) needs to provide a replacement, their slot remains empty pending input
 
 **Phase 2: Resolution**
 
@@ -334,10 +369,10 @@ If all required command slots are filled (or players cannot switch):
   - Clear the relevant command slots
 - **Continue in `Advancing` state**
 
-If any required command slot remains empty (human input needed):
-- **Push `RequestNextPokemon` back onto the stack** with updated flags (if npc provided input but not player)
+If any required command slot remains empty (input needed):
+- **Push `RequestNextPokemon` back onto the stack** with updated flags
 - **Transition to `AwaitingInput` state**
-- Wait for external input
+- Wait for external input (UI for humans, AI for NPCs)
 
 **Special Cases:**
 - If both players need replacements (e.g., from Explosion), both provide input before any switches execute

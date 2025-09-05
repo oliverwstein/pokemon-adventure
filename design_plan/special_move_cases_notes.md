@@ -136,10 +136,10 @@ This document catalogues all special cases for move execution that deviate from 
 ### DoMove Action Parameters
 ```rust
 DoMove {
-    player_index: usize,
-    team_index: usize, 
+    player_index: u8,
+    team_index: u8, 
     move_data: MoveData,
-    pp_source: Option<usize>,    // Which slot to deduct PP from
+    pp_source: Option<u8>,    // Which slot to deduct PP from
     status_check: bool,          // Whether to check status
 }
 ```

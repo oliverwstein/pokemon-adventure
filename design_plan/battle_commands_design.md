@@ -9,20 +9,20 @@ BattleCommands represent player intentions that are provided to the Battle FSM t
 ```rust
 #[derive(Debug, Clone, PartialEq)]
 pub enum BattleCommand {
-    SwitchPokemon { team_index: usize },
-    UseMove { team_index: usize, chosen_move: Move },
+    SwitchPokemon { team_index: u8 },
+    UseMove { team_index: u8, chosen_move: Move },
     UseBall { ball: PokeballType },
-    Nothing,
+    Continue { action: ContinuationAction },
     Forfeit,  // Tournament/Trainer battles - concede defeat
     Flee,     // Wild/Safari battles - escape from encounter
     AcceptEvolution { accept: bool },
-    ChooseMoveToForget { move_index: usize },
+    ChooseMoveToForget { move_index: u8 },
 }
 ```
 
 ## Command Types and Usage
 
-### `SwitchPokemon { team_index: usize }`
+### `SwitchPokemon { team_index: u8 }`
 **Purpose**: Switch to a different Pokemon from the player's team
 **Usage**: 
 - Standard battle switching for tactical advantage
@@ -34,7 +34,7 @@ pub enum BattleCommand {
 
 **Converts to**: `BattleAction::DoSwitch`
 
-### `UseMove { team_index: usize, chosen_move: Move }`
+### `UseMove { team_index: u8, chosen_move: Move }`
 **Purpose**: Execute a move with the active Pokemon
 **Parameters**:
 - `team_index`: Index of Pokemon using the move (typically active Pokemon)
@@ -44,9 +44,13 @@ pub enum BattleCommand {
 - Pokemon must know the specified move
 - Move must exist in Pokemon's current moveset
 
-**Converts to**: `BattleAction::DoMove`
+**Converts to**: `BattleAction::ChooseMove` → `BattleAction::DoMove`
 
-**Note**: Execution-time effects (sleep, paralysis, PP depletion, binding) are handled during action execution, not command validation.
+**Two-Stage Execution**:
+1. **ChooseMove**: Handles PP validation/deduction, status checks, updates last_move
+2. **DoMove**: Pure script execution of the move's behavior
+
+**Note**: PP is always consumed during ChooseMove (when player commits to the move), regardless of move timing. This differs from original games where some moves (Solar Beam) consumed PP on completion.
 
 **Edge Case**: If Pokemon learns a new move after queueing this command, the move_index is preserved (reproducing original game behavior where cached move indices could change)
 
@@ -61,12 +65,36 @@ pub enum BattleCommand {
 
 **Converts to**: `BattleAction::ThrowBall`
 
-## `Nothing`
-**Purpose**: Handle Bide, post-HyperBeam exhaustion, and disobedience (when strong traded pokemon do not obey the player)
-**Usage**: Secondary combat action in all battle types
-**Validation**: Can only be injected, cannot be chosen by player input.
+### `Continue { action: ContinuationAction }`
+**Purpose**: Handle forced actions injected by the battle system
+**Parameters**:
+- `action`: Specific type of continuation required by current battle state
+**Usage**: 
+- Bide turns (Pokemon must remain motionless)
+- Post-Hyper Beam exhaustion (recharge turn required)
+- Lock-in move continuations (Thrash, Petal Dance forced repetitions)
+- Two-turn move completions (Solar Beam release, Fly/Dig landing)
+- Disobedience (strong traded Pokemon refusing to obey)
+**Validation**: 
+- Can only be injected by the battle system based on Pokemon conditions
+- Cannot be chosen through direct player input
+- Must match the Pokemon's current forced state
 
-**Converts to**: `BattleAction::DoNothing`
+**Converts to**: `BattleAction::DoMove` (bypasses ChooseMove stage)
+
+**Direct Execution**: Continue commands skip the ChooseMove stage entirely since they don't involve PP consumption or player choice - they go directly to DoMove with pre-determined scripts based on Pokemon conditions.
+
+```rust
+#[derive(Debug, Clone, PartialEq)]
+pub enum ContinuationAction {
+    Recharge,           // Hyper Beam exhaustion
+    Biding,             // Bide action
+    ThrashContinue,     // Lock-in move repetition
+    ChargeRelease,      // Two-turn move completion
+    Disobey,            // Pokemon refuses to obey
+    DoNothing,          // Generic forced inaction
+}
+```
 
 ### `Forfeit`
 **Purpose**: Concede defeat in competitive battles
@@ -106,7 +134,7 @@ pub enum BattleCommand {
 
 **Converts to**: Evolution processing actions or cancellation
 
-### `ChooseMoveToForget { move_index: usize }`
+### `ChooseMoveToForget { move_index: u8 }`
 **Purpose**: Select which move to replace when Pokemon tries to learn a 5th move
 **Parameters**:
 - `move_index`: Index (0-3) of existing move to replace, or special value for "don't learn"
@@ -201,7 +229,7 @@ match input_request {
 impl BattleCommand {
     pub fn is_valid_for_request(
         &self, 
-        player_index: usize, 
+        player_index: u8, 
         battle: &Battle, 
         input_request: &InputRequest
     ) -> Result<(), CommandError> {
@@ -229,6 +257,24 @@ pub enum CommandError {
 3. **Action Creation**: Create corresponding BattleAction with necessary parameters
 4. **Stack Management**: Push actions onto stack in correct priority order
 
+### Two Execution Paths
+
+**Player Choice Path** (UseMove):
+```
+UseMove → ChooseMove → DoMove → Strike/Passive Actions
+         [PP handling]  [Script execution]
+```
+
+**Forced Action Path** (Continue):
+```
+Continue → DoMove → Strike/Passive Actions
+          [Direct script execution, no PP]
+```
+
+**Special Cases**:
+- **Metronome/Mirror Move**: Use ChooseMove for source move, then DoMove for copied move
+- **Transform**: Uses ChooseMove, then creates temporary moveset for future ChooseMove calls
+
 ### Priority Order (highest to lowest)
 1. **Switches**: Always execute first (immediate replacement)
 2. **Items**: Pokeball usage (in applicable battle types)  
@@ -250,7 +296,7 @@ When both players provide commands simultaneously:
 impl BattleAI for ScoringAI {
     fn decide_command(
         &self, 
-        player_index: usize, 
+        player_index: u8, 
         battle: &Battle, 
         rng: &mut dyn BattleRng
     ) -> BattleCommand {

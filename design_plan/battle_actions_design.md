@@ -12,46 +12,24 @@ BattleActions fall into several categories based on their role in battle flow:
 Actions that can trigger `AwaitingInput` state when input is needed:
 - `RequestBattleCommands`
 - `RequestNextPokemon { p1: bool, p2: bool }`  
-- `OfferMove { player_index: usize, team_index: usize, new_move: Move }`
-- `OfferEvolution { player_index: usize, team_index: usize, species: Species }`
+- `OfferMove { player_index: u8, team_index: u8, new_move: Move }`
+- `OfferEvolution { player_index: u8, team_index: u8, species: Species }`
 - `EndBattle { outcome: BattleResolution }`
 
 ### Command Execution Actions  
 Actions generated from BattleCommands:
-- `DoSwitch { player_index: usize, team_index: usize }`
-- `DoMove { player_index: usize, team_index: usize, move_index: usize }`
-- `DoForfeit { player_index: usize }`
-- `DoFlee { player_index: usize }`
+- `DoSwitch { player_index: u8, team_index: u8 }`
+- `ChooseMove { player_index: u8, team_index: u8, move_index: u8 }`
+- `DoMove { player_index: u8, team_index: u8, move_data: MoveData }`
+- `DoForfeit { player_index: u8 }`
+- `DoFlee { player_index: u8 }`
 - `ThrowBall { ball: PokeballType }`
 
 ### Battle Flow Actions
 Actions that manage turn progression:
 - `EndTurn`
+- `HandleKnockout`
 
-### Direct Effect Actions
-Actions that apply immediate state changes:
-- `Damage { player_index: usize, team_index: usize, amount: u16 }`
-- `Heal { player_index: usize, team_index: usize, amount: u16 }`
-- `Knockout { player_index: usize, team_index: usize }`
-- `ModifyStatStage { player_index: usize, target_team_index: usize, stat: Stat, delta: i8 }`
-- `ResetStatChanges { player_index: usize, target_team_index: usize }`
-- `ApplyStatus { player_index: usize, target_team_index: usize, status: StatusCondition }`
-- `RemoveStatus { player_index: usize, target_team_index: usize }`
-- `ApplyCondition { player_index: usize, target_team_index: usize, condition: PokemonCondition }`
-- `RemoveCondition { player_index: usize, target_team_index: usize, condition: PokemonCondition }`
-- `ApplyTeamCondition { player_index: usize, condition: TeamCondition }`
-
-### Move Effect Actions
-Actions for specific move mechanics:
-- `StrikeAction { player_index: usize, team_index: usize, target_team_index: usize, move_used: Move }`
-- `PassiveAction { player_index: usize, team_index: usize, move_used: Move }`
-- `Miss { player_index: usize, team_index: usize, move_used: Move }`
-
-### Action Prevention Actions
-Actions that handle conditions preventing Pokemon from acting:
-- `StatusPreventedAction { player_index: usize, team_index: usize, status: PokemonStatus }`
-- `ConfusionSelfDamage { player_index: usize, team_index: usize }`
-- `VolatilePreventedAction { player_index: usize, team_index: usize, condition: PokemonCondition }`
 
 ## BattleAction Enum Definition
 
@@ -61,90 +39,21 @@ pub enum BattleAction {
     // Actions that can trigger Awaiting Input
     RequestBattleCommands,
     RequestNextPokemon { p1: bool, p2: bool },
-    OfferMove { player_index: usize, team_index: usize, new_move: Move },
-    OfferEvolution { player_index: usize, team_index: usize, species: Species },
+    OfferMove { player_index: u8, team_index: u8, new_move: Move },
+    OfferEvolution { player_index: u8, team_index: u8, species: Species },
 
     // Actions generated from BattleCommands
-    DoSwitch { player_index: usize, team_index: usize },
-    DoMove { player_index: usize, team_index: usize, move_index: usize },
-    DoForfeit { player_index: usize },
-    DoFlee { player_index: usize },
+    DoSwitch { player_index: u8, team_index: u8 },
+    ChooseMove { player_index: u8, team_index: u8, move_index: u8 },
+    DoMove { player_index: u8, team_index: u8, move_data: MoveData },
+    DoForfeit { player_index: u8 },
+    DoFlee { player_index: u8 },
     ThrowBall { ball: PokeballType },
 
     // Battle flow control
     EndTurn,
 
-    // Direct state modifications
-    Damage { player_index: usize, team_index: usize, amount: u16 },
-    Heal { player_index: usize, team_index: usize, amount: u16 },
-    Knockout { player_index: usize, team_index: usize },
-    
-    ModifyStatStage { 
-        player_index: usize, 
-        target_team_index: usize, 
-        stat: Stat, 
-        delta: i8 
-    },
-    ResetStatChanges { player_index: usize, target_team_index: usize },
-
-    ApplyStatus { 
-        player_index: usize, 
-        target_team_index: usize, 
-        status: PokemonStatus 
-    },
-    RemoveStatus { 
-        player_index: usize, 
-        target_team_index: usize, 
-        status_type: PokemonStatus 
-    },
-
-    ApplyCondition { 
-        player_index: usize, 
-        target_team_index: usize, 
-        condition: PokemonCondition 
-    },
-    RemoveCondition { 
-        player_index: usize, 
-        target_team_index: usize, 
-        condition_key: ConditionKey 
-    },
-    RemoveAllConditions { player_index: usize, target_team_index: usize },
-    
-    ApplyTeamCondition { player_index: usize, condition: TeamCondition },
-
-    // Move execution actions
-    StrikeAction { 
-        player_index: usize, 
-        team_index: usize, 
-        target_team_index: usize, 
-        move_used: Move 
-    },
-    PassiveAction { 
-        player_index: usize, 
-        team_index: usize, 
-        move_used: Move 
-    },
-    Miss { 
-        player_index: usize, 
-        team_index: usize, 
-        move_used: Move 
-    },
-
-    // Action prevention actions
-    StatusPreventedAction { 
-        player_index: usize, 
-        team_index: usize, 
-        status: PokemonStatus 
-    },
-    ConfusionSelfDamage { 
-        player_index: usize, 
-        team_index: usize 
-    },
-    VolatilePreventedAction { 
-        player_index: usize, 
-        team_index: usize, 
-        condition: PokemonCondition 
-    },
+    HandleKnockout { player_index: u8, team_index: u8 },
 
     // Final battle resolution
     EndBattle { outcome: BattleResolution },
@@ -232,10 +141,27 @@ impl BattleAction {
 - No direct state mutations (handled by generated command execution actions)
 
 **Stack Operations**:
-- Convert commands to execution actions: `DoSwitch`, `DoMove`, `DoForfeit`, `DoFlee`, `ThrowBall`
+- Convert commands to execution actions with prevention checks:
+  - `UseMove` → Check action prevention → Push `ChooseMove` OR prevention action
+  - `Continue` → Check action prevention → Push `DoMove` OR prevention action  
+  - `SwitchPokemon` → Check trapped condition → Push `DoSwitch` OR `ConditionPreventedAction { condition: Trapped }`
+  - `DoForfeit`, `DoFlee`, `ThrowBall` → Direct conversion (no prevention)
 - Push `EndTurn` action first (executes last due to LIFO)
 - Push actions in REVERSE priority order (switches first, then by move priority/speed)
 - Clear `battle_commands` array
+
+**Action Prevention Logic**:
+- **Move Action Prevention** (applied before pushing ChooseMove/DoMove):
+  - Sleep: Push `StatusPreventedAction { status: Sleep }`
+  - Freeze: 25% thaw chance, otherwise push `StatusPreventedAction { status: Freeze }`
+  - Paralysis: 25% prevent chance, push `StatusPreventedAction { status: Paralysis }`
+  - Flinch: Push `ConditionPreventedAction { condition: Flinch }`
+  - Move Disable: Push `ConditionPreventedAction { condition: Disabled }`
+  - Confusion: 50% chance push `ConfusionSelfDamage`, otherwise continue normally
+- **Switch Action Prevention** (applied before pushing DoSwitch):
+  - Trapped: Push `ConditionPreventedAction { condition: Trapped }`
+- **Special Cases**:
+  - Exhaustion: Handled by `Continue { action: Recharge }` generating `DoNothing` (not prevention)
 
 **Event Emission**:
 - `TurnStart` events when awaiting input
@@ -326,63 +252,69 @@ impl BattleAction {
 **Purpose**: Execute Pokemon switching
 **Execution Logic**:
 
-**Switch Prevention Logic** (internal calculations based on legacy engine.rs):
-- **Trapped Condition**: If active Pokemon has `Trapped` condition and is not fainted, switch fails
-- **Target Fainted**: If target Pokemon is fainted, switch fails
+**Target Validation**:
+- Check if target Pokemon is fainted, fail if target is fainted
 
 **State Mutations** (if switch succeeds):
 - Update `battle.players[player_index].active_pokemon_index = team_index`
 - Call `battle.players[player_index].clear_active_pokemon_state()` to reset temporary modifiers
 
 **Stack Operations**:
-- Presently, none.
+- Push no additional actions (switching is atomic)
 
 **Event Emission**:
-- `ActionFailed` events for prevented switches (trapped, target fainted)
+- `ActionFailed` events for invalid switches (target fainted)
 - `PokemonSwitched` events for successful switches
 
 **Return Value**: Always `GameState::Advancing`
 
-#### `DoMove { player_index, team_index, move_index }`
-**Purpose**: Execute move usage and handle action prevention
+**Note**: Trapped condition prevention is handled by the command-to-action conversion layer. SwitchPokemon commands only generate DoSwitch actions if trapped checks pass.
+
+#### `ChooseMove { player_index, team_index, move_index }`
+**Purpose**: Handle move selection and PP consumption
 **Execution Logic**:
+
+**PP Validation**:
+- Check if move has PP > 0, fail if no PP available
+- Deduct 1 PP from move slot
 
 **State Mutations**:
 - Decrement PP for the specified move by 1
-- Update pokemon's last_move.
+- Update pokemon's last_move
 
-**Action Prevention Logic** (internal calculations using helper functions based on `calculate_action_prevention`):
-- **Sleep**: If turns_remaining > 0, Pokemon fails to act and sleep counter decrements
-- **Freeze**: 25% chance to thaw out, otherwise fails to act  
-- **Flinch**: Check for flinched condition, prevents action
-- **Exhaustion**: Check for exhausted condition, prevents action
-- **Paralysis**: 25% chance to be fully paralyzed, prevents action
-- **Confusion**: 
-  - If turns_remaining == 0, confusion expires and action proceeds
-  - If turns_remaining > 0, 50% chance to hit self instead of using move
-- **Move Disable**: Check if specific move is disabled
-- **Status Counter Updates**: Automatically update status/condition turn counters
-
-**Stack Operations** (push EITHER normal actions OR failure actions):
-- **If action prevented**: Push appropriate failure action instead:
-  - Sleep: Push sleep failure action (Pokemon remains asleep)
-  - Paralysis: Push paralysis failure action  
-  - Confusion + self-hit: Push confusion self-damage action
-  - Frozen: Push frozen failure action
-  - etc
-
-- **If action succeeds**: Push normal move execution actions:
-  - Move's data determines which actions to push based on effects:
-    - Damaging effects: Push `StrikeAction { player_index, team_index, target_team_index, move_used }`
-    - Multi-hit moves: Push multiple `StrikeAction`s 
-    - Passive effects: Push `PassiveAction { player_index, team_index, move_used }`
-    - Complex moves (e.g., Explosion): Push both `StrikeAction` (damage) and `PassiveAction` (self-destruction)
-  - Exact action generation logic will be determined during implementation based on move effect analysis
+**Stack Operations**:
+- Push `DoMove { player_index, team_index, move_data: get_move_data(move) }`
 
 **Event Emission**:
 - `MoveUsed { pokemon: species, move: move_used }`
 
-**Return Value**: Always `GameState::Advancing` (actual move effects handled by StrikeAction/PassiveAction)
+**Return Value**: Always `GameState::Advancing`
+
+**Note**: Action prevention (sleep, paralysis, etc.) is handled by the command-to-action conversion layer. UseMove commands only generate ChooseMove actions if prevention checks pass.
+
+#### `DoMove { player_index, team_index, move_data }`
+**Purpose**: Execute move script and generate appropriate move effect actions
+**Execution Logic**:
+
+**Script Processing**:
+- Process `move_data.script` instructions in sequence
+- Convert each Instruction to appropriate BattleActions
+
+**State Mutations**:
+- No direct state mutations (handled by generated actions)
+
+**Stack Operations** (process each instruction in reverse order for LIFO execution):
+- **Strike Instruction**: Push `StrikeAction { player_index, team_index, target_team_index, strike_data }`
+- **Passive Instruction**: Push `PassiveAction { player_index, team_index, passive_effect }`
+- **MultiHit Instruction**: Generate hit count, push multiple `StrikeAction`s
+- **Prepare Instruction**: Check condition state, push appropriate action based on preparation status
+
+**Event Emission**:
+- No direct events (generated actions handle their own events)
+
+**Return Value**: Always `GameState::Advancing`
+
+**Note**: Action prevention (sleep, paralysis, etc.) is handled by the command-to-action conversion layer. Continue commands only generate DoMove actions if prevention checks pass.
 
 #### `DoForfeit { player_index }`
 **Purpose**: Handle battle forfeit (competitive contexts)
@@ -498,25 +430,55 @@ impl BattleAction {
 
 ### Move Effect Actions
 
-#### `StrikeAction { player_index, team_index, target_team_index, move_used }`
-**Purpose**: Execute offensive move against target
+#### `StrikeAction { player_index, team_index, target_team_index, strike_data }`
+**Purpose**: Execute offensive strike with accuracy check and damage calculation
+**Generated From**: `Instruction::Strike` in move scripts
 **Execution Logic**:
-1. Calculate damage using battle damage formula
-2. Apply type effectiveness, STAB, critical hits
-3. Apply secondary effects (status, stat changes)
-4. Push actions for (recoil, drain, etc.)
-5. Push `Damage` action for calculated amount
-Note: Must decide whether to check for hit/miss here or in DoMove. 
-PassiveActions can't miss, whereas StrikeActions can, so it seems reasonable to check here.
 
-#### `PassiveAction { player_index, team_index, move_used }`
-**Purpose**: Execute non-damaging move effects
+**Accuracy Check**:
+- Calculate accuracy based on `strike_data.accuracy` and stat modifiers
+- Account for `SureHit` effect if present in strike_data.effects
+
+**Damage Calculation** (if accuracy succeeds):
+- Calculate damage using battle damage formula with `strike_data.power`
+- Apply type effectiveness using `strike_data.move_type`
+- Apply STAB, critical hits, and damage category modifiers
+- Process `DamageCategory::Other` for custom damage effects (FixedDamage, PercentHpDamage)
+
+**Secondary Effects Processing**:
+- Process all effects in `strike_data.effects` list
+- Generate appropriate Direct Effect Actions (ApplyStatus, StatChange, etc.)
+- Handle special effects (Drain, Recoil, CritRatio)
+
+**Stack Operations**:
+- **On Hit**: Push `Damage` action + secondary effect actions
+- **On Miss**: Push `Miss` action for miss-specific effects
+
+**Event Emission**:
+- `MoveHit` or `MoveMissed` events
+
+**Return Value**: Always `GameState::Advancing`
+
+#### `PassiveAction { player_index, team_index, passive_effect }`
+**Purpose**: Execute guaranteed non-damaging effect
+**Generated From**: `Instruction::Passive` in move scripts
 **Execution Logic**:
-1. Apply move effects to user or field
-2. Handle stat modifications, status healing, field effects
-3. Process move-specific passive effects
-4. Generate appropriate effect actions
-Note: PassiveAction is move-specific, not effect-specific, and most effects are going to be actions, so this should perhaps be a matter of calling the appropriate actions?
+
+**Effect Processing**:
+- Process the single `passive_effect` specified
+- No accuracy check (guaranteed to happen)
+
+**Stack Operations** (based on effect type):
+- **StatChange**: Push `ModifyStatStage` action
+- **Heal**: Push `Heal` action
+- **Status effects**: Push `ApplyStatus`, `RemoveStatus` actions
+- **Team effects**: Push `ApplyTeamCondition` action
+- **Special effects**: Handle Transform, Metronome, etc. with appropriate actions
+
+**Event Emission**:
+- Effect-specific events (handled by generated actions)
+
+**Return Value**: Always `GameState::Advancing`
 
 #### `Miss { player_index, team_index, move_used }`
 **Purpose**: Handle move accuracy failure
@@ -531,27 +493,31 @@ Actions that handle various conditions preventing Pokemon from acting:
 
 #### `StatusPreventedAction { player_index, team_index, status: PokemonStatus }`
 **Purpose**: Handle action prevention due to major status conditions
+**Generated From**: Command-to-action conversion layer when major status prevents action
 **Execution Logic**:
 1. **Sleep**: Pokemon fails to act, decrement turns_remaining, emit sleep prevention event
-2. **Freeze**: 25% chance to thaw (remove status), otherwise prevent action and emit freeze event
-3. **Paralysis**: 25% chance to be fully paralyzed, prevent action and emit paralysis event
+2. **Freeze**: Pokemon fails to act, emit freeze prevention event (thaw chance already checked)
+3. **Paralysis**: Pokemon fails to act, emit paralysis prevention event (prevent chance already checked)
 4. **Other Status**: Handle status-specific prevention logic
 
+#### `ConditionPreventedAction { player_index, team_index, condition: PokemonCondition }`
+**Purpose**: Handle action prevention due to volatile conditions
+**Generated From**: Command-to-action conversion layer when volatile condition prevents action
+**Execution Logic**:
+1. **Flinch**: Pokemon cannot act this turn, emit flinch prevention event
+2. **Disabled**: Pokemon cannot use disabled move, emit disable prevention event
+3. **Trapped**: Pokemon cannot switch out, emit trap prevention event
+4. **Other Conditions**: Handle condition-specific prevention logic
+5. Remove single-turn conditions (flinch is removed after preventing action)
+
 #### `ConfusionSelfDamage { player_index, team_index }`
-**Purpose**: Handle confusion causing Pokemon to damage itself
+**Purpose**: Handle confusion causing Pokemon to damage itself instead of using move
+**Generated From**: Command-to-action conversion layer when confusion self-hit occurs (50% chance)
 **Execution Logic**:
 1. Calculate confusion self-damage (typically 40 base power typeless move)
 2. Generate `Damage` action for calculated self-damage amount
 3. Emit confusion self-hit event
-
-
-#### `VolatilePreventedAction { player_index, team_index, condition: PokemonCondition }`
-**Purpose**: Handle action prevention due to volatile conditions
-**Execution Logic**:
-1. **Flinched**: Pokemon cannot act this turn, emit flinch prevention event
-2. **Exhaustion**: Pokemon must recharge after Hyper Beam, emit exhaustion event
-3. **Other Volatile**: Handle condition-specific prevention logic
-4. Remove condition (exhaustion and flinch are both single-turn conditions)
+4. Decrement confusion turns_remaining
 
 ## Action Stack Management
 

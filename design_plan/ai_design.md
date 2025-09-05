@@ -45,7 +45,7 @@ pub trait BattleAI {
     /// Generate a command for the specified player given current battle state
     fn decide_command(
         &self, 
-        player_index: usize, 
+        player_index: u8, 
         battle: &Battle, 
         rng: &mut dyn BattleRng
     ) -> BattleCommand;

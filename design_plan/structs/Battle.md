@@ -9,7 +9,8 @@ The Battle struct is the core finite state machine that manages all battle state
 ```rust
 pub struct Battle {
     pub battle_type: BattleType, // Tournament, Trainer, Wild, Safari
-    pub players: [BattlePlayer; 2],
+    pub players: [Player; 2],    // Persistent player data only
+    pub battle_state: BattleState, // All temporary battle state
     pub battle_commands: [Option<BattleCommand>; 2],
     pub action_stack: Vec<BattleAction>, // LIFO Stack
     pub turn: u8,
@@ -25,13 +26,23 @@ Determines which actions are available and how certain mechanics behave:
 - **Wild**: Catching mechanics, running away, experience gain  
 - **Safari**: Special catching rules, limited turns/balls
 
-#### `players: [BattlePlayer; 2]`
-Contains all player-specific battle state:
-- Pokemon teams (up to 6 Pokemon each)
-- Active Pokemon and their current stats/status
-- Stat stage modifications (±6 for each stat)
-- Team conditions (Reflect, Light Screen, Mist)
-- Player type (Human vs NPC) for input handling
+#### `players: [Player; 2]`
+Contains persistent player data that survives battle context:
+- Player identity and metadata (ID, name, type)
+- Pokemon teams (up to 6 Pokemon each with persistent state)
+- Accumulated ante/prize money
+- No battle-specific state (active Pokemon, conditions, etc.)
+
+#### `battle_state: BattleState`
+Contains all temporary battle-specific state for both players:
+- Active Pokemon indices for each player
+- Volatile conditions (Confused, Trapped, Rampaging, Disabled, Biding)
+- Battle flags (Exhausted, Underground, Flinched, Seeded, etc.)
+- Special transformation flags (Converted, Transformed, Substituted, Countering)
+- Stat stage modifications (±6 for each stat per player)
+- Team conditions (Reflect, Light Screen, Mist per player)
+- Temporary movesets for Transform/Mimic effects
+- Last moves used by each player
 
 #### `battle_commands: [Option<BattleCommand>; 2]`
 Temporary storage for player commands awaiting execution:
@@ -54,10 +65,11 @@ Current turn counter for battle tracking and time-based effects.
 ### `new() -> Battle`
 ```rust
 impl Battle {
-    pub fn new(battle_type: BattleType, players: [BattlePlayer; 2]) -> Self {
+    pub fn new(battle_type: BattleType, players: [Player; 2]) -> Self {
         let mut battle = Battle {
             battle_type,
             players,
+            battle_state: BattleState::new(),
             battle_commands: [None, None],
             action_stack: Vec::new(),
             turn: 1,
@@ -66,6 +78,22 @@ impl Battle {
         // Initialize with first action
         battle.action_stack.push(BattleAction::RequestBattleCommands);
         battle
+    }
+}
+
+impl BattleState {
+    pub fn new() -> Self {
+        Self {
+            active_pokemon_indices: [0, 0],
+            team_conditions: [TeamConditionSet::new(), TeamConditionSet::new()],
+            stat_stages: [StatStageSet::default(), StatStageSet::default()],
+            last_moves: [None, None],
+            active_conditions: [PokemonConditionSet::new(), PokemonConditionSet::new()],
+            simple_flags: [PokemonFlagSet::new(), PokemonFlagSet::new()],
+            special_flags: [SpecialFlagSet::new(), SpecialFlagSet::new()],
+            temporary_moves: [TempMoveSet::new(), TempMoveSet::new()],
+            scattered_coins: 0,
+        }
     }
 }
 ```
@@ -216,10 +244,10 @@ The Battle struct should provide various read-only accessor methods for external
 
 ```rust
 impl Battle {
-    pub fn get_active_pokemon(&self, player_index: usize) -> Option<&Pokemon> { /* ... */ }
+    pub fn get_active_pokemon(&self, player_index: u8) -> Option<&Pokemon> { /* ... */ }
     pub fn get_battle_type(&self) -> BattleType { /* ... */ }
     pub fn get_turn_number(&self) -> u8 { /* ... */ }
-    pub fn get_player(&self, player_index: usize) -> &BattlePlayer { /* ... */ }
+    pub fn get_player(&self, player_index: u8) -> &Player { /* ... */ }
     pub fn is_battle_over(&self) -> bool { /* ... */ }
     // Additional getters as needed for UI/logging/debugging
 }

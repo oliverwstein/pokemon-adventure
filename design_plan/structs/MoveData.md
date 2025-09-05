@@ -44,7 +44,7 @@ pub enum Instruction {
     },
     /// An instruction for two-turn moves that require preparation.
     Prepare {
-        condition: PokemonCondition,
+        flag: PokemonFlag,  // InAir, Underground, Charging
         /// The strike to execute after preparation is complete.
         strike: StrikeData,
     },
@@ -81,11 +81,19 @@ pub enum BattleStat {
 }
 
 pub enum StrikeEffect {
-    // Conditions and Statuses
-    ApplyStatus { target: Target, status: PokemonStatus, percent_chance: u8 },
-    RemoveStatus { target: Target, status: PokemonStatus, percent_chance: u8 },
-    ApplyCondition { target: Target, condition: PokemonCondition, percent_chance: u8 },
-    RemoveCondition { target: Target, condition: PokemonCondition, percent_chance: u8 },
+    // Major Status (stored on PokemonInst)
+    ApplyStatus { target: Target, status: PokemonStatusType, percent_chance: u8 },
+    RemoveStatus { target: Target, status: PokemonStatusType, percent_chance: u8 },
+    ClearStatus { target: Target },  // Remove any major status
+    
+    // Volatile Conditions (stored on BattleState)
+    ApplyCondition { target: Target, condition: PokemonConditionType, percent_chance: u8 },
+    RemoveCondition { target: Target, condition: PokemonConditionType, percent_chance: u8 },
+    
+    // Battle Flags (stored on BattleState)
+    ApplyFlag { target: Target, flag: PokemonFlagType },
+    RemoveFlag { target: Target, flag: PokemonFlagType },
+    
     StatChange { target: Target, stat: BattleStat, delta: i8, chance: u8 },
 
     // Damage Modifiers
@@ -103,26 +111,38 @@ pub enum StrikeEffect {
     // Miscellany
     SureHit,
     Reckless { self_damage_percent: u8 },
-    RequiresStatus{ target: Target, status: PokemonStatus},
-    CureStatus{ target: Target, status: PokemonStatus},
+    RequiresStatus{ target: Target, status: PokemonStatusType},
+    CureStatus{ target: Target, status: PokemonStatusType},
+    
+    // Special Transform Effect (can miss, blocked by Substitute)
+    Transform { target: Target },
+    
     AnteUp { chance: u8 },
 }
 
 pub enum PassiveEffect {
     StatChange { stat: BattleStat, delta: i8, chance: u8 },
     Heal { percent: u8 },
-    Rest { duration: u8 },
-    CureStatus { status: PokemonStatus },
+    Rest,  // Heal to full HP + apply Sleep status
+    CureStatus { status: PokemonStatusType },
+    ClearStatus,  // Remove any major status
     ClearAllStatChanges { chance: u8 },
-    ApplyTeamCondition { condition: TeamCondition },
-    Flicker {chance: u8},
-    Suicide,
-    Transform,
-    Conversion,
-    Counter,
-    MirrorMove,
-    Metronome,
-    Substitute,
+    
+    // Team Conditions (stored on BattleState)
+    ApplyTeamCondition { condition: TeamConditionType },
+    
+    // Special Effects
+    Conversion,  // Change type to match first move
+    Substitute { hp_cost_percent: u8 },  // Create substitute using HP
+    Counter,  // Set up counter damage reflection
+    MirrorMove,  // Copy and use opponent's last move
+    Mimic,   // Copy and add the opponent's last move to the user's moveset temporarily
+    Metronome,  // Randomly select and execute any move
+    Bide,  // Begin damage accumulation for 2-3 turns
+    
+    // Utility Effects
+    Flicker { chance: u8 },  // Teleport/evasion effect
+    Suicide,  // User faints (Explosion, Self-Destruct)
 }
 
 ```
@@ -130,10 +150,19 @@ pub enum PassiveEffect {
 ## Execution Model
 
 1.  **Dispatch:** When a `DoMove` action executes, it reads the `script` list from the chosen move's `MoveData`. It iterates through this list and pushes the corresponding `BattleAction` (`StrikeAction` or `PassiveAction`) for each instruction onto the action stack in **reverse order**. For `MultiHit`, it runs the hit-generation logic and pushes multiple `StrikeAction`s.
+
 2.  **Strike Execution:** When a `StrikeAction` executes, it first performs its accuracy check.
     *   **On Hit:** It calculates damage and then processes its `effects` list, generating and pushing the final Direct Effect Actions (`Damage`, `Heal`, `ApplyStatus`, etc.).
     *   **On Miss:** It pushes a single `Miss` action. The `Miss` action is responsible for checking the original strike's `effects` for any on-miss effects (e.g., `Reckless`).
+
 3.  **Passive Execution:** When a `PassiveAction` executes, it processes its `effects` list and pushes the corresponding `Direct Effect Actions`. There is no accuracy check. Note that the Passive versions of Strike effects never include a Target field, because the Strike/Passive distinction is not Damaging/Status but Offensive/Self-Directed. PassiveEffects impact the field overall, or the user, but never another target.
+
+4.  **Effect Storage:** Effects are applied to different storage locations based on their type:
+    *   **Major Status** (`ApplyStatus`, `RemoveStatus`, `ClearStatus`): Stored on `PokemonInst.status` for persistence across battle contexts
+    *   **Volatile Conditions** (`ApplyCondition`, `RemoveCondition`): Stored on `BattleState.active_conditions` for temporary battle state
+    *   **Battle Flags** (`ApplyFlag`, `RemoveFlag`): Stored on `BattleState.simple_flags` and `BattleState.special_flags` for battle-specific state markers
+    *   **Team Conditions** (`ApplyTeamCondition`): Stored on `BattleState.team_conditions` for team-wide effects
+    *   **Stat Stages** (`StatChange`): Stored on `BattleState.stat_stages` for temporary battle modifications
 
 ## Examples in Practice
 
@@ -170,7 +199,6 @@ MoveData(
     max_pp: 20,
     script: [
         Passive(StatChange(stat: Def, delta: 2, chance: 100)),
-        ),
     ],
 )
 ```
@@ -231,9 +259,27 @@ MoveData(
     name: "Tri Attack",
     max_pp: 15,
     script: [
-        Strike(data: (move_type: Fire, power: 40, accuracy: 100, category: Special, effects: [ApplyStatus(target: Target, status: Burn, percent_chance: 10)])),
-        Strike(data: (move_type: Electric, power: 40, accuracy: 100, category: Special, effects: [ApplyStatus(target: Target, status: Paralyze, percent_chance: 10)])),
-        Strike(data: (move_type: Ice, power: 40, accuracy: 100, category: Special, effects: [ApplyStatus(target: Target, status: Freeze, percent_chance: 10)])),
+        Strike(data: (
+            move_type: Fire, 
+            power: 40, 
+            accuracy: 100, 
+            category: Special, 
+            effects: [ApplyStatus(target: Target, status: Burn, percent_chance: 10)]
+        )),
+        Strike(data: (
+            move_type: Electric, 
+            power: 40, 
+            accuracy: 100, 
+            category: Special, 
+            effects: [ApplyStatus(target: Target, status: Paralysis, percent_chance: 10)]
+        )),
+        Strike(data: (
+            move_type: Ice, 
+            power: 40, 
+            accuracy: 100, 
+            category: Special, 
+            effects: [ApplyStatus(target: Target, status: Freeze, percent_chance: 10)]
+        )),
     ],
 )
 ```
@@ -267,11 +313,11 @@ MoveData(
 These are tricky, because they rely on a mix of hard-coding, while the new move design has a certain amount of scripting. 
 They are also tricky because they all involve forced actions. The current system is meant to reflect the scripting/coding boundary by noting how they interact with control conditions. 
 
-Fly and Solar Beam use Prepare, which applies a condition to the user if they don't have the condition, and removes the condition + applies the effects of the move if they do have it.
+Fly and Solar Beam use Prepare, which applies a flag to the user if they don't have the flag, and removes the flag + applies the effects of the move if they do have it.
 
-Bide uses a simple Passive, which applies the Bide condition, then does nothing until Bide's turns remaining hits zero, at which point the doubled damage is unleashed. As Bide's effect has to be hard-coded anyway, there's nothing else to say.
+Bide uses a simple Passive, which applies the Bide volatile condition, then does nothing until Bide's turns remaining hits zero, at which point the doubled damage is unleashed. As Bide's effect has to be hard-coded anyway, there's nothing else to say.
 
-Counter is handled slightly differently than in the regular games--now, instead of having negative priority, it has very high priority, and applies a one-turn condition (Counter) that records the physical damage the pokemon receives and does twice as much damage back to the opponent and the beginning of the end-of-turn. Like Bide, this can be handled with a simple Passive.
+Counter is handled slightly differently than in the regular games--now, instead of having negative priority, it has very high priority, and applies a one-turn special flag (Countering) that records the physical damage the pokemon receives and does twice as much damage back to the opponent at the beginning of the end-of-turn. Like Bide, this can be handled with a simple Passive.
 
 ```ron
 MoveData(
@@ -279,7 +325,7 @@ MoveData(
     max_pp: 15,
     script: [
         Prepare(
-            condition: HighAbove,
+            flag: InAir,
             strike: (
                 move_type: Flying,
                 power: 90,
@@ -296,7 +342,7 @@ MoveData(
     max_pp: 10,
     script: [
         Prepare(
-            condition: SolarPower,
+            flag: Charging,
             strike: (
                 move_type: Grass,
                 power: 150,
@@ -322,6 +368,20 @@ MoveData(
     priority: 2,
     script: [
         Passive(Counter),
+    ],
+)
+
+MoveData(
+    name: "Transform",
+    max_pp: 10,
+    script: [
+        Strike(data: (
+            move_type: Typeless,
+            power: 0,
+            accuracy: 255,
+            category: Other,
+            effects: [Transform(target: Target)],
+        )),
     ],
 )
 ```

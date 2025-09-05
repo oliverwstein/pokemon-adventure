@@ -1,3 +1,5 @@
+# NOTE: OUTDATED
+
 # Pokemon Battle Finite State Machine Notes
 
 ## Introduction 
@@ -31,12 +33,12 @@ pub struct Battle {
 - `battle_commands`: an array of two `Option<BattleCommand>`, representing the queued actions for the players to do. User inputs are converted into commands, but commands can also be provided directly by NPC players (`BattlePlayer` specifies `Human` or `NPC`) or carried forward from the previous turn (for multi-turn moves like SolarBeam and Fly). 
     ```rust
     pub enum BattleCommand {
-        SwitchPokemon { team_index: usize },
-        UseMove { team_index: usize, chosen_move: Move },
+        SwitchPokemon { team_index: u8 },
+        UseMove { team_index: u8, chosen_move: Move },
         UseBall { ball: PokeballType },
         Forfeit,
         AcceptEvolution { accept: bool },
-        ChooseMoveToForget { move_index: usize },
+        ChooseMoveToForget { move_index: u8 },
     }
     ```
 - `action_stack`: a `BattleAction` stack. **All** mutations of `players` and `GameState` come from `BattleAction` execution **exclusively**. `BattleCommand` just adds to the stack. Executing an action returns a `Vec<BattleAction>` that are then pushed to the stack. There are a lot of these. Also responsible for publishing events.
@@ -45,12 +47,12 @@ pub enum BattleAction {
     // Actions that can trigger Awaiting
     RequestBattleCommands,
     RequestNextPokemon {p1: bool, p2: bool},
-    OfferMove {player_index: bool, team_index: usize, new_move: Move},
-    OfferEvolution {player_index: bool, team_index: usize, species: Species},
+    OfferMove {player_index: bool, team_index: u8, new_move: Move},
+    OfferEvolution {player_index: bool, team_index: u8, species: Species},
 
     // Actions that are put on the action_stack from BattleCommands
-    DoSwitch { player_index: bool, team_index: usize},
-    DoMove {player_index: bool, team_index: usize, move_index: usize},
+    DoSwitch { player_index: bool, team_index: u8},
+    DoMove {player_index: bool, team_index: u8, move_index: u8},
     DoForfeit { player_index: bool }, // Forfeit beomes Run for Wild and Safari battles
     ThrowBall { ball: PokeballType }, // Wild and Safari battles only
 
@@ -58,27 +60,27 @@ pub enum BattleAction {
     EndBattle {outcome: BattleResolution},
     // Everything else that can happen in a battle, generically
     // For offensive moves that can miss
-    StrikeAction {player_index: bool, team_index: usize, target_team_index: usize, use_move: Move},
+    StrikeAction {player_index: bool, team_index: u8, target_team_index: u8, use_move: Move},
     // For status moves that don't affect the opponent directly (Reflect, Swords Dance, Rain Dance, etc.)
-    PassiveAction {player_index: bool, team_index: usize, use_move: Move}, // Would love a better name
+    PassiveAction {player_index: bool, team_index: u8, use_move: Move}, // Would love a better name
 
     // For missing, which emits an event and can trigger other things
-    Miss {player_index: bool, team_index: usize, use_move: Move},
+    Miss {player_index: bool, team_index: u8, use_move: Move},
 
-    Damage {player_index: bool, team_index: usize, amount: u16},
-    Heal {player_index: bool, team_index: usize, amount: u16},
+    Damage {player_index: bool, team_index: u8, amount: u16},
+    Heal {player_index: bool, team_index: u8, amount: u16},
 
-    Knockout {player_index: bool, target_team_index: usize},
+    Knockout {player_index: bool, target_team_index: u8},
 
-    ModifyStatStage {player_index: bool, target_team_index: usize, stat: Stat, delta: i8},
-    ResetStatChanges {player_index: bool, target_team_index: usize},
+    ModifyStatStage {player_index: bool, target_team_index: u8, stat: Stat, delta: i8},
+    ResetStatChanges {player_index: bool, target_team_index: u8},
 
-    ApplyStatus {player_index: bool, target_team_index: usize, status: Status {..}},
-    RemoveStatus {player_index: bool, target_team_index: usize, status: Status {..}},
+    ApplyStatus {player_index: bool, target_team_index: u8, status: Status {..}},
+    RemoveStatus {player_index: bool, target_team_index: u8, status: Status {..}},
 
-    ApplyCondition {player_index: bool, target_team_index: usize, condition: Condition {..}},
-    RemoveCondition {player_index: bool, target_team_index: usize, condition: Condition {..}},
-    RemoveAllConditions {player_index: bool, target_team_index: usize},
+    ApplyCondition {player_index: bool, target_team_index: u8, condition: Condition {..}},
+    RemoveCondition {player_index: bool, target_team_index: u8, condition: Condition {..}},
+    RemoveAllConditions {player_index: bool, target_team_index: u8},
     
     ApplyTeamCondition {player_index: bool, condition: TeamCondition {..}},
 }
@@ -245,25 +247,25 @@ impl BattleAction {
 pub enum InputRequest {
     /// The engine is waiting for a player to choose their primary action for the turn.
     ForTurnActions { // For RequestBattleCommands
-        player_index: usize,
+        player_index: u8,
     },
 
     /// A player's active Pokémon has fainted, and they must choose a replacement.
     ForNextPokemon { // For RequestNextPokemon
-        player_index: usize,
+        player_index: u8,
     },
 
     /// A Pokémon is being offered a new move, but its moveset is full.
     ForMoveToForget { // For OfferMove
-        player_index: usize,
-        team_index: usize,
+        player_index: u8,
+        team_index: u8,
         new_move: Move,
     },
 
     /// A Pokémon has met the criteria to evolve.
     ForEvolution { // For OfferEvolution
-        player_index: usize,
-        team_index: usize,
+        player_index: u8,
+        team_index: u8,
         new_species: Species,
     },
 
@@ -276,7 +278,7 @@ pub enum InputRequest {
 impl InputRequest {
     /// A convenient helper method to get the relevant player index from any request type.
     /// Returns None for battle completion since no specific player is involved.
-    pub fn player_index(&self) -> Option<usize> {
+    pub fn player_index(&self) -> Option<u8> {
         match self {
             InputRequest::ForTurnActions { player_index } => Some(*player_index),
             InputRequest::ForNextPokemon { player_index, .. } => Some(*player_index),

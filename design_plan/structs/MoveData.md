@@ -84,8 +84,7 @@ pub enum StrikeEffect {
     // Major Status (stored on PokemonInst)
     ApplyStatus { target: Target, status: PokemonStatusType, percent_chance: u8 },
     RemoveStatus { target: Target, status: PokemonStatusType, percent_chance: u8 },
-    ClearStatus { target: Target },  // Remove any major status
-    
+    CureStatus{ target: Target, status: PokemonStatusType},
     // Volatile Conditions (stored on BattleState)
     ApplyCondition { target: Target, condition: PokemonConditionType, percent_chance: u8 },
     RemoveCondition { target: Target, condition: PokemonConditionType, percent_chance: u8 },
@@ -95,6 +94,7 @@ pub enum StrikeEffect {
     RemoveFlag { target: Target, flag: PokemonFlagType },
     
     StatChange { target: Target, stat: BattleStat, delta: i8, chance: u8 },
+    Transform { target: Target },
 
     // Damage Modifiers
     Drain { percent: u8 },
@@ -112,12 +112,10 @@ pub enum StrikeEffect {
     SureHit,
     Reckless { self_damage_percent: u8 },
     RequiresStatus{ target: Target, status: PokemonStatusType},
-    CureStatus{ target: Target, status: PokemonStatusType},
     
     // Special Transform Effect (can miss, blocked by Substitute)
     Transform { target: Target },
     
-    AnteUp { chance: u8 },
 }
 
 pub enum PassiveEffect {
@@ -143,6 +141,8 @@ pub enum PassiveEffect {
     // Utility Effects
     Flicker { chance: u8 },  // Teleport/evasion effect
     Suicide,  // User faints (Explosion, Self-Destruct)
+
+    AnteUp { chance: u8 },
 }
 
 ```

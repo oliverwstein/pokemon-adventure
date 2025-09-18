@@ -172,6 +172,7 @@ pub enum Move {
     // Ice Type
     IcePunch,
     IceBeam,
+    PowderSnow,
     Blizzard,
     AuroraBeam,
 
@@ -381,6 +382,7 @@ impl std::str::FromStr for Move {
             "EGGBOMB" => Ok(Move::EggBomb),
             "ICEPUNCH" => Ok(Move::IcePunch),
             "ICEBEAM" => Ok(Move::IceBeam),
+            "POWDERSNOW" => Ok(Move::PowderSnow),
             "BLIZZARD" => Ok(Move::Blizzard),
             "AURORABEAM" => Ok(Move::AuroraBeam),
             "THUNDERPUNCH" => Ok(Move::ThunderPunch),

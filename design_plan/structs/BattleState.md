@@ -25,6 +25,9 @@ pub struct BattleState {
     pub simple_flags: [PokemonFlagSet; 2],
     pub special_flags: [SpecialFlagSet; 2],
     pub temporary_moves: [TempMoveSet; 2],
+    
+    // Action prevention tracking
+    pub prevention_checked: [bool; 2],  // Per-player prevention check status for current turn
 
     // Shared data
     pub scattered_coins: u16,
@@ -95,11 +98,11 @@ pub enum PokemonConditionType {
 }
 
 pub struct PokemonConditionSet {
-    pub confused: Option<u8>,                 // turns_remaining
-    pub trapped: Option<u8>,                  // turns_remaining  
-    pub rampaging: Option<u8>,                // turns_remaining
-    pub disabled: Option<(u8, u8)>,        // (move_index, turns_remaining)
-    pub biding: Option<(u8, u16)>,            // (turns_remaining, accumulated_damage)
+    pub confused: Option<u8>,        // turns_remaining
+    pub trapped: Option<u8>,         // turns_remaining  
+    pub rampaging: Option<u8>,       // turns_remaining
+    pub disabled: Option<(u8, u8)>,  // (turns_remaining, move_index)
+    pub biding: Option<(u8, u16)>,   // (turns_remaining, accumulated_damage)
 }
 ```
 
@@ -172,6 +175,20 @@ pub struct TempMoveInstance {
 - **Mimic**: Adds single move to temporary set with 5 PP
 - **Slot Management**: Transform overwrites all slots, Mimic uses first available slot
 - **PP Tracking**: Independent PP counter for each temporary move
+
+### Action Prevention Tracking
+
+```rust
+pub prevention_checked: [bool; 2],  // Per-player prevention check status
+```
+
+**Prevention Check Mechanics**:
+- **Turn Initialization**: Reset to `[false, false]` at start of each turn
+- **ChooseMove Actions**: Always run prevention check, set flag to `true`
+- **DoMove Actions**: Only run prevention check if flag is still `false` 
+- **Prevention Types**: Sleep, paralysis, freeze, flinch, confusion, move disable
+- **Flow Control**: Prevents double-checking when UseMove → ChooseMove → DoMove
+- **Continue Commands**: Enable proper prevention checking for multi-turn moves
 
 ## Access Pattern Implementation
 
@@ -253,6 +270,27 @@ impl BattleState {
             StatType::Accuracy => stages.accuracy,
             StatType::Evasion => stages.evasion,
         }
+    }
+}
+```
+
+### Prevention Check Management
+
+```rust
+impl BattleState {
+    /// Check if prevention has already been checked for this player this turn
+    pub fn is_prevention_checked(&self, player_index: u8) -> bool {
+        self.prevention_checked[player_index as usize]
+    }
+    
+    /// Mark prevention as checked for this player this turn
+    pub fn set_prevention_checked(&mut self, player_index: u8) {
+        self.prevention_checked[player_index as usize] = true;
+    }
+    
+    /// Reset prevention check flags for new turn (called by EndTurn or turn initialization)
+    pub fn reset_prevention_checks(&mut self) {
+        self.prevention_checked = [false, false];
     }
 }
 ```
